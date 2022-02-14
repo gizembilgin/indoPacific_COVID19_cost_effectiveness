@@ -9,7 +9,8 @@ require(tidyverse)
 if (strain == 'WT'){R0_to_fit = 2.79
 } else if (strain == "delta"){R0_to_fit = 5.08}
 
-R0_to_fit = R0_to_fit*0.79
+#COMEBACK - is R0 lower in SLE and PNG?
+#R0_to_fit = R0_to_fit*0.79
 
 ##testing reduced R0
 # if (setting == "PNG"){ R0_to_fit = R0_to_fit*0.7
