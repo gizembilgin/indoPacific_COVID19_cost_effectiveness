@@ -98,7 +98,7 @@ if ((date_start - vaccine_coverage_delay[d])>= min(vaccination_history_FINAL$dat
 
 ###### (2/3) Seroprevalence
 seroprev = read.csv("1_inputs/seroprev.csv",header=TRUE)
-seroprev = seroprev[seroprev$setting == setting,]
+seroprev = seroprev[seroprev$setting == setting & seroprev$year == seroprev_year,]
 #___________________________________________________________________
 
 
