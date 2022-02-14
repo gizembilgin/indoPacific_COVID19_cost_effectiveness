@@ -1,0 +1,61 @@
+vaccine_type,outcome,dose,VE
+Moderna,acquisition,1,66
+Pfizer,acquisition,1,57
+AstraZeneca,acquisition,1,46
+Johnson & Johnson,acquisition,1,74
+Sinopharm,acquisition,1,55
+Sinovac,acquisition,1,45
+Moderna,transmission,1,17
+Pfizer,transmission,1,17
+AstraZeneca,transmission,1,5
+Johnson & Johnson,transmission,1,24
+Sinopharm,transmission,1,5
+Sinovac,transmission,1,5
+Moderna,hospitalisation,1,71
+Pfizer,hospitalisation,1,71
+AstraZeneca,hospitalisation,1,69
+Johnson & Johnson,hospitalisation,1,86
+Sinopharm,hospitalisation,1,69
+Sinovac,hospitalisation,1,69
+Moderna,ICU,1,71
+Pfizer,ICU,1,71
+AstraZeneca,ICU,1,69
+Johnson & Johnson,ICU,1,86
+Sinopharm,ICU,1,69
+Sinovac,ICU,1,69
+Moderna,death,1,71
+Pfizer,death,1,71
+AstraZeneca,death,1,69
+Johnson & Johnson,death,1,90
+Sinopharm,death,1,69
+Sinovac,death,1,69
+Moderna,acquisition,2,95
+Pfizer,acquisition,2,80
+AstraZeneca,acquisition,2,67
+Johnson & Johnson,acquisition,2,74
+Sinopharm,acquisition,2,79
+Sinovac,acquisition,2,65
+Moderna,transmission,2,50
+Pfizer,transmission,2,50
+AstraZeneca,transmission,2,24
+Johnson & Johnson,transmission,2,24
+Sinopharm,transmission,2,24
+Sinovac,transmission,2,24
+Moderna,hospitalisation,2,87
+Pfizer,hospitalisation,2,87
+AstraZeneca,hospitalisation,2,86
+Johnson & Johnson,hospitalisation,2,86
+Sinopharm,hospitalisation,2,86
+Sinovac,hospitalisation,2,86
+Moderna,ICU,2,87
+Pfizer,ICU,2,87
+AstraZeneca,ICU,2,86
+Johnson & Johnson,ICU,2,86
+Sinopharm,ICU,2,86
+Sinovac,ICU,2,86
+Moderna,death,2,92
+Pfizer,death,2,92
+AstraZeneca,death,2,90
+Johnson & Johnson,death,2,90
+Sinopharm,death,2,90
+Sinovac,death,2,90
