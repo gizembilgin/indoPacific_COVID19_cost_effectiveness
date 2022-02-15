@@ -180,32 +180,6 @@ severe_outcome_proj <- function(incidence_log_unedited){
   
   plot1 <- 
     ggplot() + 
-    geom_line(data=outcome_proj_long,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
-    xlab("") + 
-    scale_x_date(date_breaks="1 month", date_labels="%b") +
-    #ylim(0,40) +
-    ylab("incidence") +
-    theme_bw() + 
-    theme(panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(), 
-          panel.border = element_blank(),
-          axis.line = element_line(color = 'black'))
-  
-  plot2 <- ggplot() + 
-    geom_line(data=outcome_proj_cum_long,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
-    xlab("") + 
-    scale_x_date(date_breaks="1 month", date_labels="%b") +
-    ylab("cumulative incidence") +
-    theme_bw() + 
-    theme(panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(), 
-          panel.border = element_blank(),
-          axis.line = element_line(color = 'black'))
-  
-  grid.arrange(plot1, plot2)
-  
-  plot1 <- 
-    ggplot() + 
     geom_line(data=outcome_proj_long[outcome_proj_long$outcome != 'daily_cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +
