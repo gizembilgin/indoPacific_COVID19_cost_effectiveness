@@ -72,8 +72,6 @@ severe_outcome_2 <- severe_outcome_2 %>% mutate(percentage=percentage*RR)
 severe_outcome_FINAL <- severe_outcome_2 %>%
   select(outcome,outcome_long,age_group,percentage)
 
-outcomes_list <- unique(severe_outcome_FINAL$outcome)
-
 rm(severe_outcome_0,severe_outcome_2)
 #_______________________________________________________________________________
 
@@ -97,15 +95,42 @@ colnames(workshop) <-c('agegroup','average_age')
 lifeExpect <- read.csv('1_inputs/UN_life_expectancy_est.csv')
 lifeExpect = lifeExpect[lifeExpect$setting == setting,]
 
-workshop <- workshop %>% mutate(
-  closest = min(abs(rep(average_age,nrow(lifeExpect))-lifeExpect$age))
-)
+closest_age = data.frame()
+for (i in 1:nrow(workshop)){
+  closest_age = rbind(closest_age,lifeExpect$age[which.min(abs(lifeExpect$age-workshop$average_age[i]))])
+}
+colnames(closest_age) = c('age')
+
+workshop = cbind(workshop,closest_age)
+
+workshop <- workshop %>%
+  left_join(lifeExpect) %>%
+  select(agegroup,average_age,age,life_expectancy)
+#"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
+# who would be subject during the remaining of their lives to the mortality rates of a given period."
+# https://population.un.org/wpp/Download/Standard/Mortality/
+
+YLL_FINAL = workshop %>%
+  select(agegroup,life_expectancy) %>%
+  mutate(agegroup = gsub("-", " to ", agegroup))
+YLL_FINAL$agegroup[YLL_FINAL$agegroup == '60 to 100'] = '60+'
+colnames(YLL_FINAL) = c('age_group','YLL')
+
+YLL_row = severe_outcome_FINAL[severe_outcome_FINAL$outcome == 'death',]
+YLL_row$outcome = 'YLL'
+YLL_row$outcome_long = 'YLL per death in this age_group multiplied by death rate'
+YLL_row <- YLL_row %>% left_join(YLL_FINAL) %>%
+  mutate(percentage = percentage*YLL)
+YLL_row = YLL_row[,c(1:4)]
+
+severe_outcome_FINAL = rbind(severe_outcome_FINAL,YLL_row)
 
 #_______________________________________________________________________________
 
 
 
-#####(6/6) Geunine proj from incidence!
+#####(6/6) Genuine projection from incidence!
+outcomes_list <- unique(severe_outcome_FINAL$outcome)
 
 severe_outcome_proj <- function(incidence_log_unedited){
   outcome_proj = incidence_log_unedited[,c('date','daily_cases')]
@@ -206,4 +231,6 @@ severe_outcome_proj <- function(incidence_log_unedited){
   grid.arrange(plot1, plot2)
 
 }
+
+severe_outcome_proj(incidence_log_unedited)
 
