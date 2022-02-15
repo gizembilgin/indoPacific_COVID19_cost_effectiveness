@@ -20,13 +20,13 @@ library(gridExtra)
 
 #       (2/4) User choice / Model toggles              
 ####################################################################
-setting = "SLE"
+setting = "PNG"
 
 date_start = as.Date('2022-04-01')  #note, '2020-03-01' used for current WT behaviour_mod fit (02/02/2022); and '2022-04-01 for simulations
-model_weeks = 8          # how many weeks should the model run for?, 24 PNG fit
+model_weeks = 52          # how many weeks should the model run for?, 24 PNG fit
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
-strain_inital = 'omicron'             #options:'WT','delta'
+strain_inital = 'delta'             #options:'WT','delta'
 seed = 50/100000 
 
 
@@ -36,6 +36,8 @@ underascertainment_est = 43
 
 behaviour_mod = 0  #0.268 if start 01/03
 uniform_mod=1
+
+seroprev_year = 2022 #COMEBACK - tie this to date_start!
 
 #vaccine_strategy_toggle = , read in vaccine_strategy.csv
 #__________________________________________________________________
