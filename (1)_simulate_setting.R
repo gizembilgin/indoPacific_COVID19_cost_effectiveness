@@ -28,7 +28,7 @@ pop_setting <- aggregate(pop_setting$population, by=list(category=pop_setting$ag
 colnames(pop_setting) <-c('agegroup','pop')
 pop <- pop_setting$pop
 
-rm (pop_setting, pop_orig) #keep pop_setting_orig for contact matrix weighting
+rm (pop_orig) #keep pop_setting_orig for contact matrix weighting
 #______________________________________________________________________________________________________________________________________
 
 
