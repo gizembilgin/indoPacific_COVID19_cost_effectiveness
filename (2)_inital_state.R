@@ -47,6 +47,28 @@ for (i in 1:J){ # age
   }
 }
 
+vaccine_coverage_end_history = rep(0, num_age_groups * num_vax_types * num_vax_doses)
+## COMEBACK - is this necessary?
+
+for (i in 1:J){ # age
+  for (t in 1:T){  # vaccine type
+    for (d in 1:D){ # vaccine dose
+      C = i + J*(t+(d-1)*T) - J
+      
+      if (vax_type_list[t] == "Johnson & Johnson" & d == 2){
+        #avoid J&J dose 2, otherwise NA and stuffs up vax_type order
+      } else{
+        vaccine_coverage_end_history[C] = vaccination_history_FINAL$coverage_this_date[
+            vaccination_history_FINAL$date == max(vaccination_history_FINAL$date) 
+            & vaccination_history_FINAL$dose == d
+            & vaccination_history_FINAL$vaccine_type == vax_type_list[t]]/100 * multiplier[i]
+      }
+    }
+  }
+}
+
+
+
 
 
 
