@@ -203,8 +203,27 @@ severe_outcome_proj <- function(incidence_log_unedited){
           axis.line = element_line(color = 'black'))
   
   grid.arrange(plot1, plot2)
-
+  
+  row = vax_strategy_name
+  for (i in 1:length(unique(outcome_proj_cum_long$outcome))){
+    outcome = unique(outcome_proj_cum_long$outcome)[i]
+    row = cbind(row,
+                round(outcome_proj_cum_long$proj[outcome_proj_cum_long$outcome == outcome &
+                                                   outcome_proj_cum_long$date == max(outcome_proj_cum_long$date)]))
+  }
+  colnames(row) = c('vaccination strategy',unique(outcome_proj_cum_long$outcome))  
+  
+  severe_outcome_table = rbind(severe_outcome_table,row)  
 }
 
-severe_outcome_proj(incidence_log_unedited)
+
+
+
+  
+
+  
+  
+  
+  
+  
 
