@@ -67,8 +67,17 @@ for (i in 1:J){ # age
   }
 }
 
+vaccination_history_FINAL_V2 = data.frame() #with doses by age by day
+#COMEBACK - uniform assumption in ages 20+
+age_split =  pop/sum(pop[3:num_age_groups]); age_split[1:2] = 0
 
-
+for (j in 1:num_age_groups){
+  workshop = vaccination_history_FINAL
+  workshop <- workshop %>% mutate(
+    age_group = age_group_labels[j],
+    doses_delivered_this_date = doses_delivered_this_date*age_split[j])
+  vaccination_history_FINAL_V2 = rbind(vaccination_history_FINAL_V2,workshop)
+}
 
 
 
