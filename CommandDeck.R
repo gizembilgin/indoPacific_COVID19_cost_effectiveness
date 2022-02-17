@@ -23,7 +23,7 @@ library(gridExtra)
 setting = "PNG"
 
 date_start = as.Date('2022-04-01')  #note, '2020-03-01' used for current WT behaviour_mod fit (02/02/2022); and '2022-04-01 for simulations
-model_weeks = 52          # how many weeks should the model run for?, 24 PNG fit
+model_weeks = 10          # how many weeks should the model run for?, 24 PNG fit
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
 strain_inital = 'delta'             #options:'WT','delta'

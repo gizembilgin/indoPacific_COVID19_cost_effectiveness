@@ -199,6 +199,8 @@ while (doses_to_deliver>0 & priority_group_num <= (highest_priority)){
   
   priority_group_num = priority_group_num + 1  
 }
+
+vaccine_allocation =  eligible_pop %>% select(age_group,dose,doses_delivered,priority)
 #_______________________________________________________________________________
 
 
