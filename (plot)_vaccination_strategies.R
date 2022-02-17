@@ -1,15 +1,20 @@
 
 ###### Coding vaccine prioritisation strategies
 
+#options(scipen = 100)
+
 #####(1/3) Toggles #############################################################
 
-vax_strategy = "oldest"
-#options: "oldest", "youngest","dose 1", OTHER?
+vax_age_strategy = "uniform_transmit"
+#options: "oldest", "youngest","50_down","uniform", OTHER?
+
+vax_dose_strategy = 2
+#options: 1, 2
 
 vax_strategy_vaccine_type = "AstraZeneca" 
 #options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
 
-vax_strategy_num_doses = 200000
+vax_strategy_num_doses = as.integer(10000000)
 #COMEBACK - should have % option
 
 vax_strategy_delivery_timeframe = 180 #(days)
@@ -62,11 +67,138 @@ eligible_pop
 ###(B/C) Place priority # on age group by strategy
 #lots of {} strategy
 #want table with columns: age_group, priority
+#options: "oldest", "youngest","dose 1", OTHER?
+if (vax_age_strategy == "oldest"){
+  eligible_pop <- eligible_pop %>%
+    mutate(priority= case_when(
+      age_group == '60-100' ~ 1,
+      age_group == '50-59' ~ 2,
+      age_group == '40-49' ~ 3,
+      age_group == '30-39' ~ 4,
+      age_group == '20-29' ~ 5,
+      age_group == '5-19' ~ 6,
+      age_group == '0-4' ~ 99 # will restrict priority loop to <10
+    ))
+} else if (vax_age_strategy == "youngest"){
+  eligible_pop <- eligible_pop %>%
+    mutate(priority= case_when(
+      age_group == '60-100' ~ 6,
+      age_group == '50-59' ~ 5,
+      age_group == '40-49' ~ 4,
+      age_group == '30-39' ~ 3,
+      age_group == '20-29' ~ 2,
+      age_group == '5-19' ~ 1,
+      age_group == '0-4' ~ 99
+    ))
+} else if (vax_age_strategy == "50_down"){
+  eligible_pop <- eligible_pop %>%
+    mutate(priority= case_when(
+      age_group == '60-100' ~ 6,
+      age_group == '50-59' ~ 1,
+      age_group == '40-49' ~ 2,
+      age_group == '30-39' ~ 3,
+      age_group == '20-29' ~ 4,
+      age_group == '5-19' ~ 5,
+      age_group == '0-4' ~ 99
+    ))
+} else if (vax_age_strategy == "uniform"){
+  eligible_pop <- eligible_pop %>%
+    mutate(priority= case_when(
+      age_group == '60-100' ~ 1,
+      age_group == '50-59' ~ 1,
+      age_group == '40-49' ~ 1,
+      age_group == '30-39' ~ 1,
+      age_group == '20-29' ~ 1,
+      age_group == '5-19' ~ 1,
+      age_group == '0-4' ~ 99
+    ))
+} else if (vax_age_strategy == "uniform_transmit"){
+  eligible_pop <- eligible_pop %>%
+    mutate(priority= case_when(
+      age_group == '60-100' ~ 3,
+      age_group == '50-59' ~ 2,
+      age_group == '40-49' ~ 2,
+      age_group == '30-39' ~ 1,
+      age_group == '20-29' ~ 1,
+      age_group == '5-19' ~ 1,
+      age_group == '0-4' ~ 99
+    ))
+}
+
 
 
 ###(C/C) Distribute doses by priority
 #separate by 1/2 dose strategy
 #want table with columns: age_group, priority, dose 1, dose 2
+if (vax_strategy_vaccine_type == "Johnson & Johnson"){vax_dose_strategy == 1}
+
+doses_to_deliver = vax_strategy_num_doses
+priority_group_num = 1
+eligible_pop <- eligible_pop %>% mutate(doses_delivered = 0)
+
+n=length(unique(eligible_pop$priority))
+highest_priority = sort(unique(eligible_pop$priority),partial=n-1)[n-1] #highest valid priority
+
+while (doses_to_deliver>0 & priority_group_num <= (highest_priority)){
+  priority_group = eligible_pop[eligible_pop$priority == priority_group_num,]
+  
+  if (length(unique(priority_group$age_group)) == 1){
+  
+    workshop = doses_to_deliver/vax_dose_strategy - priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy]
+      
+    if (workshop < 0){
+      priority_group$doses_delivered[priority_group$dose == vax_dose_strategy & priority_group$priority == priority_group_num] = doses_to_deliver/vax_dose_strategy
+      if (vax_dose_strategy == 2){priority_group$doses_delivered[priority_group$dose == 1] = doses_to_deliver/vax_dose_strategy }
+      doses_to_deliver = 0
+    
+    } else if (workshop>0){
+      priority_group$doses_delivered[priority_group$dose == vax_dose_strategy] =  priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy]
+      doses_to_deliver = doses_to_deliver - priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy]
+      
+      if (vax_dose_strategy == 2){
+        workshop2 = doses_to_deliver- priority_group$eligible_individuals[priority_group$dose == 1]
+        if(workshop2 < 0){
+          priority_group$doses_delivered[priority_group$dose == 1] = doses_to_deliver
+          doses_to_deliver = 0
+        } else{
+          priority_group$doses_delivered[priority_group$dose == 1] = priority_group$eligible_individuals[priority_group$dose == 1]
+          doses_to_deliver = doses_to_deliver - priority_group$eligible_individuals[priority_group$dose == 1]
+        }
+      }
+    }
+  
+  } else {
+    workshop = doses_to_deliver/vax_dose_strategy - sum(priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy])
+    
+    if (workshop < 0){
+      prop_to_deliver = doses_to_deliver/vax_dose_strategy / sum(priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy])
+      
+      priority_group$doses_delivered[priority_group$dose == vax_dose_strategy] = prop_to_deliver * priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy]
+      if (vax_dose_strategy == 2){priority_group$doses_delivered[priority_group$dose == 1] = prop_to_deliver * priority_group$eligible_individuals[priority_group$dose == 1] }
+      doses_to_deliver = 0
+      
+    } else if (workshop>0){
+      priority_group$doses_delivered[priority_group$dose == vax_dose_strategy] =  priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy]
+      doses_to_deliver = doses_to_deliver - sum(priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy])
+      
+      if (vax_dose_strategy == 2){
+        workshop2 = doses_to_deliver- sum(priority_group$eligible_individuals[priority_group$dose == 1])
+        if(workshop2 < 0){
+          prop_to_deliver = doses_to_deliver / sum(priority_group$eligible_individuals[priority_group$dose == 1])
+          priority_group$doses_delivered[priority_group$dose == 1] = doses_to_deliver
+          doses_to_deliver = 0
+        } else{
+          priority_group$doses_delivered[priority_group$dose == 1] = priority_group$eligible_individuals[priority_group$dose == 1]
+          doses_to_deliver = doses_to_deliver - sum(priority_group$eligible_individuals[priority_group$dose == 1])
+        }
+      }
+    }
+  }
+  
+  eligible_pop$doses_delivered[eligible_pop$priority == priority_group_num] = priority_group$doses_delivered
+  
+  priority_group_num = priority_group_num + 1  
+}
 #_______________________________________________________________________________
 
 
