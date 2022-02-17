@@ -80,30 +80,27 @@ for (increments_number in 1:num_time_steps){
   #  }
   #}
   
-  age_split =  pop/sum(pop[3:num_age_groups])
-  age_split[1:2] = 0
-  
   for (t in 1:num_vax_types){ #iterating over vaccine types
     this_vax = vax_type_list[t]
-    this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax,]
+    this_vax_history = vaccination_history_FINAL_V2[vaccination_history_FINAL_V2$vaccine_type == this_vax,]
 
     # (1/3) recorded vax
     #COMEBACK delay of J&J first does is 21 days, is this right?
     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_1,]) >0){
       dose_one <- as.numeric(this_vax_history$doses_delivered_this_date[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_1 & this_vax_history$dose==1])
-    }else { dose_one = 0}
+    }else { dose_one = rep(0,num_age_groups)}
     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_2,]) >0){
       dose_two <- as.numeric(this_vax_history$doses_delivered_this_date[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_2 & this_vax_history$dose==2])
-    }  else { dose_two = 0}
-    if (this_vax == "Johnson & Johnson") {dose_two = 0}
+    }  else { dose_two = rep(0,num_age_groups)}
+    if (this_vax == "Johnson & Johnson") {dose_two = rep(0,num_age_groups)}
 
     #NB: no booster dose yet!
 
     VR_this_step <- cbind(dose_one,dose_two)
 
     for (i in 1:num_age_groups){ # across age groups
-      increase_one = VR_this_step[1] * age_split[i]
-      increase_two = VR_this_step[2] * age_split[i]
+      increase_one = VR_this_step[i,1] 
+      increase_two = VR_this_step[i,2] 
 
       for (j in 1:4){ #let's assume all SEIR vaccinated
         #for (d in 1:D){ #COMEBACK could shorten code with dose  B = i + J*(t+(d-1)*T)
