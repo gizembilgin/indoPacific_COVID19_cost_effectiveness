@@ -5,7 +5,7 @@
 
 #####(1/3) Toggles #############################################################
 
-vax_age_strategy = "uniform_transmit"
+vax_age_strategy = "oldest"
 #options: "oldest", "youngest","50_down","uniform", OTHER?
 
 vax_dose_strategy = 2
@@ -14,15 +14,18 @@ vax_dose_strategy = 2
 vax_strategy_vaccine_type = "AstraZeneca" 
 #options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
 
+vax_strategy_vaccine_interval = 7*3 #interval between first and second dose
+
 vax_strategy_num_doses = as.integer(10000000)
 #COMEBACK - should have % option
 
-vax_strategy_delivery_timeframe = 180 #(days)
-#COMEBACK - should have max # per day option
+vax_strategy_max_expected_cov = 0.8 #between 0-1 % of total age group expected to be vaccinated
 
 vax_strategy_start_date = as.Date('2022-01-20')
 
-vax_strategy_max_expected_cov = 0.8 #between 0-1 % of total age group expected to be vaccinated
+vax_strategy_roll_out_speed = 50000 #doses delivered per day
+#vax_strategy_roll_out_speed = vax_strategy_num_doses/(6*30) #all doses delivered within 6 months
+
 #_______________________________________________________________________________
 
 
@@ -133,21 +136,21 @@ if (vax_age_strategy == "oldest"){
 if (vax_strategy_vaccine_type == "Johnson & Johnson"){vax_dose_strategy == 1}
 
 doses_to_deliver = vax_strategy_num_doses
-priority_group_num = 1
+priority_num = 1
 eligible_pop <- eligible_pop %>% mutate(doses_delivered = 0)
 
 n=length(unique(eligible_pop$priority))
 highest_priority = sort(unique(eligible_pop$priority),partial=n-1)[n-1] #highest valid priority
 
-while (doses_to_deliver>0 & priority_group_num <= (highest_priority)){
-  priority_group = eligible_pop[eligible_pop$priority == priority_group_num,]
+while (doses_to_deliver>0 & priority_num <= (highest_priority)){
+  priority_group = eligible_pop[eligible_pop$priority == priority_num,]
   
   if (length(unique(priority_group$age_group)) == 1){
   
     workshop = doses_to_deliver/vax_dose_strategy - priority_group$eligible_individuals[priority_group$dose == vax_dose_strategy]
       
     if (workshop < 0){
-      priority_group$doses_delivered[priority_group$dose == vax_dose_strategy & priority_group$priority == priority_group_num] = doses_to_deliver/vax_dose_strategy
+      priority_group$doses_delivered[priority_group$dose == vax_dose_strategy & priority_group$priority == priority_num] = doses_to_deliver/vax_dose_strategy
       if (vax_dose_strategy == 2){priority_group$doses_delivered[priority_group$dose == 1] = doses_to_deliver/vax_dose_strategy }
       doses_to_deliver = 0
     
@@ -195,16 +198,121 @@ while (doses_to_deliver>0 & priority_group_num <= (highest_priority)){
     }
   }
   
-  eligible_pop$doses_delivered[eligible_pop$priority == priority_group_num] = priority_group$doses_delivered
+  eligible_pop$doses_delivered[eligible_pop$priority == priority_num] = priority_group$doses_delivered
   
-  priority_group_num = priority_group_num + 1  
+  priority_num = priority_num + 1  
 }
 
-vaccine_allocation =  eligible_pop %>% select(age_group,dose,doses_delivered,priority)
+VA =  eligible_pop %>% 
+  select(age_group,dose,doses_delivered,priority) %>%
+  mutate(doses_left = doses_delivered)
 #_______________________________________________________________________________
 
 
 
 #####(3/3) Distribute between days #############################################
+# we are going to use:
+# (1) vax_strategy_roll_out_speed - max doses delivered per day
+# (2) vax_strategy_start_date - first day of doses delivered
+
+vax_strategy_delivery_timeframe = vax_strategy_num_doses/vax_strategy_roll_out_speed #(days)
+vax_delivery_outline = data.frame(as.numeric(),as.numeric(),as.character(),as.numeric())
+colnames(vax_delivery_outline) = c('day','dose','age_group','doses_delivered')
+
+priority_num = 1
+priority_age = as.character(unique(VA$age_group[VA$priority == priority_num]))
+
+daily_avaliable_doses = data.frame(day=1:vax_strategy_delivery_timeframe,
+                                   avaliable = vax_strategy_roll_out_speed)
+#COMEBACK = need to correct last day so don't overshoot avaliable doses
+
+#for (day in 1:vax_strategy_delivery_timeframe){
+for (day in 1:9){  
+  
+  avaliable = daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day]
+  
+  while(avaliable>0){
+    
+    if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
+    #i.e., while we still have doses to deliver in this priority group
+      
+      if(VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] >= avaliable/vax_dose_strategy){
+        #if number to deliver > available doses
+        
+        vax_delivery_outline = rbind(vax_delivery_outline,
+                                     cbind(day = day,
+                                           dose = 1,
+                                           age_group = priority_age,
+                                           doses_delivered = avaliable/vax_dose_strategy))
+        VA$doses_left[VA$priority == priority_num & VA$dose == 1] =
+          VA$doses_left[VA$priority == priority_num & VA$dose == 1] - avaliable/vax_dose_strategy
+        
+        if (vax_dose_strategy == 2){
+          vax_delivery_outline = rbind(vax_delivery_outline,
+                                       cbind(day = day + vax_strategy_vaccine_interval,
+                                             dose = 2,
+                                             age_group = priority_age,
+                                             doses_delivered = avaliable/vax_dose_strategy))
+          VA$doses_left[VA$priority == priority_num & VA$dose == 2] =
+            VA$doses_left[VA$priority == priority_num & VA$dose == 2] - avaliable/vax_dose_strategy
+          
+          daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] =
+            daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] - avaliable/vax_dose_strategy
+        }
+        avaliable = 0
+      }
+      
+      if(VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] 
+         < avaliable/vax_dose_strategy){
+        #if number to deliver < available doses
+        
+        vax_delivery_outline = rbind(vax_delivery_outline,
+                                     cbind(day,
+                                           1,
+                                           VA$age_group[VA$priority == priority_num],
+                                           VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] ))
+        VA$doses_left[VA$priority == priority_num & VA$dose == 1] =
+          VA$doses_left[VA$priority == priority_num & VA$dose == 1] - 
+          VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] 
+        
+        if (vax_dose_strategy == 2){
+          vax_delivery_outline = rbind(vax_delivery_outline,
+                                       cbind(day + vax_strategy_vaccine_interval,
+                                             2,
+                                             VA$age_group[VA$priority == priority_num],
+                                             VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] 
+                                             ))
+          VA$doses_left[VA$priority == priority_num & VA$dose == 2] =
+            VA$doses_left[VA$priority == priority_num & VA$dose == 2] - VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] 
+          
+          daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] =
+            daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] - VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] 
+        }
+        avaliable = avaliable - VA$doses_left[VA$priority == priority_num & VA$dose == vax_dose_strategy] 
+      }
+      
+    } else if(sum(VA$doses_left[VA$priority == priority_num])==0){
+        priority_num = priority_num+1
+        priority_age = as.character(unique(VA$age_group[VA$priority == priority_num]))
+    }
+  }
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #_______________________________________________________________________________
