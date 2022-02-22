@@ -203,9 +203,6 @@ while (doses_to_deliver>0 & priority_num <= (highest_priority)){
   priority_num = priority_num + 1  
 }
 
-VA =  eligible_pop %>% 
-  select(age_group,dose,doses_delivered,priority) %>%
-  mutate(doses_left = doses_delivered)
 #_______________________________________________________________________________
 
 
@@ -214,6 +211,11 @@ VA =  eligible_pop %>%
 # we are going to use:
 # (1) vax_strategy_roll_out_speed - max doses delivered per day
 # (2) vax_strategy_start_date - first day of doses delivered
+
+
+VA =  eligible_pop %>% 
+  select(age_group,dose,doses_delivered,priority) %>%
+  mutate(doses_left = doses_delivered)
 
 vax_strategy_delivery_timeframe = vax_strategy_num_doses/vax_strategy_roll_out_speed #(days)
 vax_delivery_outline = data.frame(as.numeric(),as.numeric(),as.character(),as.numeric())
@@ -239,11 +241,20 @@ for (day in 1:18){
     #if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
     #i.e., while we still have doses to deliver in this priority group
       
-      #COMEBACK - covering 1st without 2nd first!
-      if(vax_dose_strategy >1 & (VA$doses_left[VA$priority == priority_num & VA$dose == 2]-VA$doses_left[VA$priority == priority_num & VA$dose == 1])>0){
-        
-      }
+      diff_doses = (VA$doses_left[VA$priority == priority_num & VA$dose == 2]-VA$doses_left[VA$priority == priority_num & VA$dose == 1])
       
+      #COMEBACK - covering 1st without 2nd first!, should we cover all open age groups, not just priority?
+      if(vax_dose_strategy >1 & diff_doses >0){
+        vax_delivery_outline = rbind(vax_delivery_outline,
+                                     cbind(day = day,
+                                           dose = 2,
+                                           age_group = priority_age,
+                                           doses_delivered = min(diff_doses,avaliable)))
+        VA$doses_left[VA$priority == priority_num & VA$dose == 2] =
+          VA$doses_left[VA$priority == priority_num & VA$dose == 2] -  min(diff_doses,avaliable)
+        
+        avaliable = avaliable -  min(diff_doses,avaliable)
+      }
       
       
       if(VA$doses_left[VA$priority == priority_num & VA$dose == 1] >= avaliable/vax_dose_strategy){
