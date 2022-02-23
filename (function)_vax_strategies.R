@@ -229,9 +229,10 @@ daily_avaliable_doses = data.frame(day=1:vax_strategy_delivery_timeframe,
 #COMEBACK = need to correct last day so don't overshoot avaliable doses
 
 #for (day in 1:vax_strategy_delivery_timeframe){
-for (day in 1:18){  
+for (day in 1){  
   
   avaliable = daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day]
+  max_avaliable = avaliable
   
   while(avaliable>0){
     
@@ -256,8 +257,9 @@ for (day in 1:18){
         avaliable = avaliable -  min(diff_doses,avaliable)
       }
       
-      
-      if(VA$doses_left[VA$priority == priority_num & VA$dose == 1] >= avaliable/vax_dose_strategy){
+      ### need two nestled if loops? if doses_left >= max_avaliable, or >=avaliable; if < <
+      if(VA$doses_left[VA$priority == priority_num & VA$dose == 1] >= max_avaliable/vax_dose_strategy &
+         avaliable >= max_avaliable/vax_dose_strategy){
         #if number to deliver as complete 'dose' strategy > available doses
         #NB: check for dose 1 even when two dose strategy as dose 2 > dose 1 and result in -ve dose one!
         
@@ -265,18 +267,18 @@ for (day in 1:18){
                                      cbind(day = day,
                                            dose = 1,
                                            age_group = priority_age,
-                                           doses_delivered = avaliable/vax_dose_strategy))
+                                           doses_delivered = max_avaliable/vax_dose_strategy))
         VA$doses_left[VA$priority == priority_num & VA$dose == 1] =
-          VA$doses_left[VA$priority == priority_num & VA$dose == 1] - avaliable/vax_dose_strategy
+          VA$doses_left[VA$priority == priority_num & VA$dose == 1] - max_avaliable/vax_dose_strategy
         
         if (vax_dose_strategy == 2){
           vax_delivery_outline = rbind(vax_delivery_outline,
                                        cbind(day = day + vax_strategy_vaccine_interval,
                                              dose = 2,
                                              age_group = priority_age,
-                                             doses_delivered = avaliable/vax_dose_strategy))
+                                             doses_delivered = max_avaliable/vax_dose_strategy))
           VA$doses_left[VA$priority == priority_num & VA$dose == 2] =
-            VA$doses_left[VA$priority == priority_num & VA$dose == 2] - avaliable/vax_dose_strategy
+            VA$doses_left[VA$priority == priority_num & VA$dose == 2] - max_avaliable/vax_dose_strategy
           
           daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] =
             daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] - avaliable/vax_dose_strategy
@@ -284,14 +286,22 @@ for (day in 1:18){
         avaliable = 0
       }
       
-      if(VA$doses_left[VA$priority == priority_num & VA$dose == 1] < avaliable/vax_dose_strategy){
+      if(VA$doses_left[VA$priority == priority_num & VA$dose == 1] < avaliable/vax_dose_strategy | 
+         avaliable < max_avaliable/vax_dose_strategy){
         #if number to deliver in 'complete' schedule < available doses
+        
+        dose_to_deliver = min(avaliable/vax_dose_strategy,VA$doses_left[VA$priority == priority_num & VA$dose == 1])
+        #is this correct??
         
         vax_delivery_outline = rbind(vax_delivery_outline,
                                      cbind(day = day ,
                                            dose = 1,
                                            age_group = priority_age,
                                            doses_delivered = VA$doses_left[VA$priority == priority_num & VA$dose == 1]))
+        
+        VA$doses_left[VA$priority == priority_num & VA$dose == 1] = 0
+        
+        avaliable = avaliable -  VA$doses_left[VA$priority == priority_num & VA$dose == 1]
                                     
         if (vax_dose_strategy == 2){
           vax_delivery_outline = rbind(vax_delivery_outline,
@@ -301,13 +311,11 @@ for (day in 1:18){
                                              doses_delivered = VA$doses_left[VA$priority == priority_num & VA$dose == 1]))
                                              #same doses delivered to second dose as to first!
                                              
-          VA$doses_left[VA$priority == priority_num & VA$dose == 2] =
-            VA$doses_left[VA$priority == priority_num & VA$dose == 2] - VA$doses_left[VA$priority == priority_num & VA$dose == 1] 
+          VA$doses_left[VA$priority == priority_num & VA$dose == 2] = 0
           
           daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] =
             daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] - VA$doses_left[VA$priority == priority_num & VA$dose == 1] 
         }
-        avaliable = avaliable - VA$doses_left[VA$priority == priority_num & VA$dose == 1] 
       }
       
     #} else if(sum(VA$doses_left[VA$priority == priority_num])==0){
