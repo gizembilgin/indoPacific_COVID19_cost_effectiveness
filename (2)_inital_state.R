@@ -13,7 +13,7 @@ vaccine_coverage_delay = c(vaccine_coverage_delay_1,vaccine_coverage_delay_2)
  
 #COMEBACK - arbitrary uniform distribution of vaccines into age classes >19 years old
 #age_group_labels = c('0-4','5-19','20-29','30-39','40-49','50-59','60-100')
-multiplier =  sum(pop[3:num_age_groups])/sum(pop)
+multiplier =  sum(pop)/sum(pop[3:num_age_groups])
 multiplier = c(0,0,rep(multiplier,J-2))
 
 ## Inital coverage
@@ -162,7 +162,9 @@ if (date_start <= max(case_history$date)){
 if (seed>0) { #overwrite
   initialInfected = seed/2;  initialExposed  = seed/2
 }
-
+if (date_start > max(case_history$date)){
+  initialRecovered = round(pop*seroprev$seroprev/100)
+}
 
 #(C/F): age distribution of cases
 #COMEBACK: no data, so assuming uniform across age groups
@@ -170,9 +172,7 @@ initialRecovered = round(initialRecovered * pop/sum(pop))
 initialInfected = round(initialInfected * pop/sum(pop))
 initialExposed = round(initialExposed * pop/sum(pop))
 
-if (date_start > max(case_history$date)){
-  initialRecovered = round(pop*seroprev$seroprev/100)
-}
+
 
 #Step Four: distribute infections among disease classes
 for (i in 1:num_age_groups){ #across age classes
