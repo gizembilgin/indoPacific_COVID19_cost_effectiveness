@@ -13,8 +13,9 @@ vax_dose_strategy = 2
 
 vax_strategy_vaccine_type = "AstraZeneca" 
 #options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
+if (vax_strategy_vaccine_type == "Johnson & Johnson"){vax_dose_strategy == 1}
 
-vax_strategy_vaccine_interval = 7*3 #interval between first and second dose
+vax_strategy_vaccine_interval = 7*3 #(days) interval between first and second dose
 
 vax_strategy_num_doses = as.integer(10000000)
 #COMEBACK - should have % option
@@ -32,11 +33,7 @@ vax_strategy_roll_out_speed = 50000 #doses delivered per day
 
 #####(2/3) Enact strategy ######################################################
 ###(A/C) Calculate the eligible population
-# = % max poss coverage * pop_size - existing vaccine coverage
 eligible_pop = data.frame(pop_setting)
-
-#set max poss coverage
-eligible_pop$pop = round(eligible_pop$pop * vax_strategy_max_expected_cov)
 colnames(eligible_pop) = c('age_group','eligible_individuals')
 
 #make long by dose
@@ -58,13 +55,31 @@ for (t in 1:num_vax_types){
       existing_coverage$cov_to_date[existing_coverage$dose == d] + vaccine_coverage_end_history[(J*(t+(d-1)*T) - J+1):(J*(t+(d-1)*T))]
   }
 }
+## CHECK - aligns!
+# workshop<- eligible_pop %>% left_join(existing_coverage) %>%
+#   mutate(eligible_individuals = round(eligible_individuals *(1-cov_to_date))) %>%
+#   select(age_group,dose,eligible_individuals)
+# 1-aggregate(workshop$eligible_individuals, by=list(workshop$dose), FUN=sum)$x/sum(pop)
+# workshop <- vaccination_history_FINAL[vaccination_history_FINAL$date == as.Date('2022-02-22'),]
+# aggregate(workshop$coverage_this_date, by=list(workshop$dose), FUN=sum)
+
+#now remove vaccinated, and vaccine hesistant
+unreachable = 1-vax_strategy_max_expected_cov
 
 eligible_pop <- eligible_pop %>% left_join(existing_coverage) %>%
-  mutate(eligible_individuals = round(eligible_individuals *(1-cov_to_date))) %>%
+  mutate(eligible_individuals = round(eligible_individuals *(1-(cov_to_date+unreachable)))) %>%
   select(age_group,dose,eligible_individuals)
 
 eligible_pop
 
+#NOTE: some with dose 2 > dose 1
+#Assume covered by existing vaccine supply and/or never likely to get second dose?
+workshop_JJ =  vaccination_history_FINAL$coverage_this_date[vaccination_history_FINAL$date == max(vaccination_history_FINAL$date) & vaccination_history_FINAL$vaccine_type == "Johnson & Johnson"]
+diff_dose_one_two  = sum(eligible_pop$eligible_individuals[eligible_pop$dose == 2] - eligible_pop$eligible_individuals[eligible_pop$dose == 1])
+  
+diff_dose_one_two - workshop_JJ/100* sum(pop)
+100*diff_dose_one_two/sum(pop) - workshop_JJ
+#<HERE>
 
 
 ###(B/C) Place priority # on age group by strategy
@@ -133,8 +148,6 @@ if (vax_age_strategy == "oldest"){
 ###(C/C) Distribute doses by priority
 #separate by 1/2 dose strategy
 #want table with columns: age_group, priority, dose 1, dose 2
-if (vax_strategy_vaccine_type == "Johnson & Johnson"){vax_dose_strategy == 1}
-
 doses_to_deliver = vax_strategy_num_doses
 priority_num = 1
 eligible_pop <- eligible_pop %>% mutate(doses_delivered = 0)
@@ -232,16 +245,15 @@ daily_avaliable_doses = data.frame(day=1:vax_strategy_delivery_timeframe,
 for (day in 1){  
   
   avaliable = daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day]
-  max_avaliable = avaliable
   
   while(avaliable>0){
     
-    
-    if(VA$doses_left[VA$priority == priority_num & VA$dose == 1]>0){ 
-    
-    #if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
+    if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
     #i.e., while we still have doses to deliver in this priority group
+    #if(VA$doses_left[VA$priority == priority_num & VA$dose == 1]>0){ 
       
+      #Are there some stragglers in this group with dose 1 but not dose 2 coverage?
+      #COMEBACK - don't accidentally give extra dose to J&J
       diff_doses = (VA$doses_left[VA$priority == priority_num & VA$dose == 2]-VA$doses_left[VA$priority == priority_num & VA$dose == 1])
       
       #COMEBACK - covering 1st without 2nd first!, should we cover all open age groups, not just priority?
