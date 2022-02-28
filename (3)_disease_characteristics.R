@@ -5,24 +5,13 @@
 strain = strain_inital
 
 ### (A/E) Transmission
-# (i) Contact matrix
-#imported in (1)_simulate_setting
+param_age <- read.csv("1_inputs/param_age.csv",header=TRUE)
+#COMEBACK uncertainty?
+#COMEBACK hard coded for num age group
 
-# (ii) proportion of cases symptomatic
-if (run_type == "point"){gamma=1-0.133
-}else if (run_type == "rand"){gamma=1-rnorm(1,mean=0.133,sd=0.0102)}     #confidence interval around Meru's ACT specific analysis
-gamma = rep(gamma,num_age_groups)
-
-suscept <- read.csv("1_inputs/susceptibility.csv",header=TRUE)
-suscept = suscept$susceptibility
-#COME BACK: hard coded for num age groups
-
-# gamma_orig <- read.csv('1_inputs/ACT_probab_sympt.csv')
-# gamma = gamma_orig$probab_sympt
-
-
-#(iii) modification factor on infectiousness of asymptomatic cases
-lota = 0.5 #taken from Doherty Institute estimate
+suscept = param_age$susceptibility # (i) age-specific susceptibility to infection
+gamma = param_age$prob_sympt       # (ii) proportion of cases symptomatic
+lota = 0.5                         # (iii) modification factor on infectiousness of asymptomatic cases
 
 
 ### (B/E) Latent period 
