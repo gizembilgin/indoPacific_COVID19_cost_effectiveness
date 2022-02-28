@@ -160,7 +160,8 @@ if (date_start <= max(case_history$date)){
     as.numeric()
 }
 if (seed>0) { #overwrite
-  initialInfected = seed/2;  initialExposed  = seed/2
+  initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
+  initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 }
 if (date_start > max(case_history$date)){
   initialRecovered = round(pop*seroprev$seroprev/100)
