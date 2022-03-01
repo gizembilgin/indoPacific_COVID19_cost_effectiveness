@@ -20,14 +20,14 @@ library(gridExtra)
 
 #       (2/4) User choice / Model toggles              
 ####################################################################
-setting = "PNG"
+setting = "SLE"
 
 date_start = as.Date('2022-04-01')  #note, '2020-03-01' used for current WT behaviour_mod fit (02/02/2022); and '2022-04-01 for simulations
 model_weeks = 10          # how many weeks should the model run for?, 24 PNG fit
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
 strain_inital = 'delta'             #options:'WT','delta'
-seed = 50/100000 
+seed = 0.001
 
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
