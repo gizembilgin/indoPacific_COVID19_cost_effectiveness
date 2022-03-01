@@ -8,6 +8,7 @@ strain = strain_inital
 param_age <- read.csv("1_inputs/param_age.csv",header=TRUE)
 #COMEBACK uncertainty?
 #COMEBACK hard coded for num age group
+#COMEBACK gamma seems too low!
 
 suscept = param_age$susceptibility # (i) age-specific susceptibility to infection
 gamma = param_age$prob_sympt       # (ii) proportion of cases symptomatic
