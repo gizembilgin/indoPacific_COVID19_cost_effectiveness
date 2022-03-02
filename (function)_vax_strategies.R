@@ -15,15 +15,15 @@ vax_strategy <- function(vax_strategy_start_date,
   
 ##### Set-up ###################################################################
 ### TOGGLES - left these hard coded for development
-vax_age_strategy = "oldest"
-vax_dose_strategy = 2
-vax_strategy_vaccine_type = "Pfizer" 
-vax_strategy_vaccine_interval = 7*3 
-vax_strategy_num_doses = as.integer(1000000)
-vax_strategy_max_expected_cov = 0.8 
-vax_strategy_start_date = as.Date('2022-01-20')
-vax_strategy_roll_out_speed = 50000 
-#vax_strategy_roll_out_speed = vax_strategy_num_doses/(6*30) #all doses delivered within 6 months
+# vax_age_strategy = "uniform"
+# vax_dose_strategy = 2
+# vax_strategy_vaccine_type = "Pfizer" 
+# vax_strategy_vaccine_interval = 7*3 
+# vax_strategy_num_doses = as.integer(6000000)
+# vax_strategy_max_expected_cov = 0.8 
+# vax_strategy_start_date = as.Date('2022-01-20')
+# vax_strategy_roll_out_speed = 50000 
+# #vax_strategy_roll_out_speed = vax_strategy_num_doses/(6*30) #all doses delivered within 6 months
 
 ### WARNINGS 
 if (vax_strategy_vaccine_type == "Johnson & Johnson" & vax_dose_strategy > 1){stop('J&J can NOT be more than a 1 dose strategy')}
@@ -158,124 +158,96 @@ while (doses_to_deliver>0 & priority_num <= (highest_priority)){
 
 
 #####(4/?) Distribute between days #############################################
-# we are going to use:
-# (1) vax_strategy_roll_out_speed - max doses delivered per day
-# (2) vax_strategy_start_date - first day of doses delivered
-
+# we should use:
+# (1) vax_strategy_num_doses - doses to deliver
+# (2) vax_strategy_roll_out_speed - max doses delivered per day
+# (3) vax_strategy_start_date - first day of doses delivered
 
 VA =  eligible_pop %>% mutate(doses_left = doses_delivered)
-vax_strategy_delivery_timeframe = vax_strategy_num_doses/vax_strategy_roll_out_speed #(days)
-
-vax_delivery_outline = data.frame(as.numeric(),as.numeric(),as.character(),as.numeric())
-colnames(vax_delivery_outline) = c('day','dose','age_group','doses_delivered')
-
 priority_num = 1
-priority_age = as.character(unique(VA$age_group[VA$priority == priority_num]))
+priority_group  = as.character(unique(VA$age_group[VA$priority == priority_num]))
 
-daily_avaliable_doses = data.frame(day=1:vax_strategy_delivery_timeframe,
-                                   avaliable = vax_strategy_roll_out_speed)
-#COMEBACK = need to correct last day so don't overshoot avaliable doses
-
-#for (day in 1:vax_strategy_delivery_timeframe){
-for (day in 1){  
-  
-  avaliable = daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day]
-  
-  while(avaliable>0){
-    
-    if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
-    #i.e., while we still have doses to deliver in this priority group
-    #if(VA$doses_left[VA$priority == priority_num & VA$dose == 1]>0){ 
-      
-      #Are there some stragglers in this group with dose 1 but not dose 2 coverage?
-      #COMEBACK - don't accidentally give extra dose to J&J
-      diff_doses = (VA$doses_left[VA$priority == priority_num & VA$dose == 2]-VA$doses_left[VA$priority == priority_num & VA$dose == 1])
-      
-      #COMEBACK - covering 1st without 2nd first!, should we cover all open age groups, not just priority?
-      if(vax_dose_strategy >1 & diff_doses >0){
-        vax_delivery_outline = rbind(vax_delivery_outline,
-                                     cbind(day = day,
-                                           dose = 2,
-                                           age_group = priority_age,
-                                           doses_delivered = min(diff_doses,avaliable)))
-        VA$doses_left[VA$priority == priority_num & VA$dose == 2] =
-          VA$doses_left[VA$priority == priority_num & VA$dose == 2] -  min(diff_doses,avaliable)
-        
-        avaliable = avaliable -  min(diff_doses,avaliable)
-      }
-      
-      ### need two nestled if loops? if doses_left >= max_avaliable, or >=avaliable; if < <
-      if(VA$doses_left[VA$priority == priority_num & VA$dose == 1] >= max_avaliable/vax_dose_strategy &
-         avaliable >= max_avaliable/vax_dose_strategy){
-        #if number to deliver as complete 'dose' strategy > available doses
-        #NB: check for dose 1 even when two dose strategy as dose 2 > dose 1 and result in -ve dose one!
-        
-        vax_delivery_outline = rbind(vax_delivery_outline,
-                                     cbind(day = day,
-                                           dose = 1,
-                                           age_group = priority_age,
-                                           doses_delivered = max_avaliable/vax_dose_strategy))
-        VA$doses_left[VA$priority == priority_num & VA$dose == 1] =
-          VA$doses_left[VA$priority == priority_num & VA$dose == 1] - max_avaliable/vax_dose_strategy
-        
-        if (vax_dose_strategy == 2){
-          vax_delivery_outline = rbind(vax_delivery_outline,
-                                       cbind(day = day + vax_strategy_vaccine_interval,
-                                             dose = 2,
-                                             age_group = priority_age,
-                                             doses_delivered = max_avaliable/vax_dose_strategy))
-          VA$doses_left[VA$priority == priority_num & VA$dose == 2] =
-            VA$doses_left[VA$priority == priority_num & VA$dose == 2] - max_avaliable/vax_dose_strategy
-          
-          daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] =
-            daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] - avaliable/vax_dose_strategy
-        }
-        avaliable = 0
-      }
-      
-      if(VA$doses_left[VA$priority == priority_num & VA$dose == 1] < avaliable/vax_dose_strategy | 
-         avaliable < max_avaliable/vax_dose_strategy){
-        #if number to deliver in 'complete' schedule < available doses
-        
-        dose_to_deliver = min(avaliable/vax_dose_strategy,VA$doses_left[VA$priority == priority_num & VA$dose == 1])
-        #is this correct??
-        
-        vax_delivery_outline = rbind(vax_delivery_outline,
-                                     cbind(day = day ,
-                                           dose = 1,
-                                           age_group = priority_age,
-                                           doses_delivered = VA$doses_left[VA$priority == priority_num & VA$dose == 1]))
-        
-        VA$doses_left[VA$priority == priority_num & VA$dose == 1] = 0
-        
-        avaliable = avaliable -  VA$doses_left[VA$priority == priority_num & VA$dose == 1]
-                                    
-        if (vax_dose_strategy == 2){
-          vax_delivery_outline = rbind(vax_delivery_outline,
-                                       cbind(day = day + vax_strategy_vaccine_interval,
-                                             dose = 2,
-                                             age_group = priority_age,
-                                             doses_delivered = VA$doses_left[VA$priority == priority_num & VA$dose == 1]))
-                                             #same doses delivered to second dose as to first!
-                                             
-          VA$doses_left[VA$priority == priority_num & VA$dose == 2] = 0
-          
-          daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] =
-            daily_avaliable_doses$avaliable[daily_avaliable_doses$day == day+vax_strategy_vaccine_interval] - VA$doses_left[VA$priority == priority_num & VA$dose == 1] 
-        }
-      }
-      
-    #} else if(sum(VA$doses_left[VA$priority == priority_num])==0){
-    } else if (VA$doses_left[VA$priority == priority_num & VA$dose == 1] ==0){
-        priority_num = priority_num+1
-        priority_age = as.character(unique(VA$age_group[VA$priority == priority_num]))
-    }
+if (vax_dose_strategy == 1){
+  timeframe = vax_strategy_num_doses/vax_strategy_roll_out_speed
+  daily_per_dose = vax_strategy_roll_out_speed
+} else if (vax_dose_strategy == 2){
+  if(vax_strategy_num_doses/(vax_strategy_roll_out_speed*2)<vax_strategy_vaccine_interval){
+    timeframe = vax_strategy_num_doses/(vax_strategy_roll_out_speed*2)
+    daily_per_dose = vax_strategy_roll_out_speed
+  } else{
+    timeframe = vax_strategy_num_doses/(vax_strategy_roll_out_speed)
+    daily_per_dose = vax_strategy_roll_out_speed/2
   }
-  
 }
 
-vax_delivery_outline$day = as.numeric(vax_delivery_outline$day)
+length_track = timeframe
+if (vax_dose_strategy == 2){length_track=length_track+vax_strategy_vaccine_interval}
 
+vax_delivery_outline <- crossing(day = c(1:length_track),
+                                 dose = c(1:num_vax_doses),
+                                 age_group = age_group_labels,
+                                 doses_delivered = c(0))
+vax_delivery_outline <- vax_delivery_outline %>% mutate(age_group = gsub('-',' to ',age_group))
+
+#for (day in 1:timeframe){
+for (day in 1:timeframe){
+  
+  avaliable = daily_per_dose
+  #ensuring that last day doesn't overshoot available doses
+  if (day == timeframe){
+    avaliable = vax_strategy_num_doses/vax_dose_strategy-(timeframe-1)*daily_per_dose
+  }
+  
+  while(avaliable>0 & priority_num <= highest_priority){
+    
+    if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
+      #i.e., while we still have doses to deliver in this priority group
+      
+      #ISSUE HERE
+      workshop_doses = min(sum(VA$doses_left[VA$priority == priority_num & VA$dose == 1]),
+                           daily_per_dose)
+      #either deliver max capacity or number left in this group, whichever is fewer
+      
+      leftover=0
+      
+      for (i in length(priority_group):1){
+        workshop_age = priority_group[i]
+        workshop_prop = sum(VA$doses_left[VA$age_group == workshop_age])/sum(VA$doses_left[VA$priority == priority_num])
+        workshop_calc = workshop_doses * workshop_prop + leftover
+        
+        if (workshop_calc > VA$doses_left[VA$age_group == workshop_age & VA$dose == 1]){
+          leftover = abs(workshop_calc - VA$doses_left[VA$age_group == workshop_age & VA$dose == 1])
+          workshop_calc = VA$doses_left[VA$age_group == workshop_age & VA$dose == 1]
+          
+        } else{
+          leftover = 0
+        }
+        vax_delivery_outline$doses_delivered[vax_delivery_outline$day == day &
+                                               vax_delivery_outline$dose == 1 &
+                                               vax_delivery_outline$age_group == workshop_age] = workshop_calc
+        VA$doses_left[VA$age_group == workshop_age & VA$dose == 1] = VA$doses_left[VA$age_group == workshop_age & VA$dose == 1] - workshop_calc
+        
+        if (vax_dose_strategy == 2){
+          vax_delivery_outline$doses_delivered[vax_delivery_outline$day == day + vax_strategy_vaccine_interval &
+                                                 vax_delivery_outline$dose == 2 &
+                                                 vax_delivery_outline$age_group == workshop_age] = workshop_calc
+          VA$doses_left[VA$age_group == workshop_age & VA$dose == 2] = VA$doses_left[VA$age_group == workshop_age & VA$dose == 2] - workshop_calc
+        }
+        
+      }
+      
+      avaliable = avaliable - workshop_doses
+      
+      
+    } else if (sum(VA$doses_left[VA$priority == priority_num])==0){
+      priority_num = priority_num+1
+      priority_group = as.character(unique(VA$age_group[VA$priority == priority_num]))
+    } else{
+      stop('negative doses left, reconsider!')
+    }
+  } #<end while loop>
+  
+}
 
 
 return(vax_delivery_outline)
@@ -283,6 +255,20 @@ return(vax_delivery_outline)
 }
 
 
+vax_delivery_outline = 
+  vax_strategy(vax_strategy_start_date                  = as.Date('2022-01-20'),
+                         vax_strategy_num_doses         = as.integer(1000000),
+                         vax_strategy_roll_out_speed    = 50000 ,               # doses delivered per day
+                         vax_age_strategy               = "oldest",            # options: "oldest", "youngest","50_down","uniform", OTHER?
+                         vax_dose_strategy              = 2,                    # options: 1,2
+                         vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
+                         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
+                         vax_strategy_max_expected_cov  = 0.8                   # value between 0-1 (equivalent to %) of age group willing to be vaccinated
+)
+  
+
+### CHECK 
+aggregate(vax_delivery_outline$doses_delivered, by=list(category=vax_delivery_outline$dose,vax_delivery_outline$age_group), FUN=sum)
 
 
 
