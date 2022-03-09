@@ -27,7 +27,16 @@ vax_strategy <- function(vax_strategy_start_date,
 
 ### WARNINGS 
 if (vax_strategy_vaccine_type == "Johnson & Johnson" & vax_dose_strategy > 1){stop('J&J can NOT be more than a 1 dose strategy')}
-
+if (vax_strategy_start_date <= max(vaccination_history_TRUE$date)){ 
+  stop ('Your hypothetical vaccine campaign start date needs to be in the future!')
+}
+if (vax_strategy_start_date <= date_start){ 
+  stop ('Your hypothetical vaccine campaign start date needs to be after the start date (unless you want to do more coding)')
+}
+if (!(vax_strategy_vaccine_type %in% c("Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"))){
+  stop('pick a valid vaccine type, or check your spelling!')
+}
+  
 ### IMPORTS
 prioritisation_csv <- read.csv("1_inputs/prioritisation.csv",header=TRUE)
 #_______________________________________________________________________________
@@ -52,9 +61,9 @@ existing_coverage = data.frame(eligible_pop$age_group,eligible_pop$dose,rep(0,nu
 colnames(existing_coverage) = c('age_group','dose','cov_to_date')
 for (t in 1:num_vax_types){
   for (d in 1:num_vax_doses){
-    #need to sum across vaccine_coverage (as this is vaccination_history_FINAL split across age groups)
+    #need to sum across vaccine_coverage (as this is vaccination_history_POP split across age groups)
     existing_coverage$cov_to_date[existing_coverage$dose == d] =
-      existing_coverage$cov_to_date[existing_coverage$dose == d] + vaccine_coverage_end_history[(J*(t+(d-1)*T) - J+1):(J*(t+(d-1)*T))]
+      existing_coverage$cov_to_date[existing_coverage$dose == d] + vaccine_coverage_end_history$cov[(J*(t+(d-1)*T) - J+1):(J*(t+(d-1)*T))]
   }
 }
 
@@ -63,7 +72,7 @@ for (t in 1:num_vax_types){
 #   mutate(eligible_individuals = round(eligible_individuals *(1-cov_to_date))) %>%
 #   select(age_group,dose,eligible_individuals)
 # 1-aggregate(workshop$eligible_individuals, by=list(workshop$dose), FUN=sum)$x/sum(pop)
-# workshop <- vaccination_history_FINAL[vaccination_history_FINAL$date == as.Date('2022-02-22'),]
+# workshop <- vaccination_history_POP[vaccination_history_POP$date == as.Date('2022-02-22'),]
 # aggregate(workshop$coverage_this_date, by=list(workshop$dose), FUN=sum)
 
 #now remove vaccinated, and vaccine hesistant
@@ -76,8 +85,8 @@ eligible_pop <- eligible_pop %>% left_join(existing_coverage) %>%
 #NOTE: some with dose 2 > dose 1
 #Assume covered by existing vaccine supply and/or never likely to get second dose?
 # if ("Johnson & Johnson" %in% vax_type_list ){
-#   workshop_JJ =  vaccination_history_FINAL$coverage_this_date[vaccination_history_FINAL$date == max(vaccination_history_FINAL$date) & 
-#                                                                 vaccination_history_FINAL$vaccine_type == "Johnson & Johnson"]
+#   workshop_JJ =  vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & 
+#                                                                 vaccination_history_POP$vaccine_type == "Johnson & Johnson"]
 # } else {workshop_JJ=0 }
 # diff_dose_one_two  = sum(eligible_pop$eligible_individuals[eligible_pop$dose == 2] - eligible_pop$eligible_individuals[eligible_pop$dose == 1])
 #   
@@ -189,7 +198,6 @@ vax_delivery_outline <- crossing(day = c(1:length_track),
                                  doses_delivered = c(0))
 vax_delivery_outline <- vax_delivery_outline %>% mutate(age_group = gsub('-',' to ',age_group))
 
-#for (day in 1:timeframe){
 for (day in 1:timeframe){
   
   avaliable = daily_per_dose
@@ -249,26 +257,48 @@ for (day in 1:timeframe){
   
 }
 
+### formating vax_delivery_outline to align with vaccination_history_TRUE
+vax_delivery_outline$date = vax_strategy_start_date + (vax_delivery_outline$day-1)
+vax_delivery_outline$vaccine_type = vax_strategy_vaccine_type
+if (vax_strategy_vaccine_type %in% c("Moderna","Pfizer")){
+  vax_delivery_outline$vaccine_mode = 'mRNA'
+} else if (vax_strategy_vaccine_type %in% c("AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac")){
+  vax_delivery_outline$vaccine_mode = 'viral'
+}
 
-return(vax_delivery_outline)
+vax_delivery_outline$age_group = gsub(' to ','-', vax_delivery_outline$age_group)
+vax_delivery_outline$coverage_this_date = NA #shouldn't be used anyway
+names(vax_delivery_outline)[names(vax_delivery_outline) == 'doses_delivered'] <-'doses_delivered_this_date'
+
+vax_delivery_outline = vax_delivery_outline %>% 
+  select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group)
+
+
+### adding to end of vaccination_history_TRUE
+#do we need zero rows?
+vaccination_history_MODF = rbind(vaccination_history_TRUE,vax_delivery_outline)
+
+
+
+return(vaccination_history_MODF)
 
 }
 
 
-vax_delivery_outline = 
-  vax_strategy(vax_strategy_start_date                  = as.Date('2022-01-20'),
-                         vax_strategy_num_doses         = as.integer(1000000),
-                         vax_strategy_roll_out_speed    = 50000 ,               # doses delivered per day
-                         vax_age_strategy               = "oldest",            # options: "oldest", "youngest","50_down","uniform", OTHER?
-                         vax_dose_strategy              = 2,                    # options: 1,2
-                         vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
-                         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
-                         vax_strategy_max_expected_cov  = 0.8                   # value between 0-1 (equivalent to %) of age group willing to be vaccinated
-)
-  
+# vax_delivery_outline =
+#   vax_strategy(vax_strategy_start_date                  = as.Date('2022-04-20'),
+#                vax_strategy_num_doses         = as.integer(1000000),
+#                vax_strategy_roll_out_speed    = 50000 ,               # doses delivered per day
+#                vax_age_strategy               = "oldest",            # options: "oldest", "youngest","50_down","uniform", OTHER?
+#                vax_dose_strategy              = 2,                    # options: 1,2
+#                vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
+#                vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
+#                vax_strategy_max_expected_cov  = 0.8                   # value between 0-1 (equivalent to %) of age group willing to be vaccinated
+#   )
 
-### CHECK 
-aggregate(vax_delivery_outline$doses_delivered, by=list(category=vax_delivery_outline$dose,vax_delivery_outline$age_group), FUN=sum)
+
+# ### CHECK 
+#aggregate(vax_delivery_outline$doses_delivered_this_date, by=list(category=vax_delivery_outline$dose,vax_delivery_outline$age_group), FUN=sum)
 
 
 
