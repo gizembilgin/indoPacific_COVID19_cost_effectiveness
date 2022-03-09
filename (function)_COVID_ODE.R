@@ -59,11 +59,14 @@ covidODE <- function(t, state, parameters){
         for (d in 1:D){
           #B = i+J+(t-1)*J+(d-1)*J*T = i+J(1+(t-1)+(d-1)*T)
           B = i + J*(t+(d-1)*T)
+          VE_step = VE$VE[VE$dose==d & 
+                            VE$vaccine_type == vax_type_list[t]&
+                            VE$age_group == age_group_labels[i]]
           
-          dS[B] = omega*R[B]              - tau[i]*(1-VE[t,d])*S[B] 
-          dE[B] = tau[i]*(1-VE[t,d])*S[B] - lambda*E[B] + tau[i]*(1-VE[t,d])*(1-rho)*R[B]
+          dS[B] = omega*R[B]              - tau[i]*(1-VE_step)*S[B] 
+          dE[B] = tau[i]*(1-VE_step)*S[B] - lambda*E[B] + tau[i]*(1-VE_step)*(1-rho)*R[B]
           dI[B] = lambda*E[B]             - delta*I[B]
-          dR[B] = delta*I[B]              - omega*R[B]  - tau[i]*(1-VE[t,d])*(1-rho)*R[B]
+          dR[B] = delta*I[B]              - omega*R[B]  - tau[i]*(1-VE_step)*(1-rho)*R[B]
           dIncidence[B] = lambda*E[B] 
           
         }
