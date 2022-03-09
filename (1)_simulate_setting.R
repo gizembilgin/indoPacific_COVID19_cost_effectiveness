@@ -19,6 +19,7 @@ NPI_toggle = 'contain_health'   #options: contain_health, stringency
 # however, some other programs aren't as flexible
 age_groups = c(0,4,19,29,39,49,59,110)
 age_group_labels = c('0-4','5-19','20-29','30-39','40-49','50-59','60-100')
+num_age_groups = J = length(age_group_labels)           # 0-4,5-11,12-15,16-29,30-59,60+
 
 pop_orig <- read.csv("C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/inputs/pop_estimates.csv", header=TRUE)
 pop_setting_orig <- pop_orig[pop_orig$country == setting,]
@@ -247,8 +248,24 @@ vaccination_history_3 <- vaccination_history_2 %>%
 vaccination_history_3 <- vaccination_history_3[vaccination_history_3$dose !=0, ] # nrows = 1638-546/2 = 1365
 vaccination_history_3 <- na.omit(vaccination_history_3) # nrows = 1365-5 = 1360
 
-vaccination_history_FINAL <- vaccination_history_3[,c('date','vaccine_type','vaccine_mode','dose','coverage_this_date','doses_delivered_this_date')] %>%
+vaccination_history_POP <- vaccination_history_3[,c('date','vaccine_type','vaccine_mode','dose','coverage_this_date','doses_delivered_this_date')] %>%
   arrange(date,vaccine_type,dose)
+
+
+#Split daily doses by age
+vaccination_history_TRUE = data.frame() 
+age_split =  pop/sum(pop[3:num_age_groups]); age_split[1:2] = 0 #COMEBACK - uniform assumption in ages 20+
+
+for (j in 1:num_age_groups){
+  workshop = vaccination_history_POP
+  workshop <- workshop %>% mutate(
+    age_group = age_group_labels[j],
+    doses_delivered_this_date = doses_delivered_this_date*age_split[j])
+  vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
+}
+
+
+
 
 ## for overarching plotting
 #COMEBACK: doses delivered very jagged, should we do seven day rolling average?
