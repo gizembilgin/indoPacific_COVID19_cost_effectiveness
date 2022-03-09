@@ -12,7 +12,7 @@ library(rvest)
 library(ggplot2)
 library(gridExtra)
 
-#rm(list=ls())                                                               # clear global environment
+rm(list=ls())                                                               # clear global environment
 #setwd("~/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/v2021_12_20_X")  # set working directory
 #_________________________________________________________________
 
@@ -39,7 +39,20 @@ uniform_mod=1
 
 seroprev_year = 2022 #COMEBACK - tie this to date_start!
 
-#vaccine_strategy_toggle = , read in vaccine_strategy.csv
+
+vax_strategy_plot = "on" #to add hypothetical vaccination campaign
+
+vax_strategy_toggles =
+  list(vax_strategy_start_date                  = as.Date('2022-04-20'),
+       vax_strategy_num_doses         = as.integer(1000000),
+       vax_strategy_roll_out_speed    = 50000 ,               # doses delivered per day
+       vax_age_strategy               = "oldest",            # options: "oldest", "youngest","50_down","uniform", OTHER?
+       vax_dose_strategy              = 2,                    # options: 1,2
+       vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
+       vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
+       vax_strategy_max_expected_cov  = 0.8                   # value between 0-1 (equivalent to %) of age group willing to be vaccinated
+  )
+
 #__________________________________________________________________
 
 
@@ -49,10 +62,13 @@ seroprev_year = 2022 #COMEBACK - tie this to date_start!
 ##(A) Load functions
 source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
 source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
+source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
 
 
 ##(B) Simulate setting 
 # time saving tactics! Load setting if not yet loaded
+if (complete_model_runs == 1){run_type="point"
+} else if (complete_model_runs > 1){run_type="rand"}
 if (setting == "PNG"){setting_long = "Papua New Guinea"
 } else if (setting == "SLE"){setting_long = "Sierra Leone"}
 
@@ -63,24 +79,21 @@ prev_setting = setting
 #making some interim variables to assist with configuring states
 seed = sum(pop)*seed
 num_disease_classes = 4                                 # SEIR 
-num_age_groups = J = length(age_group_labels)           # 0-4,5-11,12-15,16-29,30-59,60+
-num_vax_doses = D = length(unique(vaccination_history_FINAL$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
-vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
-num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
+num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
+vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
+num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
 num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes) #+1 for incidence tracker
-source(paste(getwd(),"/(2)_inital_state.R",sep=""))
+
 
 
 ##(C) Run the model!
-if (complete_model_runs == 1){run_type="point"
-} else if (complete_model_runs > 1){run_type="rand"}
-
 time.start=proc.time()[[3]] #let's see how long this runs for
 
 incidence_log_tracker=data.frame()
 for (run_number in 1:complete_model_runs){
   source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
+  source(paste(getwd(),"/(2)_inital_state.R",sep=""))
   source(paste(getwd(),"/(4)_time_step.R",sep=""))
   incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
 }
