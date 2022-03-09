@@ -18,6 +18,8 @@ parameters = c(
   delta=delta,
   omega=omega,
   rho=rho,
+  age_group_labels=age_group_labels,
+  vax_type_list=vax_type_list,
   VE=VE,
 # VE_onwards=VE_onwards,
   num_age_groups=num_age_groups,
@@ -82,8 +84,9 @@ for (increments_number in 1:num_time_steps){
   
   for (t in 1:num_vax_types){ #iterating over vaccine types
     this_vax = vax_type_list[t]
-    this_vax_history = vaccination_history_FINAL_V2[vaccination_history_FINAL_V2$vaccine_type == this_vax,]
-
+    
+    this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax,]
+    
     # (1/3) recorded vax
     #COMEBACK delay of J&J first does is 21 days, is this right?
     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_1,]) >0){
