@@ -77,7 +77,9 @@ if (round(sum(next_state) - sum(pop),digits =0 ) == 0) {
   for (t in 1:T){
     for (d in 1:D){
       B = i + J*(t+(d-1)*T)
-      next_state_immunity[,B] = next_state_immunity[,B] * (1-VE[t,d])
+      next_state_immunity[,B] = next_state_immunity[,B] * (1-VE$VE[VE$dose==d & 
+                                                                     VE$vaccine_type == vax_type_list[t]&
+                                                                     VE$age_group == age_group_labels[i]])
     }
   }
   
