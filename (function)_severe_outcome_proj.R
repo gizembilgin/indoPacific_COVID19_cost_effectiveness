@@ -12,6 +12,7 @@ VOC = strain_inital
 
 ##### (1/6) Load population-level wild-type estimate of severe outcomes
 severe_outcome_0 <- read.csv('1_inputs/severe_outcome_country_level.csv')
+severe_outcome_0$percentage = severe_outcome_0$percentage/100 #make it between 0-1
 severe_outcome_0 <- severe_outcome_0[severe_outcome_0$outcome %in% c('death','severe_disease','hosp') &
                                        severe_outcome_0$country == setting
                                      ,-c(1,5)]
@@ -70,7 +71,9 @@ workshop <- workshop[,c(1,2,3)] #remove source and explanation columns
 severe_outcome_2 <- severe_outcome_1 %>%  left_join(workshop)
 severe_outcome_2 <- severe_outcome_2 %>% mutate(percentage=percentage*RR)
 severe_outcome_FINAL <- severe_outcome_2 %>%
-  select(outcome,outcome_long,age_group,percentage)
+  select(outcome,outcome_long,age_group,percentage) %>%
+  mutate(age_group = gsub(" to ", "-", age_group)) 
+severe_outcome_FINAL$age_group[severe_outcome_FINAL$age_group == '60+'] = '60-100'
 
 rm(severe_outcome_0,severe_outcome_2)
 #_______________________________________________________________________________
@@ -111,9 +114,7 @@ workshop <- workshop %>%
 # https://population.un.org/wpp/Download/Standard/Mortality/
 
 YLL_FINAL = workshop %>%
-  select(agegroup,life_expectancy) %>%
-  mutate(agegroup = gsub("-", " to ", agegroup))
-YLL_FINAL$agegroup[YLL_FINAL$agegroup == '60 to 100'] = '60+'
+  select(agegroup,life_expectancy) 
 colnames(YLL_FINAL) = c('age_group','YLL')
 
 YLL_row = severe_outcome_FINAL[severe_outcome_FINAL$outcome == 'death',]
@@ -125,62 +126,73 @@ YLL_row = YLL_row[,c(1:4)]
 
 severe_outcome_FINAL = rbind(severe_outcome_FINAL,YLL_row)
 
+severe_outcome_FINAL = severe_outcome_FINAL %>%
+  mutate(outcome_VE = case_when(
+    outcome %in% c('death','YLL') ~ 'death',
+    outcome %in% c('hosp','severe_disease') ~ 'hospitalisation'
+  ))
+
 #_______________________________________________________________________________
+
+
+###<interim> workshop - calculation VE against severe outcomes by day
+VE_tracker = data.frame()
+for (outcome in c('death','hospitalisation')){
+  for (day in 1:(model_weeks*7) ){
+    workshop = VE_time_step(strain_inital,date_start+day,outcome)
+    workshop = workshop %>% mutate(date=day,
+                                   outcome_VE=outcome)
+    VE_tracker = rbind(VE_tracker,workshop)
+  }
+}
+VE_tracker$date = date_start + VE_tracker$date 
+
+workshop = crossing(dose = 0,
+                    vaccine_type = "unvaccinated",
+                    age_group = age_group_labels,
+                    VE = 0,
+                    date = unique(VE_tracker$date),
+                    outcome_VE=unique(VE_tracker$outcome))
+VE_tracker = rbind(VE_tracker,workshop)
+
+severe_outcome_FINAL = severe_outcome_FINAL %>%
+  left_join(VE_tracker)
+
+severe_outcome_FINAL = severe_outcome_FINAL %>%
+  mutate(percentage = percentage*(1-VE)) %>%
+  select(date,outcome,outcome_long,age_group,vaccine_type,dose,percentage)
 
 
 
 #####(6/6) Genuine projection from incidence!
+#COMEBACK - what parts of this program should be in the function?
 outcomes_list <- unique(severe_outcome_FINAL$outcome)
 
 severe_outcome_proj <- function(incidence_log_unedited){
-  outcome_proj = incidence_log_unedited[,c('date','daily_cases')]
   
-  workshop = subset(incidence_log_unedited, select=-c(time,date,daily_cases))
+  workshop = incidence_log_tidy %>%
+    left_join(severe_outcome_FINAL) %>%
+    mutate(proj = incidence*percentage)
+  if(!nrow(severe_outcome_FINAL) == nrow(workshop)){stop('something has gone amiss')}
   
-  for (i in 1:length(outcomes_list)){ #do for every outcome
-    outcome = outcomes_list[i]
-    workshop_temp = workshop
-    this_health_outcome = severe_outcome_FINAL[severe_outcome_FINAL$outcome == outcome,c('percentage')]
-    this_health_outcome = this_health_outcome/100 #from % -> between 0-1
-    
-    #COMEBACK - would apply VE but for now
-    this_health_outcome = rep(this_health_outcome,num_vax_classes)
-    
-    for (i in 1:nrow(workshop)){
-      #COMEBACK - could be faster!
-      workshop_temp[i,] = workshop[i,] * this_health_outcome
-    }
-    
-    outcome_result = as.data.frame(rowSums(workshop_temp))
-    colnames(outcome_result) = outcome
-    
-    outcome_proj = cbind(outcome_proj,outcome_result)
-  }
+  workshop = workshop %>%
+    group_by(date,outcome) %>%
+    summarise(proj=sum(proj))
   
-  outcome_proj_cum = outcome_proj
-  for (i in 2:ncol(outcome_proj)){
-    outcome_proj_cum[,i] = round(cumsum(outcome_proj_cum[,i]),digits=4)
-  }
+  workshop_incid =  incidence_log_unedited[,c('date','daily_cases')] %>%
+    mutate(outcome ='cases',proj = daily_cases) %>%
+    select(date,outcome,proj)
   
-  outcome_proj_cum_long = data.frame()
-  for (i in 2:ncol(outcome_proj_cum)){
-    interim = outcome_proj_cum[,c(1,i)]
-    colnames(interim) = c('date','proj')
-    interim$outcome = colnames(outcome_proj_cum)[i]
-    outcome_proj_cum_long = rbind(outcome_proj_cum_long,interim)
-  }
+  workshop = rbind(workshop,workshop_incid)
   
-  outcome_proj_long = data.frame()
-  for (i in 2:ncol(outcome_proj)){
-    interim = outcome_proj[,c(1,i)]
-    colnames(interim) = c('date','proj')
-    interim$outcome = colnames(outcome_proj)[i]
-    outcome_proj_long = rbind(outcome_proj_long,interim)
-  }
+  severe_outcome_projections = workshop %>%
+    group_by(outcome) %>%
+    mutate(proj_cum = cumsum(proj))
   
+
   plot1 <- 
     ggplot() + 
-    geom_line(data=outcome_proj_long[outcome_proj_long$outcome != 'daily_cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
+    geom_line(data=severe_outcome_projections[severe_outcome_projections$outcome != 'cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     #ylim(0,40) +
@@ -192,7 +204,7 @@ severe_outcome_proj <- function(incidence_log_unedited){
           axis.line = element_line(color = 'black'))
   
   plot2 <- ggplot() + 
-    geom_line(data=outcome_proj_cum_long[outcome_proj_cum_long$outcome != 'daily_cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
+    geom_line(data=severe_outcome_projections[severe_outcome_projections$outcome != 'cases',],aes(x=date,y=proj_cum,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     ylab("cumulative incidence") +
@@ -204,18 +216,17 @@ severe_outcome_proj <- function(incidence_log_unedited){
   
   grid.arrange(plot1, plot2)
   
-  row = vax_strategy_name
-  for (i in 1:length(unique(outcome_proj_cum_long$outcome))){
-    outcome = unique(outcome_proj_cum_long$outcome)[i]
-    row = cbind(row,
-                round(outcome_proj_cum_long$proj[outcome_proj_cum_long$outcome == outcome &
-                                                   outcome_proj_cum_long$date == max(outcome_proj_cum_long$date)]))
-  }
-  colnames(row) = c('vaccination strategy',unique(outcome_proj_cum_long$outcome))  
   
-  severe_outcome_table = rbind(severe_outcome_table,row)  
+  row = severe_outcome_projections %>% 
+    filter(date == max(severe_outcome_projections$date)) %>%
+    select(-c(proj,date)) %>%
+    pivot_wider(names_from=outcome,
+                values_from=proj_cum) 
+  
+   return(row)
 }
 
+severe_outcome_proj(incidence_log_unedited)
 
 
 
