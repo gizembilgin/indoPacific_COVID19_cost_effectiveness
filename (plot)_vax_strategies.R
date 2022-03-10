@@ -4,6 +4,8 @@ vax_strategy_name = 'no intervention'
 
 
 ###LOOP
+#COMEBACK, is this really a function?
+source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
 severe_outcome_proj(incidence_log_unedited)
 
 ###END LOOP

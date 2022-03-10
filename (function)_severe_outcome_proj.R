@@ -2,26 +2,29 @@
 # We used country-specific severity estimates to project from cumulative incidence to 
 # incidence of severe disease, acute-care bed hospitalisation and deaths [39]. 
 # We then adjusted these wild-type estimates by variant- and age-specific multipliers [40-42].
+# Further, we included vaccine effectiveness against severe outcomes.
 
-# COMEBACK - could include d'n in both pop estimate and variant multiplier
-# COMEBACK - need to apply VE against severe outcome
-# NOTE - this will be incidence of hosp NOT occupancy
+# COMEBACK - could include d'n in both country-specific estimate, variant multiplier, VE, age distribution
+# COMEBACK - what parts of this script should be in the function?
+
+# NOTE - this will be incidence of hosp NOT occupancy, the WHO defines severe disease as 
+# "a patient with severe acute respiratory illness (fever and at least one sign or symptom of respiratory disease), AND requiring hospitalization
+# Hence, hosp - severe = unmet need!
 
 VOC = strain_inital
 
 
-##### (1/6) Load population-level wild-type estimate of severe outcomes
+##### (1/7) Load population-level wild-type estimate of severe outcomes
 severe_outcome_0 <- read.csv('1_inputs/severe_outcome_country_level.csv')
 severe_outcome_0$percentage = severe_outcome_0$percentage/100 #make it between 0-1
 severe_outcome_0 <- severe_outcome_0[severe_outcome_0$outcome %in% c('death','severe_disease','hosp') &
                                        severe_outcome_0$country == setting
-                                     ,-c(1,5)]
-#dropping ICU and ICR as we won't use them, removing source and country column
+                                     ,-c(1,5)] #dropping ICU and ICR as we won't use them, removing source and country column
 #_______________________________________________________________________________
 
 
 if (VOC != 'WT'){
-#####(2/6) Load variant-specific multipliers
+#####(2/7) Load variant-specific multipliers
 #these multipliers are WT to VOC
 
   workshop <- read.csv('1_inputs/severe_outcome_variant_multiplier.csv')
@@ -46,7 +49,7 @@ if (VOC != 'WT'){
 
 
 
-#####(3/6) Calculating population-level variant-specific estimate of severe outcomes
+#####(3/7) Calculating population-level variant-specific estimate of severe outcomes
 #could be made faster, but assumptions less obvious, by including a var that is var_proxy to join on
 severe_outcome_1 <- severe_outcome_0 %>%
   mutate(percentage = case_when(
@@ -54,7 +57,7 @@ severe_outcome_1 <- severe_outcome_0 %>%
     outcome == 'severe_disease' ~ percentage * workshop$multiplier[workshop$outcome == 'ICU'], #assumption
     outcome == 'hosp' ~ percentage * workshop$multiplier[workshop$outcome == 'hosp']
   ),variant=VOC)
-  rm (omicron_basis,workshop2)
+rm (omicron_basis,workshop2)
   
 } else if (VOC == 'WT'){
   severe_outcome_1 = severe_outcome_0 %>% mutate(variant = VOC)
@@ -63,7 +66,7 @@ severe_outcome_1 <- severe_outcome_0 %>%
 
 
 
-#####(4/6) Calculating age-specific estimates of severe outcomes
+#####(4/7) Calculating age-specific estimates of severe outcomes
 # COMEBACK - these are dummy values, and NOT country-specific
 workshop <- read.csv('1_inputs/severe_outcome_age_distribution.csv')
 workshop <- workshop[,c(1,2,3)] #remove source and explanation columns
@@ -80,7 +83,7 @@ rm(severe_outcome_0,severe_outcome_2)
 
 
 
-#####(5/6) Calculating YLL from death
+#####(5/7) Calculating YLL from death
 #requires average age in age-group and life_expectancy of this study setting
 workshop <- pop_setting_orig %>%
   mutate(agegroup = cut(age,breaks = age_groups, include.lowest = T,labels = age_group_labels)) 
@@ -135,7 +138,9 @@ severe_outcome_FINAL = severe_outcome_FINAL %>%
 #_______________________________________________________________________________
 
 
-###<interim> workshop - calculation VE against severe outcomes by day
+
+#####(6/7) Multiplying severe outcomes by VE
+#(A/B) calculate VE against severe outcomes by day
 VE_tracker = data.frame()
 for (outcome in c('death','hospitalisation')){
   for (day in 1:(model_weeks*7) ){
@@ -155,36 +160,35 @@ workshop = crossing(dose = 0,
                     outcome_VE=unique(VE_tracker$outcome))
 VE_tracker = rbind(VE_tracker,workshop)
 
-severe_outcome_FINAL = severe_outcome_FINAL %>%
-  left_join(VE_tracker)
-
-severe_outcome_FINAL = severe_outcome_FINAL %>%
+#(B/B) calculate severe outcome incidence by vax_status
+severe_outcome_FINAL = severe_outcome_FINAL %>% left_join(VE_tracker) %>%
   mutate(percentage = percentage*(1-VE)) %>%
   select(date,outcome,outcome_long,age_group,vaccine_type,dose,percentage)
+#_______________________________________________________________________________
 
 
 
-#####(6/6) Genuine projection from incidence!
-#COMEBACK - what parts of this program should be in the function?
-outcomes_list <- unique(severe_outcome_FINAL$outcome)
-
+#####(7/7) Genuine projection from incidence!
 severe_outcome_proj <- function(incidence_log_unedited){
   
+  #(A/D) Join incidence_log_tidy with severe outcome incidence by vax status
   workshop = incidence_log_tidy %>%
     left_join(severe_outcome_FINAL) %>%
-    mutate(proj = incidence*percentage)
+    mutate(proj = incidence*percentage) #calculate incidence -> severe outcome
   if(!nrow(severe_outcome_FINAL) == nrow(workshop)){stop('something has gone amiss')}
   
+  #(B/D) Sum across age groups, doses and vaccination status to get overall severe incidence per day
   workshop = workshop %>%
     group_by(date,outcome) %>%
     summarise(proj=sum(proj))
   
+  #(C/D) Add cases as an outcome
   workshop_incid =  incidence_log_unedited[,c('date','daily_cases')] %>%
     mutate(outcome ='cases',proj = daily_cases) %>%
     select(date,outcome,proj)
-  
   workshop = rbind(workshop,workshop_incid)
   
+  #(D/D) Calculate cumulative severe outcomes by outcome type
   severe_outcome_projections = workshop %>%
     group_by(outcome) %>%
     mutate(proj_cum = cumsum(proj))
@@ -216,17 +220,17 @@ severe_outcome_proj <- function(incidence_log_unedited){
   
   grid.arrange(plot1, plot2)
   
-  
+  #create row for table comparing vaccine strategies
   row = severe_outcome_projections %>% 
     filter(date == max(severe_outcome_projections$date)) %>%
     select(-c(proj,date)) %>%
     pivot_wider(names_from=outcome,
                 values_from=proj_cum) 
   
-   return(row)
+   return(row) #COMEBACK - do we need to return severe_outcome_projections instead?
 }
 
-severe_outcome_proj(incidence_log_unedited)
+
 
 
 
