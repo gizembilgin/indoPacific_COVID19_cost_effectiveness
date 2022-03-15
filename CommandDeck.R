@@ -12,8 +12,11 @@ library(rvest)
 library(ggplot2)
 library(gridExtra)
 
-#rm(list=ls())                                                               # clear global environment
-#setwd("~/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/v2021_12_20_X")  # set working directory
+if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
+}else if (Sys.info()[['user']] == 'Gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
+
+
+#rm(list=ls())  # clear global environment
 #_________________________________________________________________
 
 
@@ -40,7 +43,7 @@ uniform_mod=1
 seroprev_year = 2022 #COMEBACK - tie this to date_start!
 
 
-vax_strategy_plot = "off" #to add hypothetical vaccination campaign
+vax_strategy_plot = "on" #to add hypothetical vaccination campaign
 
 vax_strategy_toggles =
   list(vax_strategy_start_date                  = as.Date('2022-04-20'),
