@@ -21,7 +21,7 @@ age_groups = c(0,4,19,29,39,49,59,110)
 age_group_labels = c('0-4','5-19','20-29','30-39','40-49','50-59','60-100')
 num_age_groups = J = length(age_group_labels)           # 0-4,5-11,12-15,16-29,30-59,60+
 
-pop_orig <- read.csv("C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/inputs/pop_estimates.csv", header=TRUE)
+pop_orig <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
 pop_setting_orig <- pop_orig[pop_orig$country == setting,]
 pop_setting <- pop_setting_orig %>%
   mutate(agegroup = cut(age,breaks = age_groups, include.lowest = T,labels = age_group_labels)) 
@@ -38,7 +38,7 @@ rm (pop_orig) #keep pop_setting_orig for contact matrix weighting
 ### (2/5) Contact patterns of population
 #CONFIRMATION FROM MARK JIT: .Rdata files are more up to date on GitHub (Prem et al. 2021 paper)
 #(A/C) load contact matrix
-load(file = "~/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/inputs/contact_all.Rdata")
+load(file = paste(rootpath,"inputs/contact_all.Rdata",sep=''))
 contact_matrix_setting <- contact_all[[setting]]
 Prem_et_al_age_list <- c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75)
 colnames(contact_matrix_setting) <- Prem_et_al_age_list; rownames(contact_matrix_setting) <- Prem_et_al_age_list
