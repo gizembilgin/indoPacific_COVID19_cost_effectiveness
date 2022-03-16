@@ -7,7 +7,7 @@
 ### (4) Live updates of # vaccinated (if useful, otherwise .csv files)
 ### (5) Proxy estimate of TTIQ/PHSM i.e. NPI
 
-### Still need: importation
+### COMEBACK - still need importation
 #______________________________________________________________________________________________________________________________________
 
 ### Static toggles
@@ -87,7 +87,7 @@ for (i in 1:length(age_group_labels)){
 
 contact_matrix = workshop
 
-rm(pop_setting_orig, contact_all, contact_matrix_setting,
+rm( contact_all, contact_matrix_setting,
    Prem_et_al_age_list, Prem_et_al_age_num, pop_Prem,
    workshop, workshop_interim, workshop_pop,i, j, k)
 #______________________________________________________________________________________________________________________________________
