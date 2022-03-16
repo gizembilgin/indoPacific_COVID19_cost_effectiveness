@@ -3,7 +3,7 @@
 ### COMEBACK count = 5
 
 
-###### (1/3) Vaccination 
+###### (1/3) Vaccination
 #(A/B) Coverage 
 #(i/iv) Delay
 vaccine_coverage_delay_1 = 21 #number of days till protection from first dose, COMEBACK - J&J full protection after 14 days? (single dose vaccine)
@@ -12,8 +12,10 @@ vaccine_coverage_delay = c(vaccine_coverage_delay_1,vaccine_coverage_delay_2)
 
 
 #(ii/iv) #Vaccine coverage at end of true history
+multiplier =  sum(pop)/sum(pop[3:num_age_groups])
+multiplier = c(0,0,rep(multiplier,J-2)) #COMEBACK - arbitrary uniform distribution of vaccines into age classes >19 years old
 vaccine_coverage_end_history = crossing(dose = c(1:num_vax_doses),
-                                        vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
+                                        vaccine_type = unique(vaccination_history_TRUE$vaccine_type),
                                         age_group = age_group_labels,
                                         cov = c(0)) 
 
@@ -22,7 +24,7 @@ for (i in 1:J){ # age
   for (t in 1:T){  # vaccine type
     for (d in 1:D){ # vaccine dose
       C = i + J*(t+(d-1)*T) - J
-      workshop_type =  unique(vaccination_history_TRUE$vaccine_type)[t]
+      workshop_type =  unique(vaccination_history_POP$vaccine_type)[t]
       workshop_age = age_group_labels[i]
       
       if (workshop_type == "Johnson & Johnson" & d == 2){#avoid J&J dose 2, otherwise NA and stuffs up vax_type order
@@ -32,6 +34,7 @@ for (i in 1:J){ # age
             vaccination_history_POP$date == max(vaccination_history_POP$date) 
             & vaccination_history_POP$dose == d
             & vaccination_history_POP$vaccine_type == workshop_type]/100 * multiplier[i]
+        
         vaccine_coverage_end_history$cov[
           vaccine_coverage_end_history$dose == d &
             vaccine_coverage_end_history$vaccine_type == workshop_type &
@@ -71,10 +74,7 @@ if (vax_strategy_plot == "on"){
 
 
 
-#(iv/iv)  Inital coverage
-multiplier =  sum(pop)/sum(pop[3:num_age_groups])
-multiplier = c(0,0,rep(multiplier,J-2)) #COMEBACK - arbitrary uniform distribution of vaccines into age classes >19 years old
-
+#(iv/iv)  Initial coverage
 vaccine_coverage = crossing(dose = c(1:num_vax_doses),
                             vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
                             age_group = age_group_labels,
