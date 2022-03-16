@@ -1,4 +1,4 @@
-Age group,outcome_long,outcome,rate,source
+agegroup,outcome_long,outcome,rate,source
 0 to 9,infection fatality ratio per 10000,death,0,Seedat et al. 2021
 10 to 19,infection fatality ratio per 10000,death,0,Seedat et al. 2021
 20 to 29,infection fatality ratio per 10000,death,0.12,Seedat et al. 2021
