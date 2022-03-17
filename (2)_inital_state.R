@@ -16,16 +16,13 @@ multiplier =  sum(pop)/sum(pop[3:num_age_groups])
 multiplier = c(0,0,rep(multiplier,J-2)) #COMEBACK - arbitrary uniform distribution of vaccines into age classes >19 years old
 vaccine_coverage_end_history = crossing(dose = c(1:num_vax_doses),
                                         vaccine_type = unique(vaccination_history_TRUE$vaccine_type),
-                                        age_group = age_group_labels,
+                                        age_group_num = c(1:num_age_groups),
                                         cov = c(0)) 
-
-
 for (i in 1:J){ # age
   for (t in 1:T){  # vaccine type
     for (d in 1:D){ # vaccine dose
       C = i + J*(t+(d-1)*T) - J
       workshop_type =  unique(vaccination_history_POP$vaccine_type)[t]
-      workshop_age = age_group_labels[i]
       
       if (workshop_type == "Johnson & Johnson" & d == 2){#avoid J&J dose 2, otherwise NA and stuffs up vax_type order
       } else{
@@ -38,12 +35,14 @@ for (i in 1:J){ # age
         vaccine_coverage_end_history$cov[
           vaccine_coverage_end_history$dose == d &
             vaccine_coverage_end_history$vaccine_type == workshop_type &
-            vaccine_coverage_end_history$age_group == workshop_age
+            vaccine_coverage_end_history$age_group_num == i
         ] = max(workshop_value,0)
       }
     }
   }
 }
+#COMEBACK - need elegant
+vaccine_coverage_end_history = vaccine_coverage_end_history %>% left_join(age_group_order)
 
 
 #(iii/iv) Add hypothetical campaign (if 'on')
@@ -70,7 +69,6 @@ if (vax_strategy_plot == "on"){
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
-
 
 
 
