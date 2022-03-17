@@ -17,12 +17,12 @@ vax_strategy <- function(vax_strategy_start_date,
 ### TOGGLES - left these hard coded for development
 # vax_age_strategy = "uniform"
 # vax_dose_strategy = 2
-# vax_strategy_vaccine_type = "Pfizer" 
-# vax_strategy_vaccine_interval = 7*3 
+# vax_strategy_vaccine_type = "Pfizer"
+# vax_strategy_vaccine_interval = 7*3
 # vax_strategy_num_doses = as.integer(6000000)
-# vax_strategy_max_expected_cov = 0.8 
-# vax_strategy_start_date = as.Date('2022-01-20')
-# vax_strategy_roll_out_speed = 50000 
+# vax_strategy_max_expected_cov = 0.8
+# vax_strategy_start_date = as.Date('2022-04-20')
+# vax_strategy_roll_out_speed = 50000
 # #vax_strategy_roll_out_speed = vax_strategy_num_doses/(6*30) #all doses delivered within 6 months
 
 ### WARNINGS 
