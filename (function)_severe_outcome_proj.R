@@ -12,7 +12,9 @@
   workshop = incidence_log_tidy %>%
     left_join(severe_outcome_FINAL) %>%
     mutate(proj = incidence*percentage) #calculate incidence -> severe outcome
-  if(!nrow(severe_outcome_FINAL) == nrow(workshop)){stop('something has gone amiss')}
+  if(!nrow(severe_outcome_FINAL[severe_outcome_FINAL$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('something has gone amiss')
+  } else if (!nrow(severe_outcome_FINAL) == nrow(workshop)){warning('more doses left to give in this simulation')}
+  #NOTE: number of rows in severe_outcome_FINAL may be longer than run of model if more doses to give out than the run of the model
   
   #(B/D) Sum across age groups, doses and vaccination status to get overall severe incidence per day
   workshop = workshop %>%
@@ -54,7 +56,7 @@ plot2 <- ggplot() +
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
 
-grid.arrange(plot1, plot2)
+#grid.arrange(plot1, plot2)
 
 #create row for table comparing vaccine strategies
 row = severe_outcome_projections %>% 
