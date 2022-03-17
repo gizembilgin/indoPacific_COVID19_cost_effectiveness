@@ -12,11 +12,11 @@ library(rvest)
 library(ggplot2)
 library(gridExtra)
 
-if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
-}else if (Sys.info()[['user']] == 'Gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
-
-
 #rm(list=ls())  # clear global environment
+
+
+if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
+}else if (Sys.info()[['user']] == 'gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
 #_________________________________________________________________
 
 
@@ -26,7 +26,7 @@ if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents
 setting = "SLE"
 
 date_start = as.Date('2022-04-01')  #note, '2020-03-01' used for current WT behaviour_mod fit (02/02/2022); and '2022-04-01 for simulations
-model_weeks = 10          # how many weeks should the model run for?, 24 PNG fit
+model_weeks = 20          # how many weeks should the model run for?, 24 PNG fit
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
 strain_inital = 'delta'             #options:'WT','delta'
@@ -42,19 +42,19 @@ uniform_mod=1
 
 seroprev_year = 2022 #COMEBACK - tie this to date_start!
 
-
-vax_strategy_plot = "on" #to add hypothetical vaccination campaign
-
-vax_strategy_toggles =
-  list(vax_strategy_start_date                  = as.Date('2022-04-20'),
-       vax_strategy_num_doses         = as.integer(1000000),
-       vax_strategy_roll_out_speed    = 50000 ,               # doses delivered per day
-       vax_age_strategy               = "oldest",            # options: "oldest", "youngest","50_down","uniform", OTHER?
-       vax_dose_strategy              = 2,                    # options: 1,2
-       vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-       vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
-       vax_strategy_max_expected_cov  = 0.8                   # value between 0-1 (equivalent to %) of age group willing to be vaccinated
-  )
+# 
+# vax_strategy_plot = "on" #to add hypothetical vaccination campaign
+# 
+#  vax_strategy_toggles =
+#    list(vax_strategy_start_date                  = as.Date('2022-04-20'),
+#         vax_strategy_num_doses         = as.integer(5000000),
+#         vax_strategy_roll_out_speed    = 50000 ,               # doses delivered per day
+#         vax_age_strategy               = "oldest",            # options: "oldest", "youngest","50_down","uniform", OTHER?
+#         vax_dose_strategy              = 2,                    # options: 1,2
+#         vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
+#         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
+#         vax_strategy_max_expected_cov  = 0.8                   # value between 0-1 (equivalent to %) of age group willing to be vaccinated
+# )
 
 #__________________________________________________________________
 
@@ -98,6 +98,7 @@ for (run_number in 1:complete_model_runs){
   source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
   source(paste(getwd(),"/(2)_inital_state.R",sep=""))
   source(paste(getwd(),"/(4)_time_step.R",sep=""))
+  source(paste(getwd(),"/(mech shop) severe outcome setting-specific rates.R",sep="")) # COMEBACK - should this just save its results somewhere?
   incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
 }
 
