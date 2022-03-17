@@ -29,6 +29,8 @@ parameters = c(
 
 Reff_tracker = data.frame()
 for (increments_number in 1:num_time_steps){
+#for (increments_number in 1:122){
+
   if (increments_number == 1){
     
     sol = as.data.frame(ode(y=state,times=(seq(0,time_step,by=1)),func=covidODE,parms=parameters))
@@ -89,21 +91,33 @@ for (increments_number in 1:num_time_steps){
     
     # (1/3) recorded vax
     #COMEBACK delay of J&J first does is 21 days, is this right?
+
     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_1,]) >0){
-      dose_one <- as.numeric(this_vax_history$doses_delivered_this_date[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_1 & this_vax_history$dose==1])
-    }else { dose_one = rep(0,num_age_groups)}
+      dose_one <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_1 & this_vax_history$dose==1,]
+    }else { dose_one = crossing(date = date_now,
+                                vaccine_type = this_vax,
+                                vaccine_mode = 'dummy',
+                                dose =1,
+                                coverage_this_date = NA,
+                                doses_delivered_this_date = 0,
+                                age_group = age_group_labels)} #COMEBACK is this necessary?
+    
     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_2,]) >0){
-      dose_two <- as.numeric(this_vax_history$doses_delivered_this_date[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_2 & this_vax_history$dose==2])
-    }  else { dose_two = rep(0,num_age_groups)}
-    if (this_vax == "Johnson & Johnson") {dose_two = rep(0,num_age_groups)}
+      dose_two <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_2 & this_vax_history$dose==2,]
+    }  else { dose_two = crossing(date = date_now,
+                                  vaccine_type = this_vax,
+                                  vaccine_mode = 'dummy',
+                                  dose =2,
+                                  coverage_this_date = NA,
+                                  doses_delivered_this_date = 0,
+                                  age_group = age_group_labels)}
+    if (this_vax == "Johnson & Johnson") {dose_two$doses_delivered_this_date = 0}
 
-    #NB: no booster dose yet!
-
-    VR_this_step <- cbind(dose_one,dose_two)
+    VR_this_step = rbind(dose_one,dose_two)
 
     for (i in 1:num_age_groups){ # across age groups
-      increase_one = VR_this_step[i,1] 
-      increase_two = VR_this_step[i,2] 
+      increase_one = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 1 & VR_this_step$age_group == age_group_labels[i]] 
+      increase_two = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 2 & VR_this_step$age_group == age_group_labels[i]] 
 
       for (j in 1:4){ #let's assume all SEIR vaccinated
         #for (d in 1:D){ #COMEBACK could shorten code with dose  B = i + J*(t+(d-1)*T)
