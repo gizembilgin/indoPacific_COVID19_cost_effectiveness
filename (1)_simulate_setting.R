@@ -19,6 +19,7 @@ NPI_toggle = 'contain_health'   #options: contain_health, stringency
 # however, some other programs aren't as flexible
 age_groups = c(0,4,19,29,39,49,59,110)
 age_group_labels = c('0-4','5-19','20-29','30-39','40-49','50-59','60-100')
+age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:7))
 num_age_groups = J = length(age_group_labels)           # 0-4,5-11,12-15,16-29,30-59,60+
 
 pop_orig <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
