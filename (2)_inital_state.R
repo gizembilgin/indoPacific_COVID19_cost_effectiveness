@@ -13,7 +13,7 @@ vaccine_coverage_delay = c(vaccine_coverage_delay_1,vaccine_coverage_delay_2)
 
 #(ii/iv) #Vaccine coverage at end of true history
 multiplier =  sum(pop)/sum(pop[3:num_age_groups])
-multiplier = c(0,0,rep(multiplier,J-2)) #COMEBACK - arbitrary uniform distribution of vaccines into age classes >19 years old
+multiplier = c(0,0,rep(multiplier,J-2)) #COMEBACK - arbitrary uniform distribution of vaccines into age classes 18+ years old
 vaccine_coverage_end_history = crossing(dose = c(1:num_vax_doses),
                                         vaccine_type = unique(vaccination_history_TRUE$vaccine_type),
                                         age_group_num = c(1:num_age_groups),
@@ -65,14 +65,37 @@ if (vax_strategy_plot == "on"){
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
   num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes) #+1 for incidence tracker
   
-
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
 
 
 
+
 #(iv/iv)  Initial coverage
+#<intermission> correcting coverage_this_date variable (previously = total doses delivered/sum(pop))
+workshop = pop_setting
+colnames(workshop) = c('age_group','pop')
+
+vaccination_history_FINAL = vaccination_history_FINAL %>% left_join(workshop) %>%
+    group_by(age_group,vaccine_type,dose) %>%
+    mutate(coverage_this_date = 100*cumsum(doses_delivered_this_date)/pop) %>%
+    select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group)
+
+# workshop = vaccination_history_FINAL %>% left_join(workshop) %>%
+#   group_by(age_group,vaccine_type,dose) %>%
+#   mutate(total = cumsum(doses_delivered_this_date),
+#          cov = 100*cumsum(doses_delivered_this_date)/pop)
+#workshop = na.omit(workshop)
+#workshop = workshop[workshop$age_group == '5-17' & workshop$dose == 2,]
+# workshop = workshop[workshop$age_group == '70-100' & workshop$dose == 2,]
+# ggplot(workshop) + geom_point(aes(x=date, y=coverage_this_date,color=vaccine_type)) + 
+#   geom_line(aes(x=date,y=cov,color=vaccine_type))
+#CHECKED: new cov values are higher since doses(age_group)/pop(age_group) > doses(all)/pop(all) since some age groups not vaccinated
+
+
+
+#calc
 vaccine_coverage = crossing(dose = c(1:num_vax_doses),
                             vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
                             age_group = age_group_labels,
@@ -81,19 +104,21 @@ vaccine_coverage = crossing(dose = c(1:num_vax_doses),
 for (i in 1:J){ # age
   for (t in 1:T){  # vaccine type
     for (d in 1:D){ # vaccine dose
-      C = i + J*(t+(d-1)*T) - J
       workshop_type =  unique(vaccination_history_FINAL$vaccine_type)[t]
       workshop_age = age_group_labels[i]
+      this_vax_max_date = max(vaccination_history_FINAL$date[vaccination_history_FINAL$vaccine_type == workshop_type])
+      
       
       if (workshop_type == "Johnson & Johnson" & d == 2){ #avoid J&J dose 2, otherwise NA and stuffs up vax_type order
       } else{
-        if ((date_start - vaccine_coverage_delay[d])<= max(vaccination_history_POP$date) &
-            (date_start - vaccine_coverage_delay[d])>= min(vaccination_history_POP$date)){
+        if ((date_start - vaccine_coverage_delay[d])<= this_vax_max_date &
+            (date_start - vaccine_coverage_delay[d])>= min(vaccination_history_FINAL$date)){
           
-          workshop_value =  vaccination_history_POP$coverage_this_date[
-            vaccination_history_POP$date == date_start - vaccine_coverage_delay[d] 
-            & vaccination_history_POP$dose == d
-            & vaccination_history_POP$vaccine_type == workshop_type] / 100 * multiplier[i]
+          workshop_value =  vaccination_history_FINAL$coverage_this_date[
+            vaccination_history_FINAL$date == date_start - vaccine_coverage_delay[d] 
+            & vaccination_history_FINAL$age_group == workshop_age
+            & vaccination_history_FINAL$dose == d
+            & vaccination_history_FINAL$vaccine_type == workshop_type] / 100
           
           vaccine_coverage$cov[
               vaccine_coverage$dose == d &
@@ -101,12 +126,13 @@ for (i in 1:J){ # age
               vaccine_coverage$age_group == workshop_age
           ] = max(workshop_value,0)
            
-        } else if ((date_start - vaccine_coverage_delay[d])> max(vaccination_history_POP$date)){
+        } else if ((date_start - vaccine_coverage_delay[d])> this_vax_max_date){
           workshop_value =
-            vaccination_history_POP$coverage_this_date[
-              vaccination_history_POP$date == max(vaccination_history_POP$date) 
-              & vaccination_history_POP$dose == d
-              & vaccination_history_POP$vaccine_type == workshop_type]/100 * multiplier[i]
+            vaccination_history_FINAL$coverage_this_date[
+              vaccination_history_FINAL$date == this_vax_max_date
+              & vaccination_history_FINAL$dose == d
+              & vaccination_history_FINAL$age_group == workshop_age
+              & vaccination_history_FINAL$vaccine_type == workshop_type]/100 
           
           vaccine_coverage$cov[
             vaccine_coverage$dose == d &
@@ -156,13 +182,18 @@ VE_full_vaccine_type <- VE_full_vaccine_type %>%
     vaccine_type == 'Johnson & Johnson' ~ 'viral'
   ))
 
+#COMEBACK - cheeky update
+# VE_estimates <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
+# VE_estimates = VE_estimates  %>% select(strain, vaccine_type, dose, outcome,VE)
+# sinopharm = VE_estimates[VE_estimates$]
+
+
+
 VE_waning_distribution <- VE_full_vaccine_type %>%
   left_join(VE_waning_distribution, by = c("outcome","dose","vaccine_mode")) %>%
   select('strain','outcome','vaccine_mode','vaccine_type','dose','days','VE','VE_internal') %>%
   mutate(VE_days = VE * VE_internal/100)
 
-#distribution for viral (AZ reference) and mRNA (Pfizer reference) for dose 1,2, and 3 (booster is mRNA only)
-#VE = matrix(0,nrow=num_vax_classes,ncol=num_vax_doses)
 VE =  crossing(dose = c(1:num_vax_doses),
                vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
                age_group = age_group_labels,
@@ -171,15 +202,18 @@ if ((date_start - vaccine_coverage_delay[d])>= min(vaccination_history_POP$date)
   VE = VE_inital = VE_time_step(strain_inital,date_start,'acquisition')
   VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
 }
-
-#CHECK: VE of vaccine types line up with how vaccine coverage input!
 #___________________________________________________________________
 
 
 
 ###### (2/3) Seroprevalence
-seroprev = read.csv("1_inputs/seroprev.csv",header=TRUE)
-seroprev = seroprev[seroprev$setting == setting & seroprev$year == seroprev_year,]
+load(file = "1_inputs/seroprev.Rdata")
+seroprev = seroprev[seroprev$setting == setting & seroprev$year == 
+                      as.numeric(format(date_start, format="%Y")),]
+if (as.numeric(format(date_start, format="%Y")) > 2022){
+  load(file = "1_inputs/seroprev.Rdata")
+  seroprev = seroprev[seroprev$setting == setting & seroprev$year ==  2022,]
+}
 #___________________________________________________________________
 
 
@@ -209,12 +243,12 @@ if (date_start <= max(case_history$date)){
     select(active) %>%
     as.numeric()
 }
-if (seed>0) { #overwrite
+if (seed>0 & seed_date == date_start) { #overwrite
   initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
   initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 }
 if (date_start > max(case_history$date)){
-  initialRecovered = round(pop*seroprev$seroprev/100)
+  initialRecovered = round(pop*seroprev$seroprev/100) #checked- yes age_groups in correct order (untidy)
 }
 
 #(C/F): age distribution of cases
@@ -237,26 +271,37 @@ for (i in 1:num_age_groups){ #across age classes
   
   # Step Four B: distribute across vaccine classes 
   # COMEBACK, assumption infections are spread equally across vax classes
+S_tidy = data.frame(S_inital)
+S_tidy$temp = seq(1,(num_age_groups*num_vax_classes))
+S_tidy$age_group = rep(age_group_labels,num_vax_classes)
+S_tidy$dose = 0
+S_tidy$vaccine_type = "unvaccinated"
+for (d in 1:num_vax_doses){
+  S_tidy$dose[S_tidy$temp %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
+  for (t in 1:num_vax_types){
+    S_tidy$vaccine_type[S_tidy$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
+  }
+}
+
 for (i in 1:J){ # age
   for (t in 1:T){  # vaccine type
     for (d in 1:D){ # vaccine dose
-      B = i + J*(t+(d-1)*T) #COMEBACK use tidy values
       workshop_cov = vaccine_coverage$cov[vaccine_coverage$dose == d &
-                                            vaccine_coverage$age_group == age_group_labels[i] &
-                                            vaccine_coverage$vaccine_type == vax_type_list[t]
-                                          ]
-      #COMEBACK - make sure vaccine_coverage order of doses and vaccine types the same
-      #S_inital[B] = S_inital[i] * vaccine_coverage$cov[B-J]
-      #S_inital[i] = S_inital[i] * (1-vaccine_coverage$cov[B-J])
-      S_inital[B] = S_inital[i] * workshop_cov
-      S_inital[i] = S_inital[i] * (1-workshop_cov)
+                                            vaccine_coverage$vaccine_type == vax_type_list[t] &
+                                            vaccine_coverage$age_group == age_group_labels[i]]
+      
+      S_tidy$S_inital[S_tidy$dose == d & S_tidy$age_group == age_group_labels[i] & S_tidy$vaccine_type == vax_type_list[t]] = 
+        S_tidy$S_inital[S_tidy$dose == 0 & S_tidy$age_group == age_group_labels[i]] * workshop_cov
+      
+      S_tidy$S_inital[S_tidy$dose == 0 & S_tidy$age_group == age_group_labels[i]] = 
+        S_tidy$S_inital[S_tidy$dose == 0 & S_tidy$age_group == age_group_labels[i]] * (1-workshop_cov)
       }
     }
 }
     
 
 #Step Five: construct silly array that ODE solver requires
-state=c(S_inital,E_inital,I_inital,R_inital,Incidence_inital) 
+state=c(S_tidy$S_inital,E_inital,I_inital,R_inital,Incidence_inital) 
 sum(state); sum(pop) #CHECK = confirmed equal
 
 

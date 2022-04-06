@@ -7,7 +7,8 @@ require(tidyverse)
 
 #(A) setup
 if (strain == 'WT'){R0_to_fit = 2.79
-} else if (strain == "delta"){R0_to_fit = 5.08}
+} else if (strain == "delta"){R0_to_fit = 5.08
+} else if (strain == "omicron"){R0_to_fit = 5.08*1.64} #World Health Organization. (2022). COVID-19 weekly epidemiological update, edition 82, 8 March 2022. World Health Organization. https://apps.who.int/iris/handle/10665/352390. License: CC BY-NC-SA 3.0 IGO
 
 #COMEBACK - is R0 lower in SLE and PNG?
 #R0_to_fit = R0_to_fit*0.79
@@ -52,7 +53,7 @@ diag_matrix = diag(diag_matrix,num_age_groups)
 diag_matrix = suscept*diag_matrix
 NGM_R0 <- contact_matrix_adjust %*% diag_matrix
 R0_beta <- abs(eigen(NGM_R0)$values[1])
-R0_beta; R0_to_fit
+R0_beta; R0_to_fit #COMEBACK - should these match?
 #_______________________________________________________________________________
 
 
@@ -67,32 +68,34 @@ Reff_time_step <- function(parameters,next_state){
 NGM_modified = NGM_R0 * (1-parameters$NPI*(1+behaviour_mod))  
   
 #(B) pre-existing immunity, i.e., vax and recovery
-if (round(sum(next_state) - sum(pop),digits =0 ) == 0) {
+if (round(sum(next_state$pop) - sum(pop),digits =0 ) == 0) {
   next_state_immunity = next_state
   
   #immunity from infection
-  next_state_immunity[4,] = next_state_immunity[4,] * (1-rho)
+  next_state_immunity$pop[next_state_immunity$class == 'R'] = next_state_immunity$pop[next_state_immunity$class == 'R']  * (1-rho)
   
   #immunity from vaccination
-  for (t in 1:T){
-    for (d in 1:D){
-      B = i + J*(t+(d-1)*T)
-      next_state_immunity[,B] = next_state_immunity[,B] * (1-VE$VE[VE$dose==d & 
-                                                                     VE$vaccine_type == vax_type_list[t]&
-                                                                     VE$age_group == age_group_labels[i]])
+  for (i in 1:J){
+    for (t in 1:T){
+      for (d in 1:D){
+        next_state_immunity$pop[next_state_immunity$dose == d & next_state_immunity$vaccine_type == vax_type_list[t] & next_state$age_group == age_group_labels[i]] = 
+          next_state_immunity$pop[next_state_immunity$dose == d & next_state_immunity$vaccine_type == vax_type_list[t] & next_state$age_group == age_group_labels[i]] * 
+          (1-VE$VE[VE$dose==d & VE$vaccine_type == vax_type_list[t]& VE$age_group == age_group_labels[i]])
+      }
     }
   }
   
-  immunity = sum(next_state_immunity)/sum(pop)
+  immunity = sum(next_state_immunity$pop)/sum(pop)
   
   NGM_modified = NGM_modified * immunity
   
 } else{
-  warning("issue with time_step population fluctating")
+  stop("issue with time_step population fluctating")
 }
 
   Reff  <- abs(eigen(NGM_modified)$values[1]) 
   return(Reff)
 }
+
 
 

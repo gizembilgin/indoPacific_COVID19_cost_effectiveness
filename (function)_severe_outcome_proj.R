@@ -55,7 +55,6 @@ plot2 <- ggplot() +
         panel.grid.minor = element_blank(), 
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
-
 #grid.arrange(plot1, plot2)
 
 #create row for table comparing vaccine strategies

@@ -1,4 +1,5 @@
 ### This program runs all of the sub-scripts of the COVID-19 transmission model
+### It is intended to complete one standard 'run'/scenario of the disease model
 
 
 
@@ -14,7 +15,6 @@ library(gridExtra)
 
 #rm(list=ls())  # clear global environment
 
-
 if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
 }else if (Sys.info()[['user']] == 'gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
 #_________________________________________________________________
@@ -25,37 +25,23 @@ if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents
 ####################################################################
 setting = "SLE"
 
-date_start = as.Date('2022-04-01')  #note, '2020-03-01' used for current WT behaviour_mod fit (02/02/2022); and '2022-04-01 for simulations
-model_weeks = 20          # how many weeks should the model run for?, 24 PNG fit
+#date_start = as.Date('2022-04-15')
+date_start = max(vaccination_history_FINAL$date)
+model_weeks = 5          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
-strain_inital = 'delta'             #options:'WT','delta'
+strain_inital = 'omicron'             #options:'WT','delta','omicron'
 seed = 0.001
-
+#seed_date = vax_strategy_start_date+365/2
+seed_date = date_start
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
-
 underascertainment_est = 43
 
-behaviour_mod = 0  #0.268 if start 01/03
+behaviour_mod = 0  #0.268 if start 01/03/21
 uniform_mod=1
 
-seroprev_year = 2022 #COMEBACK - tie this to date_start!
-
-# 
-# vax_strategy_plot = "on" #to add hypothetical vaccination campaign
-# 
-#  vax_strategy_toggles =
-#    list(vax_strategy_start_date                  = as.Date('2022-04-20'),
-#         vax_strategy_num_doses         = as.integer(5000000),
-#         vax_strategy_roll_out_speed    = 50000 ,               # doses delivered per day
-#         vax_age_strategy               = "oldest",            # options: "oldest", "youngest","50_down","uniform", OTHER?
-#         vax_dose_strategy              = 2,                    # options: 1,2
-#         vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-#         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
-#         vax_strategy_max_expected_cov  = 0.8                   # value between 0-1 (equivalent to %) of age group willing to be vaccinated
-# )
-
+#vax_strategy_plot = "off" #included in (plot)_vax_strategies
 #__________________________________________________________________
 
 
@@ -110,8 +96,7 @@ if (complete_model_runs>1){
                      UCI = CI(daily_cases)[1], 
                      LCI = CI(daily_cases)[3]) 
 }
-time.end=proc.time()[[3]]
-time.end-time.start 
+
 #__________________________________________________________________
 
 
@@ -126,7 +111,6 @@ plot1 <- ggplot() +
              aes(x=date,y=rolling_average*underascertainment_est),na.rm=TRUE) + 
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
-  #ylim(0,40) +
   ylab("daily cases") +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
@@ -138,7 +122,6 @@ plot2 <- ggplot() +
   geom_line(data=incidence_log,aes(x=date,y=cumulative_incidence),na.rm=TRUE) +
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
-  #ylim(0,40) +
   ylab("cumulative cases") +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
@@ -158,7 +141,6 @@ plot1 <-
              aes(x=date,y=rolling_average*100*underascertainment_est/sum(pop)),na.rm=TRUE) + 
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
-  #ylim(0,40) +
   ylab("daily cases % whole pop") +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
@@ -182,7 +164,6 @@ plot3<- ggplot() +
   geom_line(data=incidence_log,aes(x=date,y=cumulative_incidence_percentage),na.rm=TRUE) +
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
-  #ylim(0,40) +
   ylab("cumulative cases % whole pop") +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
@@ -196,4 +177,6 @@ grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
 #__________________________________________________________________ 
 
 
-## current runtime (19/01) ~ 117 seconds (although concurrently fitting ACT)
+time.end=proc.time()[[3]]
+time.end-time.start 
+## current runtime (23/03) 50 seconds for 10 weeks

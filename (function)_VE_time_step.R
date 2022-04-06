@@ -64,7 +64,16 @@ VE_time_step <- function(strain_now,date_now,outcome){
                            age_group = age_group_labels,
                            VE =0) 
       workshop = rbind(workshop,workshop2)
+    } 
+    #slightly manual work around!
+    if(this_vax == "Johnson & Johnson" & nrow(workshop[workshop$vaccine_type =="Johnson & Johnson",])==num_age_groups){
+      workshop2 = crossing(dose = 2,
+                           vaccine_type = "Johnson & Johnson",
+                           age_group = age_group_labels,
+                           VE =0) 
+      workshop = rbind(workshop,workshop2)
     }
+    
   }
 
   # #(5) Transpose to ODE format VE[type,dose]

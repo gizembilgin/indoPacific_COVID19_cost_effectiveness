@@ -152,8 +152,6 @@ age_dn_severe_outcomes = rbind(age_dn_severe_outcomes,age_distribution_save)
 
 }
 
-#remove interim files!
-rm(workshop_sum2,workshop_sum,workshop,age_group_labels_10,age_groups_10,pop_w,overall,plot_list)
 
 #plot settings
 workshop = age_dn_severe_outcomes
@@ -187,6 +185,8 @@ time.end-time.start
 
 
 
+#remove interim files!
+rm(workshop_sum2,workshop_sum,workshop,age_group_labels_10,age_groups_10,pop_w,overall,plot_list)
 
 
 

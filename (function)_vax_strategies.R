@@ -24,15 +24,24 @@ vax_strategy <- function(vax_strategy_start_date,
 # vax_strategy_start_date = as.Date('2022-04-20')
 # vax_strategy_roll_out_speed = 50000
 # #vax_strategy_roll_out_speed = vax_strategy_num_doses/(6*30) #all doses delivered within 6 months
-
+  # vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date
+  # vax_strategy_num_doses         = vax_strategy_toggles$vax_strategy_num_doses
+  # vax_strategy_roll_out_speed    = vax_strategy_toggles$vax_strategy_roll_out_speed
+  # vax_age_strategy               = vax_strategy_toggles$vax_age_strategy
+  # vax_dose_strategy              = vax_strategy_toggles$vax_dose_strategy
+  # vax_strategy_vaccine_type      = vax_strategy_toggles$vax_strategy_vaccine_type
+  # vax_strategy_vaccine_interval  = vax_strategy_toggles$vax_strategy_vaccine_interval
+  # vax_strategy_max_expected_cov  = vax_strategy_toggles$vax_strategy_max_expected_cov
+  
+  
 ### WARNINGS 
 if (vax_strategy_vaccine_type == "Johnson & Johnson" & vax_dose_strategy > 1){stop('J&J can NOT be more than a 1 dose strategy')}
 if (vax_strategy_start_date <= max(vaccination_history_TRUE$date)){ 
   stop ('Your hypothetical vaccine campaign start date needs to be in the future!')
 }
-if (vax_strategy_start_date <= date_start){ 
-  stop ('Your hypothetical vaccine campaign start date needs to be after the start date (unless you want to do more coding)')
-}
+# if (vax_strategy_start_date <= date_start){ 
+#   stop ('Your hypothetical vaccine campaign start date needs to be after the start date (unless you want to do more coding)')
+# }
 if (!(vax_strategy_vaccine_type %in% c("Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"))){
   stop('pick a valid vaccine type, or check your spelling!')
 }
@@ -57,15 +66,19 @@ for (i in 1:num_vax_doses){
 eligible_pop= workshop
 
 #remove already vaccinated individuals
-existing_coverage = data.frame(eligible_pop$age_group,eligible_pop$dose,rep(0,num_age_groups*num_vax_doses))
-colnames(existing_coverage) = c('age_group','dose','cov_to_date')
-for (t in 1:num_vax_types){
-  for (d in 1:num_vax_doses){
+existing_coverage = crossing(dose = c(1:num_vax_doses),
+                             age_group = age_group_labels,
+                             cov_to_date = 0)
+
+for (d in 1:num_vax_doses){
+  for (i in 1:num_age_groups){
     #need to sum across vaccine_coverage (as this is vaccination_history_POP split across age groups)
-    existing_coverage$cov_to_date[existing_coverage$dose == d] =
-      existing_coverage$cov_to_date[existing_coverage$dose == d] + vaccine_coverage_end_history$cov[(J*(t+(d-1)*T) - J+1):(J*(t+(d-1)*T))]
+    existing_coverage$cov_to_date[existing_coverage$dose == d & existing_coverage$age_group == age_group_labels[i]] = 
+      sum(vaccine_coverage_end_history$cov[vaccine_coverage_end_history$dose == d & vaccine_coverage_end_history$age_group == age_group_labels[i]])
   }
 }
+existing_coverage$age_group = gsub('-',' to ',existing_coverage$age_group)
+
 
 ## CHECK - aligns!
 # workshop<- eligible_pop %>% left_join(existing_coverage) %>%
@@ -106,12 +119,12 @@ if (vax_age_strategy %in% unique(prioritisation_csv$strategy)) {
 } else if (vax_age_strategy == "manual_overwrite"){
   eligible_pop <- eligible_pop %>%
     mutate(priority= case_when(
-      age_group == '60 to 100' ~ 6,
-      age_group == '50 to 59' ~ 5,
-      age_group == '40 to 49' ~ 4,
-      age_group == '30 to 39' ~ 3,
-      age_group == '20 to 29' ~ 2,
-      age_group == '5 to 19' ~ 1,
+      age_group == '70 to 100' ~ 6,
+      age_group == '60 to 69' ~ 5,
+      age_group == '45 to 59' ~ 4,
+      age_group == '30 to 44' ~ 3,
+      age_group == '18 to 29' ~ 2,
+      age_group == '5 to 17' ~ 1,
       age_group == '0 to 4' ~ 99
     ))
 }
@@ -177,9 +190,11 @@ priority_num = 1
 priority_group  = as.character(unique(VA$age_group[VA$priority == priority_num]))
 
 if (vax_dose_strategy == 1){
-  timeframe = vax_strategy_num_doses/vax_strategy_roll_out_speed
+  ceiling = min(sum(eligible_pop$doses_delivered),vax_strategy_num_doses) #max delivery (either limited by eligible individuals, or available doses!)
+  timeframe = ceiling/vax_strategy_roll_out_speed
   daily_per_dose = vax_strategy_roll_out_speed
 } else if (vax_dose_strategy == 2){
+  #COMEBACK - do we need a ceiling here too?
   if(vax_strategy_num_doses/(vax_strategy_roll_out_speed*2)<vax_strategy_vaccine_interval){
     timeframe = vax_strategy_num_doses/(vax_strategy_roll_out_speed*2)
     daily_per_dose = vax_strategy_roll_out_speed
@@ -188,6 +203,7 @@ if (vax_dose_strategy == 1){
     daily_per_dose = vax_strategy_roll_out_speed/2
   }
 }
+timeframe = round(timeframe)
 
 length_track = timeframe
 if (vax_dose_strategy == 2){length_track=length_track+vax_strategy_vaccine_interval}
@@ -198,18 +214,24 @@ vax_delivery_outline <- crossing(day = c(1:length_track),
                                  doses_delivered = c(0))
 vax_delivery_outline <- vax_delivery_outline %>% mutate(age_group = gsub('-',' to ',age_group))
 
+#for (day in 1:229){
 for (day in 1:timeframe){
-  
   avaliable = daily_per_dose
-  #ensuring that last day doesn't overshoot available doses
-  if (day == timeframe){
-    avaliable = vax_strategy_num_doses/vax_dose_strategy-(timeframe-1)*daily_per_dose
-  }
+  #ensuring that we don't overshoot available doses
+  if (day == timeframe){avaliable = vax_strategy_num_doses/vax_dose_strategy-(timeframe-1)*daily_per_dose}
+  if (avaliable > sum(VA$doses_left)){avaliable = sum(VA$doses_left)}
   
   while(avaliable>0 & priority_num <= highest_priority){
     
     if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
       #i.e., while we still have doses to deliver in this priority group
+      
+      if(0 %in% VA$doses_left[VA$priority == priority_num & VA$dose == 1]){
+        age_complete = VA$age_group[VA$doses_left == 0 & VA$priority == priority_num & VA$dose == 1]
+        VA$priority[VA$age_group %in% age_complete] = VA$priority[VA$age_group %in% age_complete] + 100
+        
+        priority_group = as.character(unique(VA$age_group[VA$priority == priority_num]))
+      } #FIX - when one age group in the priority group runs out first
       
       #ISSUE HERE
       workshop_doses = min(sum(VA$doses_left[VA$priority == priority_num & VA$dose == 1]),
@@ -272,7 +294,7 @@ names(vax_delivery_outline)[names(vax_delivery_outline) == 'doses_delivered'] <-
 
 vax_delivery_outline = vax_delivery_outline %>% 
   select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group)
-
+#CHECK - aggregate(vax_delivery_outline$doses_delivered_this_date,by=list(vax_delivery_outline$age_group),FUN=sum) - aligns with eligible_pop
 
 ### adding to end of vaccination_history_TRUE
 #do we need zero rows?

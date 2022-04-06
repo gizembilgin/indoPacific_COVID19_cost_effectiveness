@@ -5,14 +5,13 @@
 strain = strain_inital
 
 ### (A/E) Transmission
-param_age <- read.csv("1_inputs/param_age.csv",header=TRUE)
+load(file = "1_inputs/param_age.Rdata")
 #COMEBACK uncertainty?
-#COMEBACK hard coded for num age group
 #COMEBACK gamma seems too low!
 
-suscept = param_age$susceptibility # (i) age-specific susceptibility to infection
-gamma = param_age$prob_sympt       # (ii) proportion of cases symptomatic
-lota = 0.5                         # (iii) modification factor on infectiousness of asymptomatic cases
+suscept = param_age$value[param_age$param == 'susceptibility'] # (i) age-specific susceptibility to infection
+gamma =param_age$value[param_age$param == 'prop_sympt']        # (ii) proportion of cases symptomatic
+lota = 0.5                                                     # (iii) modification factor on infectiousness of asymptomatic cases
 
 
 ### (B/E) Latent period 
@@ -40,7 +39,7 @@ delta = 1/AverageSymptomaticPeriod
 
 
 ### (D/E) Waning of infection-derived immunity
-lengthInfectionDerivedImmunity = 180 #days
+lengthInfectionDerivedImmunity = 180 #days #COMEBACK - need actual value!
 omega = 1/lengthInfectionDerivedImmunity
 
 load(file = "1_inputs/NG_rho.Rdata")
@@ -51,8 +50,9 @@ if (strain_inital == 'delta' | strain_inital == 'WT'){
   rho = mean(immunity_from_infection$ve_predict_mean[immunity_from_infection$outcome == "acquisition" &
                                                        immunity_from_infection$strain == 'omicron' & immunity_from_infection$days<=lengthInfectionDerivedImmunity])
 }
-#rho = mean(immunity_from_infection$ve_predict_mean[immunity_from_infection$outcome == "acquisition" &
-#                                                    immunity_from_infection$strain == 'delta' & immunity_from_infection$days == 1])
+rho = 0.9 #COMEBACK - need actual value!
+#rho = rho_time_step(strain_inital,date_start)
+
 
 ### (E/E) Beta - fitting parameter
 if (NPI_toggle == 'stringency'){ NPI_estimates = NPI_estimates_full[,-c(3)]

@@ -17,10 +17,13 @@ NPI_toggle = 'contain_health'   #options: contain_health, stringency
 ### (1/5) Age structure of population
 #NOTE: this program has been configured so that the age_groups can be modified on a whim,
 # however, some other programs aren't as flexible
-age_groups = c(0,4,19,29,39,49,59,110)
-age_group_labels = c('0-4','5-19','20-29','30-39','40-49','50-59','60-100')
-age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:7))
-num_age_groups = J = length(age_group_labels)           # 0-4,5-11,12-15,16-29,30-59,60+
+age_groups = c(0,4,17,29,44,59,69,110)
+age_group_labels = c('0-4','5-17','18-29','30-44','45-59','60-69','70-100')
+#age_groups = c(0,4,19,29,39,49,59,110)
+#age_group_labels = c('0-4','5-19','20-29','30-39','40-49','50-59','60-100')
+
+num_age_groups = J = length(age_group_labels)          
+age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
 
 pop_orig <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
 pop_setting_orig <- pop_orig[pop_orig$country == setting,]
@@ -31,7 +34,6 @@ colnames(pop_setting) <-c('agegroup','pop')
 pop <- pop_setting$pop
 #write.csv(pop_setting,file = 'x_results/pop_scrap.csv')
 
-rm (pop_orig) #keep pop_setting_orig for contact matrix weighting
 #______________________________________________________________________________________________________________________________________
 
 
@@ -47,50 +49,55 @@ colnames(contact_matrix_setting) <- Prem_et_al_age_list; rownames(contact_matrix
 #(B/C) calculate age weightings
 Prem_et_al_age_num <- c(0,4,9,14,19,24,29,34,39,44,49,54,59,64,69,74,110)
 pop_Prem <- pop_setting_orig %>%
-  mutate(agegroup = cut(age,breaks = Prem_et_al_age_num, include.lowest = T, labels = Prem_et_al_age_list)) 
-pop_Prem <- aggregate(pop_Prem$population, by=list(category=pop_Prem$agegroup), FUN=sum)
-colnames(pop_Prem) <-c('agegroup','pop')
-pop_Prem <- pop_Prem$pop
+  mutate(agegroup_PREM = cut(age,breaks = Prem_et_al_age_num, include.lowest = T, labels = Prem_et_al_age_list),
+         agegroup_MODEL = cut(age,breaks = age_groups, include.lowest = T, labels = age_group_labels)) %>%
+  ungroup() %>%
+  group_by(agegroup_MODEL) %>%
+  mutate(model_group_percent = population/sum(population)) %>%
+  ungroup() %>%
+  group_by(agegroup_PREM) %>%
+  mutate(prem_group_percent = population/sum(population)) %>%
+  select(age,agegroup_PREM,agegroup_MODEL,model_group_percent,prem_group_percent)
+sum_1 = aggregate(pop_Prem$model_group_percent, by=list(category= pop_Prem$agegroup_MODEL,pop_Prem$agegroup_PREM), FUN=sum)
+colnames(sum_1) = c('agegroup_MODEL','agegroup_PREM','model_group_percentage')
+sum_2 = aggregate(pop_Prem$prem_group_percent, by=list(category= pop_Prem$agegroup_MODEL,pop_Prem$agegroup_PREM), FUN=sum)
+colnames(sum_2) = c('agegroup_MODEL','agegroup_PREM','prem_group_percentage')
+pop_Prem = sum_1 %>% left_join(sum_2)
+#View(pop_Prem)
+
 
 #(C/C) construct contact matrix by our age groups
 #create skeleton
-workshop_interim  <- data.frame(matrix(ncol = 16,nrow=length(age_groups)-1))
-rownames(workshop_interim) <- age_group_labels
-colnames(workshop_interim) <- Prem_et_al_age_list
+workshop_cm1  <- data.frame(matrix(0,ncol = 16,nrow=length(age_groups)-1))
+rownames(workshop_cm1) <- age_group_labels
+colnames(workshop_cm1) <- Prem_et_al_age_list
 
-workshop <- data.frame(matrix(ncol = length(age_group_labels),nrow=length(age_group_labels)))
-rownames(workshop) <- age_group_labels
-colnames(workshop) <- age_group_labels
+workshop_cm2 <- data.frame(matrix(0,ncol = length(age_group_labels),nrow=length(age_group_labels)))
+rownames(workshop_cm2) <- age_group_labels
+colnames(workshop_cm2) <- age_group_labels
 
 #age weighting of contacts
 for (i in 1:(length(age_group_labels))){
-  j = round((age_groups[i+1] - age_groups[i]) / 5) #how many age bands need to be collapsed?
-  k = round(age_groups[i]/5)+1                     #where is the starting point?
+  workshop = pop_Prem[pop_Prem$agegroup_MODEL == age_group_labels[i],]
+  for (j in 1:nrow(workshop)){
+    workshop_cm1[i,] = workshop_cm1[i,]  + contact_matrix_setting[row.names(contact_matrix_setting) == workshop$agegroup_PREM[j]] * workshop$model_group_percentage[j]
+  }
+} 
   
-  if (j+k>nrow(contact_matrix_setting)){j=nrow(contact_matrix_setting) - k +1} #caveat as 75+ doesn't align with age groups up to 110
-  if (j==1){workshop_interim[i,] = contact_matrix_setting[k,]
-  } else if (j>1){
-    workshop_pop <- pop_Prem[k:(k+(j-1))]
-    workshop_pop <- workshop_pop/sum(workshop_pop)
-    workshop_interim[i,] = colSums( contact_matrix_setting[k:(k+(j-1)),] * workshop_pop)
-  } 
-}
-
 #sum across collapsed age bands
-for (i in 1:length(age_group_labels)){
-  j = round((age_groups[i+1] - age_groups[i]) / 5) #how many age bands need to be collapsed?
-  k = round(age_groups[i]/5)+1                     #where is the starting point?
-  
-  if (j+k>ncol(contact_matrix_setting)){j=ncol(contact_matrix_setting) - k +1} #caveat as 75+ doesn't align with age groups up to 110
-  if (j>1){workshop[,i] = rowSums(workshop_interim[,k:(k+(j-1))])
-  } else if (j == 1){workshop[,i] = workshop_interim[,k:(k+(j-1))]}
-}
+for (i in 1:J){
+  workshop = pop_Prem[pop_Prem$agegroup_MODEL == age_group_labels[i],]
+  for (j in 1:nrow(workshop)){
+    workshop_cm2[,i] = workshop_cm2[,i]  + workshop_cm1[colnames(workshop_cm1) == workshop$agegroup_PREM[j]]  * workshop$prem_group_percentage[j]
+  }
+}  
+#CHECK:rowSums(workshop_cm1) == rowSums(workshop_cm2)
 
-contact_matrix = workshop
+contact_matrix = workshop_cm2
 
-rm( contact_all, contact_matrix_setting,
+rm( contact_all, contact_matrix_setting, sum_1, sum_2,
    Prem_et_al_age_list, Prem_et_al_age_num, pop_Prem,
-   workshop, workshop_interim, workshop_pop,i, j, k)
+   workshop_cm2, workshop_cm1,i, j)
 #______________________________________________________________________________________________________________________________________
 
 
@@ -183,7 +190,7 @@ vaccination_history <- vaccination_history %>%
     values_to = 'num'
   )
 
-#some manual processing here due to lack of data
+#COMEBACK - some manual processing here due to lack of data
 #last updated 12/01/2022 using:
 # PNG - https://covid19.info.gov.pg/files/Situation%20Report/PNG%20COVID-19%20Health%20Situation%20Report%20105.pdf
 # SLE - https://mohs.gov.sl/download/sl_-covax-esmf-sierra-leone-final_june-22-2021-updated-docx/
@@ -255,7 +262,7 @@ vaccination_history_POP <- vaccination_history_3[,c('date','vaccine_type','vacci
 
 #Split daily doses by age
 vaccination_history_TRUE = data.frame() 
-age_split =  pop/sum(pop[3:num_age_groups]); age_split[1:2] = 0 #COMEBACK - uniform assumption in ages 20+
+age_split =  pop/sum(pop[3:num_age_groups]); age_split[1:2] = 0 #COMEBACK - uniform assumption in ages 18+
 
 for (j in 1:num_age_groups){
   workshop = vaccination_history_POP
@@ -264,7 +271,7 @@ for (j in 1:num_age_groups){
     doses_delivered_this_date = doses_delivered_this_date*age_split[j])
   vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
 }
-
+vaccination_history_TRUE$coverage_this_date[vaccination_history_TRUE$age_group == '0-4'] =0
 
 
 

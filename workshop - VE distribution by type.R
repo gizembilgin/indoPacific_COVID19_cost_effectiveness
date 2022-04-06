@@ -65,7 +65,7 @@ workshop <- VE_full_vaccine_type %>%
   mutate(immunity = paste(vaccine_type,dose))
 
 
-strain_test = 'delta'
+strain_test = 'omicron'
 
 plot_list = list()
 

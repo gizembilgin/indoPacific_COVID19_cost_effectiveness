@@ -80,7 +80,6 @@ severe_outcome_2 <- severe_outcome_2 %>% mutate(percentage=percentage*RR)
 severe_outcome_FINAL <- severe_outcome_2 %>%
   select(outcome,outcome_long,age_group,percentage) %>%
   mutate(age_group = gsub(" to ", "-", age_group)) 
-severe_outcome_FINAL$age_group[severe_outcome_FINAL$age_group == '60+'] = '60-100'
 
 rm(severe_outcome_0,severe_outcome_2)
 #_______________________________________________________________________________
