@@ -10,11 +10,11 @@
 ##### Genuine projection from incidence!
   #(A/D) Join incidence_log_tidy with severe outcome incidence by vax status
   workshop = incidence_log_tidy %>%
-    left_join(severe_outcome_FINAL) %>%
+    left_join(severe_outcome_this_run) %>%
     mutate(proj = incidence*percentage) #calculate incidence -> severe outcome
-  if(!nrow(severe_outcome_FINAL[severe_outcome_FINAL$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('something has gone amiss')
-  } else if (!nrow(severe_outcome_FINAL) == nrow(workshop)){warning('more doses left to give in this simulation')}
-  #NOTE: number of rows in severe_outcome_FINAL may be longer than run of model if more doses to give out than the run of the model
+  if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('something has gone amiss')
+  } else if (!nrow(severe_outcome_this_run) == nrow(workshop)){warning('more doses left to give in this simulation')}
+  #NOTE: number of rows in severe_outcome_this_run may be longer than run of model if more doses to give out than the run of the model
   
   #(B/D) Sum across age groups, doses and vaccination status to get overall severe incidence per day
   workshop = workshop %>%

@@ -10,6 +10,8 @@
 # NOTE - this will be incidence of hosp NOT occupancy, the WHO defines severe disease as 
 # "a patient with severe acute respiratory illness (fever and at least one sign or symptom of respiratory disease), AND requiring hospitalization
 # Hence, hosp - severe = unmet need!
+time.start=proc.time()[[3]]
+
 
 VOC = strain_inital
 
@@ -149,32 +151,8 @@ ggplot() +
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
 #_______________________________________________________________________________
+time.end=proc.time()[[3]]
+time.end-time.start 
 
 
-
-#####(6/7) Multiplying severe outcomes by VE
-#(A/B) calculate VE against severe outcomes by day
-VE_tracker = data.frame()
-for (outcome in c('death','hospitalisation')){
-  for (day in 1:(model_weeks*7) ){
-    workshop = VE_time_step(strain_inital,date_start+day,outcome)
-    workshop = workshop %>% mutate(date=day,
-                                   outcome_VE=outcome)
-    VE_tracker = rbind(VE_tracker,workshop)
-  }
-}
-VE_tracker$date = date_start + VE_tracker$date 
-
-workshop = crossing(dose = 0,
-                    vaccine_type = "unvaccinated",
-                    age_group = age_group_labels,
-                    VE = 0,
-                    date = unique(VE_tracker$date),
-                    outcome_VE=unique(VE_tracker$outcome))
-VE_tracker = rbind(VE_tracker,workshop)
-
-#(B/B) calculate severe outcome incidence by vax_status
-severe_outcome_FINAL = severe_outcome_FINAL %>% left_join(VE_tracker) %>%
-  mutate(percentage = percentage*(1-VE)) %>%
-  select(date,outcome,outcome_long,age_group,vaccine_type,dose,percentage)
-#_______________________________________________________________________________
+save(severe_outcome_FINAL, file = "1_inputs/severe_outcome_FINAL.Rdata")
