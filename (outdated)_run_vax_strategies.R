@@ -123,3 +123,5 @@ for (ticket in 1:length(queue)){
 
 time.end=proc.time()[[3]]
 time.end-time.start 
+
+save.image(file = paste("complete_model_run_",Sys.Date(),".Rdata",sep=''))
