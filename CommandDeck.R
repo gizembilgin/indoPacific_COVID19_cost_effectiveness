@@ -25,21 +25,30 @@ if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents
 ####################################################################
 setting = "SLE"
 
-#date_start = as.Date('2022-04-15')
-date_start = max(vaccination_history_FINAL$date)
-model_weeks = 5          # how many weeks should the model run for?
-complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
+if(outbreak_post_rollout == "on"){
+  date_start = max(vaccination_history_FINAL$date)
+  seed_date = date_start 
+}else if(outbreak_post_rollout == "off"){ #i.e. rolling out vaccine during outbreak
+  date_start = as.Date('2022-04-15')
+  #date_start = max(vaccination_history_FINAL$date)
+  
+  #seed_date = vax_strategy_start_date+365/2
+  seed_date = date_start
+}
 
 strain_inital = 'omicron'             #options:'WT','delta','omicron'
+model_weeks = 5          # how many weeks should the model run for?
+complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 seed = 0.001
-#seed_date = vax_strategy_start_date+365/2
-seed_date = date_start
+
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
 underascertainment_est = 43
 
 behaviour_mod = 0  #0.268 if start 01/03/21
 uniform_mod=1
+
+
 
 #vax_strategy_plot = "off" #included in (plot)_vax_strategies
 #__________________________________________________________________
@@ -84,7 +93,7 @@ for (run_number in 1:complete_model_runs){
   source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
   source(paste(getwd(),"/(2)_inital_state.R",sep=""))
   source(paste(getwd(),"/(4)_time_step.R",sep=""))
-  source(paste(getwd(),"/(mech shop) severe outcome setting-specific rates.R",sep="")) # COMEBACK - should this just save its results somewhere?
+  source(paste(getwd(),"/(once)_severe_outcomes_calc.R",sep="")) # COMEBACK - should this just save its results somewhere?
   incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
 }
 
@@ -103,6 +112,7 @@ if (complete_model_runs>1){
 #       (4/4) Basic plots            
 # ####################################################################
 # NOTE: more advanced plots in scripts title '(plot)_...'
+if (ticket ==1){
 
 #raw number - daily and cumulative
 plot1 <- ggplot() + 
@@ -172,7 +182,7 @@ plot3<- ggplot() +
         axis.line = element_line(color = 'black'))
 
 grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
-
+}
 #either incidence per 100,000 or % of total population
 #__________________________________________________________________ 
 
