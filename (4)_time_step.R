@@ -216,6 +216,7 @@ for (increments_number in 1:num_time_steps){
     
     Reff <- Reff_time_step(parameters,next_state)
     Reff_tracker = rbind(Reff_tracker,Reff)
+
     
     next_state_FINAL=as.numeric(c(S_next,E_next,I_next,R_next,
                                   Incidence_inital)) #setting Incid to repeated 0s

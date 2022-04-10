@@ -339,7 +339,6 @@ NPI_estimates_full = na.omit(NPI_estimates_full) #removing last two weeks where 
 #two metrics to give a go!
 
 
-
 rm(workshop, workshop2)
 
 Ox_tracker_complete <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")

@@ -3,7 +3,7 @@
 ### COMEBACK count = 5
 
 
-###### (1/3) Vaccination
+###### (1/4) Vaccination
 #(A/B) Coverage 
 #(i/iv) Delay
 vaccine_coverage_delay_1 = 21 #number of days till protection from first dose, COMEBACK - J&J full protection after 14 days? (single dose vaccine)
@@ -67,6 +67,10 @@ if (vax_strategy_plot == "on"){
   
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
+}
+if(outbreak_post_rollout == "on"){
+  date_start = max(vaccination_history_FINAL$date)
+  seed_date = date_start
 }
 
 
@@ -206,7 +210,7 @@ if ((date_start - vaccine_coverage_delay[d])>= min(vaccination_history_POP$date)
 
 
 
-###### (2/3) Seroprevalence
+###### (2/4) Seroprevalence
 load(file = "1_inputs/seroprev.Rdata")
 seroprev = seroprev[seroprev$setting == setting & seroprev$year == 
                       as.numeric(format(date_start, format="%Y")),]
@@ -218,7 +222,29 @@ if (as.numeric(format(date_start, format="%Y")) > 2022){
 
 
 
-###### (2/3) Hence, initial state
+###### (3/4) NPI
+if (NPI_toggle == 'stringency'){ NPI_estimates = NPI_estimates_full[,-c(3)]
+} else if (NPI_toggle == 'contain_health'){ NPI_estimates = NPI_estimates_full[,-c(2)]}
+colnames(NPI_estimates) <- c('date','NPI')
+
+if(date_start <=max(NPI_estimates$date)){
+  NPI_inital = NPI_estimates$NPI[NPI_estimates$date==date_start]
+} else {
+  if (NPI_outbreak_toggle == "final"){
+    NPI_inital = NPI_estimates$NPI[NPI_estimates$date == max(NPI_estimates$date)] # peak is 40.8
+  } 
+  if (NPI_outbreak_toggle == "delta_peaks"){
+    #NPI_inital = NPI_estimates$NPI[NPI_estimates$date == as.Date('2021-07-07')] #peak is 62.3
+    NPI_inital = mean(NPI_estimates$NPI[NPI_estimates$date > as.Date('2021-01-01')&NPI_estimates$date<as.Date('2021-08-01')])
+    #average of two delta peaks in 2021
+  }
+}
+NPI = NPI_inital = as.numeric(NPI_inital)/100
+#________________________________________________________________
+
+
+
+###### (4/4) Hence, initial state
 #(A/F): intialise classes
 J=num_age_groups
 T=num_vax_types
