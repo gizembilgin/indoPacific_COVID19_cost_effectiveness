@@ -297,37 +297,67 @@ for (i in 1:num_age_groups){ #across age classes
   
   # Step Four B: distribute across vaccine classes 
   # COMEBACK, assumption infections are spread equally across vax classes
-S_tidy = data.frame(S_inital)
-S_tidy$temp = seq(1,(num_age_groups*num_vax_classes))
-S_tidy$age_group = rep(age_group_labels,num_vax_classes)
-S_tidy$dose = 0
-S_tidy$vaccine_type = "unvaccinated"
-for (d in 1:num_vax_doses){
-  S_tidy$dose[S_tidy$temp %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
-  for (t in 1:num_vax_types){
-    S_tidy$vaccine_type[S_tidy$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
-  }
-}
+state_TIDY = data.frame()
+disease_class_list = list('S','E','I','R')
+inital_list = list(S_inital,E_inital,I_inital,R_inital)
 
-for (i in 1:J){ # age
-  for (t in 1:T){  # vaccine type
-    for (d in 1:D){ # vaccine dose
-      workshop_cov = vaccine_coverage$cov[vaccine_coverage$dose == d &
-                                            vaccine_coverage$vaccine_type == vax_type_list[t] &
-                                            vaccine_coverage$age_group == age_group_labels[i]]
-      
-      S_tidy$S_inital[S_tidy$dose == d & S_tidy$age_group == age_group_labels[i] & S_tidy$vaccine_type == vax_type_list[t]] = 
-        S_tidy$S_inital[S_tidy$dose == 0 & S_tidy$age_group == age_group_labels[i]] * workshop_cov
-      
-      S_tidy$S_inital[S_tidy$dose == 0 & S_tidy$age_group == age_group_labels[i]] = 
-        S_tidy$S_inital[S_tidy$dose == 0 & S_tidy$age_group == age_group_labels[i]] * (1-workshop_cov)
+for (num in 1:num_disease_classes){
+  
+  disease_class = inital_list[[num]]
+  
+  state_tidy = data.frame(disease_class)
+  colnames(state_tidy) = c('state_inital')
+  state_tidy$class = disease_class_list[[num]]
+  state_tidy$temp = seq(1,(num_age_groups*num_vax_classes))
+  state_tidy$age_group = rep(age_group_labels,num_vax_classes)
+  state_tidy$dose = 0
+  state_tidy$vaccine_type = "unvaccinated"
+  for (d in 1:num_vax_doses){
+    state_tidy$dose[state_tidy$temp %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
+    for (t in 1:num_vax_types){
+      state_tidy$vaccine_type[state_tidy$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
+    }
+  }
+  
+  workshop = state_tidy
+  
+  for (i in 1:J){ # age
+    
+    #pop*(1-cov1A-cov1B-cov1C)
+    state_tidy$state_inital[state_tidy$dose == 0 & state_tidy$age_group == age_group_labels[i]] = 
+      workshop$state_inital[workshop$dose == 0 & workshop$age_group == age_group_labels[i]]*
+      (1-sum(vaccine_coverage$cov[vaccine_coverage$dose == 1 & vaccine_coverage$age_group == age_group_labels[i]]))
+    
+    for (t in 1:T){  # vaccine type
+      for (d in 1:D){ # vaccine dose
+
+        if (d != D){
+          #pop*(cov1A-cov2A)
+          state_tidy$state_inital[state_tidy$dose == d & state_tidy$age_group == age_group_labels[i] & state_tidy$vaccine_type == vax_type_list[t]] = 
+            workshop$state_inital[workshop$dose == 0 & workshop$age_group == age_group_labels[i]]*
+            (vaccine_coverage$cov[vaccine_coverage$dose == d &
+                                    vaccine_coverage$vaccine_type == vax_type_list[t] &
+                                    vaccine_coverage$age_group == age_group_labels[i]] -
+               vaccine_coverage$cov[vaccine_coverage$dose == d+1 &
+                                      vaccine_coverage$vaccine_type == vax_type_list[t] &
+                                      vaccine_coverage$age_group == age_group_labels[i]])
+        }
+        if (d == D){
+          #pop*cov2A
+          state_tidy$state_inital[state_tidy$dose == d & state_tidy$age_group == age_group_labels[i] & state_tidy$vaccine_type == vax_type_list[t]] = 
+            workshop$state_inital[workshop$dose == 0 & workshop$age_group == age_group_labels[i]]*
+            (vaccine_coverage$cov[vaccine_coverage$dose == d &
+                                    vaccine_coverage$vaccine_type == vax_type_list[t]&
+                                    vaccine_coverage$age_group == age_group_labels[i]])
+        }
       }
     }
-}
-    
+  }
+  state_TIDY = rbind(state_TIDY,state_tidy)
+}    
 
 #Step Five: construct silly array that ODE solver requires
-state=c(S_tidy$S_inital,E_inital,I_inital,R_inital,Incidence_inital) 
+state=c(state_TIDY$state_inital,Incidence_inital) 
 sum(state); sum(pop) #CHECK = confirmed equal
 
 

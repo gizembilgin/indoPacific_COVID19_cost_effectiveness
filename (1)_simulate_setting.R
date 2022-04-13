@@ -272,7 +272,7 @@ for (j in 1:num_age_groups){
   vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
 }
 vaccination_history_TRUE$coverage_this_date[vaccination_history_TRUE$age_group == '0-4'] =0
-
+vaccination_history_TRUE$coverage_this_date[vaccination_history_TRUE$age_group == '5-17'] = 0 #MIGHT CHANGE
 
 
 ## for overarching plotting
