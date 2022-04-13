@@ -23,6 +23,7 @@ parameters = c(
   VE=VE,
   # VE_onwards=VE_onwards,
   num_age_groups=num_age_groups,
+  num_disease_classes = num_disease_classes,
   num_vax_types=num_vax_types,
   num_vax_doses=num_vax_doses)
 
@@ -104,6 +105,7 @@ for (increments_number in 1:num_time_steps){
       
       # (1/3) recorded vax
       #COMEBACK delay of J&J first does is 21 days, is this right?
+      #COMEBACK cleaner code in ACT
       
       if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_1,]) >0){
         dose_one <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_1 & this_vax_history$dose==1,]
@@ -133,6 +135,7 @@ for (increments_number in 1:num_time_steps){
         increase_two = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 2 & VR_this_step$age_group == age_group_labels[i]] 
         
         for (j in 1:4){ #let's assume all SEIR vaccinated
+          #COMEBACK better in ACT
           class=class_name_list[j]
           
           # prop unvax in SEIR

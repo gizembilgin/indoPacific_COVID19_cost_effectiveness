@@ -12,6 +12,7 @@ library(deSolve)
 library(rvest)
 library(ggplot2)
 library(gridExtra)
+library(ggpubr)
 
 #rm(list=ls())  # clear global environment
 
@@ -37,7 +38,7 @@ if(outbreak_post_rollout == "on"){
 }
 
 strain_inital = 'omicron'             #options:'WT','delta','omicron'
-model_weeks = 5          # how many weeks should the model run for?
+model_weeks = 52          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 seed = 0.001
 

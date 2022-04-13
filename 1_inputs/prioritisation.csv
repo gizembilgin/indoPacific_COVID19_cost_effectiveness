@@ -48,3 +48,10 @@ PNG_plan,30 to 44,2
 PNG_plan,45 to 59,1
 PNG_plan,60 to 69,1
 PNG_plan,70 to 100,1
+adults_then_children,0 to 4,99
+adults_then_children,5 to 17,2
+adults_then_children,18 to 29,1
+adults_then_children,30 to 44,1
+adults_then_children,45 to 59,1
+adults_then_children,60 to 69,1
+adults_then_children,70 to 100,1
