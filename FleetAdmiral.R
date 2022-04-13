@@ -5,7 +5,7 @@
 # (3) Varying speed of vaccine roll-out
 # (4) Other sensitivity analysis
 #________________________________________________________________________________________________________________
-
+time.start.FleetAdmiral=proc.time()[[3]]
 results_warehouse = list()
 
 
@@ -47,11 +47,13 @@ if (setting == "SLE"){
 
 
 ###(1/4) Impact of current program targets
-
+source(paste(getwd(),"/(run 1)_impact_of_current_program_targets.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
 ### (2) Varying levels of coverage - w and w/out children
+outbreak_post_rollout = "on" #COMEBACK - are you sure? #Currently vaccine roll-out prior to an outbreak
+source(paste(getwd(),"/(run 2)_varying_coverage.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
@@ -61,7 +63,23 @@ source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
 
 
 ### (4) Other sensitivity analysis
+#COMEBACK - need to code/decide
 #________________________________________________________________________________________________________________
 
 
-save.image(file = paste("complete_model_run_",Sys.Date(),".Rdata",sep=''))
+save.image(file = paste("x_results/complete_model_run_",Sys.Date(),".Rdata",sep=''))
+
+time.end.FleetAdmiral=proc.time()[[3]]
+time.end.FleetAdmiral-time.start.FleetAdmiral 
+# 6798.61 = 1.9 hours
+
+
+time = Sys.time()
+time = gsub(':','-',time)
+file_name = paste( "x_results/Vaccine allocation project results",time)
+file_name = gsub(' ','_',file_name)
+
+library(rmarkdown); library(tinytex)
+render('results_report_compiler_v2.Rmd',output_file = file_name)
+#render('results_report_compiler_v2.Rmd',output_file = file_name, output_format = "pdf_document")
+#render('results_report_compiler_v2.Rmd',output_file = file_name, output_format = "word_document")

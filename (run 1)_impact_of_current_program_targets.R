@@ -5,6 +5,7 @@
 ### (1) Overarching trackers #####################################################################################################
 warehouse_table = data.frame() 
 warehouse_plot = data.frame()
+baseline_to_compare = "no further vaccine rollout"
 
 
 ### (2) Queue strategies to run ##################################################################################################
@@ -17,12 +18,12 @@ queue[[1]] = list(vax_strategy_description = "no further vaccine rollout",
 
 
 #(B/B) Current program targets
-queue[[2]] = list(vax_strategy_description = 'baseline - current roll-out',
+queue[[2]] = list(vax_strategy_description = 'current roll-out DURING outbreak',
                   vax_strategy_plot = "on",
                   outbreak_post_rollout = "off",
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)  #roll out vaccine DURING outbreak
 
-queue[[3]] = list(vax_strategy_description = 'baseline - current roll-out',
+queue[[3]] = list(vax_strategy_description = 'current roll-out PRIOR to outbreak',
                   vax_strategy_plot = "on",
                   outbreak_post_rollout = "on",
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)  #roll out vaccine PRIOR TO outbreak
@@ -36,6 +37,7 @@ for (ticket in 1:length(queue)){
   commands = queue[[ticket]]
   
   vax_strategy_description = commands$vax_strategy_description
+  vax_strategy_plot = commands$vax_strategy_plot
   outbreak_post_rollout = commands$outbreak_post_rollout
   if ('vax_strategy_toggles' %in% names(commands)){
     vax_strategy_toggles = commands$vax_strategy_toggles
@@ -58,7 +60,7 @@ results_warehouse_entry[[1]] = warehouse_table
 results_warehouse_entry[[2]] = warehouse_plot
 
 #(A/B) absolute outcome plot
-warehouse_plot = warehouse_plot %>% mutate(time = date)
+warehouse_plot = warehouse_plot %>% mutate(time = day)
 
 plot_list = list()
 for (i in 1:length(unique(warehouse_plot$outcome))){
@@ -78,23 +80,23 @@ annotate_figure(plot, top = text_grob('absolute outcome by scenario', face = 'bo
 results_warehouse_entry[[3]]= plot
 
 #(B/B) cumulative outcome table
-averted_table = warehouse_table[warehouse_table$scenario != 'baseline - current roll-out',]
+averted_table = warehouse_table[warehouse_table$scenario != baseline_to_compare,]
 averted_table_rel = averted_table
 for (i in 1:(length(queue)-1)){
   averted_table[i,c(1:length(unique(warehouse_plot$outcome)))] = 
-    warehouse_table[warehouse_table$scenario == 'baseline - current roll-out',c(1:length(unique(warehouse_plot$outcome)))] -
+    warehouse_table[warehouse_table$scenario == baseline_to_compare,c(1:length(unique(warehouse_plot$outcome)))] -
     averted_table[i,c(1:length(unique(warehouse_plot$outcome)))] 
   
   averted_table_rel[i,c(1:length(unique(warehouse_plot$outcome)))] = 100 * averted_table[i,c(1:length(unique(warehouse_plot$outcome)))]/
-    warehouse_table[warehouse_table$scenario == 'baseline - current roll-out',c(1:length(unique(warehouse_plot$outcome)))]
+    warehouse_table[warehouse_table$scenario == baseline_to_compare,c(1:length(unique(warehouse_plot$outcome)))]
 }
 table_list = list(absolute = averted_table, 
                   relative = averted_table_rel) #COMEBACK could be merged
-#table_list
+table_list
 
 results_warehouse_entry[[4]]= table_list
 
 #____________________________________________________________________________________________________________________________________
 
-results_warehouse[[3]] = results_warehouse_entry
+results_warehouse[[1]] = results_warehouse_entry
 
