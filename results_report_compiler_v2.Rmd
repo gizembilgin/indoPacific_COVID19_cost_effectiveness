@@ -10,33 +10,50 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-options(scipen=10000); require(ggpubr)
+options(scipen=10000); require(ggpubr); require(knitr)
 
-load(paste("x_results/complete_model_run_",Sys.Date(),".Rdata",sep=''))
+list_poss_Rdata = list.files(path="x_results/",pattern = "complete_model_run_*")
+list_poss_Rdata_details = double()
+for (i in 1:length(list_poss_Rdata)){
+  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                 file.info(paste('x_results/',list_poss_Rdata[[i]],sep=''))$mtime)
+}
+latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+
+load(paste('x_results/',latest_file,sep=''))
 ```
 
 
 # Introduction
 This document brings together results from multiple model runs. It is intended to be re-run as the model is updated.
+
 NOTE: The setting for this run is: `r paste(setting)`
 
-## Target questions
+**Focus questions:**
+
 * What impact will the existing vaccination plan have on morbidity and mortality?
 * What impact can be achieved under different levels of vaccine coverage?
 * What are the potential benefits of expanding the immunisation schedule to include children?
 
-## Overarching assumptions
-Unless otherwise specified, key model assumptions in this run are:  
+**Overarching assumptions**
 
-Variable | Value
----------|--------
-Circulating strain | `r paste(strain_inital)`
-Length of model run | `r paste(model_weeks)`
-Proportion of population willing to be vaccinated | `r paste(vax_strategy_toggles$vax_strategy_max_expected_cov)`
-Daily capacity for vaccination (doses) | `r paste(vax_strategy_toggles$vax_strategy_roll_out_speed)`
-Vaccine type used| `r paste(vax_strategy_toggles$vax_strategy_vaccine_type)`
+Unless otherwise specified, key model parameters in this run are:  
 
-## Next steps for noting
+Variable | Value | Rational
+---------|--------|--------
+Circulating strain | `r paste(strain_inital)`|
+Length of model run | `r paste(model_weeks)`|
+Current vaccine coverage target | `r paste(gov_target)` | Government target in COVAX documentation May 2021
+Proportion of population willing to be vaccinated | `r paste(vax_strategy_toggles$vax_strategy_max_expected_cov)`|Survey estimating vaccine acceptance in January 2021 (Solis et al., 2021)
+Daily capacity for vaccination (doses) | `r paste(vax_strategy_toggles$vax_strategy_roll_out_speed)` | Slightly lower than the pilot vaccination campaign October-November 2021 
+Anticipated type of future vaccine doses| `r paste(vax_strategy_toggles$vax_strategy_vaccine_type)` | The Government of Sierra Leone has demonstrated a strong preference for this vaccine, negotiating with major donors, such as the Government of Italy, to change their donations of double-dose vaccines (such as Pfizer) to Janssen vaccines for ease of deployment 
+
+**Other assumptions:**
+
+* Linear roll-out of vaccines (Lowy Institute report and trends in the ACT do not support this)
+
+**Next steps for noting:**
+
 * update of infection- and vaccine-derived immunity
 * sensitivity analysis 
     + turning on/off waning of vaccine-derived immunity
@@ -49,47 +66,48 @@ Vaccine type used| `r paste(vax_strategy_toggles$vax_strategy_vaccine_type)`
   
 # Impact of current program targets
 Roll out of current program target (51.6% coverage) during or prior to an outbreak:
-```{r echo=FALSE}
-library(knitr)
+```{r echo=FALSE , fig.width=10,fig.height=5}
+
 results_warehouse[[1]][[3]]
-kable(results_warehouse[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes')
-kable(results_warehouse[[3]][[4]]$relative, caption = 'Relative difference in outcomes')
+kable(results_warehouse[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
 ```
 
 ***
 
 # Varying levels of coverage
 ## Using current age-specific eligiblity
-```{r echo=FALSE}
-library(knitr)
+```{r echo=FALSE, fig.width=10,fig.height=5}
+
 results_warehouse[[2]][[3]][[1]]
-kable(results_warehouse[[2]][[4]][[1]]$absolute, caption = 'Absolute difference in outcomes')
-kable(results_warehouse[[2]][[4]][[1]]$relative, caption = 'Relative difference in outcomes')
+kable(results_warehouse[[2]][[4]][[1]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[2]][[4]][[1]]$relative, caption = 'Relative difference in outcomes',digits=2)
 ```
 ## Expanding eligibility to children
+Note: This section runs the roll-out DURING an outbreak. Otherwise waning immunity makes ever vaccinating kids look like a bad idea.
 ### Run current vaccine campaign, then expand to children
-```{r echo=FALSE}
-library(knitr)
+```{r echo=FALSE, fig.width=10,fig.height=5}
+
 results_warehouse[[2]][[3]][[2]]
-kable(results_warehouse[[2]][[4]][[2]]$absolute, caption = 'Absolute difference in outcomes')
-kable(results_warehouse[[2]][[4]][[2]]$relative, caption = 'Relative difference in outcomes')
+kable(results_warehouse[[2]][[4]][[2]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[2]][[4]][[2]]$relative, caption = 'Relative difference in outcomes',digits=2)
 ```
 ### Expand to children now
-```{r echo=FALSE}
-library(knitr)
+```{r echo=FALSE, fig.width=10,fig.height=5}
+
 results_warehouse[[2]][[3]][[3]]
-kable(results_warehouse[[2]][[4]][[3]]$absolute, caption = 'Absolute difference in outcomes')
-kable(results_warehouse[[2]][[4]][[3]]$relative, caption = 'Relative difference in outcomes')
+kable(results_warehouse[[2]][[4]][[3]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[2]][[4]][[3]]$relative, caption = 'Relative difference in outcomes',digits=2)
 ```
 ***
 
 # Varying speed of vaccine roll-out
 This section models varying speeds of vaccine roll-out *DURING* an outbreak.
-```{r echo=FALSE}
-library(knitr)
+```{r echo=FALSE, fig.width=10,fig.height=5}
+
 results_warehouse[[3]][[3]]
-kable(results_warehouse[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes')
-kable(results_warehouse[[3]][[4]]$relative, caption = 'Relative difference in outcomes')
+kable(results_warehouse[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2)
 ```
 
 

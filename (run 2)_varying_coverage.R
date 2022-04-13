@@ -73,7 +73,7 @@ for (i in 1:length(target_list)){
   this_vax_strategy$vax_strategy_num_doses = as.integer(workshop_doses)
   this_vax_strategy$vax_age_strategy = "uniform"
   
-  queue[[(5+i)]] = list(vax_strategy_description = paste('expand to children now',target_percentage,'%'),
+  queue[[(5+i)]] = list(vax_strategy_description = paste('expand to children now',target_percentage,'%',sep=''),
                     vax_strategy_toggles = this_vax_strategy) 
 }
 
@@ -94,7 +94,7 @@ for (ticket in 1:length(queue)){
     mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
   
-  row = row %>% mutate(scenario = vax_strategy_description)
+  row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
 }
 #____________________________________________________________________________________________________________________________________
@@ -115,8 +115,8 @@ if (outbreak_post_rollout == "on"){
 }
 
 section_1 = c('current vaccination targets (51.6%)','lower than current vaccination targets (40.0%)')
-section_2 = c("current vaccination targets (51.6%)", "current then expand to children 60 %", "current then expand to children 70 %", "current then expand to children 80 %")
-section_3 = c("current vaccination targets (51.6%)","expand to children now 40 %","expand to children now 51.6 %","expand to children now 60 %","expand to children now 70 %","expand to children now 80 %")
+section_2 = c("current vaccination targets (51.6%)", "current then expand to children 60%", "current then expand to children 70%", "current then expand to children 80%")
+section_3 = c("current vaccination targets (51.6%)","expand to children now 40%","expand to children now 51.6%","expand to children now 60%","expand to children now 70%","expand to children now 80%")
 section_list = list(section_1,section_2,section_3)
 
 for (section in 1:3){

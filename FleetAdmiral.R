@@ -11,8 +11,8 @@ results_warehouse = list()
 
 
 if (setting == "SLE"){
-  target = 0.516
-  workshop_doses = target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
+  gov_target = 0.516
+  workshop_doses = gov_target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
   workshop_doses = round(workshop_doses * sum(pop))
   
   vax_strategy_toggles_CURRENT_TARGET =
@@ -26,8 +26,8 @@ if (setting == "SLE"){
          vax_strategy_max_expected_cov  = 0.88                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
     )
 } else if (setting == "PNG"){
-  target = 0.199
-  workshop_doses = target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
+  gov_target = 0.199
+  workshop_doses = gov_target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
   workshop_doses = round(workshop_doses * sum(pop))
   workshop_doses = workshop_doses * 2 
   
@@ -52,7 +52,8 @@ source(paste(getwd(),"/(run 1)_impact_of_current_program_targets.R",sep=""))
 
 
 ### (2) Varying levels of coverage - w and w/out children
-outbreak_post_rollout = "on" #COMEBACK - are you sure? #Currently vaccine roll-out prior to an outbreak
+outbreak_post_rollout = "off" 
+#Note: roll-out must be during outbreak, otherwise waning immunity makes vaccinating kids look like a bad idea
 source(paste(getwd(),"/(run 2)_varying_coverage.R",sep=""))
 #________________________________________________________________________________________________________________
 
