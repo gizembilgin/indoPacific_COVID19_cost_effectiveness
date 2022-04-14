@@ -48,9 +48,10 @@ Proportion of population willing to be vaccinated | `r paste(vax_strategy_toggle
 Daily capacity for vaccination (doses) | `r paste(vax_strategy_toggles$vax_strategy_roll_out_speed)` | Slightly lower than the pilot vaccination campaign October-November 2021 
 Anticipated type of future vaccine doses| `r paste(vax_strategy_toggles$vax_strategy_vaccine_type)` | The Government of Sierra Leone has demonstrated a strong preference for this vaccine, negotiating with major donors, such as the Government of Italy, to change their donations of double-dose vaccines (such as Pfizer) to Janssen vaccines for ease of deployment 
 
-**Other assumptions:**
+**Other assumptions/limitations:**
 
 * Linear roll-out of vaccines (Lowy Institute report and trends in the ACT do not support this)
+* Vaccine effectiveness estimates last updated on the 14th of April 2022 from WHO live systematic review (<https://view-hub.org/covid-19/effectiveness-studies>)
 
 **Next steps for noting:**
 
