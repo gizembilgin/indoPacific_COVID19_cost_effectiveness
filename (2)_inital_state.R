@@ -158,53 +158,21 @@ for (i in 1:J){ # age
 
 
 #(B/B) Vaccine Effectiveness (VE)
-#Vaccine_effectiveness = VE[age_group,dose_number]
-#Load NG day-by-day waning (UK data on AZ and Pfizer)
-#distribution for viral (AZ reference) and mRNA (Pfizer reference) for dose 1,2, and 3 (booster is mRNA only)
-load(file = "1_inputs/NG_VE_processed.Rdata")
-VE_waning_distribution <- VE_together %>%
-  mutate(vaccine_type = gsub("AZ", "AstraZeneca", vaccine_type)) %>%
-  mutate(vaccine_mode = case_when(
-    vaccine_type == 'Pfizer' ~ 'mRNA',
-    vaccine_type == 'AstraZeneca' ~ 'viral'
-  ))
-#Create VE_internal as metric of % max VE for this type
-VE_waning_distribution <- VE_waning_distribution%>%
-  group_by(outcome,strain,vaccine_mode,dose) %>%
-  mutate(VE_internal = ve_predict_mean / max(ve_predict_mean))
-VE_waning_distribution <- VE_waning_distribution[,-c(3)] #remove vaccine_type
-
-#Load VE for all vaccines we are interested in  
-VE_full_vaccine_type = read.csv("1_inputs/vaccine_effectiveness.csv",header=TRUE)
-VE_full_vaccine_type <- VE_full_vaccine_type %>%
-  mutate(vaccine_mode = case_when(
-    vaccine_type == 'Pfizer' ~ 'mRNA',
-    vaccine_type == 'Moderna' ~ 'mRNA',
-    vaccine_type == 'AstraZeneca' ~ 'viral',
-    vaccine_type == 'Sinopharm' ~ 'viral',
-    vaccine_type == 'Sinovac' ~ 'viral',
-    vaccine_type == 'Johnson & Johnson' ~ 'viral'
-  ))
-
-#COMEBACK - cheeky update
-# VE_estimates <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
-# VE_estimates = VE_estimates  %>% select(strain, vaccine_type, dose, outcome,VE)
-# sinopharm = VE_estimates[VE_estimates$]
-
-
-
-VE_waning_distribution <- VE_full_vaccine_type %>%
-  left_join(VE_waning_distribution, by = c("outcome","dose","vaccine_mode")) %>%
-  select('strain','outcome','vaccine_mode','vaccine_type','dose','days','VE','VE_internal') %>%
-  mutate(VE_days = VE * VE_internal/100)
+load( file = '1_inputs/VE_waning_distribution.Rdata')
+part_one = VE_waning_distribution[VE_waning_distribution$outcome %in% c('any_infection','symptomatic_disease') &
+                                    VE_waning_distribution$waning == waning_toggle_acqusition,]
+part_two = VE_waning_distribution[VE_waning_distribution$outcome %in% c('severe_disease','death') &
+                                    VE_waning_distribution$waning == waning_toggle_severe_outcome,]
+VE_waning_distribution = rbind(part_one,part_two)
+rm(part_one,part_two)
 
 VE =  crossing(dose = c(1:num_vax_doses),
                vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
                age_group = age_group_labels,
                VE = c(0)) 
 if ((date_start - vaccine_coverage_delay[d])>= min(vaccination_history_POP$date)){
-  VE = VE_inital = VE_time_step(strain_inital,date_start,'acquisition')
-  VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
+  VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
+  #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
 }
 #___________________________________________________________________
 

@@ -137,7 +137,7 @@ severe_outcome_FINAL = rbind(severe_outcome_FINAL,YLL_row)
 severe_outcome_FINAL = severe_outcome_FINAL %>%
   mutate(outcome_VE = case_when(
     outcome %in% c('death','YLL') ~ 'death',
-    outcome %in% c('hosp','severe_disease') ~ 'hospitalisation'
+    outcome %in% c('hosp','severe_disease') ~ 'severe_disease'
   ))
 
 ggplot() + 

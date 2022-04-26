@@ -8,7 +8,7 @@ time.start=proc.time()[[3]]
 #(A/B) calculate VE against severe outcomes by day
 if (ticket == 1 | vax_strategy_plot == "on"){ #only have to run when vax strategy changing
   VE_tracker = data.frame()
-  for (outcome in c('death','hospitalisation')){
+  for (outcome in c('death','severe_disease')){
     for (day in 1:(model_weeks*7) ){
       workshop = VE_time_step(strain_inital,date_start+day,outcome)
       workshop = workshop %>% mutate(date=day,

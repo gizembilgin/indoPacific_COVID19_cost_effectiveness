@@ -52,7 +52,7 @@ for (increments_number in 1:num_time_steps){
     } #i.e. assume after end date that NPI constant
     
     if ((date_now - min(vaccine_coverage_delay))>= min(vaccination_history_FINAL$date)){
-      parameters$VE = VE_time_step(strain,date_now,'acquisition')
+      parameters$VE = VE_time_step(strain,date_now,'any_infection')
     }
     #parameters$rho = rho_time_step(strain,date_now)
     
