@@ -54,7 +54,7 @@ for (i in 1:length(target_list)){
   this_vax_strategy$vax_strategy_num_doses = as.integer(workshop_doses)
   this_vax_strategy$vax_age_strategy = "adults_then_children"
   
-  queue[[(2+i)]] = list(vax_strategy_description = paste('current then expand to children',target_percentage,'%'),
+  queue[[(2+i)]] = list(vax_strategy_description = paste('current then expand to children ',target_percentage,'%',sep=''),
                         vax_strategy_toggles = this_vax_strategy) 
 }
 
@@ -73,7 +73,7 @@ for (i in 1:length(target_list)){
   this_vax_strategy$vax_strategy_num_doses = as.integer(workshop_doses)
   this_vax_strategy$vax_age_strategy = "uniform"
   
-  queue[[(5+i)]] = list(vax_strategy_description = paste('expand to children now',target_percentage,'%',sep=''),
+  queue[[(5+i)]] = list(vax_strategy_description = paste('expand to children now ',target_percentage,'%',sep=''),
                     vax_strategy_toggles = this_vax_strategy) 
 }
 
@@ -149,13 +149,15 @@ baseline_to_compare = "current vaccination targets (51.6%)"
   averted_table = warehouse_table[warehouse_table$scenario != baseline_to_compare,]
   averted_table_rel = averted_table
   for (i in 1:(length(queue)-1)){
-    averted_table[i,c(1:length(unique(warehouse_plot$outcome)))] = 
-      warehouse_table[warehouse_table$scenario == baseline_to_compare,c(1:length(unique(warehouse_plot$outcome)))] -
-      averted_table[i,c(1:length(unique(warehouse_plot$outcome)))] 
+    end = (length(unique(warehouse_plot$outcome))+1)
+    averted_table[i,c(2:end)] = 
+      warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)] -
+      averted_table[i,c(2:end)] 
     
-    averted_table_rel[i,c(1:length(unique(warehouse_plot$outcome)))] = 100 * averted_table[i,c(1:length(unique(warehouse_plot$outcome)))]/
-      warehouse_table[warehouse_table$scenario == baseline_to_compare,c(1:length(unique(warehouse_plot$outcome)))]
+    averted_table_rel[i,c(2:end)] = 100 * averted_table[i,c(2:end)]/
+      warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)]
   }
+    
   
 for (section in 1:3){
   list_plot_commands = section_list[[section]]  
@@ -172,7 +174,7 @@ results_warehouse_entry[[4]]= scenario_table_list
 
 #____________________________________________________________________________________________________________________________________
 
-results_warehouse[[2]] = results_warehouse_entry
+results_warehouse[[receipt]] = results_warehouse_entry
 
 
 #COMEBACK - how can current vaccine target be better than increased coverage??

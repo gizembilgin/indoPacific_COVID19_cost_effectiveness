@@ -8,7 +8,8 @@
 time.start.FleetAdmiral=proc.time()[[3]]
 results_warehouse = list()
 
-
+waning_toggle_acqusition = TRUE
+waning_toggle_severe_outcome = TRUE
 
 if (setting == "SLE"){
   gov_target = 0.516
@@ -43,27 +44,37 @@ if (setting == "SLE"){
     )
 } else { stop ('pick a valid setting!')}
 
-
+current_coverage = c(sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose ==1]),
+                     sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose ==2])) #COMEBACK - if J&J in use!
+if ("Johnson & Johnson" %in% unique(vaccination_history_POP$vaccine_type)){warning('True vaccine coverage MUST consider J&J dose 1')}
 
 
 ###(1/4) Impact of current program targets
+receipt = 1
 source(paste(getwd(),"/(run 1)_impact_of_current_program_targets.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
 ### (2) Varying levels of coverage - w and w/out children
+receipt = 2
 outbreak_post_rollout = "off" 
 #Note: roll-out must be during outbreak, otherwise waning immunity makes vaccinating kids look like a bad idea
+source(paste(getwd(),"/(run 2)_varying_coverage.R",sep=""))
+
+receipt = 3
+outbreak_post_rollout = "on" 
 source(paste(getwd(),"/(run 2)_varying_coverage.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
 ### (3) Varying speed of vaccine roll-out
+receipt = 4
 source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
 ### (4) Other sensitivity analysis
+receipt = 4
 #COMEBACK - need to code/decide
 #________________________________________________________________________________________________________________
 

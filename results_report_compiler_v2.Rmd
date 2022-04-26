@@ -39,14 +39,17 @@ NOTE: The setting for this run is: `r paste(setting)`
 
 Unless otherwise specified, key model parameters in this run are:  
 
-Variable | Value | Rational
+Variable | Value | Source
 ---------|--------|--------
 Circulating strain | `r paste(strain_inital)`|
 Length of model run | `r paste(model_weeks)`|
+Current vaccine coverage | dose one: `r paste(round(current_coverage[1]),'%',sep='')`; dose two: `r paste(round(current_coverage[2]),'%',sep='')`| John Hopkins COVID-19 vaccination data
 Current vaccine coverage target | `r paste(gov_target)` | Government target in COVAX documentation May 2021
-Proportion of population willing to be vaccinated | `r paste(vax_strategy_toggles$vax_strategy_max_expected_cov)`|Survey estimating vaccine acceptance in January 2021 (Solis et al., 2021)
-Daily capacity for vaccination (doses) | `r paste(vax_strategy_toggles$vax_strategy_roll_out_speed)` | Slightly lower than the pilot vaccination campaign October-November 2021 
-Anticipated type of future vaccine doses| `r paste(vax_strategy_toggles$vax_strategy_vaccine_type)` | The Government of Sierra Leone has demonstrated a strong preference for this vaccine, negotiating with major donors, such as the Government of Italy, to change their donations of double-dose vaccines (such as Pfizer) to Janssen vaccines for ease of deployment 
+Proportion of population willing to be vaccinated | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov)`|Survey estimating vaccine acceptance in January 2021 (Solis et al., 2021)
+Daily capacity for vaccination (doses) | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_roll_out_speed)` | Slightly lower than the pilot vaccination campaign October-November 2021 
+Anticipated type of future vaccine doses| `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type)` | The Government of Sierra Leone has demonstrated a strong preference for this vaccine, negotiating with major donors, such as the Government of Italy, to change their donations of double-dose vaccines (such as Pfizer) to Janssen vaccines for ease of deployment 
+Waning of VE against acquisition | `r paste(waning_toggle_acqusition)`|
+Waning of VE against severe disease | `r paste(waning_toggle_severe_outcome)`|
 
 **Other assumptions/limitations:**
 
@@ -70,8 +73,8 @@ Roll out of current program target (51.6% coverage) during or prior to an outbre
 ```{r echo=FALSE , fig.width=10,fig.height=5}
 
 results_warehouse[[1]][[3]]
-kable(results_warehouse[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
-kable(results_warehouse[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
+kable(results_warehouse[[1]][[4]]$absolute, caption = 'Absolute difference in outcomes (compared to no further vaccine roll-out)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[1]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
 ```
 
 ***
@@ -81,24 +84,41 @@ kable(results_warehouse[[3]][[4]]$relative, caption = 'Relative difference in ou
 ```{r echo=FALSE, fig.width=10,fig.height=5}
 
 results_warehouse[[2]][[3]][[1]]
-kable(results_warehouse[[2]][[4]][[1]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
-kable(results_warehouse[[2]][[4]][[1]]$relative, caption = 'Relative difference in outcomes',digits=2)
+kable(results_warehouse[[2]][[4]][[1]]$absolute, caption = 'Absolute difference in outcomes (compared to current vaccine targets)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[2]][[4]][[1]]$relative, caption = 'Relative difference in outcomes (%)',digits=2)
 ```
-## Expanding eligibility to children
-Note: This section runs the roll-out DURING an outbreak. Otherwise waning immunity makes ever vaccinating kids look like a bad idea.
+## Expanding eligibility to children (DURING an outbreak)
+
 ### Run current vaccine campaign, then expand to children
 ```{r echo=FALSE, fig.width=10,fig.height=5}
-
 results_warehouse[[2]][[3]][[2]]
-kable(results_warehouse[[2]][[4]][[2]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
-kable(results_warehouse[[2]][[4]][[2]]$relative, caption = 'Relative difference in outcomes',digits=2)
+kable(results_warehouse[[2]][[4]][[2]]$absolute, caption = 'Absolute difference in outcomes (compared to current vaccine targets)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[2]][[4]][[2]]$relative, caption = 'Relative difference in outcomes (%)',digits=2)
 ```
 ### Expand to children now
 ```{r echo=FALSE, fig.width=10,fig.height=5}
 
 results_warehouse[[2]][[3]][[3]]
-kable(results_warehouse[[2]][[4]][[3]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
-kable(results_warehouse[[2]][[4]][[3]]$relative, caption = 'Relative difference in outcomes',digits=2)
+kable(results_warehouse[[2]][[4]][[3]]$absolute, caption = 'Absolute difference in outcomes (compared to current vaccine targets)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[2]][[4]][[3]]$relative, caption = 'Relative difference in outcomes (%)',digits=2)
+```
+
+## Expanding eligibility to children (PRIOR TO an outbreak)
+Note: If waning immunity against severe outcomes ON, this looks like a bad idea.
+
+### Run current vaccine campaign, then expand to children
+```{r echo=FALSE, fig.width=10,fig.height=5}
+workshop = 3
+results_warehouse[[workshop]][[3]][[2]]
+kable(results_warehouse[[workshop]][[4]][[2]]$absolute, caption = 'Absolute difference in outcomes (compared to current vaccine targets)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[workshop]][[4]][[2]]$relative, caption = 'Relative difference in outcomes (%)',digits=2)
+```
+### Expand to children now
+```{r echo=FALSE, fig.width=10,fig.height=5}
+workshop = 3
+results_warehouse[[workshop]][[3]][[3]]
+kable(results_warehouse[[workshop]][[4]][[3]]$absolute, caption = 'Absolute difference in outcomes (compared to current vaccine targets)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[workshop]][[4]][[3]]$relative, caption = 'Relative difference in outcomes (%)',digits=2)
 ```
 ***
 
@@ -106,9 +126,9 @@ kable(results_warehouse[[2]][[4]][[3]]$relative, caption = 'Relative difference 
 This section models varying speeds of vaccine roll-out *DURING* an outbreak.
 ```{r echo=FALSE, fig.width=10,fig.height=5}
 
-results_warehouse[[3]][[3]]
-kable(results_warehouse[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes',digits=0,format.args = list(big.mark = ","))
-kable(results_warehouse[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2)
+results_warehouse[[4]][[3]]
+kable(results_warehouse[[4]][[4]]$absolute, caption = 'Absolute difference in outcomes (compared to current rollout speed)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse[[4]][[4]]$relative, caption = 'Relative difference in outcomes (%)',digits=2)
 ```
 
 

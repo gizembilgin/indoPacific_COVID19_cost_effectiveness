@@ -108,15 +108,17 @@ annotate_figure(plot, top = text_grob('absolute outcome by scenario', face = 'bo
 results_warehouse_entry[[3]]= plot
 
 #(B/B) cumulative outcome table
-averted_table = warehouse_table[warehouse_table$scenario != 'baseline - current roll-out',]
+baseline_to_compare = 'baseline - current roll-out'
+averted_table = warehouse_table[warehouse_table$scenario != baseline_to_compare,]
 averted_table_rel = averted_table
 for (i in 1:(length(queue)-1)){
-  averted_table[i,c(1:length(unique(warehouse_plot$outcome)))] = 
-    warehouse_table[warehouse_table$scenario == 'baseline - current roll-out',c(1:length(unique(warehouse_plot$outcome)))] -
-    averted_table[i,c(1:length(unique(warehouse_plot$outcome)))] 
+  end = (length(unique(warehouse_plot$outcome))+1)
+  averted_table[i,c(2:end)] = 
+    warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)] -
+    averted_table[i,c(2:end)] 
   
-  averted_table_rel[i,c(1:length(unique(warehouse_plot$outcome)))] = 100 * averted_table[i,c(1:length(unique(warehouse_plot$outcome)))]/
-    warehouse_table[warehouse_table$scenario == 'baseline - current roll-out',c(1:length(unique(warehouse_plot$outcome)))]
+  averted_table_rel[i,c(2:end)] = 100 * averted_table[i,c(2:end)]/
+    warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)]
 }
 table_list = list(absolute = averted_table, 
                   relative = averted_table_rel) #COMEBACK could be merged
@@ -126,5 +128,5 @@ results_warehouse_entry[[4]]= table_list
 
 #____________________________________________________________________________________________________________________________________
 
-results_warehouse[[3]] = results_warehouse_entry
+results_warehouse[[receipt]] = results_warehouse_entry
 
