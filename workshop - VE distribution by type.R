@@ -1,14 +1,15 @@
 ## checking distribution provided by NG consistent between strains
 
-outcome = 'acquisition'
+outcome = 'hospitalisation'
 
-strain_test = 'delta'
+strain_test = 'omicron'
 
 workshop <- VE_together[VE_together$outcome == outcome &
                                  VE_together$strain == strain_test,]
+workshop <- VE_together[VE_together$strain == strain_test,]
 
 workshop <- workshop %>%
-  group_by(vaccine_type,dose) %>%
+  group_by(vaccine_type,outcome,dose) %>%
   mutate(VE_internal = ve_predict_mean / max(ve_predict_mean),
          immunity=paste(vaccine_type,dose))
 

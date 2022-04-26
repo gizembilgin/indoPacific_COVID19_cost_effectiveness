@@ -1,3 +1,9 @@
+#This program creates point estimates of VE by dose, vaccine_type, outcome and strain
+
+# strains =  "delta"   "omicron"
+# outcomes = "any_infection"       "death"               "severe_disease"      "symptomatic_disease"
+# vaccine type = "AstraZeneca"       "Johnson & Johnson" "Moderna"           "Pfizer"            "Sinopharm"         "Sinovac"     
+
 
 require(tidyverse); require(readr);require(ggplot2);require(ggpubr)
 
@@ -316,6 +322,19 @@ VE_estimates_imputed = workshop %>%
     vaccine_type == "Pfizer" ~ "Pfizer-BioNTech Comirnaty (BNT162b2)",
     vaccine_type == "Sinopharm" ~ "Sinopharm BIBP vaccine",
     vaccine_type == "Sinovac" ~ "Sinovac Biotech CoronaVac"         
+  ),
+  vaccine_mode = case_when(
+      vaccine_type == 'Pfizer' ~ 'mRNA',
+      vaccine_type == 'Moderna' ~ 'mRNA',
+      vaccine_type == 'AstraZeneca' ~ 'viral',
+      vaccine_type == 'Sinopharm' ~ 'viral',
+      vaccine_type == 'Sinovac' ~ 'viral',
+      vaccine_type == 'Johnson & Johnson' ~ 'viral'
+    ),
+  outcome_family = case_when(
+    outcome %in% c('any_infection','symptomatic_disease') ~ 'acquisition',
+    outcome %in% c('severe_disease','death') ~ 'severe_outcome'
+    
   ))
 
 strain = 'delta'
@@ -339,3 +358,9 @@ plot = ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]],
 #annotate_figure(plot, top = text_grob(paste('VE estimates against',strain), size = 18))
 plot
 
+
+
+
+##### send to Cromer et al.
+# VE_severe_outcome_estimates_FINAL = VE_estimates_imputed[VE_estimates_imputed$outcome %in% c('death','severe_disease'), ]
+# write.csv(VE_severe_outcome_estimates_FINAL, file = 'x_results/VE_severe_outcome.Rdata')

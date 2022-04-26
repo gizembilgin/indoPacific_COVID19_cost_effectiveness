@@ -84,7 +84,7 @@ VE_time_step <- function(strain_now,date_now,outcome){
   # VE_result <- VE_result %>%
   #   arrange(vaccine_type)
   # VE_result <- VE_result[,-c(1)]
-  # VE_result[is.na(VE_result)] <-0 #J&J second dose correction
+  workshop[is.na(workshop)] <-0 #J&J second dose correction
   
   ##instead retain tidy form
   VE_tidy = workshop
