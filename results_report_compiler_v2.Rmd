@@ -44,12 +44,14 @@ Variable | Value | Source
 Circulating strain | `r paste(strain_inital)`|
 Length of model run | `r paste(model_weeks)`|
 Current vaccine coverage | dose one: `r paste(round(current_coverage[1]),'%',sep='')`; dose two: `r paste(round(current_coverage[2]),'%',sep='')`| John Hopkins COVID-19 vaccination data
-Current vaccine coverage target | `r paste(gov_target)` | Government target in COVAX documentation May 2021
-Proportion of population willing to be vaccinated | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov)`|Survey estimating vaccine acceptance in January 2021 (Solis et al., 2021)
+Current vaccine coverage target | `r paste(gov_target*100,'%',sep='')` | Government target in COVAX documentation May 2021
+Proportion of population willing to be vaccinated | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov*100,'%',sep='')`|Survey estimating vaccine acceptance in January 2021 (Solis et al., 2021)
 Daily capacity for vaccination (doses) | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_roll_out_speed)` | Slightly lower than the pilot vaccination campaign October-November 2021 
 Anticipated type of future vaccine doses| `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type)` | The Government of Sierra Leone has demonstrated a strong preference for this vaccine, negotiating with major donors, such as the Government of Italy, to change their donations of double-dose vaccines (such as Pfizer) to Janssen vaccines for ease of deployment 
 Waning of VE against acquisition | `r paste(waning_toggle_acqusition)`|
 Waning of VE against severe disease | `r paste(waning_toggle_severe_outcome)`|
+Waning of infection-derived immunity against acquisition | `r paste(waning_toggle_rho_acqusition)`|
+Waning of infection-derived immunity against severe outcomes | Not yet included |
 
 **Other assumptions/limitations:**
 
@@ -136,4 +138,42 @@ kable(results_warehouse[[4]][[4]]$relative, caption = 'Relative difference in ou
 
 # Sensitivity analysis (TBC)
 
+***
+
+# Appendix - parameter estimates
+
+<font size="5"> **Vaccine effectiveness estimates** </font>
+
+<font size="4"> **Point estimates by type, dose and outcome** </font>
+```{r echo=FALSE, fig.width=12,fig.height=7}
+plot_VE_point_estimates
+```
+
+<font size="4"> **Duration of protection (shape of waning immunity)** </font>
+
+```{r echo=FALSE, fig.width=10,fig.height=5}
+waning_shape_plot_list[[1]]
+if (waning_toggle_severe_outcome == TRUE){
+  waning_shape_plot_list[[3]]
+  waning_shape_plot_list[[2]]
+}
+```
+
+<font size="4"> **Infection-derived immunity estimate** </font>
+
+Rho initial: `r paste(rho_inital)`
+
+<font size="4"> **Seroprevalence**  </font>
+```{r echo=FALSE}
+row.names(seroprev) <- c()
+kable(seroprev[,c(3,4)])
+```
+
+<font size="4"> **Other key parameters**  </font>
+
+Variable | Value | Source
+---------|--------|--------
+Seed of outbreak (initially infected) |  `r paste(seed, 'individuals')`|
+Delay from first dose to protection |`r paste(vaccine_coverage_delay_1,'days')` |
+Delay from second dose to protection |`r paste(vaccine_coverage_delay_2,'days')` |
 ***
