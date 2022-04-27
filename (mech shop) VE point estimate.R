@@ -337,7 +337,7 @@ VE_estimates_imputed = workshop %>%
     
   ))
 
-strain = 'delta'
+strain = 'omicron'
 to_plot = VE_estimates_imputed[VE_estimates_imputed$strain == strain &VE_estimates_imputed$dose !=3,]
 
 plot_list = list()
@@ -352,11 +352,11 @@ for (i in 1:length(unique(to_plot$outcome))){
     ylab("") + 
     labs(title=paste("VE against ",outcome,sep=""))
 }
-plot = ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]],
+plot_VE_point_estimates = ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]],
           common.legend = TRUE,
           legend="bottom")
 #annotate_figure(plot, top = text_grob(paste('VE estimates against',strain), size = 18))
-plot
+plot_VE_point_estimates
 
 
 

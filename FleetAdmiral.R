@@ -9,7 +9,8 @@ time.start.FleetAdmiral=proc.time()[[3]]
 results_warehouse = list()
 
 waning_toggle_acqusition = TRUE
-waning_toggle_severe_outcome = TRUE
+waning_toggle_severe_outcome = FALSE
+waning_toggle_rho_acqusition = FALSE
 
 if (setting == "SLE"){
   gov_target = 0.516
@@ -74,7 +75,7 @@ source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
 
 
 ### (4) Other sensitivity analysis
-receipt = 4
+receipt = 5
 #COMEBACK - need to code/decide
 #________________________________________________________________________________________________________________
 

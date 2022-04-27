@@ -35,23 +35,25 @@ apply_distribution = VE_estimates_imputed %>% left_join(load_distribution, by = 
 
 ###(3/3) Plot distributions and save VE_waning_distribution
 #(A/B) Plot
-workshop = apply_distribution %>%
+waning_to_plot = apply_distribution %>%
   filter(dose < 3) %>%
+  filter(vaccine_type %in% vax_type_list) %>%
+  filter(outcome %in% c('any_infection','severe_disease','death')) %>%
   mutate(immunity = paste(vaccine_type,dose))
 # 
-# workshop = no_waning %>%
+# waning_to_plot = no_waning %>%
 #   filter(dose < 3) %>%
 #   mutate(immunity = paste(vaccine_type,dose))
 
 strain_test = 'omicron'
 
-plot_list = list()
+waning_shape_plot_list = list()
 
-for (i in 1:length(unique(workshop$outcome))){
-  proj_outcome = unique(workshop$outcome)[i]
+for (i in 1:length(unique(waning_to_plot$outcome))){
+  proj_outcome = unique(waning_to_plot$outcome)[i]
   
-  plot_list[[i]]  <- ggplot() +
-    geom_line(data=workshop[workshop$outcome == proj_outcome & workshop$strain == strain_test,],
+  waning_shape_plot_list[[i]]  <- ggplot() +
+    geom_line(data=waning_to_plot[waning_to_plot$outcome == proj_outcome & waning_to_plot$strain == strain_test,],
               aes(x=days,y=VE_days,color=as.factor(immunity)),na.rm=TRUE) +
     labs(title=(paste("Waning of VE against",proj_outcome,"(",strain_test,')'))) +
     xlab("days since vaccination") +
@@ -61,7 +63,7 @@ for (i in 1:length(unique(workshop$outcome))){
     theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
   
 }
-plot_list
+waning_shape_plot_list
 
 #(B/B) Save
 waning = apply_distribution %>% mutate(waning = TRUE)

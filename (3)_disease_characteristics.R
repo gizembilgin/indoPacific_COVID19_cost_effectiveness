@@ -50,7 +50,7 @@ if (strain_inital == 'delta' | strain_inital == 'WT'){
   rho = mean(immunity_from_infection$ve_predict_mean[immunity_from_infection$outcome == "acquisition" &
                                                        immunity_from_infection$strain == 'omicron' & immunity_from_infection$days<=lengthInfectionDerivedImmunity])
 }
-rho = 0.9 #COMEBACK - need actual value!
+rho_inital = 0.9 #COMEBACK - need actual value!
 #rho = rho_time_step(strain_inital,date_start)
 
 
