@@ -3,7 +3,7 @@
 ### COMEBACK count = 5
 
 
-###### (1/4) Vaccination
+###### (1/5) Vaccination
 #(A/B) Coverage 
 #(i/iv) Delay
 vaccine_coverage_delay_1 = 21 #number of days till protection from first dose, COMEBACK - J&J full protection after 14 days? (single dose vaccine)
@@ -178,7 +178,7 @@ if ((date_start - vaccine_coverage_delay[d])>= min(vaccination_history_POP$date)
 
 
 
-###### (2/4) Seroprevalence
+###### (2/5) Seroprevalence
 load(file = "1_inputs/seroprev.Rdata")
 seroprev = seroprev[seroprev$setting == setting & seroprev$year == 
                       as.numeric(format(date_start, format="%Y")),]
@@ -190,7 +190,7 @@ if (as.numeric(format(date_start, format="%Y")) > 2022){
 
 
 
-###### (3/4) NPI
+###### (3/5) NPI
 if (NPI_toggle == 'stringency'){ NPI_estimates = NPI_estimates_full[,-c(3)]
 } else if (NPI_toggle == 'contain_health'){ NPI_estimates = NPI_estimates_full[,-c(2)]}
 colnames(NPI_estimates) <- c('date','NPI')
@@ -212,14 +212,35 @@ NPI = NPI_inital = as.numeric(NPI_inital)/100
 
 
 
-###### (4/4) Hence, initial state
+###### (4/5) Risk groups
+#load distribution by age of risk groups 
+risk_group_list = list('general public')
+if (num_risk_groups>1){
+  #COMEBACK_RISK these are DUMMY VALUES (~DHS fertility rate)
+  risk_dn = read.csv('1_inputs/risk_group.csv')
+  if( risk_group_toggle %in% c('pregnant_women','comorbidities')){
+    risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_toggle,]
+  } else (stop('risk_group_toggle not a valid value'))
+  risk_dn = risk_dn %>%
+    mutate(age_group = gsub(' to ','-',age_group)) %>%
+    select(age_group,prop)
+  risk_group_list[[2]] = risk_group_toggle
+}
+
+#________________________________________________________________
+
+
+
+###### (5/5) Hence, initial state
 #(A/F): intialise classes
 J=num_age_groups
 T=num_vax_types
 D=num_vax_doses
+RISK=num_risk_groups
 A=J*(T*D+1) # +1 is unvax
 
-S_inital=E_inital=I_inital=R_inital=Incidence_inital=(rep(0,A))
+S_inital=E_inital=I_inital=R_inital=(rep(0,A)) #bit less as will multiply by RISK later
+Incidence_inital=(rep(0,A*RISK))
 
 
 #(B/F): number of active infected/recovered cases
@@ -279,6 +300,7 @@ for (num in 1:num_disease_classes){
   state_tidy$temp = seq(1,(num_age_groups*num_vax_classes))
   state_tidy$age_group = rep(age_group_labels,num_vax_classes)
   state_tidy$dose = 0
+  state_tidy$risk_group = 'general public'
   state_tidy$vaccine_type = "unvaccinated"
   for (d in 1:num_vax_doses){
     state_tidy$dose[state_tidy$temp %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
@@ -324,8 +346,34 @@ for (num in 1:num_disease_classes){
   state_TIDY = rbind(state_TIDY,state_tidy)
 }    
 
+if (num_risk_groups>1){
+  state_TIDY = state_TIDY %>% left_join(risk_dn)
+  
+  not_at_risk = state_TIDY
+  not_at_risk = not_at_risk %>%
+    mutate(state_inital=state_inital*(1-prop))
+  
+  
+  at_risk = state_TIDY
+  at_risk$risk_group = risk_group_toggle
+  at_risk = at_risk %>%
+    mutate(state_inital=state_inital*prop)
+  
+  
+  workshop = rbind(not_at_risk,at_risk)
+  
+  workshop$class = factor(workshop$class, levels = disease_class_list)
+  workshop$risk_group = factor(workshop$risk_group, levels = c('general public',risk_group_toggle))
+  workshop$vaccine_type = factor(workshop$vaccine_type, levels = vax_type_list)
+  workshop$age_group = factor(workshop$age_group, levels = age_group_labels)
+  
+  state_TIDY = workshop %>% arrange(class,risk_group,dose,vaccine_type,age_group)
+  
+}
+
 #Step Five: construct silly array that ODE solver requires
 state=c(state_TIDY$state_inital,Incidence_inital) 
-sum(state); sum(pop) #CHECK = confirmed equal
+
+if (sum(state) != sum(pop)){stop('inital state doesnt align with population size!')}
 
 
