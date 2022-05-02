@@ -40,7 +40,7 @@ if(outbreak_post_rollout == "on"){
 strain_inital = 'omicron'             #options:'WT','delta','omicron'
 model_weeks = 52          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
-seed = 0.001
+
 
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
@@ -76,13 +76,15 @@ if (setting != prev_setting){source(paste(getwd(),"/(1)_simulate_setting.R",sep=
 prev_setting = setting                             
 
 #making some interim variables to assist with configuring states
-seed = sum(pop)*seed
+seed = 0.001*sum(pop)
+num_risk_groups = 2                                     # if >1 then a risk group, either pregnant women or comorbidities included
+risk_group_toggle = "pregnant_women"
 num_disease_classes = 4                                 # SEIR 
 num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
 vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
-num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes) #+1 for incidence tracker
+num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes)*num_risk_groups #+1 for incidence tracker
 
 
 
@@ -190,4 +192,4 @@ grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
 
 time.end=proc.time()[[3]]
 time.end-time.start 
-## current runtime (23/03) 50 seconds for 10 weeks
+## current runtime (23/03) 3 minutes for 52 weeks

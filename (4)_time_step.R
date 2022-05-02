@@ -23,14 +23,16 @@ parameters = c(
   VE=VE,
   # VE_onwards=VE_onwards,
   num_age_groups=num_age_groups,
+  num_risk_groups = num_risk_groups,
   num_disease_classes = num_disease_classes,
   num_vax_types=num_vax_types,
   num_vax_doses=num_vax_doses)
 
 
 Reff_tracker = data.frame()
+
+
 for (increments_number in 1:num_time_steps){
-  #for (increments_number in 231){
   
   if (increments_number == 1){
     
@@ -63,7 +65,7 @@ for (increments_number in 1:num_time_steps){
     state_working=as.vector(state_working)
     
     # lets reconstruct our matrix (easier to work with)
-    A=J*(T*D+1) # +1 is unvax
+    A=RISK*J*(T*D+1) # +1 is unvax
     
     S = as.matrix(state_working[1:A])
     E = as.matrix(state_working[(A+1):(2*A)])
@@ -76,12 +78,13 @@ for (increments_number in 1:num_time_steps){
     prev_state = data.frame()
     class_list = list(S,E,I,R)
     class_name_list = c('S','E','I','R')
+    #HERE!!!
     for (i in 1:num_disease_classes){
       workshop = data.frame(t(class_list[[i]]))
       colnames(workshop) = c('pop')
       workshop$class = class_name_list[i]
-      workshop$temp = seq(1,(num_age_groups*num_vax_classes))
-      workshop$age_group = rep(age_group_labels,num_vax_classes)
+      workshop$temp = rep(seq(1,(num_age_groups*num_vax_classes)),RISK)
+      workshop$age_group = rep(age_group_labels,num_vax_classes*RISK)
       workshop$dose = 0
       workshop$vaccine_type = "unvaccinated"
       for (d in 1:num_vax_doses){
@@ -90,76 +93,90 @@ for (increments_number in 1:num_time_steps){
           workshop$vaccine_type[workshop$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
         }
       }
+      workshop$risk_group = 'general public'
+      if (RISK>1){
+        workshop$risk_group[(num_age_groups*num_vax_classes+1):(num_age_groups*num_vax_classes*2)] = risk_group_toggle
+      }
       prev_state = rbind(prev_state,workshop)
     }
-    sum(prev_state$pop); sum(pop)
+    if (round(sum(prev_state$pop))!= sum(pop)){stop('prev state not equal to pop size! (~line 100 in time step)')}
     
     next_state=prev_state # initialise next state
     
     
     ### VACCINATION
-    for (t in 1:num_vax_types){ #iterating over vaccine types
-      this_vax = vax_type_list[t]
-      
-      this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax,]
-      
-      # (1/3) recorded vax
-      #COMEBACK delay of J&J first does is 21 days, is this right?
-      #COMEBACK cleaner code in ACT
-      
-      if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_1,]) >0){
-        dose_one <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_1 & this_vax_history$dose==1,]
-      }else { dose_one = crossing(date = date_now,
-                                  vaccine_type = this_vax,
-                                  vaccine_mode = 'dummy',
-                                  dose =1,
-                                  coverage_this_date = NA,
-                                  doses_delivered_this_date = 0,
-                                  age_group = age_group_labels)} #COMEBACK is this necessary?
-      
-      if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_2,]) >0){
-        dose_two <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_2 & this_vax_history$dose==2,]
-      }  else { dose_two = crossing(date = date_now,
-                                    vaccine_type = this_vax,
-                                    vaccine_mode = 'dummy',
-                                    dose =2,
-                                    coverage_this_date = NA,
-                                    doses_delivered_this_date = 0,
-                                    age_group = age_group_labels)}
-      if (this_vax == "Johnson & Johnson") {dose_two$doses_delivered_this_date = 0}
-      
-      VR_this_step = rbind(dose_one,dose_two)
-      
-      for (i in 1:num_age_groups){ # across age groups
-        increase_one = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 1 & VR_this_step$age_group == age_group_labels[i]] 
-        increase_two = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 2 & VR_this_step$age_group == age_group_labels[i]] 
-        
-        for (j in 1:4){ #let's assume all SEIR vaccinated
-          #COMEBACK better in ACT
-          class=class_name_list[j]
-          
-          # prop unvax in SEIR
-          prop1 = prev_state$pop[prev_state$class == class & prev_state$vaccine_type == "unvaccinated" & prev_state$age_group == age_group_labels[i]]/
-            sum(prev_state$pop[prev_state$vaccine_type == "unvaccinated" & prev_state$age_group == age_group_labels[i]])
-          
-          # prop dose one
-          prop2 = prev_state$pop[prev_state$class == class & prev_state$vaccine_type == vax_type_list[t] & prev_state$dose == 1 & prev_state$age_group == age_group_labels[i]]/
-            sum(prev_state$pop[prev_state$vaccine_type == vax_type_list[t] & prev_state$dose == 1 & prev_state$age_group == age_group_labels[i]])
-          
-          if (is.nan(prop1) == TRUE){prop1=0}
-          if (is.nan(prop2) == TRUE){prop2=0}
-          
-          next_state$pop[next_state$class == class & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] =
-            next_state$pop[next_state$class == class & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] - increase_one*prop1
-          
-          next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & next_state$dose == 1 & next_state$age_group == age_group_labels[i]] =
-            next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & next_state$dose == 1 & next_state$age_group == age_group_labels[i]] + increase_one*prop1-increase_two*prop2
-          
-          next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & next_state$dose == 2 & next_state$age_group == age_group_labels[i]] =
-            next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & next_state$dose == 2 & next_state$age_group == age_group_labels[i]] + increase_two * prop2
-        }
-      }
-    }
+
+   for (t in 1:num_vax_types){ #iterating over vaccine types
+     this_vax = vax_type_list[t]
+     
+     this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax,]
+     
+     # (1/3) recorded vax
+     #COMEBACK delay of J&J first does is 21 days, is this right?
+     #COMEBACK cleaner code in ACT
+     
+     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_1,]) >0){
+       dose_one <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_1 & this_vax_history$dose==1,]
+     }else { dose_one = crossing(date = date_now,
+                                 vaccine_type = this_vax,
+                                 vaccine_mode = 'dummy',
+                                 dose =1,
+                                 coverage_this_date = NA,
+                                 doses_delivered_this_date = 0,
+                                 age_group = age_group_labels)} #COMEBACK is this necessary?
+     
+     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_2,]) >0){
+       dose_two <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_2 & this_vax_history$dose==2,]
+     }  else { dose_two = crossing(date = date_now,
+                                   vaccine_type = this_vax,
+                                   vaccine_mode = 'dummy',
+                                   dose =2,
+                                   coverage_this_date = NA,
+                                   doses_delivered_this_date = 0,
+                                   age_group = age_group_labels)}
+     if (this_vax == "Johnson & Johnson") {dose_two$doses_delivered_this_date = 0}
+       
+       VR_this_step = rbind(dose_one,dose_two)
+       
+       for (r in 1:RISK){
+         this_risk_group = risk_group_list[[r]]   
+       for (i in 1:num_age_groups){ # across age groups
+         increase_one = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 1 & VR_this_step$age_group == age_group_labels[i]] 
+         increase_two = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 2 & VR_this_step$age_group == age_group_labels[i]] 
+         
+         if (RISK>1){
+           proportion = risk_dn$prop[risk_dn$age_group == age_group_labels[i]]
+           if (r == 1){        increase_one = increase_one * (1-proportion)
+           } else if (r == 2){ increase_one = increase_one * proportion}
+          }
+         
+         for (j in 1:4){ #let's assume all SEIR vaccinated
+           #COMEBACK better in ACT
+           class=class_name_list[j]
+           
+           # prop unvax in SEIR
+           prop1 = prev_state$pop[prev_state$class == class & prev_state$risk_group == this_risk_group & prev_state$vaccine_type == "unvaccinated" & prev_state$age_group == age_group_labels[i]]/
+             sum(prev_state$pop[prev_state$vaccine_type == "unvaccinated" & prev_state$risk_group == this_risk_group & prev_state$age_group == age_group_labels[i]])
+           
+           # prop dose one
+           prop2 = prev_state$pop[prev_state$class == class & prev_state$risk_group == this_risk_group & prev_state$vaccine_type == vax_type_list[t] & prev_state$dose == 1 & prev_state$age_group == age_group_labels[i]]/
+             sum(prev_state$pop[prev_state$risk_group == this_risk_group & prev_state$vaccine_type == vax_type_list[t] & prev_state$dose == 1 & prev_state$age_group == age_group_labels[i]])
+           
+           if (is.nan(prop1) == TRUE){prop1=0}
+           if (is.nan(prop2) == TRUE){prop2=0}
+           
+           next_state$pop[next_state$class == class & prev_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] =
+             next_state$pop[next_state$class == class & prev_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] - increase_one*prop1
+           
+           next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 1 & next_state$age_group == age_group_labels[i]] =
+             next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 1 & next_state$age_group == age_group_labels[i]] + increase_one*prop1-increase_two*prop2
+           
+           next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 2 & next_state$age_group == age_group_labels[i]] =
+             next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 2 & next_state$age_group == age_group_labels[i]] + increase_two * prop2
+         }
+       }
+     }
+  }
     
     if (seed_date != date_start & seed_date == date_now){
       seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
@@ -206,12 +223,21 @@ for (increments_number in 1:num_time_steps){
     #   }
     #}
     #next_state <- round(next_state,digits=0)
-    sum(next_state$pop); sum(prev_state$pop); sum(pop) # CHECK = confirmed equal
     
+    if (round(sum(next_state$pop))!= round(sum(prev_state$pop))){stop('pop not retained between next_state and prev_state!')}
+    if (round(sum(next_state$pop))!= sum(pop)) {stop('pop in next_state not equal to setting population')}
     if(nrow(next_state[round(next_state$pop)<0,])>0){ stop('issue in vaccination in (4)_time_step')}
     
     
     # convert back into silly vector form for ODE solver
+    workshop = next_state
+    workshop$class = factor(workshop$class, levels = disease_class_list)
+    workshop$risk_group = factor(workshop$risk_group, levels = risk_group_list)
+    workshop$vaccine_type = factor(workshop$vaccine_type, levels = vax_type_list)
+    workshop$age_group = factor(workshop$age_group, levels = age_group_labels)
+    
+    next_state = workshop %>% arrange(class,risk_group,dose,vaccine_type,age_group)
+    
     S_next=next_state$pop[next_state$class == 'S']
     E_next=next_state$pop[next_state$class == 'E']
     I_next=next_state$pop[next_state$class == 'I']
@@ -240,7 +266,8 @@ for (increments_number in 1:num_time_steps){
 J=num_age_groups
 T=num_vax_types
 D=num_vax_doses
-A=J*(T*D+1) # +1 is unvax
+RISK=num_risk_groups
+A=RISK*J*(T*D+1) # +1 is unvax
 
 #WEEKLY
 #Incid by age and vax class
@@ -281,16 +308,18 @@ check = check %>% select(S,E,I,R,Incid) %>%
 ### INCIDENCE LOG TIDY 
 workshop = subset(incidence_log_unedited, select=-c(time,daily_cases))
 
+
 workshop = pivot_longer(
   workshop,
-  cols = paste((num_disease_classes)*(num_age_groups*num_vax_classes)+1):paste((num_disease_classes+1)*(num_age_groups*num_vax_classes)),
+  cols = paste((num_disease_classes)*(num_age_groups*num_vax_classes)*RISK+1):paste((num_disease_classes+1)*(num_age_groups*num_vax_classes)*RISK),
   names_to = 'temp',
   values_to = 'incidence'
 )
-workshop$temp = as.numeric(workshop$temp) - (num_disease_classes)*(num_age_groups*num_vax_classes)
+workshop$temp = as.numeric(workshop$temp) - (num_disease_classes)*(num_age_groups*num_vax_classes)*RISK
 
+
+#HERE - ERROR need to align!
 workshop2=as.data.frame(unique(workshop$temp)); colnames(workshop2)=c('temp')
-
 workshop2$age_group = rep(age_group_labels,num_vax_classes) #smallest subdivision is age
 workshop2$dose = 0                                          #then dose
 workshop2$vaccine_type = "unvaccinated"                     #then vaccine type
@@ -302,6 +331,35 @@ for (d in 1:num_vax_doses){
 }
 #View(workshop2)
 #CHECKED: yes aligns as expected
+
+
+
+
+for (i in 1:num_disease_classes){
+  workshop = data.frame(t(class_list[[i]]))
+  colnames(workshop) = c('pop')
+  workshop$temp = rep(seq(1,(num_age_groups*num_vax_classes)),RISK)
+  workshop$age_group = rep(age_group_labels,num_vax_classes*RISK)
+  workshop$dose = 0
+  workshop$vaccine_type = "unvaccinated"
+  for (d in 1:num_vax_doses){
+    workshop$dose[workshop$temp %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
+    for (t in 1:num_vax_types){
+      workshop$vaccine_type[workshop$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
+    }
+  }
+  workshop$risk_group = 'general public'
+  if (RISK>1){
+    workshop$risk_group[(num_age_groups*num_vax_classes+1):(num_age_groups*num_vax_classes*2)] = risk_group_toggle
+  }
+  prev_state = rbind(prev_state,workshop)
+}
+
+
+
+
+
+
 
 incidence_log_tidy = workshop %>% left_join(workshop2)
 incidence_log_tidy = subset(incidence_log_tidy,select=-c(temp))

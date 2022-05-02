@@ -1,0 +1,15 @@
+risk_group_name,age_group,prop,source
+pregnant_women,0 to 4,0,DUMMY
+pregnant_women,5 to 17,0,DUMMY
+pregnant_women,18 to 29,0.1,DUMMY
+pregnant_women,30 to 44,0.075,DUMMY
+pregnant_women,45 to 59,0.025,DUMMY
+pregnant_women,60 to 69,0,DUMMY
+pregnant_women,70 to 100,0,DUMMY
+comorbidities,0 to 4,0,DUMMY
+comorbidities,5 to 17,0.05,DUMMY
+comorbidities,18 to 29,0.05,DUMMY
+comorbidities,30 to 44,0.1,DUMMY
+comorbidities,45 to 59,0.5,DUMMY
+comorbidities,60 to 69,0.8,DUMMY
+comorbidities,70 to 100,0.9,DUMMY
