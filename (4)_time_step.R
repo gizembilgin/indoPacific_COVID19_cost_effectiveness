@@ -300,9 +300,7 @@ check$S = rowSums(sol_log_unedited[,2:(A+1)])
 
 check = check %>% select(S,E,I,R,Incid) %>%
   mutate(pop = S + E + I + R)
-
-#check=check[check$Incid != 0,]
-#check$date = incidence_log$date
+if (check$pop[1] !=sum(pop)){stop('ERROR: see line 276 of (4) timestep')}
 
 
 ### INCIDENCE LOG TIDY 
@@ -320,45 +318,30 @@ workshop$temp = as.numeric(workshop$temp) - (num_disease_classes)*(num_age_group
 
 #HERE - ERROR need to align!
 workshop2=as.data.frame(unique(workshop$temp)); colnames(workshop2)=c('temp')
+if (RISK == 1){
+  workshop2 = workshop2 %>%   mutate(temp_risk = temp, risk_group = risk_group_list[[1]])
+} else {
+  workshop2 = workshop2 %>%
+    mutate(temp_risk = case_when(
+      temp <= max(workshop$temp)/2 ~ temp,
+      temp > max(workshop$temp)/2  ~ temp - max(workshop$temp)/2 
+    ),
+    risk_group = case_when(
+      temp <= max(workshop$temp)/2 ~ risk_group_list[[1]],
+      temp > max(workshop$temp)/2  ~ risk_group_list[[2]]
+    ))
+}
 workshop2$age_group = rep(age_group_labels,num_vax_classes) #smallest subdivision is age
 workshop2$dose = 0                                          #then dose
 workshop2$vaccine_type = "unvaccinated"                     #then vaccine type
 for (d in 1:num_vax_doses){
-  workshop2$dose[workshop2$temp %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
+  workshop2$dose[workshop2$temp_risk %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
   for (t in 1:num_vax_types){
-    workshop2$vaccine_type[workshop2$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
+    workshop2$vaccine_type[workshop2$temp_risk %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
   }
 }
 #View(workshop2)
 #CHECKED: yes aligns as expected
-
-
-
-
-for (i in 1:num_disease_classes){
-  workshop = data.frame(t(class_list[[i]]))
-  colnames(workshop) = c('pop')
-  workshop$temp = rep(seq(1,(num_age_groups*num_vax_classes)),RISK)
-  workshop$age_group = rep(age_group_labels,num_vax_classes*RISK)
-  workshop$dose = 0
-  workshop$vaccine_type = "unvaccinated"
-  for (d in 1:num_vax_doses){
-    workshop$dose[workshop$temp %in% c((T*(d-1)+1)*J+1):((T*d+1)*J)] = d
-    for (t in 1:num_vax_types){
-      workshop$vaccine_type[workshop$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
-    }
-  }
-  workshop$risk_group = 'general public'
-  if (RISK>1){
-    workshop$risk_group[(num_age_groups*num_vax_classes+1):(num_age_groups*num_vax_classes*2)] = risk_group_toggle
-  }
-  prev_state = rbind(prev_state,workshop)
-}
-
-
-
-
-
 
 
 incidence_log_tidy = workshop %>% left_join(workshop2)

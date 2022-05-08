@@ -77,7 +77,7 @@ prev_setting = setting
 
 #making some interim variables to assist with configuring states
 seed = 0.001*sum(pop)
-num_risk_groups = 2                                     # if >1 then a risk group, either pregnant women or comorbidities included
+num_risk_groups = 2                                    # if >1 then a risk group, either pregnant women or comorbidities included
 risk_group_toggle = "pregnant_women"
 num_disease_classes = 4                                 # SEIR 
 num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
