@@ -271,7 +271,7 @@ A=RISK*J*(T*D+1) # +1 is unvax
 
 #WEEKLY
 #Incid by age and vax class
-incidence_log_unedited <- sol_log_unedited[, c(1,(A*4+2):(A*5+1))]
+incidence_log_unedited <- sol_log_unedited[, c(1,(A*num_disease_classes+2):(A*(num_disease_classes+1)+1))]
 
 # select weekly end points 
 incidence_log_unedited <- incidence_log_unedited %>% filter (time %% time_step == 0, rowSums(incidence_log_unedited) != time)

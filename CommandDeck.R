@@ -31,9 +31,6 @@ if(outbreak_post_rollout == "on"){
   seed_date = date_start 
 }else if(outbreak_post_rollout == "off"){ #i.e. rolling out vaccine during outbreak
   date_start = as.Date('2022-04-15')
-  #date_start = max(vaccination_history_FINAL$date)
-  
-  #seed_date = vax_strategy_start_date+365/2
   seed_date = date_start
 }
 
@@ -42,13 +39,11 @@ model_weeks = 52          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
 
-
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
 underascertainment_est = 43
 
 behaviour_mod = 0  #0.268 if start 01/03/21
 uniform_mod=1
-
 
 
 #vax_strategy_plot = "off" #included in (plot)_vax_strategies
@@ -77,7 +72,7 @@ prev_setting = setting
 
 #making some interim variables to assist with configuring states
 seed = 0.001*sum(pop)
-num_risk_groups = 2                                    # if >1 then a risk group, either pregnant women or comorbidities included
+num_risk_groups = 1                                    # if >1 then a risk group, either pregnant women or comorbidities included
 risk_group_toggle = "pregnant_women"
 num_disease_classes = 4                                 # SEIR 
 num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 

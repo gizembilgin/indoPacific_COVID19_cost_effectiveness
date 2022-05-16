@@ -19,19 +19,21 @@ covidODE <- function(t, state, parameters){
     
     dS = dE = dI = dR = dIncidence  <- numeric(length=A)
  
-    tau =(rep(0,J))
+    tau =(rep(0,J)) 
     
-    for (r in 1:RISK){
-      for (i in 1:J){
-        for (j in 1:J){
-          
-          total=0
-          for(interval in 1:(num_disease_classes*RISK*(T*D+1))){
-            total = total+state[j+(interval-1)*J]
-          }
-          
-          # inclusion of reduced transmission from infected individuals
-          total_infected_mod = I[j]
+    #calculating transmission to each age group
+    for (i in 1:J){
+      for (j in 1:J){
+  
+        total=0 #total in contact age j
+        for(interval in 1:(num_disease_classes*RISK*(T*D+1))){
+          total = total+state[j+(interval-1)*J] 
+        }
+        
+        # inclusion of reduced transmission from infected individuals
+        total_infected_mod = 0 #total infected in age j
+        for (r in 1:RISK){
+          total_infected_mod = total_infected_mod + I[j+(r-1)*A/RISK] #unvax
           for (t in 1:T){
             for (d in 1:D){
               B = j + J*(t+(d-1)*T)+(r-1)*A/RISK
@@ -39,13 +41,12 @@ covidODE <- function(t, state, parameters){
               total_infected_mod=total_infected_mod + I[B]
             }
           }
-          
+        }
           tau[i]=tau[i]+contact_matrix[i,j]*(total_infected_mod*(lota*(1-gamma[j])+gamma[j]))/(total)
         
         }
         tau[i]=tau[i]*(1-NPI*(1+behaviour_mod))*beta[i]*uniform_mod*suscept[i]
         tau[i]=max(min(1,tau[i]),0) #transmission can not be more than 1 (100%)
-      }
     }
     
     for (r in 1:RISK){

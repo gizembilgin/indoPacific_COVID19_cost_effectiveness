@@ -237,10 +237,10 @@ J=num_age_groups
 T=num_vax_types
 D=num_vax_doses
 RISK=num_risk_groups
-A=J*(T*D+1) # +1 is unvax
+count=J*(T*D+1) # +1 is unvax
 
-S_inital=E_inital=I_inital=R_inital=(rep(0,A)) #bit less as will multiply by RISK later
-Incidence_inital=(rep(0,A*RISK))
+S_inital=E_inital=I_inital=R_inital=(rep(0,count)) #bit less as will multiply by RISK later
+Incidence_inital=(rep(0,count*RISK))
 
 
 #(B/F): number of active infected/recovered cases
