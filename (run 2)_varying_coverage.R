@@ -6,7 +6,7 @@
 warehouse_table = data.frame() 
 warehouse_plot = data.frame()
 baseline_to_compare = "no further vaccine rollout"
-vax_strategy_plot = "on"
+vax_strategy_toggle = "on"
 
 ### (2) Planning #################################################################################################################
 #calculating poss level of coverage
@@ -89,8 +89,8 @@ for (ticket in 1:length(queue)){
   vax_strategy_toggles = commands$vax_strategy_toggles
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
-  source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
-  severe_outcome_projections = severe_outcome_projections %>% 
+  
+  severe_outcome_projections = severe_outcome_log %>% 
     mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
   

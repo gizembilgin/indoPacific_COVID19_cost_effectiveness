@@ -6,13 +6,13 @@
 #       (1/4) Setup                 
 ####################################################################
 #load libraries
-library(tidyverse)
 library(readr)
 library(deSolve)
 library(rvest)
 library(ggplot2)
 library(gridExtra)
 library(ggpubr)
+library(tidyverse)
 
 #rm(list=ls())  # clear global environment
 
@@ -30,13 +30,19 @@ if(outbreak_post_rollout == "on"){
   date_start = max(vaccination_history_FINAL$date)
   seed_date = date_start 
 }else if(outbreak_post_rollout == "off"){ #i.e. rolling out vaccine during outbreak
-  date_start = as.Date('2022-04-15')
+  date_start = as.Date('2022-08-15')
   seed_date = date_start
 }
 
 strain_inital = 'omicron'             #options:'WT','delta','omicron'
 model_weeks = 52          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
+
+vax_strategy_toggle = "on"
+
+risk_group_toggle = "on"
+risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
+vax_risk_strategy_toggle = "on"
 
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
@@ -46,7 +52,7 @@ behaviour_mod = 0  #0.268 if start 01/03/21
 uniform_mod=1
 
 
-#vax_strategy_plot = "off" #included in (plot)_vax_strategies
+#vax_strategy_toggle = "off" #included in (plot)_vax_strategies
 #__________________________________________________________________
 
 
@@ -57,6 +63,7 @@ uniform_mod=1
 source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
 source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
 source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
+source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
 
 
 ##(B) Simulate setting 
@@ -66,15 +73,20 @@ if (complete_model_runs == 1){run_type="point"
 if (setting == "PNG"){setting_long = "Papua New Guinea"
 } else if (setting == "SLE"){setting_long = "Sierra Leone"}
 
+if (risk_group_toggle == "on"){
+  num_risk_groups = 2
+} else{ num_risk_groups = 1; vax_risk_strategy_toggle = "off"}
+
+num_disease_classes = 4                                 # SEIR 
+
 if (exists("prev_setting") == FALSE){ prev_setting = "NONE"}
-if (setting != prev_setting){source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))} #load setting stats if new setting
-prev_setting = setting                             
+if (exists("prev_risk_num") == FALSE){ prev_risk_num = "NONE"}
+if (setting != prev_setting | num_risk_groups != prev_risk_num){source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))} #load setting stats if new setting
+prev_setting = setting
+prev_risk_num = num_risk_groups 
+seed = 0.001*sum(pop)
 
 #making some interim variables to assist with configuring states
-seed = 0.001*sum(pop)
-num_risk_groups = 1                                    # if >1 then a risk group, either pregnant women or comorbidities included
-risk_group_toggle = "pregnant_women"
-num_disease_classes = 4                                 # SEIR 
 num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
 vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
@@ -84,7 +96,7 @@ num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes)*num
 
 
 ##(C) Run the model!
-time.start=proc.time()[[3]] #let's see how long this runs for
+time.start.CommandDeck=proc.time()[[3]] #let's see how long this runs for
 
 incidence_log_tracker=data.frame()
 for (run_number in 1:complete_model_runs){
@@ -93,6 +105,7 @@ for (run_number in 1:complete_model_runs){
   source(paste(getwd(),"/(4)_time_step.R",sep=""))
   source(paste(getwd(),"/(once)_severe_outcomes_calc.R",sep="")) # COMEBACK - should this just save its results somewhere?
   incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
+  source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
 }
 
 if (complete_model_runs>1){
@@ -185,6 +198,6 @@ grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
 #__________________________________________________________________ 
 
 
-time.end=proc.time()[[3]]
-time.end-time.start 
-## current runtime (23/03) 3 minutes for 52 weeks
+time.end.CommandDeck=proc.time()[[3]]
+time.end.CommandDeck-time.start.CommandDeck
+## current runtime (19/05) 8 minutes for 52 weeks with 2 risk groups, 6 mins with 1 risk

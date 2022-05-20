@@ -13,18 +13,18 @@ queue = list()
 
 #(A/B) No further roll-out
 queue[[1]] = list(vax_strategy_description = "no further vaccine rollout",
-                  vax_strategy_plot = "off",
+                  vax_strategy_toggle = "off",
                   outbreak_post_rollout = "off")
 
 
 #(B/B) Current program targets
 queue[[2]] = list(vax_strategy_description = 'current roll-out DURING outbreak',
-                  vax_strategy_plot = "on",
+                  vax_strategy_toggle = "on",
                   outbreak_post_rollout = "off",
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)  #roll out vaccine DURING outbreak
 
 queue[[3]] = list(vax_strategy_description = 'current roll-out PRIOR to outbreak',
-                  vax_strategy_plot = "on",
+                  vax_strategy_toggle = "on",
                   outbreak_post_rollout = "on",
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)  #roll out vaccine PRIOR TO outbreak
 
@@ -37,15 +37,15 @@ for (ticket in 1:length(queue)){
   commands = queue[[ticket]]
   
   vax_strategy_description = commands$vax_strategy_description
-  vax_strategy_plot = commands$vax_strategy_plot
+  vax_strategy_toggle = commands$vax_strategy_toggle
   outbreak_post_rollout = commands$outbreak_post_rollout
   if ('vax_strategy_toggles' %in% names(commands)){
     vax_strategy_toggles = commands$vax_strategy_toggles
   }
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
-  source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
-  severe_outcome_projections = severe_outcome_projections %>% 
+  
+  severe_outcome_projections = severe_outcome_log %>% 
     mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
   

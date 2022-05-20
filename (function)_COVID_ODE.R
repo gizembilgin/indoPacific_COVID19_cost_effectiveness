@@ -64,7 +64,8 @@ covidODE <- function(t, state, parameters){
             #B = i+J+(t-1)*J+(d-1)*J*T = i+J(1+(t-1)+(d-1)*T)
             B = i + J*(t+(d-1)*T)+(r-1)*A/RISK
             VE_step = VE$VE[VE$dose==d & 
-                              VE$vaccine_type == vax_type_list[t]&
+                              VE$risk_group == risk_group_labels[r] &
+                              VE$vaccine_type == vax_type_list[t] &
                               VE$age_group == age_group_labels[i]] #COMEBACK_RISK tidy for VE modifications!
             
             dS[B] = omega*R[B]              - tau[i]*(1-VE_step)*S[B] 

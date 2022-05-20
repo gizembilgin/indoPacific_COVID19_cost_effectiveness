@@ -127,7 +127,7 @@ pop_w <- pop_w[pop_w$country == setting,] %>%
 workshop = workshop %>% left_join(pop_w) %>%
   mutate(interim = RR*group_percent)
 workshop_sum =  aggregate(workshop$interim, by=list(category= workshop$outcome,workshop$agegroup_model), FUN=sum)
-colnames(workshop_sum) = c('outcome','agegroup','RR')
+colnames(workshop_sum) = c('outcome','age_group','RR')
 
 #(D) CHECK
 #find pop % within model agroups
@@ -144,9 +144,8 @@ workshop_sum2
 
 ###(4) Finalise :)
 age_distribution_save = workshop_sum %>%
-  select(outcome,agegroup,RR) %>%
+  select(outcome,age_group,RR) %>%
   mutate(setting=setting)
-colnames(age_distribution_save) = c('outcome','age_group','RR','setting')
 
 age_dn_severe_outcomes = rbind(age_dn_severe_outcomes,age_distribution_save)
 

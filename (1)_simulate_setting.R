@@ -15,12 +15,11 @@ NPI_toggle = 'contain_health'   #options: contain_health, stringency
 
 
 ### (1/5) Age structure of population
+##(A/B) Without risk groups
 #NOTE: this program has been configured so that the age_groups can be modified on a whim,
 # however, some other programs aren't as flexible
 age_groups = c(0,4,17,29,44,59,69,110)
-age_group_labels = c('0-4','5-17','18-29','30-44','45-59','60-69','70-100')
-#age_groups = c(0,4,19,29,39,49,59,110)
-#age_group_labels = c('0-4','5-19','20-29','30-39','40-49','50-59','60-100')
+age_group_labels = c('0 to 4','5 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
 
 num_age_groups = J = length(age_group_labels)          
 age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
@@ -30,9 +29,43 @@ pop_setting_orig <- pop_orig[pop_orig$country == setting,]
 pop_setting <- pop_setting_orig %>%
   mutate(agegroup = cut(age,breaks = age_groups, include.lowest = T,labels = age_group_labels)) 
 pop_setting <- aggregate(pop_setting$population, by=list(category=pop_setting$agegroup), FUN=sum)
-colnames(pop_setting) <-c('agegroup','pop')
+colnames(pop_setting) <-c('age_group','pop')
 pop <- pop_setting$pop
 #write.csv(pop_setting,file = 'x_results/pop_scrap.csv')
+#_______________________________________________________
+
+
+##(B/B) With risk groups
+pop_risk_group_dn = pop_setting %>% mutate(risk_group = 'general_public')
+risk_group_labels = c('general_public')
+
+if (num_risk_groups>1){
+  #COMEBACK_RISK these are DUMMY VALUES (~DHS fertility rate)
+  risk_dn = read.csv('1_inputs/risk_group.csv')
+  
+  if( risk_group_name %in% c('pregnant_women','comorbidities')){
+    risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name,]
+  } else {stop('risk_group_name not a valid value')}
+  
+  risk_dn = risk_dn %>%
+    select(age_group,prop)
+  risk_group_labels[2] = risk_group_name
+  
+  pop_high_risk = pop_setting %>% left_join(risk_dn) %>%
+    mutate(risk_group = risk_group_name,
+           pop = round(pop*prop)) %>% 
+    select(risk_group,age_group,pop)
+  pop_general_public   = pop_setting %>% left_join(risk_dn) %>%
+    mutate(risk_group = 'general_public',
+           pop = round(pop*(1-prop))) %>% 
+    select(risk_group,age_group,pop)
+  pop_risk_group_dn = rbind(pop_general_public,pop_high_risk)
+  
+  pop_risk_group = aggregate(pop_risk_group_dn$pop, by = list(pop_risk_group_dn$risk_group), FUN = sum)
+  colnames(pop_risk_group) = c('risk_group','pop')
+}
+if (round(sum(pop_risk_group_dn$pop)) != sum(pop)){stop('(1) simulate setting line 66')}
+
 
 #______________________________________________________________________________________________________________________________________
 
@@ -173,6 +206,7 @@ rm(workshop, workshop_cases, workshop_deaths)
 
 
 ###(4/5) Live updates of vaccination
+##(i/iii) Load and clean data _________________________________________________
 #Take John Hopkins reporting of vaccination coverage, a collation of data from WHO, CDC and Our World in Data
 workshop <- readr::read_csv("https://raw.githubusercontent.com/govex/COVID-19/master/data_tables/vaccine_data/global_data/time_series_covid19_vaccine_global.csv")
 workshop = workshop[workshop$'Country_Region' == setting_long,]
@@ -217,7 +251,6 @@ if ("Johnson & Johnson" %in% unique(setting_vaccine$vaccine_type)){
 }
 #CHECKED by hand for PNG and SLE 12/01/2021
 
-
 setting_vaccine_2 <- setting_vaccine[,c('vaccine_type','full','partial')]
 setting_vaccine_2 <- setting_vaccine_2 %>%
   pivot_longer(
@@ -258,24 +291,87 @@ vaccination_history_3 <- na.omit(vaccination_history_3) # nrows = 1365-5 = 1360
 
 vaccination_history_POP <- vaccination_history_3[,c('date','vaccine_type','vaccine_mode','dose','coverage_this_date','doses_delivered_this_date')] %>%
   arrange(date,vaccine_type,dose)
+##_____________________________________________________________________________
 
 
-#Split daily doses by age
-vaccination_history_TRUE = data.frame() 
-age_split =  pop/sum(pop[3:num_age_groups]); age_split[1:2] = 0 #COMEBACK - uniform assumption in ages 18+
+##(ii/iii) Adjust to model format _____________________________________________
+#Split daily doses by age and risk
+#COMEBACK - currently only one risk group at a time!
+if (risk_group_toggle == "off"){
+  vaccination_history_TRUE = data.frame() 
+  age_split =  pop/sum(pop[3:num_age_groups]); age_split[1:2] = 0 #COMEBACK - uniform assumption in ages 18+
+  
+  for (j in 1:num_age_groups){
+    workshop = vaccination_history_POP
+    workshop <- workshop %>% mutate(
+      age_group = age_group_labels[j],
+      doses_delivered_this_date = doses_delivered_this_date*age_split[j])
+    vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
+  }
+  vaccination_history_TRUE$risk_group = "general_public"
+  
+} else if (risk_group_toggle == "on" & risk_group_name == "pregnant_women"){
+  #ASSUMPTION: equal coverage as not prioritised
+  vaccination_history_TRUE = data.frame() 
+  
+  adult_pop = sum(pop[3:num_age_groups])
+  age_risk_split =  pop_risk_group_dn %>%
+    mutate(split = case_when(
+      age_group %in% c('0 to 4','5 to 17') ~ 0,
+      TRUE ~ pop/adult_pop
+    ))
+  if (sum(age_risk_split$split) != 1){stop('(1) simulate setting line 290: dn of doses >1')}
+  
+  for (r in 1:num_risk_groups){
+    for (j in 1:num_age_groups){
+    workshop = vaccination_history_POP
+    workshop <- workshop %>% mutate(
+      age_group = age_group_labels[j],
+      risk_group = risk_group_labels[r],
+      doses_delivered_this_date = doses_delivered_this_date*age_risk_split$split[age_risk_split$age_group == age_group_labels[j] & age_risk_split$risk_group == risk_group_labels[r]])
+    vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
+    }
+  }
+  if (sum(vaccination_history_POP$doses_delivered_this_date) != sum(vaccination_history_TRUE$doses_delivered_this_date)){stop('(1) simulate setting line 305')}
 
-for (j in 1:num_age_groups){
-  workshop = vaccination_history_POP
-  workshop <- workshop %>% mutate(
-    age_group = age_group_labels[j],
-    doses_delivered_this_date = doses_delivered_this_date*age_split[j])
-  vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
+} else if (risk_group_toggle == "on" & risk_group_name == "adults_with_comorbidities"){
+  
+  adults_with_comorbidities_prioritisation = 0.8 #COMEBACK - check this assumption!
+  
+  vaccination_history_TRUE = data.frame() 
+  age_risk_split  = pop_risk_group_dn %>% 
+    group_by(risk_group) %>% mutate(split = pop/sum(pop)) %>%
+    ungroup() %>% mutate(split = case_when(
+      risk_group == risk_group_name ~ split * adults_with_comorbidities_prioritisation,
+      risk_group == 'general_public' ~ split * (1-adults_with_comorbidities_prioritisation)
+    ))
+  if (sum(age_risk_split$split) !=1){stop('(1) simulate setting line 320')} 
+
+  for (r in 1:num_risk_groups){
+    for (j in 1:num_age_groups){
+      workshop = vaccination_history_POP
+      workshop <- workshop %>% mutate(
+        age_group = age_group_labels[j],
+        risk_group = risk_group_labels[r],
+        doses_delivered_this_date = doses_delivered_this_date*age_risk_split$split[age_risk_split$age_group == age_group_labels[j] & age_risk_split$risk_group == risk_group_labels[r]])
+      vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
+    }
+  }
+  if (sum(vaccination_history_POP$doses_delivered_this_date) != sum(vaccination_history_TRUE$doses_delivered_this_date)){stop('(1) simulate setting line 305')}
 }
-vaccination_history_TRUE$coverage_this_date[vaccination_history_TRUE$age_group == '0-4'] =0
-vaccination_history_TRUE$coverage_this_date[vaccination_history_TRUE$age_group == '5-17'] = 0 #MIGHT CHANGE
+
+#Let's recalculate coverage_this_date here
+vaccination_history_TRUE = vaccination_history_TRUE %>% left_join(pop_risk_group_dn) %>%
+  group_by(risk_group,age_group,vaccine_type,dose) %>%
+  mutate(coverage_this_date = case_when(
+    pop > 0 ~ cumsum(doses_delivered_this_date)/pop,
+    TRUE ~ 0)) %>%
+  select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group)
+
+##_____________________________________________________________________________
 
 
-## for overarching plotting
+##(iii/iii) Plot _______________________________________________________________
 #COMEBACK: doses delivered very jagged, should we do seven day rolling average?
 vaccination_history <- vaccination_history %>%
   mutate(coverage_this_date = 100 * num / sum(pop))

@@ -11,6 +11,8 @@ results_warehouse = list()
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = FALSE
 waning_toggle_rho_acqusition = FALSE
+risk_group_toggle = "off" #much sure not in CommandDeck
+vax_risk_strategy_toggle = "off"
 
 if (setting == "SLE"){
   gov_target = 0.516
@@ -21,6 +23,7 @@ if (setting == "SLE"){
     list(vax_strategy_start_date                  = as.Date('2022-04-20'),
          vax_strategy_num_doses         = as.integer(workshop_doses),
          vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
+         vax_delivery_group             = 'universal',
          vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
          vax_dose_strategy              = 1,                    # options: 1,2
          vax_strategy_vaccine_type      = "Johnson & Johnson" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
@@ -37,6 +40,7 @@ if (setting == "SLE"){
     list(vax_strategy_start_date                  = as.Date('2022-04-20'),
          vax_strategy_num_doses         = as.integer(workshop_doses), 
          vax_strategy_roll_out_speed    = 12000 ,               # doses delivered per day
+         vax_delivery_group             = 'universal',
          vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
          vax_dose_strategy              = 2,                    # options: 1,2
          vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"

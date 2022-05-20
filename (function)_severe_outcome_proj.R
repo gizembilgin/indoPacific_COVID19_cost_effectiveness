@@ -12,9 +12,11 @@
   workshop = incidence_log_tidy %>%
     left_join(severe_outcome_this_run) %>%
     mutate(proj = incidence*percentage) #calculate incidence -> severe outcome
-  if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('something has gone amiss')
-  } else if (!nrow(severe_outcome_this_run) == nrow(workshop)){warning('more doses left to give in this simulation')}
+  if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),])*num_risk_groups == nrow(workshop)){stop('something has gone amiss')
+  } else if (!nrow(severe_outcome_this_run)*num_risk_groups == nrow(workshop)){warning('more doses left to give in this simulation')}
   #NOTE: number of rows in severe_outcome_this_run may be longer than run of model if more doses to give out than the run of the model
+  
+  severe_outcome_log_tidy = workshop %>% select(date,risk_group,age_group,dose,vaccine_type,outcome,proj) 
   
   #(B/D) Sum across age groups, doses and vaccination status to get overall severe incidence per day
   workshop = workshop %>%
@@ -28,13 +30,13 @@
   workshop = rbind(workshop,workshop_incid)
   
   #(D/D) Calculate cumulative severe outcomes by outcome type
-  severe_outcome_projections = workshop %>%
+  severe_outcome_log = workshop %>%
     group_by(outcome) %>%
     mutate(proj_cum = cumsum(proj))
   
 plot1 <- 
   ggplot() + 
-  geom_line(data=severe_outcome_projections[severe_outcome_projections$outcome != 'cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
+  geom_line(data=severe_outcome_log[severe_outcome_log$outcome != 'cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
   #ylim(0,40) +
@@ -46,7 +48,7 @@ plot1 <-
         axis.line = element_line(color = 'black'))
 
 plot2 <- ggplot() + 
-  geom_line(data=severe_outcome_projections[severe_outcome_projections$outcome != 'cases',],aes(x=date,y=proj_cum,color=as.factor(outcome)),na.rm=TRUE) +
+  geom_line(data=severe_outcome_log[severe_outcome_log$outcome != 'cases',],aes(x=date,y=proj_cum,color=as.factor(outcome)),na.rm=TRUE) +
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
   ylab("cumulative incidence") +
@@ -58,8 +60,8 @@ plot2 <- ggplot() +
 #grid.arrange(plot1, plot2)
 
 #create row for table comparing vaccine strategies
-row = severe_outcome_projections %>% 
-  filter(date == max(severe_outcome_projections$date)) %>%
+row = severe_outcome_log %>% 
+  filter(date == max(severe_outcome_log$date)) %>%
   select(-c(proj,date)) %>%
   pivot_wider(names_from=outcome,
               values_from=proj_cum) 

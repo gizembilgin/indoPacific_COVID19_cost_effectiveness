@@ -5,11 +5,14 @@
 vax_strategy <- function(vax_strategy_start_date,
                          vax_strategy_num_doses,
                          vax_strategy_roll_out_speed,   # doses delivered per day
+                         vax_delivery_group = 'universal', #options = 'universal','at_risk','general_public'
                          vax_age_strategy,              # options: "oldest", "youngest","50_down","uniform", OTHER?
                          vax_dose_strategy,             # options: 1,2
                          vax_strategy_vaccine_type,     # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
                          vax_strategy_vaccine_interval, # (days) interval between first and second dose
-                         vax_strategy_max_expected_cov  # value between 0-1 (equivalent to %) of age group willing to be vaccinated
+                         vax_strategy_max_expected_cov,  # value between 0-1 (equivalent to %) of age group willing to be vaccinated
+                         restriction_date = NA,
+                         vax_end_hist   = vaccine_coverage_end_history
                          ){
 
   
@@ -35,7 +38,7 @@ vax_strategy <- function(vax_strategy_start_date,
   
   
 ### WARNINGS 
-if (vax_strategy_vaccine_type == "Johnson & Johnson" & vax_dose_strategy > 1){stop('J&J can NOT be more than a 1 dose strategy')}
+if (vax_strategy_vaccine_type == "Johnson & Johnson" & vax_dose_strategy > 1){stop('We dont currently have an estimate of VE for 2 J&J')}
 if (vax_strategy_start_date <= max(vaccination_history_TRUE$date)){ 
   stop ('Your hypothetical vaccine campaign start date needs to be in the future!')
 }
@@ -45,17 +48,32 @@ if (vax_strategy_start_date <= max(vaccination_history_TRUE$date)){
 if (!(vax_strategy_vaccine_type %in% c("Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"))){
   stop('pick a valid vaccine type, or check your spelling!')
 }
+if (vax_delivery_group != "universal" & num_risk_groups == 1){
+  warning("You need a risk group to have a risk strategy! We have overwritten vax_delivery_group = 'universal'")
+  vax_delivery_group = 'universal'
+}
   
 ### IMPORTS
 prioritisation_csv <- read.csv("1_inputs/prioritisation.csv",header=TRUE)
+
+if (vax_delivery_group %in% c('universal','general_public')){ this_risk_group = 'general_public'
+} else if (vax_delivery_group == 'at_risk'){ this_risk_group = risk_group_name}
 #_______________________________________________________________________________
 
 
 
 #####(1/?) Calculate the eligible population ###################################
-eligible_pop = data.frame(pop_setting)
-colnames(eligible_pop) = c('age_group','eligible_individuals')
-eligible_pop$age_group = gsub('-',' to ',eligible_pop$age_group)
+if (vax_delivery_group == 'universal'){
+  eligible_pop = data.frame(pop_setting)
+  colnames(eligible_pop) = c('age_group','eligible_individuals')
+} else if (vax_delivery_group == 'at_risk'){
+  eligible_pop = pop_risk_group_dn[pop_risk_group_dn == risk_group_name,] %>% select(age_group,pop)
+  colnames(eligible_pop) = c('age_group','eligible_individuals')
+} else if (vax_delivery_group == 'general_public'){
+  eligible_pop = pop_risk_group_dn[pop_risk_group_dn == 'general_public',] %>% select(age_group,pop)
+  colnames(eligible_pop) = c('age_group','eligible_individuals')
+}
+
 
 #make long by dose
 workshop = data.frame()
@@ -73,11 +91,15 @@ existing_coverage = crossing(dose = c(1:num_vax_doses),
 for (d in 1:num_vax_doses){
   for (i in 1:num_age_groups){
     #need to sum across vaccine_coverage (as this is vaccination_history_POP split across age groups)
-    existing_coverage$cov_to_date[existing_coverage$dose == d & existing_coverage$age_group == age_group_labels[i]] = 
-      sum(vaccine_coverage_end_history$cov[vaccine_coverage_end_history$dose == d & vaccine_coverage_end_history$age_group == age_group_labels[i]])
+    existing_coverage$cov_to_date[existing_coverage$dose == d & 
+                                    existing_coverage$age_group == age_group_labels[i]] = 
+      sum(vax_end_hist$coverage_this_date[vax_end_hist$risk_group == this_risk_group &
+                                                                 vax_end_hist$dose == d & 
+                                                                 vax_end_hist$age_group == age_group_labels[i]])
   }
-}
-existing_coverage$age_group = gsub('-',' to ',existing_coverage$age_group)
+} 
+
+#COMEBACK RISK - existing coverage is in % age group, may need to make risk specific
 
 
 ## CHECK - aligns!
@@ -90,6 +112,7 @@ existing_coverage$age_group = gsub('-',' to ',existing_coverage$age_group)
 
 #now remove vaccinated, and vaccine hesistant
 unreachable = 1-vax_strategy_max_expected_cov
+#COMEBACK RISK - vaccine hesitancy may differ in the at risk group
 
 eligible_pop <- eligible_pop %>% left_join(existing_coverage) %>%
   mutate(eligible_individuals = round(eligible_individuals *(1-(cov_to_date+unreachable)))) %>%
@@ -204,6 +227,9 @@ if (vax_dose_strategy == 1){
   }
 }
 timeframe = round(timeframe)
+if (is.na(restriction_date) == FALSE){
+  timeframe = as.numeric(restriction_date - vax_strategy_start_date) + 1
+}
 
 length_track = timeframe
 if (vax_dose_strategy == 2){length_track=length_track+vax_strategy_vaccine_interval}
@@ -212,7 +238,6 @@ vax_delivery_outline <- crossing(day = c(1:length_track),
                                  dose = c(1:num_vax_doses),
                                  age_group = age_group_labels,
                                  doses_delivered = c(0))
-vax_delivery_outline <- vax_delivery_outline %>% mutate(age_group = gsub('-',' to ',age_group))
 
 #for (day in 1:229){
 for (day in 1:timeframe){
@@ -288,7 +313,6 @@ if (vax_strategy_vaccine_type %in% c("Moderna","Pfizer")){
   vax_delivery_outline$vaccine_mode = 'viral'
 }
 
-vax_delivery_outline$age_group = gsub(' to ','-', vax_delivery_outline$age_group)
 vax_delivery_outline$coverage_this_date = NA #shouldn't be used anyway
 names(vax_delivery_outline)[names(vax_delivery_outline) == 'doses_delivered'] <-'doses_delivered_this_date'
 
@@ -298,9 +322,13 @@ vax_delivery_outline = vax_delivery_outline %>%
 
 ### adding to end of vaccination_history_TRUE
 #do we need zero rows?
+if(vax_delivery_group != 'universal'){
+  return(vax_delivery_outline)
+} #HERE return as vaccination_history if 'universal', but as extra lines + timeframe if at risk
+
+vax_delivery_outline$risk_group = this_risk_group
+
 vaccination_history_MODF = rbind(vaccination_history_TRUE,vax_delivery_outline)
-
-
 
 return(vaccination_history_MODF)
 

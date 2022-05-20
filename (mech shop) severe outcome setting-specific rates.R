@@ -80,8 +80,7 @@ workshop = workshop[workshop$setting == setting,]
 severe_outcome_2 <- severe_outcome_1 %>%  left_join(workshop)
 severe_outcome_2 <- severe_outcome_2 %>% mutate(percentage=percentage*RR)
 severe_outcome_FINAL <- severe_outcome_2 %>%
-  select(outcome,outcome_long,age_group,percentage) %>%
-  mutate(age_group = gsub(" to ", "-", age_group)) 
+  select(outcome,outcome_long,age_group,percentage) 
 
 rm(severe_outcome_0,severe_outcome_2)
 #_______________________________________________________________________________

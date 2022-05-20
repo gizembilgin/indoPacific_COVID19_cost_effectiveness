@@ -20,6 +20,7 @@ parameters = c(
   rho=rho_inital,
   age_group_labels=age_group_labels,
   vax_type_list=vax_type_list,
+  risk_group_labels = risk_group_labels,
   VE=VE,
   # VE_onwards=VE_onwards,
   num_age_groups=num_age_groups,
@@ -33,6 +34,7 @@ Reff_tracker = data.frame()
 
 
 for (increments_number in 1:num_time_steps){
+#for (increments_number in 1:48){ 
   
   if (increments_number == 1){
     
@@ -93,9 +95,9 @@ for (increments_number in 1:num_time_steps){
           workshop$vaccine_type[workshop$temp %in% c((((t-1)+(d-1)*T+1)*J+1):(((t-1)+(d-1)*T+2)*J))] = vax_type_list[t]
         }
       }
-      workshop$risk_group = 'general public'
+      workshop$risk_group = 'general_public'
       if (RISK>1){
-        workshop$risk_group[(num_age_groups*num_vax_classes+1):(num_age_groups*num_vax_classes*2)] = risk_group_toggle
+        workshop$risk_group[(num_age_groups*num_vax_classes+1):(num_age_groups*num_vax_classes*2)] = risk_group_name
       }
       prev_state = rbind(prev_state,workshop)
     }
@@ -105,11 +107,11 @@ for (increments_number in 1:num_time_steps){
     
     
     ### VACCINATION
-
+for (r in 1:RISK){
+  this_risk_group = risk_group_labels[r]   
    for (t in 1:num_vax_types){ #iterating over vaccine types
      this_vax = vax_type_list[t]
-     
-     this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax,]
+     this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax & vaccination_history_FINAL$risk_group == this_risk_group,]
      
      # (1/3) recorded vax
      #COMEBACK delay of J&J first does is 21 days, is this right?
@@ -123,7 +125,8 @@ for (increments_number in 1:num_time_steps){
                                  dose =1,
                                  coverage_this_date = NA,
                                  doses_delivered_this_date = 0,
-                                 age_group = age_group_labels)} #COMEBACK is this necessary?
+                                 age_group = age_group_labels,
+                                 risk_group = this_risk_group)} #COMEBACK is this necessary?
      
      if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_2,]) >0){
        dose_two <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_2 & this_vax_history$dose==2,]
@@ -133,22 +136,16 @@ for (increments_number in 1:num_time_steps){
                                    dose =2,
                                    coverage_this_date = NA,
                                    doses_delivered_this_date = 0,
-                                   age_group = age_group_labels)}
+                                   age_group = age_group_labels,
+                                   risk_group = this_risk_group)}
      if (this_vax == "Johnson & Johnson") {dose_two$doses_delivered_this_date = 0}
        
        VR_this_step = rbind(dose_one,dose_two)
        
-       for (r in 1:RISK){
-         this_risk_group = risk_group_list[[r]]   
        for (i in 1:num_age_groups){ # across age groups
          increase_one = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 1 & VR_this_step$age_group == age_group_labels[i]] 
          increase_two = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 2 & VR_this_step$age_group == age_group_labels[i]] 
-         
-         if (RISK>1){
-           proportion = risk_dn$prop[risk_dn$age_group == age_group_labels[i]]
-           if (r == 1){        increase_one = increase_one * (1-proportion)
-           } else if (r == 2){ increase_one = increase_one * proportion}
-          }
+
          
          for (j in 1:4){ #let's assume all SEIR vaccinated
            #COMEBACK better in ACT
@@ -175,8 +172,8 @@ for (increments_number in 1:num_time_steps){
              next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 2 & next_state$age_group == age_group_labels[i]] + increase_two * prop2
          }
        }
-     }
-  }
+   }
+}
     
     if (seed_date != date_start & seed_date == date_now){
       seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
@@ -226,13 +223,13 @@ for (increments_number in 1:num_time_steps){
     
     if (round(sum(next_state$pop))!= round(sum(prev_state$pop))){stop('pop not retained between next_state and prev_state!')}
     if (round(sum(next_state$pop))!= sum(pop)) {stop('pop in next_state not equal to setting population')}
-    if(nrow(next_state[round(next_state$pop)<0,])>0){ stop('issue in vaccination in (4)_time_step')}
+    if(nrow(next_state[round(next_state$pop)<0,])>0){ stop('(4)_time_step line 224')}
     
     
     # convert back into silly vector form for ODE solver
     workshop = next_state
     workshop$class = factor(workshop$class, levels = disease_class_list)
-    workshop$risk_group = factor(workshop$risk_group, levels = risk_group_list)
+    workshop$risk_group = factor(workshop$risk_group, levels = risk_group_labels)
     workshop$vaccine_type = factor(workshop$vaccine_type, levels = vax_type_list)
     workshop$age_group = factor(workshop$age_group, levels = age_group_labels)
     
@@ -300,7 +297,7 @@ check$S = rowSums(sol_log_unedited[,2:(A+1)])
 
 check = check %>% select(S,E,I,R,Incid) %>%
   mutate(pop = S + E + I + R)
-if (check$pop[1] !=sum(pop)){stop('ERROR: see line 276 of (4) timestep')}
+if (round(check$pop[1]) !=sum(pop)){stop('ERROR: see line 276 of (4) timestep')}
 
 
 ### INCIDENCE LOG TIDY 

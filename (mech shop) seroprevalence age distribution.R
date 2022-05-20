@@ -159,7 +159,7 @@ sum(check$interim) #=2.6
 seroprev_FINAL = rbind(SLE_2021,SLE_2022,PNG_2021,PNG_2022)
 seroprev_FINAL = seroprev_FINAL %>% select(year,setting,agegroup,seroprev)
 names(seroprev_FINAL)[names(seroprev_FINAL) == 'agegroup'] <- 'age_group' #change column name
-seroprev_FINAL$age_group = gsub('-',' to ',seroprev_FINAL$age_group)
+
 
 #CHECK - plot against previous
 grid.arrange(ggplot() + geom_point(data=seroprev_FINAL,aes(x=age_group,y=seroprev,color=setting)),

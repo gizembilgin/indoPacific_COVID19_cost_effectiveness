@@ -10,46 +10,12 @@ warehouse_plot = data.frame()
 
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
-vax_strategy_plot = "on"
+vax_strategy_toggle = "on"
 
 # (A/C) Baseline _________________________________________
-#18+ open
-if (setting == "SLE"){
-  target = 0.516
-  workshop_doses = target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
-  workshop_doses = round(workshop_doses * sum(pop))
-  
-  vax_strategy_toggles =
-    list(vax_strategy_start_date                  = as.Date('2022-04-20'),
-         vax_strategy_num_doses         = as.integer(workshop_doses),
-         vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
-         vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
-         vax_dose_strategy              = 1,                    # options: 1,2
-         vax_strategy_vaccine_type      = "Johnson & Johnson" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
-         vax_strategy_max_expected_cov  = 0.88                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
-    )
-} else if (setting == "PNG"){
-  target = 0.199
-  workshop_doses = target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
-  workshop_doses = round(workshop_doses * sum(pop))
-  workshop_doses = workshop_doses * 2 
-  
-  vax_strategy_toggles =
-    list(vax_strategy_start_date                  = as.Date('2022-04-20'),
-         vax_strategy_num_doses         = as.integer(workshop_doses), 
-         vax_strategy_roll_out_speed    = 12000 ,               # doses delivered per day
-         vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
-         vax_dose_strategy              = 2,                    # options: 1,2
-         vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
-         vax_strategy_max_expected_cov  = 0.74                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
-    )
-} else { stop ('pick a valid setting!')}
-
 queue[[1]] = list(vax_strategy_description = 'baseline - current roll-out',
-                  vax_strategy_plot = "on",
-                  vax_strategy_toggles = vax_strategy_toggles)
+                  vax_strategy_toggle = "on",
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)
 
 # (B/C)  200% current roll-out speed _______________________________________________
 queue[[2]] = queue[[1]]
@@ -73,8 +39,8 @@ for (ticket in 1:length(queue)){
   }
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
-  source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
-  severe_outcome_projections = severe_outcome_projections %>% 
+  
+  severe_outcome_projections = severe_outcome_log %>% 
     mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
   row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)

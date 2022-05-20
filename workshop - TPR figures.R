@@ -12,7 +12,7 @@ queue = list()
 
 # (A/?) No further vaccine roll-out (queue[[1]]) ___________________________________
 queue[[1]] = list(vax_strategy_description = "no further vaccine rollout",
-                  vax_strategy_plot = "off")
+                  vax_strategy_toggle = "off")
 
 
 # (B/?) 'Baseline' roll-out (queue[[2-3]]) _________________________________________
@@ -51,7 +51,7 @@ if (setting == "SLE"){
 } else { stop ('pick a valid setting!')}
 
 queue[[2]] = list(vax_strategy_description = 'baseline - current roll-out',
-                  vax_strategy_plot = "on",
+                  vax_strategy_toggle = "on",
                   vax_strategy_toggles = vax_strategy_toggles)
 
 
@@ -103,8 +103,8 @@ for (ticket in 1:length(queue)){
   commands = queue[[ticket]]
   
   vax_strategy_description = commands$vax_strategy_description
-  if ('vax_strategy_plot' %in% names(commands)){
-    vax_strategy_plot = commands$vax_strategy_plot
+  if ('vax_strategy_toggle' %in% names(commands)){
+    vax_strategy_toggle = commands$vax_strategy_toggle
   }
   if ('vax_strategy_toggles' %in% names(commands)){
     vax_strategy_toggles = commands$vax_strategy_toggles

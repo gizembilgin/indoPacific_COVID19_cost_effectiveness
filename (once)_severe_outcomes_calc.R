@@ -6,7 +6,7 @@ time.start=proc.time()[[3]]
 
 #####(6/7) Multiplying severe outcomes by VE
 #(A/B) calculate VE against severe outcomes by day
-if (ticket == 1 | vax_strategy_plot == "on"){ #only have to run when vax strategy changing
+if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
   VE_tracker = data.frame()
   for (outcome in c('death','severe_disease')){
     for (day in 1:(model_weeks*7) ){
@@ -19,6 +19,7 @@ if (ticket == 1 | vax_strategy_plot == "on"){ #only have to run when vax strateg
   VE_tracker$date = date_start + VE_tracker$date 
   
   workshop = crossing(dose = 0,
+                      risk_group = risk_group_labels,
                       vaccine_type = "unvaccinated",
                       age_group = age_group_labels,
                       VE = 0,
