@@ -208,7 +208,8 @@ for (s in unique(workshop$strain)){
         workshop$VE[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == o & workshop$dose == 1] = estimate
         workshop$source_extend[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == o & workshop$dose == 1] = "dose one estimated from dose two"
       }
-    }}
+    }
+    }
   }
 }
 sum(workshop$source_extend == "dose one estimated from dose two",na.rm=TRUE)

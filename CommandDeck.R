@@ -52,8 +52,6 @@ underascertainment_est = 43
 behaviour_mod = 0  #0.268 if start 01/03/21
 uniform_mod=1
 
-
-#vax_strategy_toggle = "off" #included in (plot)_vax_strategies
 #__________________________________________________________________
 
 
@@ -95,8 +93,6 @@ vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
 num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes)*num_risk_groups #+1 for incidence tracker
-
-
 
 ##(C) Run the model!
 time.start.CommandDeck=proc.time()[[3]] #let's see how long this runs for
