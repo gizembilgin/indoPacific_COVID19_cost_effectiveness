@@ -12,12 +12,12 @@ warehouse_plot = data.frame()
 queue = list()
 vax_strategy_toggle = "on"
 
-# (A/C) Baseline _________________________________________
+# (A/B) Baseline _________________________________________
 queue[[1]] = list(vax_strategy_description = 'baseline - current roll-out',
                   vax_strategy_toggle = "on",
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)
 
-# (B/C)  200% current roll-out speed _______________________________________________
+# (B/B)  Increased roll-out speed _______________________________________________
 queue[[2]] = queue[[1]]
 queue[[2]]$vax_strategy_description = '200% rollout speed'
 queue[[2]]$vax_strategy_toggles$vax_strategy_roll_out_speed = queue[[1]]$vax_strategy_toggles$vax_strategy_roll_out_speed * 2

@@ -42,12 +42,13 @@ VE_time_step <- function(strain_now,date_now,outcome){
     vax_to_this_date <- rbind(vax_to_this_date[vax_to_this_date$days<365,c(colnames(meddling))],
                           meddling)
   }
-  
+
   #(3) Bring VE d'n and AIR history together
   workshop <- vax_to_this_date %>%
     left_join(VE_distribution) %>%
     select(risk_group,vaccine_type,dose,days,age_group,VE_days,prop) %>%
     mutate(VE_weighted = VE_days*prop)
+  
   
   #(4) Aggregate to estimate population VE for doses
   workshop <- aggregate(workshop$VE_weighted, 
@@ -57,26 +58,27 @@ VE_time_step <- function(strain_now,date_now,outcome){
   
   #<interim> add none covered vaccines
   for (i in 1:num_vax_types){
-    this_vax = vax_type_list[i]
-    if (!( this_vax %in% unique(workshop$vaccine_type))){
-      workshop2 = crossing(risk_group = risk_group_labels,
-                           dose = c(1:num_vax_doses),
-                           vaccine_type = this_vax,
-                           age_group = age_group_labels,
-                           VE =0) 
-      workshop = rbind(workshop,workshop2)
-    } 
-    #slightly manual work around!
-    #COMEBACK Johson & Johnson overwrite
-    if(this_vax == "Johnson & Johnson" & nrow(workshop[workshop$vaccine_type =="Johnson & Johnson",])==num_age_groups){
-      workshop2 = crossing(risk_group = risk_group_labels,
-                           dose = 2,
-                           vaccine_type = "Johnson & Johnson",
-                           age_group = age_group_labels,
-                           VE =0) 
-      workshop = rbind(workshop,workshop2)
+    for (r in 1:num_risk_groups){
+      this_vax = vax_type_list[i]
+      if (!( this_vax %in% unique(workshop$vaccine_type[workshop$risk_group == risk_group_labels[r]]))){
+        workshop2 = crossing(risk_group = risk_group_labels[r],
+                             dose = c(1:num_vax_doses),
+                             vaccine_type = this_vax,
+                             age_group = age_group_labels,
+                             VE =0) 
+        workshop = rbind(workshop,workshop2)
+      } 
+      #slightly manual work around!
+      #COMEBACK Johson & Johnson overwrite
+      if(this_vax == "Johnson & Johnson" & nrow(workshop[workshop$vaccine_type =="Johnson & Johnson",])==num_age_groups){
+        workshop2 = crossing(risk_group = risk_group_labels,
+                             dose = 2,
+                             vaccine_type = "Johnson & Johnson",
+                             age_group = age_group_labels,
+                             VE =0) 
+        workshop = rbind(workshop,workshop2)
+      }
     }
-    
   }
 
   # #(5) Transpose to ODE format VE[type,dose]

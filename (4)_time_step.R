@@ -316,7 +316,7 @@ workshop$temp = as.numeric(workshop$temp) - (num_disease_classes)*(num_age_group
 #HERE - ERROR need to align!
 workshop2=as.data.frame(unique(workshop$temp)); colnames(workshop2)=c('temp')
 if (RISK == 1){
-  workshop2 = workshop2 %>%   mutate(temp_risk = temp, risk_group = risk_group_list[[1]])
+  workshop2 = workshop2 %>%   mutate(temp_risk = temp, risk_group = risk_group_labels[[1]])
 } else {
   workshop2 = workshop2 %>%
     mutate(temp_risk = case_when(
@@ -324,8 +324,8 @@ if (RISK == 1){
       temp > max(workshop$temp)/2  ~ temp - max(workshop$temp)/2 
     ),
     risk_group = case_when(
-      temp <= max(workshop$temp)/2 ~ risk_group_list[[1]],
-      temp > max(workshop$temp)/2  ~ risk_group_list[[2]]
+      temp <= max(workshop$temp)/2 ~ risk_group_labels[[1]],
+      temp > max(workshop$temp)/2  ~ risk_group_labels[[2]]
     ))
 }
 workshop2$age_group = rep(age_group_labels,num_vax_classes) #smallest subdivision is age

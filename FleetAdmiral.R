@@ -11,7 +11,7 @@ results_warehouse = list()
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = FALSE
 waning_toggle_rho_acqusition = FALSE
-risk_group_toggle = "off" #much sure not in CommandDeck
+risk_group_toggle = "off" #make sure not in CommandDeck
 vax_risk_strategy_toggle = "off"
 
 if (setting == "SLE"){

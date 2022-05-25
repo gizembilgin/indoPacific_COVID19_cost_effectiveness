@@ -9,11 +9,11 @@
 
 ##### Genuine projection from incidence!
   #(A/D) Join incidence_log_tidy with severe outcome incidence by vax status
-  workshop = incidence_log_tidy %>%
-    left_join(severe_outcome_this_run) %>%
+  workshop = severe_outcome_this_run %>%
+    left_join(incidence_log_tidy) %>%
     mutate(proj = incidence*percentage) #calculate incidence -> severe outcome
-  if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),])*num_risk_groups == nrow(workshop)){stop('something has gone amiss')
-  } else if (!nrow(severe_outcome_this_run)*num_risk_groups == nrow(workshop)){warning('more doses left to give in this simulation')}
+  if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('something has gone amiss')
+  } else if (!nrow(severe_outcome_this_run) == nrow(workshop)){warning('more doses left to give in this simulation')}
   #NOTE: number of rows in severe_outcome_this_run may be longer than run of model if more doses to give out than the run of the model
   
   severe_outcome_log_tidy = workshop %>% select(date,risk_group,age_group,dose,vaccine_type,outcome,proj) 
@@ -57,7 +57,7 @@ plot2 <- ggplot() +
         panel.grid.minor = element_blank(), 
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
-#grid.arrange(plot1, plot2)
+grid.arrange(plot1, plot2)
 
 #create row for table comparing vaccine strategies
 row = severe_outcome_log %>% 

@@ -1,11 +1,11 @@
 
 
-load(file = '1_inputs/severe_outcome_FINAL.Rdata') #adjusted values from Qatar
+
 time.start=proc.time()[[3]]
 
 
 #####(6/7) Multiplying severe outcomes by VE
-#(A/B) calculate VE against severe outcomes by day
+#(A/C) calculate VE against severe outcomes by day
 if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
   VE_tracker = data.frame()
   for (outcome in c('death','severe_disease')){
@@ -28,10 +28,40 @@ if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strat
   VE_tracker = rbind(VE_tracker,workshop)
 }
 
-#(B/B) calculate severe outcome incidence by vax_status
+#(B/C) 
+load(file = '1_inputs/severe_outcome_FINAL.Rdata') #adjusted values from Qatar
+if (risk_group_toggle == "on"){
+  severe_outcomes_list = unique(severe_outcome_FINAL$outcome)
+  
+  severe_outcome_FINAL_wRisk = data.frame()
+  for (o in 1:length(severe_outcomes_list)){
+    this_outcome = severe_outcomes_list[o]
+    for (i in 1:num_age_groups){
+      this_age = age_group_labels[i]
+      row = severe_outcome_FINAL %>% filter(outcome == this_outcome & age_group == this_age)
+      
+      IR = row$percentage
+      P = pop_setting$pop[pop_setting$age_group == this_age]
+      P_general = pop_risk_group_dn$pop[pop_risk_group_dn$risk_group == 'general_public' & pop_risk_group_dn$age_group == this_age]
+      P_risk = pop_risk_group_dn$pop[pop_risk_group_dn$risk_group == risk_group_name & pop_risk_group_dn$age_group == this_age]
+      if (P != (P_general+P_risk)){stop('Line 15 P_general + P_risk != P_overall')}
+      
+      IR_gen = ((IR*P)/((RR_estimate*P_risk)/P_general +1))/P_general
+      IR_risk = ((IR*P)/(P_general/(RR_estimate*P_risk) +1))/P_risk
+      
+      row_gen = row %>% mutate(percentage = IR_gen,risk_group = 'general_public')
+      row_risk = row %>% mutate(percentage = IR_risk,risk_group = risk_group_name)
+      severe_outcome_FINAL_wRisk = rbind(severe_outcome_FINAL_wRisk,row_gen,row_risk)
+    }
+  }
+  severe_outcome_FINAL_wRisk$percentage[is.na(severe_outcome_FINAL_wRisk$percentage)]=0
+  severe_outcome_FINAL = severe_outcome_FINAL_wRisk
+}
+
+#(C/C) calculate severe outcome incidence by vax_status
 severe_outcome_this_run = severe_outcome_FINAL %>% left_join(VE_tracker) %>%
   mutate(percentage = percentage*(1-VE)) %>%
-  select(date,outcome,outcome_long,age_group,vaccine_type,dose,percentage)
+  select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
 #_______________________________________________________________________________
 
 

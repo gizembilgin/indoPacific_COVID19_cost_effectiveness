@@ -35,14 +35,15 @@ if(outbreak_post_rollout == "on"){
 }
 
 strain_inital = 'omicron'             #options:'WT','delta','omicron'
-model_weeks = 52          # how many weeks should the model run for?
+model_weeks = 10          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
-vax_strategy_toggle = "on"
+#vax_strategy_toggle = "on"
 
-risk_group_toggle = "on"
-risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
-vax_risk_strategy_toggle = "on"
+#RR_estimate = 2
+#risk_group_toggle = "on"
+#risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
+#vax_risk_strategy_toggle = "on"
 
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
@@ -81,9 +82,11 @@ num_disease_classes = 4                                 # SEIR
 
 if (exists("prev_setting") == FALSE){ prev_setting = "NONE"}
 if (exists("prev_risk_num") == FALSE){ prev_risk_num = "NONE"}
-if (setting != prev_setting | num_risk_groups != prev_risk_num){source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))} #load setting stats if new setting
+if (exists("prev_risk_group") == FALSE){ prev_risk_group = "NONE"}
+if (setting != prev_setting | num_risk_groups != prev_risk_num | risk_group_name != prev_risk_group){source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))} #load setting stats if new setting
 prev_setting = setting
 prev_risk_num = num_risk_groups 
+prev_risk_group = risk_group_name
 seed = 0.001*sum(pop)
 
 #making some interim variables to assist with configuring states

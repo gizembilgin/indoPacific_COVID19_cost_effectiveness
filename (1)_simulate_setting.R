@@ -43,8 +43,11 @@ if (num_risk_groups>1){
   #COMEBACK_RISK these are DUMMY VALUES (~DHS fertility rate)
   risk_dn = read.csv('1_inputs/risk_group.csv')
   
-  if( risk_group_name %in% c('pregnant_women','comorbidities')){
+  if(risk_group_name %in% c('adults_with_comorbidities')){
     risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name,]
+  } else if (risk_group_name %in% c('pregnant_women')){
+    load(file = "1_inputs/prevalence_pregnancy.Rdata")
+    risk_dn = prevalence_pregnancy
   } else {stop('risk_group_name not a valid value')}
   
   risk_dn = risk_dn %>%
@@ -64,7 +67,7 @@ if (num_risk_groups>1){
   pop_risk_group = aggregate(pop_risk_group_dn$pop, by = list(pop_risk_group_dn$risk_group), FUN = sum)
   colnames(pop_risk_group) = c('risk_group','pop')
 }
-if (round(sum(pop_risk_group_dn$pop)) != sum(pop)){stop('(1) simulate setting line 66')}
+if (round(sum(pop_risk_group_dn$pop)) != sum(pop)){stop('(1) simulate setting line 69')}
 
 
 #______________________________________________________________________________________________________________________________________
@@ -297,8 +300,10 @@ vaccination_history_POP <- vaccination_history_3[,c('date','vaccine_type','vacci
 ##(ii/iii) Adjust to model format _____________________________________________
 #Split daily doses by age and risk
 #COMEBACK - currently only one risk group at a time!
+vaccination_history_TRUE = data.frame() 
+
 if (risk_group_toggle == "off"){
-  vaccination_history_TRUE = data.frame() 
+  
   age_split =  pop/sum(pop[3:num_age_groups]); age_split[1:2] = 0 #COMEBACK - uniform assumption in ages 18+
   
   for (j in 1:num_age_groups){
@@ -310,9 +315,7 @@ if (risk_group_toggle == "off"){
   }
   vaccination_history_TRUE$risk_group = "general_public"
   
-} else if (risk_group_toggle == "on" & risk_group_name == "pregnant_women"){
-  #ASSUMPTION: equal coverage as not prioritised
-  vaccination_history_TRUE = data.frame() 
+} else if (risk_group_toggle == "on"){
   
   adult_pop = sum(pop[3:num_age_groups])
   age_risk_split =  pop_risk_group_dn %>%
@@ -320,6 +323,21 @@ if (risk_group_toggle == "off"){
       age_group %in% c('0 to 4','5 to 17') ~ 0,
       TRUE ~ pop/adult_pop
     ))
+  
+  if (is.na(risk_group_prioritisation_to_date) == FALSE){
+
+    workshop = age_risk_split
+    age_list = unique(workshop$age_group)[!(unique(workshop$age_group) %in% workshop$age_group[workshop$split == 0])]
+    
+    for (i in 1:length(age_list)){
+      age_risk_split$split[ age_risk_split$risk_group == risk_group_name &  age_risk_split$age_group == age_list[i]] =  
+        sum(workshop$split[ age_risk_split$age_group == age_list[i]]) * risk_group_prioritisation_to_date 
+      
+      age_risk_split$split[ age_risk_split$risk_group == 'general_public' &  age_risk_split$age_group == age_list[i]] =  
+        sum(workshop$split[ age_risk_split$age_group == age_list[i]]) * (1-risk_group_prioritisation_to_date) 
+    }
+  }
+  
   if (sum(age_risk_split$split) != 1){stop('(1) simulate setting line 290: dn of doses >1')}
   
   for (r in 1:num_risk_groups){
@@ -334,31 +352,7 @@ if (risk_group_toggle == "off"){
   }
   if (sum(vaccination_history_POP$doses_delivered_this_date) != sum(vaccination_history_TRUE$doses_delivered_this_date)){stop('(1) simulate setting line 305')}
 
-} else if (risk_group_toggle == "on" & risk_group_name == "adults_with_comorbidities"){
-  
-  adults_with_comorbidities_prioritisation = 0.8 #COMEBACK - check this assumption!
-  
-  vaccination_history_TRUE = data.frame() 
-  age_risk_split  = pop_risk_group_dn %>% 
-    group_by(risk_group) %>% mutate(split = pop/sum(pop)) %>%
-    ungroup() %>% mutate(split = case_when(
-      risk_group == risk_group_name ~ split * adults_with_comorbidities_prioritisation,
-      risk_group == 'general_public' ~ split * (1-adults_with_comorbidities_prioritisation)
-    ))
-  if (sum(age_risk_split$split) !=1){stop('(1) simulate setting line 320')} 
-
-  for (r in 1:num_risk_groups){
-    for (j in 1:num_age_groups){
-      workshop = vaccination_history_POP
-      workshop <- workshop %>% mutate(
-        age_group = age_group_labels[j],
-        risk_group = risk_group_labels[r],
-        doses_delivered_this_date = doses_delivered_this_date*age_risk_split$split[age_risk_split$age_group == age_group_labels[j] & age_risk_split$risk_group == risk_group_labels[r]])
-      vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
-    }
-  }
-  if (sum(vaccination_history_POP$doses_delivered_this_date) != sum(vaccination_history_TRUE$doses_delivered_this_date)){stop('(1) simulate setting line 305')}
-}
+} 
 
 #Let's recalculate coverage_this_date here
 vaccination_history_TRUE = vaccination_history_TRUE %>% left_join(pop_risk_group_dn) %>%

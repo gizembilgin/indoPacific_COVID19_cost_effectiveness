@@ -332,12 +332,13 @@ state_tidy$risk_group = factor(state_tidy$risk_group, levels = risk_group_labels
 state_tidy$age_group = factor(state_tidy$age_group, levels = age_group_labels)
   
 state_tidy = state_tidy %>% arrange(class,risk_group,dose,vaccine_type,age_group)
+state_tidy$state_inital[is.na(state_tidy$state_inital)] = 0
   
 #CHECKED - unique(state_tidy$vaccine_type)[-c(1)] == vax_type_list
 
 #Step Five: construct silly array that ODE solver requires
 state=c(state_tidy$state_inital,Incidence_inital) 
 
-if (sum(state) != sum(pop)){stop('inital state doesnt align with population size!')}
+if (round(sum(state)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
 
 
