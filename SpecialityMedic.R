@@ -14,12 +14,14 @@ waning_toggle_rho_acqusition = FALSE
 
 outbreak_post_rollout = "off"
 
-RR_estimate = 2
+RR_estimate = RR_default = 2
 vax_strategy_toggle = "on"
 vax_risk_strategy_toggle = "on"
 risk_group_toggle = "on" 
 risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
 risk_group_prioritisation_to_date = NA
+default_prioritisation_proportion = 0.5
+
 #make sure toggles not in CommandDeck
 
 if (setting == "SLE"){

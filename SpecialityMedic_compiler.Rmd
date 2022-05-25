@@ -2,29 +2,80 @@
 title: "Prioritising doses to at risk groups results"
 author: "GMB"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(scipen=10000); require(ggpubr); require(knitr)
+
+list_poss_Rdata = list.files(path="x_results/",pattern = "SpecialityMedic_run_*")
+list_poss_Rdata_details = double()
+for (i in 1:length(list_poss_Rdata)){
+  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                 file.info(paste('x_results/',list_poss_Rdata[[i]],sep=''))$mtime)
+}
+latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+
+load(paste('x_results/',latest_file,sep=''))
 ```
 
-## R Markdown
+# Introduction
+Note: This document includes results for the prioritisation of  **`r paste(risk_group_name)`**.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## Overarching assumptions
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Variable | Value | Source
+---------|--------|--------
+Circulating strain | `r paste(strain_inital)`|
+Delivery of doses post outbreak | `r paste(outbreak_post_rollout)`|
+Length of model run | `r paste(model_weeks)`|
+Current vaccine coverage | dose one: `r paste(round(current_coverage[1]),'%',sep='')`; dose two: `r paste(round(current_coverage[2]),'%',sep='')`| John Hopkins COVID-19 vaccination data
+Current vaccine coverage target | `r paste(gov_target*100,'%',sep='')` | Government target in COVAX documentation May 2021
+Proportion of population willing to be vaccinated (general population) | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov*100,'%',sep='')`|Survey estimating vaccine acceptance in January 2021 (Solis et al., 2021)
+Daily capacity for vaccination (doses) | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_roll_out_speed)` | Slightly lower than the pilot vaccination campaign October-November 2021 
+Anticipated type of future vaccine doses| `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type)` | The Government of Sierra Leone has demonstrated a strong preference for this vaccine, negotiating with major donors, such as the Government of Italy, to change their donations of double-dose vaccines (such as Pfizer) to Janssen vaccines for ease of deployment 
+Waning of VE against acquisition | `r paste(waning_toggle_acqusition)`|
+Waning of VE against severe disease | `r paste(waning_toggle_severe_outcome)`|
+Waning of infection-derived immunity against acquisition | `r paste(waning_toggle_rho_acqusition)`|
+Waning of infection-derived immunity against severe outcomes | Not yet included |
 
-```{r cars}
-summary(cars)
+## Risk group parameters (unless otherwsie specified):
+
+Variable | Value | Source
+---------|--------|--------
+Risk group prioritisation to date| `r paste(risk_group_prioritisation_to_date)` | 
+Proportion of population willing to be vaccinated (at risk group) | `r paste(vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov*100,'%',sep='')`|
+Increased risk of risk group | `r paste(RR_estimate)` | 
+Default_prioritisation_proportion | `r paste(default_prioritisation_proportion)` | 
+
+***
+
+# Prioritising primary dose coverage by x%
+```{r echo=FALSE , fig.width=10,fig.height=5}
+
+results_warehouse_SM[[1]][[3]]
+kable(results_warehouse_SM[[1]][[4]]$absolute, caption = 'Absolute difference in outcomes (compared to no prioritisation)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse_SM[[1]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
 ```
 
-## Including Plots
+***
 
-You can also embed plots, for example:
+# Delivery of booster doses to at risk group
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+***
+
+# Sensitivity analysis
+## Range of possible RR
+```{r echo=FALSE , fig.width=10,fig.height=5}
+
+results_warehouse_SM[[3]][[3]]
+kable(results_warehouse_SM[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes compared to no difference in risk (RR=1)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse_SM[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Reduced VE
+## Altered contact patterns
+## Vaccine hesitancy
