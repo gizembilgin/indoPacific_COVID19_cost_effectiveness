@@ -55,7 +55,7 @@ for (increments_number in 1:num_time_steps){
       parameters$NPI = NPI_this_step
     } #i.e. assume after end date that NPI constant
     
-    if ((date_now - min(vaccine_coverage_delay))>= min(vaccination_history_FINAL$date)){
+    if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
       parameters$VE = VE_time_step(strain,date_now,'any_infection')
     }
     #parameters$rho = rho_time_step(strain,date_now)
@@ -111,67 +111,60 @@ for (r in 1:RISK){
   this_risk_group = risk_group_labels[r]   
    for (t in 1:num_vax_types){ #iterating over vaccine types
      this_vax = vax_type_list[t]
+     
      this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax & vaccination_history_FINAL$risk_group == this_risk_group,]
      
      # (1/3) recorded vax
      #COMEBACK delay of J&J first does is 21 days, is this right?
-     #COMEBACK cleaner code in ACT
      
-     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_1,]) >0){
-       dose_one <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_1 & this_vax_history$dose==1,]
-     }else { dose_one = crossing(date = date_now,
-                                 vaccine_type = this_vax,
-                                 vaccine_mode = 'dummy',
-                                 dose =1,
-                                 coverage_this_date = NA,
-                                 doses_delivered_this_date = 0,
-                                 age_group = age_group_labels,
-                                 risk_group = this_risk_group)} #COMEBACK is this necessary?
-     
-     if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaccine_coverage_delay_2,]) >0){
-       dose_two <- this_vax_history[this_vax_history$date==as.Date(date_now) - vaccine_coverage_delay_2 & this_vax_history$dose==2,]
-     }  else { dose_two = crossing(date = date_now,
-                                   vaccine_type = this_vax,
-                                   vaccine_mode = 'dummy',
-                                   dose =2,
-                                   coverage_this_date = NA,
-                                   doses_delivered_this_date = 0,
-                                   age_group = age_group_labels,
-                                   risk_group = this_risk_group)}
-     if (this_vax == "Johnson & Johnson") {dose_two$doses_delivered_this_date = 0}
-       
-       VR_this_step = rbind(dose_one,dose_two)
-       
-       for (i in 1:num_age_groups){ # across age groups
-         increase_one = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 1 & VR_this_step$age_group == age_group_labels[i]] 
-         increase_two = VR_this_step$doses_delivered_this_date[VR_this_step$dose == 2 & VR_this_step$age_group == age_group_labels[i]] 
-
-         
-         for (j in 1:4){ #let's assume all SEIR vaccinated
-           #COMEBACK better in ACT
-           class=class_name_list[j]
-           
-           # prop unvax in SEIR
-           prop1 = prev_state$pop[prev_state$class == class & prev_state$risk_group == this_risk_group & prev_state$vaccine_type == "unvaccinated" & prev_state$age_group == age_group_labels[i]]/
-             sum(prev_state$pop[prev_state$vaccine_type == "unvaccinated" & prev_state$risk_group == this_risk_group & prev_state$age_group == age_group_labels[i]])
-           
-           # prop dose one
-           prop2 = prev_state$pop[prev_state$class == class & prev_state$risk_group == this_risk_group & prev_state$vaccine_type == vax_type_list[t] & prev_state$dose == 1 & prev_state$age_group == age_group_labels[i]]/
-             sum(prev_state$pop[prev_state$risk_group == this_risk_group & prev_state$vaccine_type == vax_type_list[t] & prev_state$dose == 1 & prev_state$age_group == age_group_labels[i]])
-           
-           if (is.nan(prop1) == TRUE){prop1=0}
-           if (is.nan(prop2) == TRUE){prop2=0}
-           
-           next_state$pop[next_state$class == class & prev_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] =
-             next_state$pop[next_state$class == class & prev_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] - increase_one*prop1
-           
-           next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 1 & next_state$age_group == age_group_labels[i]] =
-             next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 1 & next_state$age_group == age_group_labels[i]] + increase_one*prop1-increase_two*prop2
-           
-           next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 2 & next_state$age_group == age_group_labels[i]] =
-             next_state$pop[next_state$vaccine_type == vax_type_list[t] & next_state$class == class & prev_state$risk_group == this_risk_group & next_state$dose == 2 & next_state$age_group == age_group_labels[i]] + increase_two * prop2
+     VR_this_step = crossing(dose = seq(1:D),
+                             age_group = age_group_labels,
+                             doses = 0)
+     for (d in 1:D){
+       for (i in 2:J){ #COMEBACK - could be faster with less for loop, assumption that don't vaccinate 0-4  
+         if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d],]) >0){
+           VR_this_step$doses[VR_this_step$dose == d & VR_this_step$age_group == age_group_labels[i]] =
+             this_vax_history$doses_delivered_this_date[this_vax_history$date ==  as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d] & 
+                                                                  this_vax_history$dose==d &
+                                                                  this_vax_history$age_group == age_group_labels[i]]
          }
        }
+     }
+     
+      for (i in 1:num_age_groups){ # across age groups
+        increase = rep(0,num_vax_doses)
+        for (d in 1:D){
+          increase[d] = VR_this_step$doses[VR_this_step$dose == d & VR_this_step$age_group == age_group_labels[i]] 
+        }
+        
+       for (j in 1:4){ #let's assume all SEIR vaccinated
+         class=class_name_list[j]
+         
+         prop = rep(0,num_vax_doses) #prop in S,E,I or R in vaccine groups
+         for (d in 0:D){
+           if (d==0){
+             prop[d+1] = prev_state$pop[prev_state$class == class & prev_state$risk_group == this_risk_group & prev_state$vaccine_type == "unvaccinated" & prev_state$age_group == age_group_labels[i]]/
+               sum(prev_state$pop[prev_state$vaccine_type == "unvaccinated" & prev_state$risk_group == this_risk_group & prev_state$age_group == age_group_labels[i]])
+           } else{
+             prop[d+1] = prev_state$pop[prev_state$class == class & prev_state$risk_group == this_risk_group & prev_state$vaccine_type == this_vax &  prev_state$dose == d & prev_state$age_group == age_group_labels[i]]/
+               sum(prev_state$pop[prev_state$risk_group == this_risk_group & prev_state$vaccine_type == this_vax & prev_state$dose == d & prev_state$age_group == age_group_labels[i]])
+           }
+           if (is.nan(prop[d+1]) == TRUE){prop[d+1]=0}
+         }
+
+         next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] =
+           next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] - increase[1]* prop[1]
+         
+         for (d in 1:(D-1)){
+           next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == this_vax & next_state$dose == d & next_state$age_group == age_group_labels[i]] =
+             next_state$pop[ next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == this_vax & next_state$dose == d & next_state$age_group == age_group_labels[i]] + increase[d]*prop[d]-increase[d+1]*prop[d+1]
+         }
+         for (d in D){
+           next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == this_vax & next_state$dose == D & next_state$age_group == age_group_labels[i]] =
+             next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == this_vax & next_state$dose == D & next_state$age_group == age_group_labels[i]] + increase[D] * prop[D]
+         }
+       }
+     }
    }
 }
     
@@ -219,7 +212,6 @@ for (r in 1:RISK){
     #     }
     #   }
     #}
-    #next_state <- round(next_state,digits=0)
     
     if (round(sum(next_state$pop))!= round(sum(prev_state$pop))){stop('pop not retained between next_state and prev_state!')}
     if (round(sum(next_state$pop))!= sum(pop)) {stop('pop in next_state not equal to setting population')}

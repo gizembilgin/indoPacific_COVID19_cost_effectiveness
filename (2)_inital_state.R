@@ -6,9 +6,13 @@
 ###### (1/4) Vaccination
 #(A/B) Coverage 
 #(i/iv) Delay ____________________________________
-vaccine_coverage_delay_1 = 21 #number of days till protection from first dose, COMEBACK - J&J full protection after 14 days? (single dose vaccine)
-vaccine_coverage_delay_2 = 14 #number of days till protection from second dose
-vaccine_coverage_delay = c(vaccine_coverage_delay_1,vaccine_coverage_delay_2)
+vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
+vaxCovDelay = vaxCovDelay %>%
+  mutate(delay = case_when(
+    dose == 1 ~ 21,#number of days till protection from first dose, COMEBACK - J&J full protection after 14 days?
+    TRUE ~ 14 #all other doses
+  ))
+
 
 
 #(ii/iv) #Vaccine coverage at end of true history
@@ -90,13 +94,11 @@ for (r in 1:num_risk_groups){ # risk group
         workshop_risk = risk_group_labels[r]
         this_vax_max_date = max(vaccination_history_FINAL$date[vaccination_history_FINAL$vaccine_type == workshop_type])
         
-        if (workshop_type == "Johnson & Johnson" & d == 2){ #avoid J&J dose 2, otherwise NA and stuffs up vax_type order #COMEBACK BOOSTER J&J
-        } else{
-          if ((date_start - vaccine_coverage_delay[d])<= this_vax_max_date &
-              (date_start - vaccine_coverage_delay[d])>= min(vaccination_history_FINAL$date)){
+          if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])<= this_vax_max_date &
+              (date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_FINAL$date)){
             
             workshop_value =  vaccination_history_FINAL$coverage_this_date[
-              vaccination_history_FINAL$date == date_start - vaccine_coverage_delay[d] 
+              vaccination_history_FINAL$date == date_start - vaxCovDelay$delay[vaxCovDelay$dose == d]
               & vaccination_history_FINAL$age_group == workshop_age
               & vaccination_history_FINAL$risk_group == workshop_risk
               & vaccination_history_FINAL$dose == d
@@ -109,7 +111,7 @@ for (r in 1:num_risk_groups){ # risk group
                 vaccine_coverage$risk_group == workshop_risk 
             ] = max(workshop_value,0)
              
-          } else if ((date_start - vaccine_coverage_delay[d])> this_vax_max_date){
+          } else if ((date_start -vaxCovDelay$delay[vaxCovDelay$dose == d])> this_vax_max_date){
             workshop_value =
               vaccination_history_FINAL$coverage_this_date[
                 vaccination_history_FINAL$date == this_vax_max_date
@@ -125,7 +127,6 @@ for (r in 1:num_risk_groups){ # risk group
                 vaccine_coverage$risk_group == workshop_risk 
               ] =  max(workshop_value,0)
           } 
-        }
       }
     }
   }
@@ -147,7 +148,7 @@ VE =  crossing(dose = c(1:num_vax_doses),
                vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
                age_group = age_group_labels,
                VE = c(0)) 
-if ((date_start - vaccine_coverage_delay[d])>= min(vaccination_history_POP$date)){
+if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_POP$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
   #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
 }
