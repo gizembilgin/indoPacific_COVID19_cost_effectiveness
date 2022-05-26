@@ -38,7 +38,6 @@ vax_strategy <- function(vax_strategy_start_date,
   
   
 ### WARNINGS 
-if (vax_strategy_vaccine_type == "Johnson & Johnson" & vax_dose_strategy > 1){stop('We dont currently have an estimate of VE for 2 J&J')}
 if (vax_strategy_start_date <= max(vaccination_history_TRUE$date)){ 
   stop ('Your hypothetical vaccine campaign start date needs to be in the future!')
 }
@@ -53,11 +52,18 @@ if (vax_delivery_group != "universal" & num_risk_groups == 1){
   vax_delivery_group = 'universal'
 }
   
+
 ### IMPORTS
 prioritisation_csv <- read.csv("1_inputs/prioritisation.csv",header=TRUE)
 
 if (vax_delivery_group %in% c('universal','general_public')){ this_risk_group = 'general_public'
 } else if (vax_delivery_group == 'at_risk'){ this_risk_group = risk_group_name}
+
+
+### IS THIS A BOOSTER?
+booster_dose = "N"
+if (vax_dose_strategy == 3){booster_dose = "Y"}
+if (vax_dose_strategy == 2 & vax_strategy_vaccine_type == "Johnson & Johnson"){booster_dose = "Y"}
 #_______________________________________________________________________________
 
 

@@ -5,7 +5,7 @@
 # vaccine type = "AstraZeneca"       "Johnson & Johnson" "Moderna"           "Pfizer"            "Sinopharm"         "Sinovac"     
 
 
-require(tidyverse); require(readr);require(ggplot2);require(ggpubr)
+require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
 
 #NOTE: the four VE we calculate are VE against infection, death, severe disease and symptomatic disease. 
 
@@ -16,9 +16,9 @@ colnames(VE_estimates)
 
 VE_estimates = VE_estimates  %>% select(strain, vaccine_type, dose, outcome,VE,lower_est,upper_est)
 
-to_plot = VE_estimates[VE_estimates$strain == 'delta',]
-to_plot = VE_estimates[VE_estimates$strain == 'omicron',]
-
+this_strain = 'delta'
+this_strain = 'omicron'
+to_plot = VE_estimates[VE_estimates$strain == this_strain,]
 plot_list = list()
 for (i in 1:length(unique(to_plot$outcome))){
   outcome = unique(to_plot$outcome)[i]
@@ -30,10 +30,18 @@ for (i in 1:length(unique(to_plot$outcome))){
     ylab("") + 
     labs(title=paste("VE against ",outcome,sep=""))
 }
-ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]],
+plot_group = ggarrange(plot_list[[1]],plot_list[[4]],plot_list[[2]],plot_list[[3]],
           common.legend = TRUE,
           legend="bottom"
 )
+annotate_figure(plot_group,top=text_grob(paste(this_strain)))
+
+#NOTES ON ODD BEHAVIOUR: Sinopharm -> J&J 3rd is higher than Sinopharm 1 & 2 but lower than J&J 2nd
+#repeat Sinopharm 3rd with J&J as J&J booster
+workshop = VE_estimates %>% filter(vaccine_type == 'Johnson & Johnson' & dose == 3 & outcome %in% c('severe_disease','death'))
+workshop$dose = 2
+VE_estimates = rbind(VE_estimates,workshop)
+
 
 ###some analysis:
 #(A/D) compare VE against death (where avaliable) to VE against severe disease
@@ -134,11 +142,9 @@ delta_omicron_ratio$mean[delta_omicron_ratio$outcome == 'death'] = delta_omicron
 
 #(D/D) dose one to two
 dose_one = VE_estimates[VE_estimates$dose == 1,] %>% 
-  filter(vaccine_type != "Johnson & Johnson") %>%
   select(strain,outcome,vaccine_type,VE) %>%
   rename(dose_one = VE)
 dose_two = VE_estimates[VE_estimates$dose == 2,] %>% 
-  filter(vaccine_type != "Johnson & Johnson") %>%
   select(strain,outcome,vaccine_type,VE) %>%
   rename(dose_two = VE)
 
@@ -163,6 +169,7 @@ workshop %>% group_by(vaccine_type) %>%
             sd = sd(ratio,na.rm=TRUE))
 # vaccine_type count  mean     sd
 # 1 AstraZeneca      4 0.783 0.122 
+# 2 Johnson & Johnson4 0.755 0.258 
 # 2 Moderna          5 0.798 0.0949
 # 3 Pfizer           2 0.735 0.203 
 # 4 Sinopharm        5 0.642 0.164 
@@ -189,7 +196,6 @@ dose_ratio = workshop %>% group_by(outcome) %>%
 
 
 ##### (2/2) Impute missing values based on previous analysis ###################################################################################
-#COMEBACK - this is clunky!
 workshop = VE_estimates %>%
   mutate(source = case_when(
     is.na(VE) == FALSE ~ 'literature',
@@ -199,7 +205,6 @@ workshop = VE_estimates %>%
 #Step One: estimate dose one from dose two
 for (s in unique(workshop$strain)){
   for (t in unique(workshop$vaccine_type)){
-    if (t != "Johnson & Johnson"){
     for (o in unique(workshop$outcome)){
       workshop_rows = workshop[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == o, ]
       if (workshop_rows$source[workshop_rows$dose == 1] == "imputed" & 
@@ -209,11 +214,10 @@ for (s in unique(workshop$strain)){
         workshop$source_extend[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == o & workshop$dose == 1] = "dose one estimated from dose two"
       }
     }
-    }
   }
 }
 sum(workshop$source_extend == "dose one estimated from dose two",na.rm=TRUE)
-#n=7
+#n=8
   
 #Step Two: estimate severe_disease <-> death, and acquisition <-> symptomatic
 #(A/B) severe_disease <-> death
@@ -221,7 +225,6 @@ sum(workshop$source_extend == "dose one estimated from dose two",na.rm=TRUE)
 for (s in unique(workshop$strain)){
   for (t in unique(workshop$vaccine_type)){  
     for (d in c(1,2)){
-      if(!(d == 2 & t == "Johnson & Johnson")){
         workshop_rows = workshop[workshop$strain == s & workshop$vaccine_type == t & workshop$dose == d & workshop$outcome %in% c('death','severe_disease'), ]
         #severe_outcome -> death
         if (workshop_rows$source[workshop_rows$outcome == 'death'] == "imputed" &
@@ -239,11 +242,10 @@ for (s in unique(workshop$strain)){
           workshop$VE[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == 'severe_disease' & workshop$dose == d] = estimate
           workshop$source_extend[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == 'severe_disease' & workshop$dose == d] = "severe_disease inferred from death"
         }
-      }
     }
   }
 }
-sum(workshop$source_extend == "death inferred from severe_disease",na.rm=TRUE) # n = 11
+sum(workshop$source_extend == "death inferred from severe_disease",na.rm=TRUE) # n = 12
 sum(workshop$source_extend == "severe_disease inferred from death",na.rm=TRUE) # n = 0
 
 
@@ -251,7 +253,6 @@ sum(workshop$source_extend == "severe_disease inferred from death",na.rm=TRUE) #
 for (s in unique(workshop$strain)){
     for (t in unique(workshop$vaccine_type)){  
       for (d in c(1,2)){
-      if(!(d == 2 & t == "Johnson & Johnson")){
         workshop_rows = workshop[workshop$strain == s & workshop$vaccine_type == t & workshop$dose == d & workshop$outcome %in% c('any_infection','symptomatic_disease'), ]
         #any infection -> symptomatic infection
         if (workshop_rows$source[workshop_rows$outcome == 'any_infection'] == "imputed" &
@@ -269,18 +270,16 @@ for (s in unique(workshop$strain)){
           workshop$VE[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == 'symptomatic_disease' & workshop$dose == d] = estimate
           workshop$source_extend[workshop$strain == s & workshop$vaccine_type == t & workshop$outcome == 'symptomatic_disease' & workshop$dose == d] = "symptomatic_disease inferred from any_infection"
         }  
-      }
     }
   }
 }
 sum(workshop$source_extend == "any_infection inferred from symptomatic_disease",na.rm=TRUE) # n = 4
-sum(workshop$source_extend == "symptomatic_disease inferred from any_infection",na.rm=TRUE) # n = 5
+sum(workshop$source_extend == "symptomatic_disease inferred from any_infection",na.rm=TRUE) # n = 8
 
 
 #Step Three: estimate omicron from delta
 for (o in unique(workshop$outcome)){
   for (t in unique(workshop$vaccine_type)){
-    if (!(d == 2 & t == "Johnson & Johnson")){
       for (d in c(1,2)){
         workshop_rows = workshop[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o, ]
         if (workshop_rows$source[workshop_rows$strain == "omicron"] == "imputed" & 
@@ -290,29 +289,29 @@ for (o in unique(workshop$outcome)){
           workshop$VE[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = estimate
           workshop$source_extend[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = "omicron estimated from delta"
         }
-      }}
+      }
   }
 }
-sum(workshop$source_extend =="omicron estimated from delta",na.rm=TRUE)
-workshop[is.na(workshop$VE),]
+sum(workshop$source_extend =="omicron estimated from delta",na.rm=TRUE) # n=12
 
-#COMEBACK - why does this not fit into the last loop?
-t = "Johnson & Johnson"
-d = 1
-for (o in unique(workshop$outcome)){
-       workshop_rows = workshop[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o, ]
-        if (workshop_rows$source[workshop_rows$strain == "omicron"] == "imputed" & 
-            is.na(workshop_rows$source_extend[workshop_rows$strain == 'omicron']) &
-            is.na(workshop_rows$VE[workshop_rows$strain == 'delta']) == FALSE){
-          estimate = workshop_rows$VE[workshop_rows$strain == 'delta'] * delta_omicron_ratio$mean[delta_omicron_ratio$outcome == o]
-          workshop$VE[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = estimate
-          workshop$source_extend[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = "omicron estimated from delta"
-  }
-}
 
-sum(workshop$source_extend =="omicron estimated from delta",na.rm=TRUE)
-workshop[is.na(workshop$VE),]
-#n=14
+#COMEBACK - is this still necessary?
+# t = "Johnson & Johnson"
+# d = 1
+# for (o in unique(workshop$outcome)){
+#        workshop_rows = workshop[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o, ]
+#         if (workshop_rows$source[workshop_rows$strain == "omicron"] == "imputed" & 
+#             is.na(workshop_rows$source_extend[workshop_rows$strain == 'omicron']) &
+#             is.na(workshop_rows$VE[workshop_rows$strain == 'delta']) == FALSE){
+#           estimate = workshop_rows$VE[workshop_rows$strain == 'delta'] * delta_omicron_ratio$mean[delta_omicron_ratio$outcome == o]
+#           workshop$VE[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = estimate
+#           workshop$source_extend[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = "omicron estimated from delta"
+#   }
+# }
+
+sum(workshop$source_extend =="omicron estimated from delta",na.rm=TRUE) #n=14
+
+if (nrow(workshop[is.na(workshop$VE),])>0){stop('Some values to go!')}
 
 
 VE_estimates_imputed = workshop %>%

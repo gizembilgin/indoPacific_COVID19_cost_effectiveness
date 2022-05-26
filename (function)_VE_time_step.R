@@ -68,16 +68,6 @@ VE_time_step <- function(strain_now,date_now,outcome){
                              VE =0) 
         workshop = rbind(workshop,workshop2)
       } 
-      #slightly manual work around!
-      #COMEBACK Johson & Johnson overwrite
-      if(this_vax == "Johnson & Johnson" & nrow(workshop[workshop$vaccine_type =="Johnson & Johnson",])==num_age_groups){
-        workshop2 = crossing(risk_group = risk_group_labels,
-                             dose = 2,
-                             vaccine_type = "Johnson & Johnson",
-                             age_group = age_group_labels,
-                             VE =0) 
-        workshop = rbind(workshop,workshop2)
-      }
     }
   }
 

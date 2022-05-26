@@ -8,11 +8,9 @@ apply_risk_strategy <- function(
                          vax_doses_general,             # number of doses delivered to general pop
                          vax_doses_risk,                # number of doses delivered to risk group
                          risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov
-
 ){
   
   ### WARNINGS 
-  if (vax_strategy_vaccine_type == "Johnson & Johnson" & vax_doses_general > 2){stop('We dont currently have an estimate of VE for 2+ J&J')}
   if (!vax_risk_strategy %in% c('Y','N')){stop('Is the vax strategy on or off? Y/N')}
   if (vax_risk_proportion<0 | vax_risk_proportion>1){stop('vax_risk_proportion must be between 0-1 (0%-100%)')}
   if (vax_risk_proportion == 0 & vax_risk_strategy == 'Y'){
