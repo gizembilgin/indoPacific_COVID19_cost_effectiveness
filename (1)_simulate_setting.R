@@ -66,6 +66,9 @@ if (num_risk_groups>1){
   
   pop_risk_group = aggregate(pop_risk_group_dn$pop, by = list(pop_risk_group_dn$risk_group), FUN = sum)
   colnames(pop_risk_group) = c('risk_group','pop')
+} else{
+  risk_dn = crossing(age_group=age_group_labels,
+                     prop = 1)
 }
 if (round(sum(pop_risk_group_dn$pop)) != sum(pop)){stop('(1) simulate setting line 69')}
 
