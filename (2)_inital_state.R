@@ -39,7 +39,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
-  num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes) #+1 for incidence tracker
+  
   
 } else if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "on"){
   vaccination_history_FINAL = 
@@ -53,7 +53,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
-  num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes) #+1 for incidence tracker 
+ 
   
   date_complete_at_risk_group = vaccination_history_FINAL %>% 
     filter(risk_group == risk_group_name) %>%
@@ -136,13 +136,16 @@ vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 
 
 #(B/B) Vaccine Effectiveness (VE)
+#load( file = '1_inputs/VE_waning_distribution.Rdata')
 load( file = '1_inputs/VE_waning_distribution.Rdata')
-part_one = VE_waning_distribution[VE_waning_distribution$outcome %in% c('any_infection','symptomatic_disease') &
-                                    VE_waning_distribution$waning == waning_toggle_acqusition,]
-part_two = VE_waning_distribution[VE_waning_distribution$outcome %in% c('severe_disease','death') &
-                                    VE_waning_distribution$waning == waning_toggle_severe_outcome,]
-VE_waning_distribution = rbind(part_one,part_two)
-rm(part_one,part_two)
+VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,]
+  
+# part_one = VE_waning_distribution[VE_waning_distribution$outcome %in% c('any_infection','symptomatic_disease') &
+#                                     VE_waning_distribution$waning == waning_toggle_acqusition,]
+# part_two = VE_waning_distribution[VE_waning_distribution$outcome %in% c('severe_disease','death') &
+#                                     VE_waning_distribution$waning == waning_toggle_severe_outcome,]
+# VE_waning_distribution = rbind(part_one,part_two)
+# rm(part_one,part_two)
 
 VE =  crossing(dose = c(1:num_vax_doses),
                vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
@@ -198,10 +201,11 @@ D=num_vax_doses
 RISK=num_risk_groups
 count=J*(T*D+1)*RISK # +1 is unvax
 
-S_inital=E_inital=I_inital=R_inital=Incidence_inital=(rep(0,count)) 
+S_inital=E_inital=I_inital=R_inital=(rep(0,count)) 
 
 #(B/F): number of active infected/recovered cases
 #NB: difference in Recovered where age dn when using seroprev data
+
 if (date_start <= max(case_history$date)){
   initialInfected = case_history %>%
     filter(date == date_start) %>%
@@ -338,7 +342,10 @@ state_tidy$state_inital[is.na(state_tidy$state_inital)] = 0
 #CHECKED - unique(state_tidy$vaccine_type)[-c(1)] == vax_type_list
 
 #Step Five: construct silly array that ODE solver requires
-state=c(state_tidy$state_inital,Incidence_inital) 
+Incidence_inital=(rep(0,J*(T*D+1)*RISK)) 
+Exposed_incidence_inital = rep(0,J*2)
+
+state=c(state_tidy$state_inital,Incidence_inital,Exposed_incidence_inital) 
 
 if (round(sum(state)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
 
