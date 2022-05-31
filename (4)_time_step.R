@@ -31,7 +31,8 @@ parameters = c(
 
 
 Reff_tracker = data.frame()
-
+rho_tracker_dataframe = data.frame()
+VE_tracker_dataframe = data.frame()
 
 for (increments_number in 1:num_time_steps){
 #for (increments_number in 1:48){ 
@@ -58,8 +59,10 @@ for (increments_number in 1:num_time_steps){
     if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
       parameters$VE = VE_time_step(strain,date_now,'any_infection')
     }
-    #parameters$rho = rho_time_step(strain,date_now)
-    
+    if (waning_toggle_rho_acqusition == TRUE ){
+      parameters$rho = rho_time_step('symptomatic_disease',date_now)
+      rho = parameters$rho
+    }
     
     # selecting bottom row of solution which is time = 7 (one week)
     state_working=tail.matrix(sol,1)
@@ -237,7 +240,7 @@ for (r in 1:RISK){
 
     
     next_state_FINAL=as.numeric(c(S_next,E_next,I_next,R_next,
-                                  Incidence_inital)) #setting Incid to repeated 0s
+                                  Incidence_inital,Exposed_incidence_inital)) #setting Incid to repeated 0s
     
     # next week!
     sol <- as.data.frame(ode(y=next_state_FINAL,times=(seq(0,time_step,by=1)),func=covidODE,parms=parameters))
@@ -247,9 +250,15 @@ for (r in 1:RISK){
     sol_log=head(sol_log,-1) #remove last entry from sol_log (overlap of two weekly runs)
     sol_log <- rbind(sol_log,sol)
     sol_log_unedited <- rbind(sol_log_unedited,sol)
-  }
-}
 
+    rho_tracker_dataframe = rbind(rho_tracker_dataframe,parameters$rho) 
+    
+    workshop = parameters$VE
+    workshop = workshop[workshop$VE>0,]
+    workshop = aggregate(workshop$VE, by=list(category=workshop$dose), FUN=mean)
+    colnames(workshop) = c('dose','VE')
+    workshop$date = date_now
+    VE_tracker_dataframe = rbind(VE_tracker_dataframe,workshop)
 
 ### INCIDENCE CALCULATIONS 
 J=num_age_groups
@@ -279,6 +288,9 @@ incidence_log <- incidence_log_unedited %>%
 
 incidence_log <- cbind(incidence_log,Reff_tracker)
 
+  }
+}
+#incidence log moved within loop to allow rho_time_step to access
 
 check <- sol_log_unedited
 check$Incid = rowSums(sol_log_unedited[,(A*4+2):(A*5+1)])
@@ -333,8 +345,51 @@ for (d in 1:num_vax_doses){
 #CHECKED: yes aligns as expected
 
 
+colnames(rho_tracker_dataframe) = c('rho')
+rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = incidence_log$date[2:nrow(incidence_log)])
+
+
 incidence_log_tidy = workshop %>% left_join(workshop2)
 incidence_log_tidy = subset(incidence_log_tidy,select=-c(temp))
+
+
+
+### EXPOSED LOG TIDY
+skip = (num_disease_classes+1)*(num_age_groups*num_vax_classes)
+exposed_log = sol_log_unedited %>% 
+  select(1, (skip + 2):(skip + 2*J + 1))
+exposed_log = exposed_log %>%
+  filter (time %% time_step == 0, rowSums(exposed_log) != time) %>%
+  mutate(date =  date_start + time)
+
+workshop = subset(exposed_log, select = -c(time))
+workshop = pivot_longer(
+  workshop,
+  cols = colnames(workshop)[1]:colnames(workshop)[2*J],
+  names_to = 'temp',
+  values_to = 'exposed'
+)
+workshop$temp = as.numeric(workshop$temp) - skip
+
+workshop2=as.data.frame(unique(workshop$temp)); colnames(workshop2)=c('temp')
+workshop2$age_group = rep(age_group_labels,2) #smallest subdivision is age
+workshop2 = workshop2 %>% mutate(infection_type = case_when(
+  temp <= num_age_groups ~ "new_infection",
+  temp > num_age_groups ~ "reinfection"))
+#View(workshop2) #CHECKED: yes aligns as expected
+
+exposed_log = workshop %>% left_join(workshop2)
+exposed_log_tidy = subset(exposed_log,select=-c(temp))
+
+#reinfection ratio
+exposed_log = exposed_log_tidy %>% ungroup() %>% pivot_wider(
+  id_cols = c(date,age_group),
+  names_from = infection_type,
+  values_from = exposed)
+
+exposed_log = exposed_log %>% mutate(reinfection_ratio = reinfection/(new_infection+reinfection))
+
+ggplot(exposed_log) + geom_line(aes(x=date,y=reinfection_ratio,color=as.factor(age_group)))
 
 
 
