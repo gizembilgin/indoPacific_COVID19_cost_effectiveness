@@ -138,7 +138,8 @@ vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 #(B/B) Vaccine Effectiveness (VE)
 #load( file = '1_inputs/VE_waning_distribution.Rdata')
 load( file = '1_inputs/VE_waning_distribution.Rdata')
-VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,]
+VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
+  mutate(outcome = 'any_infection')
   
 # part_one = VE_waning_distribution[VE_waning_distribution$outcome %in% c('any_infection','symptomatic_disease') &
 #                                     VE_waning_distribution$waning == waning_toggle_acqusition,]
@@ -223,14 +224,24 @@ if (date_start <= max(case_history$date)){
   initialRecovered = pop_risk_group_dn %>% ungroup() %>% 
     mutate(R = initialRecovered*pop/sum(pop)) %>%
     select(risk_group,age_group,R)
+  
+  hist_cases = case_history %>% mutate(daily_cases = new * underascertainment_est) %>%
+    select(date,daily_cases)
 }
 if (seed>0 & seed_date == date_start) { #overwrite
   initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
   initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 }
 if (date_start > max(case_history$date)){
+  
   initialRecovered = seroprev %>% left_join(pop_setting) %>% mutate(R = seroprev*pop/100) %>%
     select(age_group,R)
+  
+  date = seq(1,lengthInfectionDerivedImmunity)
+  date = date_start - date
+  workshop = as.data.frame(date)
+  workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
+  hist_cases = workshop
   
   recovered_risk = initialRecovered %>% left_join(risk_dn) %>%
     mutate(risk_group = risk_group_name,
