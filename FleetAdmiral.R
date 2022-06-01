@@ -10,7 +10,9 @@ results_warehouse = list()
 
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = FALSE
-waning_toggle_rho_acqusition = FALSE
+waning_toggle_rho_acqusition = TRUE
+rho_severe_disease = "on"
+
 risk_group_toggle = "off" #make sure not in CommandDeck
 vax_risk_strategy_toggle = "off"
 
@@ -20,7 +22,7 @@ if (setting == "SLE"){
   workshop_doses = round(workshop_doses * sum(pop))
   
   vax_strategy_toggles_CURRENT_TARGET =
-    list(vax_strategy_start_date                  = as.Date('2022-04-20'),
+    list(vax_strategy_start_date                  = baseline_date_start,
          vax_strategy_num_doses         = as.integer(workshop_doses),
          vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
          vax_delivery_group             = 'universal',
@@ -37,7 +39,7 @@ if (setting == "SLE"){
   workshop_doses = workshop_doses * 2 
   
   vax_strategy_toggles_CURRENT_TARGET =
-    list(vax_strategy_start_date                  = as.Date('2022-04-20'),
+    list(vax_strategy_start_date                  = baseline_date_start,
          vax_strategy_num_doses         = as.integer(workshop_doses), 
          vax_strategy_roll_out_speed    = 12000 ,               # doses delivered per day
          vax_delivery_group             = 'universal',

@@ -14,6 +14,7 @@ library(gridExtra)
 library(ggpubr)
 library(tidyverse)
 
+debug = "off"
 #rm(list=ls())  # clear global environment
 
 if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
@@ -26,24 +27,40 @@ if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents
 ####################################################################
 setting = "SLE"
 
+baseline_date_start = as.Date('2022-06-01')
+
 if(outbreak_post_rollout == "on"){
   date_start = max(vaccination_history_FINAL$date)
-  seed_date = date_start 
+  seed_date = baseline_date_start 
 }else if(outbreak_post_rollout == "off"){ #i.e. rolling out vaccine during outbreak
-  date_start = as.Date('2022-08-15')
-  seed_date = date_start
+  date_start = baseline_date_start
+  seed_date = baseline_date_start
 }
 
 strain_inital = 'omicron'             #options:'WT','delta','omicron'
-model_weeks = 10          # how many weeks should the model run for?
+model_weeks = 52          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
 #vax_strategy_toggle = "on"
+# vax_strategy_toggles =
+#   list(vax_strategy_start_date                  = as.Date('2022-08-20'),
+#        vax_strategy_num_doses         = 2090592,
+#        vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
+#        vax_delivery_group             = 'universal',
+#        vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
+#        vax_dose_strategy              = 1,                    # options: 1,2
+#        vax_strategy_vaccine_type      = "Johnson & Johnson" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
+#        vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
+#        vax_strategy_max_expected_cov  = 0.88                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
+#   )
 
 #RR_estimate = 2
-#risk_group_toggle = "on"
-#risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
-#vax_risk_strategy_toggle = "on"
+#risk_group_toggle = "off"
+#risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
+#vax_risk_strategy_toggle = "off"
+
+#waning_toggle_rho_acqusition = TRUE
+#rho_severe_disease = "on"
 
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
@@ -52,20 +69,14 @@ underascertainment_est = 43
 behaviour_mod = 0  #0.268 if start 01/03/21
 uniform_mod=1
 
+discounting_rate = 0 #discounting on YLL
 #__________________________________________________________________
 
 
 
 #       (3/4) Run model            
 # ####################################################################
-##(A) Load functions
-source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
-source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
-
-
-##(B) Simulate setting 
+##(A) Simulate setting 
 # time saving tactics! Load setting if not yet loaded
 if (complete_model_runs == 1){run_type="point"
 } else if (complete_model_runs > 1){run_type="rand"}
@@ -87,12 +98,22 @@ prev_risk_num = num_risk_groups
 prev_risk_group = risk_group_name
 seed = 0.001*sum(pop)
 
+if (exists("prev_discounting_rate") == FALSE){ prev_discounting_rate = discounting_rate}
+if (prev_discounting_rate != discounting_rate){stop('need to re-run "(mech shop) severe outcome setting-specific rates" to apply new discounting rate')}
+
 #making some interim variables to assist with configuring states
 num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
 vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
-num_total_classes = (num_disease_classes+1)*(num_age_groups*num_vax_classes)*num_risk_groups #+1 for incidence tracker
+
+##(B) Load functions
+source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
+source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
+source(paste(getwd(),"/(function)_rho_time_step.R",sep=""))
+source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
+source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
+
 
 ##(C) Run the model!
 time.start.CommandDeck=proc.time()[[3]] #let's see how long this runs for
@@ -191,7 +212,16 @@ plot3<- ggplot() +
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
 
-grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
+
+if (debug == "on"){
+  plot4 = ggplot(rho_tracker_dataframe) + geom_line(aes(x=date,y=rho))
+  plot5 = ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
+  lay <- rbind(c(1,2),c(3,3),c(4,5))
+  grid.arrange(plot1, plot2, plot3,plot4,plot5, layout_matrix = lay)
+} else{
+  grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
+}
+
 }
 #either incidence per 100,000 or % of total population
 #__________________________________________________________________ 
