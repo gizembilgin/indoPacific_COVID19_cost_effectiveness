@@ -7,6 +7,7 @@ warehouse_table = data.frame()
 warehouse_plot = data.frame()
 baseline_to_compare = "no further vaccine rollout"
 vax_strategy_toggle = "on"
+age_split_results = "Y"
 
 ### (2) Planning #################################################################################################################
 #calculating poss level of coverage
@@ -123,6 +124,12 @@ for (section in 1:3){
   list_plot_commands = section_list[[section]]
   workshop = warehouse_plot[warehouse_plot$label %in% list_plot_commands, ]
   
+  #let's still plot with net outcomes (not differentiated by children and adults)
+  workshop = workshop %>% 
+    group_by(date,outcome,label,day,time) %>%
+    summarise(proj = sum(proj),
+              proj_cum = sum(proj_cum))
+  
   plot_list = list()
   for (i in 1:length(unique(workshop$outcome))){
     outcome = unique(workshop$outcome)[i]
@@ -145,19 +152,68 @@ results_warehouse_entry[[3]]= scenario_plot_list
 #(B/B) cumulative outcome table
 baseline_to_compare = "current vaccination targets (51.6%)"
 
- 
-  averted_table = warehouse_table[warehouse_table$scenario != baseline_to_compare,]
-  averted_table_rel = averted_table
-  for (i in 1:(length(queue)-1)){
-    end = (length(unique(warehouse_plot$outcome))+1)
-    averted_table[i,c(2:end)] = 
-      warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)] -
-      averted_table[i,c(2:end)] 
+
+averted_table = warehouse_table[warehouse_table$scenario != baseline_to_compare,]
+averted_table_rel = averted_table
+
+warehouse_table_net = warehouse_table[warehouse_table$scenario == baseline_to_compare,] %>% ungroup %>% 
+  group_by(scenario) %>%
+  summarise(death = sum(death),
+            hosp = sum(hosp),
+            severe_disease = sum(severe_disease),
+            YLL = sum(YLL),
+            cases = sum(cases))
+averted_table_net = warehouse_table[warehouse_table$scenario != baseline_to_compare,] %>% ungroup %>% 
+  group_by(scenario) %>%
+  summarise(death = sum(death),
+         hosp = sum(hosp),
+         severe_disease = sum(severe_disease),
+         YLL = sum(YLL),
+         cases = sum(cases))
+averted_table_net_rel = averted_table_net
+
+age_loop_list = unique(averted_table$macro_age_group)
+scenario_loop_list = unique(averted_table$scenario)
+  
+for (a in 1:(length(scenario_loop_list))){
+  this_scenario = scenario_loop_list[a]
+  for (b in 1:(length(age_loop_list))){
+    this_age = age_loop_list[b]
     
-    averted_table_rel[i,c(2:end)] = 100 * averted_table[i,c(2:end)]/
-      warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)]
+    end = (length(unique(warehouse_plot$outcome))+2)
+    averted_table[averted_table$macro_age_group == this_age & averted_table$scenario == this_scenario,
+                  c(3:end)] = 
+      warehouse_table[warehouse_table$scenario == baseline_to_compare & warehouse_table$macro_age_group == this_age,
+                      c(3:end)] -
+      averted_table[averted_table$macro_age_group == this_age & averted_table$scenario == this_scenario,
+                    c(3:end)]
+    
+    averted_table_rel[averted_table_rel$macro_age_group == this_age & averted_table_rel$scenario == this_scenario,c(3:end)] = 
+      100 * averted_table[averted_table$macro_age_group == this_age & averted_table$scenario == this_scenario,c(3:end)]/
+      warehouse_table[warehouse_table$scenario == baseline_to_compare & warehouse_table$macro_age_group == this_age,c(3:end)]
   }
-    
+  
+  end = (length(unique(warehouse_plot$outcome))+1)
+  
+  averted_table_net[averted_table_net$scenario == this_scenario, c(2:end)] = 
+    warehouse_table_net[warehouse_table_net$scenario == baseline_to_compare, c(2:end)] -
+    averted_table_net[averted_table_net$scenario == this_scenario,c(2:end)]
+  
+  averted_table_net_rel[averted_table_net_rel$scenario == this_scenario,c(2:end)] = 
+    100 * averted_table_net[averted_table_net$scenario == this_scenario,c(2:end)]/
+    warehouse_table_net[warehouse_table_net$scenario == baseline_to_compare ,c(2:end)]
+  
+}
+
+averted_table_net = averted_table_net %>% mutate(macro_age_group = 'net')
+averted_table = rbind(averted_table,averted_table_net)
+averted_table = averted_table %>% arrange(scenario)
+
+averted_table_net_rel = averted_table_net_rel %>% mutate(macro_age_group = 'net')
+averted_table_rel = rbind(averted_table_rel,averted_table_net_rel)
+averted_table_rel = averted_table_rel %>% arrange(scenario)
+
+
   
 for (section in 1:3){
   list_plot_commands = section_list[[section]]  
@@ -175,6 +231,6 @@ results_warehouse_entry[[4]]= scenario_table_list
 #____________________________________________________________________________________________________________________________________
 
 results_warehouse[[receipt]] = results_warehouse_entry
-
+age_split_results = "N"
 
 #COMEBACK - how can current vaccine target be better than increased coverage??
