@@ -18,6 +18,7 @@ covidODE <- function(t, state, parameters){
     R=state[(3*A+1):(4*A)]
     
     dS = dE = dI = dR = dIncidence  <- numeric(length=A)
+    dExposed_S  = dExposed_R        <- numeric(length=J)
  
     tau =(rep(0,J)) 
     
@@ -57,7 +58,10 @@ covidODE <- function(t, state, parameters){
         dE[unvax] = tau[i]*S[unvax] - lambda*E[unvax] + tau[i]*(1-rho)*R[unvax]
         dI[unvax] = lambda*E[unvax] - delta*I[unvax]
         dR[unvax] = delta*I[unvax]  - omega*R[unvax]  - tau[i]*(1-rho)*R[unvax]
+        
         dIncidence[unvax] = lambda*E[unvax]
+        dExposed_S[i] = tau[i]*S[i]
+        dExposed_R[i] = tau[i]*(1-rho)*R[i]
         
         for (t in 1:T){
           for (d in 1:D){
@@ -72,7 +76,10 @@ covidODE <- function(t, state, parameters){
             dE[B] = tau[i]*(1-VE_step)*S[B] - lambda*E[B] + tau[i]*(1-VE_step)*(1-rho)*R[B]
             dI[B] = lambda*E[B]             - delta*I[B]
             dR[B] = delta*I[B]              - omega*R[B]  - tau[i]*(1-VE_step)*(1-rho)*R[B]
+            
             dIncidence[B] = lambda*E[B] 
+            dExposed_S[i] = dExposed_S[i] + tau[i]*(1-VE_step)*S[B] 
+            dExposed_R[i] = dExposed_R[i] + tau[i]*(1-VE_step)*(1-rho)*R[B]
             
           }
         }
@@ -84,7 +91,7 @@ covidODE <- function(t, state, parameters){
     dI = as.numeric(dI)
     dR = as.numeric(dR)
     
-    list(c(dS,dE,dI,dR,dIncidence))  
+    list(c(dS,dE,dI,dR,dIncidence,dExposed_S,dExposed_R))  
   })
 }
 
