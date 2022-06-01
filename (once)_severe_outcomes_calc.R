@@ -6,27 +6,42 @@ time.start=proc.time()[[3]]
 
 #####(6/7) Multiplying severe outcomes by VE
 #(A/C) calculate VE against severe outcomes by day
-if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
-  VE_tracker = data.frame()
-  for (outcome in c('death','severe_disease')){
-    for (day in 1:(model_weeks*7) ){
-      workshop = VE_time_step(strain_inital,date_start+day,outcome)
-      workshop = workshop %>% mutate(date=day,
-                                     outcome_VE=outcome)
-      VE_tracker = rbind(VE_tracker,workshop)
-    }
-  }
-  VE_tracker$date = date_start + VE_tracker$date 
-  
-  workshop = crossing(dose = 0,
-                      risk_group = risk_group_labels,
-                      vaccine_type = "unvaccinated",
-                      age_group = age_group_labels,
-                      VE = 0,
-                      date = unique(VE_tracker$date),
-                      outcome_VE=unique(VE_tracker$outcome))
-  VE_tracker = rbind(VE_tracker,workshop)
-}
+#REMOVED AS NO WANING OPTION FOR VE AGAINST SEVERE OUTCOMES
+# if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
+#   VE_tracker = data.frame()
+#   for (outcome in c('death','severe_disease')){
+#     for (day in 1:(model_weeks*7) ){
+#       workshop = VE_time_step(strain_inital,date_start+day,outcome)
+#       workshop = workshop %>% mutate(date=day,
+#                                      outcome_VE=outcome)
+#       VE_tracker = rbind(VE_tracker,workshop)
+#     }
+#   }
+#   VE_tracker$date = date_start + VE_tracker$date 
+#   
+
+# }
+VE_tracker= crossing(risk_group = risk_group_labels,
+                     dose = seq(1,D),
+                     vaccine_type = vax_type_list,
+                     age_group = age_group_labels,
+                     date = unique(incidence_log$date),
+                     outcome_VE = c('death','severe_disease'))
+workshop = VE_estimates_imputed %>% filter(strain == strain_now) %>% 
+  select(vaccine_type,dose,outcome,VE) %>% mutate(VE=VE/100) %>%
+  rename(outcome_VE = outcome)
+VE_tracker = VE_tracker %>% left_join(workshop)
+
+workshop = crossing(risk_group = risk_group_labels,
+                    dose = 0,
+                    vaccine_type = "unvaccinated",
+                    age_group = age_group_labels,
+                    date = unique(incidence_log$date),
+                    outcome_VE = c('death','severe_disease'),
+                    VE = 0)
+VE_tracker = rbind(VE_tracker,workshop)
+
+
 
 #(B/C) 
 load(file = '1_inputs/severe_outcome_FINAL.Rdata') #adjusted values from Qatar
