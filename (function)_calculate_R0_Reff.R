@@ -9,6 +9,7 @@ require(tidyverse)
 if (strain == 'WT'){R0_to_fit = 2.79
 } else if (strain == "delta"){R0_to_fit = 5.08
 } else if (strain == "omicron"){R0_to_fit = 5.08*1.64} #World Health Organization. (2022). COVID-19 weekly epidemiological update, edition 82, 8 March 2022. World Health Organization. https://apps.who.int/iris/handle/10665/352390. License: CC BY-NC-SA 3.0 IGO
+#} else if (strain == "omicron"){R0_to_fit = 5.08}
 
 #COMEBACK - is R0 lower in SLE and PNG?
 #R0_to_fit = R0_to_fit*0.79
