@@ -124,6 +124,10 @@ YLL_FINAL = workshop %>%
   select(agegroup,life_expectancy) 
 colnames(YLL_FINAL) = c('age_group','YLL')
 
+#apply discounting using continuous approach, as per larson et al.
+if (discounting_rate >0){YLL_FINAL$life_expectancy = (1/discounting_rate)*(1-exp(-discounting_rate*YLL_FINAL$life_expectancy ))}
+
+
 YLL_row = severe_outcome_FINAL[severe_outcome_FINAL$outcome == 'death',]
 YLL_row$outcome = 'YLL'
 YLL_row$outcome_long = 'YLL per death in this age_group multiplied by death rate'
@@ -144,6 +148,7 @@ ggplot() +
              aes(x=factor(age_group,level=age_group_labels),
                                            y=percentage,color=as.factor(outcome)),na.rm=TRUE) +
   xlab('age group') +
+  labs(color='outcome') +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
