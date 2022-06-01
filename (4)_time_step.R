@@ -254,8 +254,8 @@ for (r in 1:RISK){
     rho_tracker_dataframe = rbind(rho_tracker_dataframe,parameters$rho) 
     
     workshop = parameters$VE
-    workshop = workshop[workshop$VE>0,]
-    workshop = aggregate(workshop$VE, by=list(category=workshop$dose), FUN=mean)
+    workshop = workshop[workshop$VE>0,] %>% mutate(immunity = paste(vaccine_type,dose))
+    workshop = aggregate(workshop$VE, by=list(category=workshop$immunity), FUN=mean)
     colnames(workshop) = c('dose','VE')
     workshop$date = date_now
     VE_tracker_dataframe = rbind(VE_tracker_dataframe,workshop)
@@ -355,7 +355,7 @@ incidence_log_tidy = subset(incidence_log_tidy,select=-c(temp))
 
 
 ### EXPOSED LOG TIDY
-skip = (num_disease_classes+1)*(num_age_groups*num_vax_classes)
+skip = (num_disease_classes+1)*(num_age_groups*num_vax_classes)*RISK
 exposed_log = sol_log_unedited %>% 
   select(1, (skip + 2):(skip + 2*J + 1))
 exposed_log = exposed_log %>%
