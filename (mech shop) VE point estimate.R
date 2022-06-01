@@ -10,7 +10,7 @@ require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
 #NOTE: the four VE we calculate are VE against infection, death, severe disease and symptomatic disease. 
 
 
-##### (1/2) Inital estimates from IVAC living systematic review ###################################################################################
+##### (1/2) Inital estimates from IVAC living systematic review ##########4#########################################################################
 VE_estimates <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
 colnames(VE_estimates)
 
@@ -340,6 +340,7 @@ VE_estimates_imputed = workshop %>%
 strain = 'omicron'
 to_plot = VE_estimates_imputed[VE_estimates_imputed$strain == strain &VE_estimates_imputed$dose !=3,]
 
+
 plot_list = list()
 for (i in 1:length(unique(to_plot$outcome))){
   outcome = unique(to_plot$outcome)[i]
@@ -350,11 +351,13 @@ for (i in 1:length(unique(to_plot$outcome))){
     theme_bw() + 
     scale_shape_manual(values=c(1,19)) +
     ylab("") + 
-    labs(title=paste("VE against ",outcome,sep=""))
+    labs(title=paste("VE against ",outcome,sep="")) + 
+    theme(text=element_text(size=10), 
+          plot.title=element_text(size=12))
 }
-plot_VE_point_estimates = ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]],
-          common.legend = TRUE,
-          legend="bottom")
+plot_VE_point_estimates = ggarrange(plot_list[[1]],plot_list[[4]],plot_list[[3]],plot_list[[2]],
+                                    common.legend = TRUE,
+                                    legend="bottom")
 #annotate_figure(plot, top = text_grob(paste('VE estimates against',strain), size = 18))
 plot_VE_point_estimates
 
