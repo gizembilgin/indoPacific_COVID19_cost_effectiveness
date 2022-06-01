@@ -72,9 +72,9 @@ kable(results_warehouse_SM[[1]][[4]]$relative, caption = 'Relative difference in
 ## Range of possible RR
 ```{r echo=FALSE , fig.width=10,fig.height=5}
 
-results_warehouse_SM[[3]][[3]]
-kable(results_warehouse_SM[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes compared to no difference in risk (RR=1)',digits=0,format.args = list(big.mark = ","))
-kable(results_warehouse_SM[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
+#results_warehouse_SM[[3]][[3]]
+#kable(results_warehouse_SM[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes compared to no #difference in risk (RR=1)',digits=0,format.args = list(big.mark = ","))
+#kable(results_warehouse_SM[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
 ```
 ## Reduced VE
 ## Altered contact patterns

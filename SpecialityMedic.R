@@ -6,11 +6,13 @@
 #________________________________________________________________________________________________________________
 
 time.start.SpecialityMedic=proc.time()[[3]]
+receipt = 0
 results_warehouse_SM = list()
 
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = FALSE
-waning_toggle_rho_acqusition = FALSE
+waning_toggle_rho_acqusition = TRUE
+rho_severe_disease = "on"
 
 outbreak_post_rollout = "off"
 
@@ -18,7 +20,7 @@ RR_estimate = RR_default = 2
 vax_strategy_toggle = "on"
 vax_risk_strategy_toggle = "on"
 risk_group_toggle = "on" 
-risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
+risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
 risk_group_prioritisation_to_date = NA
 default_prioritisation_proportion = 0.5
 
@@ -30,7 +32,7 @@ if (setting == "SLE"){
   workshop_doses = round(workshop_doses * sum(pop))
   
   vax_strategy_toggles_CURRENT_TARGET =
-    list(vax_strategy_start_date        = as.Date('2022-07-20'),
+    list(vax_strategy_start_date        = baseline_date_start,
          vax_strategy_num_doses         = as.integer(workshop_doses),
          vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
          vax_delivery_group             = 'universal',
@@ -49,14 +51,12 @@ if ("Johnson & Johnson" %in% unique(vaccination_history_POP$vaccine_type)){warni
 
 
 ###(1) Prioritising primary dose coverage by x%
-receipt = 1
 source(paste(getwd(),"/(SM run 1) prioritising primary doses.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
 ### (2) Delivery of booster doses to at risk group
-receipt = 2
-
+#source(paste(getwd(),"/(SM run 2) priority delivery of booster dose.R",sep=""))
 #________________________________________________________________________________________________________________
 
 

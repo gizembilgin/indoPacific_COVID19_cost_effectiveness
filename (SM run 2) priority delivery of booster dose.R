@@ -1,40 +1,36 @@
 
-#This program runs results for section 1 of SpecialityMedic (SM)
-#It estimates of the impact prioritising the delivery of primary doses to the at risk group
+#This program runs results for section 2 of SpecialityMedic (SM)
+#It estimates of the providing booster doses to the at risk group (general public still recieve full scheudle only)
 
 ### (1) Overarching trackers #####################################################################################################
-receipt = 1
+receipt = 2
 warehouse_table = data.frame() 
 warehouse_plot = data.frame()
-baseline_to_compare = "no prioritisation"
+baseline_to_compare = "no booster"
 
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
 
-#(A/B) Baseline - no prioritisation
+#(A/B) Baseline - no booster
 this_run = list(
-  vax_risk_strategy = 'N',             # options: 'Y','N'
-  vax_risk_proportion = 0,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
-  vax_doses_general = 1,               # number of doses delivered to general pop
-  vax_doses_risk = 1                  # number of doses delivered to risk group
+  vax_risk_strategy = 'Y',           
+  vax_risk_proportion = default_prioritisation_proportion,  
+  vax_doses_general = 1,              
+  vax_doses_risk = 1              
 )
 
-queue[[1]] = list(vax_strategy_description = "no prioritisation",
+queue[[1]] = list(vax_strategy_description = "no booster",
                   apply_risk_strategy_toggles = this_run)
 
 
-#(B/B) Increased prioritisation
-this_run$vax_risk_strategy = 'Y'
-this_run$vax_risk_proportion = 0.25
-queue[[2]] = list(vax_strategy_description = '25% prioritisation',
+#(B/B) Provision of booster
+this_run$vax_doses_risk = 2
+vax_strategy_toggles$vax_strategy_vaccine_interval = 365/4
+queue[[2]] = list(vax_strategy_description = 'booster at three months',
                   apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
 
-this_run$vax_risk_proportion = 0.5
-queue[[3]] = list(vax_strategy_description = '50% prioritisation',
-                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
-
-this_run$vax_risk_proportion = 0.75
-queue[[4]] = list(vax_strategy_description = '75% prioritisation',
+vax_strategy_toggles$vax_strategy_vaccine_interval = 365/2
+queue[[2]] = list(vax_strategy_description = 'booster at six months',
                   apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
 
 
@@ -45,7 +41,7 @@ for (ticket in 1:length(queue)){
   
   vax_strategy_description = commands$vax_strategy_description
   apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
-
+  
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   severe_outcome_projections = severe_outcome_log %>% 
