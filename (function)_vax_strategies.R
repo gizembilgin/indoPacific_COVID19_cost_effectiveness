@@ -41,9 +41,6 @@ vax_strategy <- function(vax_strategy_start_date,
 if (vax_strategy_start_date <= max(vaccination_history_TRUE$date)){ 
   stop ('Your hypothetical vaccine campaign start date needs to be in the future!')
 }
-# if (vax_strategy_start_date <= date_start){ 
-#   stop ('Your hypothetical vaccine campaign start date needs to be after the start date (unless you want to do more coding)')
-# }
 if (!(vax_strategy_vaccine_type %in% c("Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"))){
   stop('pick a valid vaccine type, or check your spelling!')
 }
@@ -64,6 +61,8 @@ if (vax_delivery_group %in% c('universal','general_public')){ this_risk_group = 
 booster_dose = "N"
 if (vax_dose_strategy == 3){booster_dose = "Y"}
 if (vax_dose_strategy == 2 & vax_strategy_vaccine_type == "Johnson & Johnson"){booster_dose = "Y"}
+
+vax_strategy_vaccine_interval = round(vax_strategy_vaccine_interval)
 #_______________________________________________________________________________
 
 
@@ -223,16 +222,16 @@ if (vax_dose_strategy == 1){
   timeframe = ceiling/vax_strategy_roll_out_speed
   daily_per_dose = vax_strategy_roll_out_speed
 } else if (vax_dose_strategy == 2){
-  #COMEBACK - do we need a ceiling here too?
-  if(vax_strategy_num_doses/(vax_strategy_roll_out_speed*2)<vax_strategy_vaccine_interval){
-    timeframe = vax_strategy_num_doses/(vax_strategy_roll_out_speed*2)
+  ceiling =  min(sum(eligible_pop$doses_delivered),vax_strategy_num_doses)
+  if(ceiling/(vax_strategy_roll_out_speed*2)<vax_strategy_vaccine_interval){
+    timeframe = ceiling/(vax_strategy_roll_out_speed*2)
     daily_per_dose = vax_strategy_roll_out_speed
   } else{
-    timeframe = vax_strategy_num_doses/(vax_strategy_roll_out_speed)
+    timeframe = ceiling/(vax_strategy_roll_out_speed)
     daily_per_dose = vax_strategy_roll_out_speed/2
   }
 }
-timeframe = round(timeframe)
+timeframe = ceiling(timeframe)
 if (is.na(restriction_date) == FALSE){
   timeframe = as.numeric(restriction_date - vax_strategy_start_date) + 1
 }
@@ -244,12 +243,12 @@ vax_delivery_outline <- crossing(day = c(1:length_track),
                                  dose = c(1:num_vax_doses),
                                  age_group = age_group_labels,
                                  doses_delivered = c(0))
-
-#for (day in 1:229){
 for (day in 1:timeframe){
+#for (day in 1:(timeframe-1)){  
+#for (day in 1:9){
   avaliable = daily_per_dose
   #ensuring that we don't overshoot available doses
-  if (day == timeframe){avaliable = vax_strategy_num_doses/vax_dose_strategy-(timeframe-1)*daily_per_dose}
+  if (day == timeframe){avaliable = min(vax_strategy_num_doses/vax_dose_strategy-(timeframe-1)*daily_per_dose,daily_per_dose)}
   if (avaliable > sum(VA$doses_left)){avaliable = sum(VA$doses_left)}
   
   while(avaliable>0 & priority_num <= highest_priority){
@@ -270,10 +269,11 @@ for (day in 1:timeframe){
       #either deliver max capacity or number left in this group, whichever is fewer
       
       leftover=0
+      VA_pt = VA #snapshot
       
       for (i in length(priority_group):1){
         workshop_age = priority_group[i]
-        workshop_prop = sum(VA$doses_left[VA$age_group == workshop_age])/sum(VA$doses_left[VA$priority == priority_num])
+        workshop_prop = sum(VA_pt$doses_left[VA_pt$age_group == workshop_age])/sum(VA_pt$doses_left[VA_pt$priority == priority_num])
         workshop_calc = workshop_doses * workshop_prop + leftover
         
         if (workshop_calc > VA$doses_left[VA$age_group == workshop_age & VA$dose == 1]){
@@ -324,7 +324,27 @@ names(vax_delivery_outline)[names(vax_delivery_outline) == 'doses_delivered'] <-
 
 vax_delivery_outline = vax_delivery_outline %>% 
   select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group)
+
+#CHECK 
+workshop = aggregate(vax_delivery_outline$doses_delivered_this_date,by=list(vax_delivery_outline$age_group),FUN=sum)
+colnames(workshop) = c('age_group','doses')
+
+if (round(sum(workshop$doses)) != round(sum(eligible_pop$doses_delivered))) { #if not all doses delivered
+  if (is.na(restriction_date) == TRUE){ #if no restriction date -> error
+    stop('error line 331 of vax strategies function')
+  } else{ #else if restriction date
+    if (round(as.numeric(restriction_date - vax_strategy_start_date +1) * vax_strategy_roll_out_speed) == round(sum(workshop$doses))){
+      #if restriction date causing non delivery of doses
+    } else{  
+      stop('error line 331 of vax strategies function')
+    }
+  } 
+}
+
+#aggregate(vax_delivery_outline$doses_delivered_this_date,by=list(vax_delivery_outline$age_group,vax_delivery_outline$dose),FUN=sum) 
 #CHECK - aggregate(vax_delivery_outline$doses_delivered_this_date,by=list(vax_delivery_outline$age_group),FUN=sum) - aligns with eligible_pop
+
+ggplot(vax_delivery_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
 
 ### adding to end of vaccination_history_TRUE
 #do we need zero rows?
