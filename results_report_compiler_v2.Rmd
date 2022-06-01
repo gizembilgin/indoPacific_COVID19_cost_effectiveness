@@ -52,6 +52,7 @@ Waning of VE against acquisition | `r paste(waning_toggle_acqusition)`|
 Waning of VE against severe disease | `r paste(waning_toggle_severe_outcome)`|
 Waning of infection-derived immunity against acquisition | `r paste(waning_toggle_rho_acqusition)`|
 Waning of infection-derived immunity against severe outcomes | Not yet included |
+YLL discounting | `r paste(discounting_rate)`| 
 
 **Other assumptions/limitations:**
 
@@ -136,7 +137,7 @@ kable(results_warehouse[[4]][[4]]$relative, caption = 'Relative difference in ou
 
 ***
 
-# Sensitivity analysis (TBC)
+# Sensitivity analysis (see FleetDeputy output)
 
 ***
 
@@ -161,7 +162,10 @@ if (waning_toggle_severe_outcome == TRUE){
 
 <font size="4"> **Infection-derived immunity estimate** </font>
 
-Rho initial: `r paste(rho_inital)`
+Rho severe outcomes: `r paste(rho_dn$protection[rho_dn$outcome == 'severe_outcome' & rho_dn$days == 1])`
+```{r echo=FALSE}
+rho_est_plot
+```
 
 <font size="4"> **Seroprevalence**  </font>
 ```{r echo=FALSE}
