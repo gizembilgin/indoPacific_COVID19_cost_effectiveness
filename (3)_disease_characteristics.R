@@ -39,19 +39,16 @@ delta = 1/AverageSymptomaticPeriod
 
 
 ### (D/E) Waning of infection-derived immunity
-lengthInfectionDerivedImmunity = 180 #days #COMEBACK - need actual value!
+lengthInfectionDerivedImmunity = 365 #days #COMEBACK - need actual value!
 omega = 1/lengthInfectionDerivedImmunity
 
-load(file = "1_inputs/NG_rho.Rdata")
-if (strain_inital == 'delta' | strain_inital == 'WT'){
-  rho = mean(immunity_from_infection$ve_predict_mean[immunity_from_infection$outcome == "acquisition" &
-                                                       immunity_from_infection$strain == 'delta' & immunity_from_infection$days<=lengthInfectionDerivedImmunity])
-} else if (strain_inital == 'omicron'){
-  rho = mean(immunity_from_infection$ve_predict_mean[immunity_from_infection$outcome == "acquisition" &
-                                                       immunity_from_infection$strain == 'omicron' & immunity_from_infection$days<=lengthInfectionDerivedImmunity])
+if (waning_toggle_rho_acqusition == TRUE ){
+  rho_inital = rho_time_step('symptomatic_disease',date_start)
+} else{
+  rho_inital = 0.95 #Chemaitelly et al. 2 week estimate
 }
-rho_inital = 0.9 #COMEBACK - need actual value!
-#rho = rho_time_step(strain_inital,date_start)
+if (rho_inital > 1){stop('rho is > 1')}
+
 
 
 ### (E/E) Beta - fitting parameter
