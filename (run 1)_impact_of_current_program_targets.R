@@ -72,7 +72,7 @@ for (i in 1:length(unique(warehouse_plot$outcome))){
     xlab("") + 
     ylab("")}
 # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
-plot = ggarrange(plot_list[[5]], plot_list[[1]], 
+plot = ggarrange(plot_list[[5]], plot_list[[3]], 
                  common.legend = TRUE,
                  legend="bottom")
 annotate_figure(plot, top = text_grob('absolute outcome by scenario', face = 'bold', size = 16))

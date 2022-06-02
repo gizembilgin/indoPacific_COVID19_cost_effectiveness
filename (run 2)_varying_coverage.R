@@ -234,3 +234,17 @@ results_warehouse[[receipt]] = results_warehouse_entry
 age_split_results = "N"
 
 #COMEBACK - how can current vaccine target be better than increased coverage??
+
+
+
+# workshop = results_warehouse[[2]][[1]]
+# workshop_2 = workshop %>% ungroup %>% 
+#   group_by(scenario) %>%
+#   summarise(death = sum(death),
+#             hosp = sum(hosp),
+#             severe_disease = sum(severe_disease),
+#             YLL = sum(YLL),
+#             cases = sum(cases)) %>%
+#   mutate(macro_age_group = 'net')
+# workshop = rbind(workshop,workshop_2)
+# View(workshop)
