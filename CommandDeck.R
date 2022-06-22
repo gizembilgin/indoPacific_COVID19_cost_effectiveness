@@ -27,7 +27,7 @@ if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents
 ####################################################################
 setting = "SLE"
 
-baseline_date_start = as.Date('2022-06-01')
+baseline_date_start = as.Date('2022-07-01')
 
 if(outbreak_post_rollout == "on"){
   date_start = max(vaccination_history_FINAL$date)
