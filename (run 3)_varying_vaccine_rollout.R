@@ -53,7 +53,7 @@ results_warehouse_entry = list()
 results_warehouse_entry[[1]] = warehouse_table
 results_warehouse_entry[[2]] = warehouse_plot
 
-#(A/B) absolute outcome plot
+#(A/B) Plot
 warehouse_plot = warehouse_plot %>% mutate(time = date)
 
 plot_list = list()
@@ -73,7 +73,23 @@ annotate_figure(plot, top = text_grob('absolute outcome by scenario', face = 'bo
 
 results_warehouse_entry[[3]]= plot
 
-#(B/B) cumulative outcome table
+plot_list = list()
+for (i in 1:length(unique(warehouse_plot$outcome))){
+  outcome = unique(warehouse_plot$outcome)[i]
+  plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
+    geom_point(aes(x=time,y=proj_cum,color=as.factor(label))) +
+    labs(title=paste(outcome)) +
+    theme_bw() + 
+    xlab("") + 
+    ylab("")}
+# 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
+cum_plot = ggarrange(plot_list[[5]], plot_list[[1]], 
+                     common.legend = TRUE,
+                     legend="bottom")
+annotate_figure(cum_plot, top = text_grob('absolute outcome by scenario', face = 'bold', size = 16))
+
+
+#(B/B) Table
 baseline_to_compare = 'baseline - current roll-out'
 averted_table = warehouse_table[warehouse_table$scenario != baseline_to_compare,]
 averted_table_rel = averted_table
