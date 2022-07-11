@@ -12,6 +12,7 @@ vax_strategy <- function(vax_strategy_start_date,
                          vax_strategy_vaccine_interval, # (days) interval between first and second dose
                          vax_strategy_max_expected_cov,  # value between 0-1 (equivalent to %) of age group willing to be vaccinated
                          restriction_date = NA,
+                         vax_roll_out_speed_modifier = data.frame(),
                          vax_end_hist   = vaccine_coverage_end_history
                          ){
 
@@ -231,10 +232,22 @@ if (vax_dose_strategy == 1){
     daily_per_dose = vax_strategy_roll_out_speed/2
   }
 }
-timeframe = ceiling(timeframe)
+
+#modify if end in sight of restriction date
 if (is.na(restriction_date) == FALSE){
   timeframe = as.numeric(restriction_date - vax_strategy_start_date) + 1
 }
+
+#modify if available doses restricted
+if (nrow(vax_roll_out_speed_modifier)>0){
+  exception_list = unique(vax_roll_out_speed_modifier$day)
+  extension_time = sum(vax_roll_out_speed_modifier$doses_delivered_this_date)/daily_per_dose
+  timeframe = timeframe + extension_time
+} else{
+  exception_list = c(-1)
+}
+
+timeframe = ceiling(timeframe)
 
 length_track = timeframe
 if (vax_dose_strategy == 2){length_track=length_track+vax_strategy_vaccine_interval}
@@ -243,12 +256,27 @@ vax_delivery_outline <- crossing(day = c(1:length_track),
                                  dose = c(1:num_vax_doses),
                                  age_group = age_group_labels,
                                  doses_delivered = c(0))
+
 for (day in 1:timeframe){
-#for (day in 1:(timeframe-1)){  
-#for (day in 1:9){
+#for (day in 1:14){
+#for (day in 1:(timeframe-1)){
   avaliable = daily_per_dose
+  daily_per_dose_here = daily_per_dose
+  
+  if (day %in% exception_list){
+    avaliable = vax_roll_out_speed_modifier$doses_avaliable[vax_roll_out_speed_modifier$day == day]
+    daily_per_dose_here = avaliable 
+  }
+  
   #ensuring that we don't overshoot available doses
-  if (day == timeframe){avaliable = min(vax_strategy_num_doses/vax_dose_strategy-(timeframe-1)*daily_per_dose,daily_per_dose)}
+  if (day == timeframe){
+    workshop_leftover = sum(vax_delivery_outline$doses_delivered)
+    avaliable = min(vax_strategy_num_doses/vax_dose_strategy-workshop_leftover,daily_per_dose)
+    #CHECK
+    if (nrow(vax_roll_out_speed_modifier)==0){
+      if(workshop_leftover != (timeframe-1)*daily_per_dose){stop('HA line 276 of vax strategies function')}
+    }
+  }
   if (avaliable > sum(VA$doses_left)){avaliable = sum(VA$doses_left)}
   
   while(avaliable>0 & priority_num <= highest_priority){
@@ -265,7 +293,7 @@ for (day in 1:timeframe){
       
       #ISSUE HERE
       workshop_doses = min(sum(VA$doses_left[VA$priority == priority_num & VA$dose == 1]),
-                           daily_per_dose)
+                           daily_per_dose_here)
       #either deliver max capacity or number left in this group, whichever is fewer
       
       leftover=0
@@ -331,12 +359,12 @@ colnames(workshop) = c('age_group','doses')
 
 if (round(sum(workshop$doses)) != round(sum(eligible_pop$doses_delivered))) { #if not all doses delivered
   if (is.na(restriction_date) == TRUE){ #if no restriction date -> error
-    stop('error line 331 of vax strategies function')
+    stop('error line 350 of vax strategies function')
   } else{ #else if restriction date
     if (round(as.numeric(restriction_date - vax_strategy_start_date +1) * vax_strategy_roll_out_speed) == round(sum(workshop$doses))){
       #if restriction date causing non delivery of doses
     } else{  
-      stop('error line 331 of vax strategies function')
+      stop('error line 359 of vax strategies function')
     }
   } 
 }
