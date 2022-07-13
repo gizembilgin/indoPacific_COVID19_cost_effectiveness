@@ -69,16 +69,10 @@ vax_strategy_vaccine_interval = round(vax_strategy_vaccine_interval)
 
 
 #####(1/?) Calculate the eligible population ###################################
-if (vax_delivery_group == 'universal'){
-  eligible_pop = data.frame(pop_setting)
-  colnames(eligible_pop) = c('age_group','eligible_individuals')
-} else if (vax_delivery_group == 'at_risk'){
-  eligible_pop = pop_risk_group_dn[pop_risk_group_dn == risk_group_name,] %>% select(age_group,pop)
-  colnames(eligible_pop) = c('age_group','eligible_individuals')
-} else if (vax_delivery_group == 'general_public'){
-  eligible_pop = pop_risk_group_dn[pop_risk_group_dn == 'general_public',] %>% select(age_group,pop)
-  colnames(eligible_pop) = c('age_group','eligible_individuals')
-}
+if (vax_delivery_group == 'universal'){ eligible_pop = data.frame(pop_setting)
+} else if (vax_delivery_group == 'at_risk'){ eligible_pop = pop_risk_group_dn[pop_risk_group_dn == risk_group_name,] %>% select(age_group,pop)
+} else if (vax_delivery_group == 'general_public'){ eligible_pop = pop_risk_group_dn[pop_risk_group_dn == 'general_public',] %>% select(age_group,pop)}
+colnames(eligible_pop) = c('age_group','eligible_individuals') 
 
 
 #make long by dose
@@ -274,7 +268,7 @@ for (day in 1:timeframe){
     avaliable = min(vax_strategy_num_doses/vax_dose_strategy-workshop_leftover,daily_per_dose)
     #CHECK
     if (nrow(vax_roll_out_speed_modifier)==0){
-      if(workshop_leftover != (timeframe-1)*daily_per_dose){stop('HA line 276 of vax strategies function')}
+      if(workshop_leftover != (timeframe-1)*daily_per_dose*vax_dose_strategy){stop('HA line 276 of vax strategies function')}
     }
   }
   if (avaliable > sum(VA$doses_left)){avaliable = sum(VA$doses_left)}
@@ -359,7 +353,7 @@ colnames(workshop) = c('age_group','doses')
 
 if (round(sum(workshop$doses)) != round(sum(eligible_pop$doses_delivered))) { #if not all doses delivered
   if (is.na(restriction_date) == TRUE){ #if no restriction date -> error
-    stop('error line 350 of vax strategies function')
+    stop('error line 356 of vax strategies function')
   } else{ #else if restriction date
     if (round(as.numeric(restriction_date - vax_strategy_start_date +1) * vax_strategy_roll_out_speed) == round(sum(workshop$doses))){
       #if restriction date causing non delivery of doses
