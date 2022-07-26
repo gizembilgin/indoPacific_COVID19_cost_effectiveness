@@ -130,6 +130,7 @@ for (r in 1:RISK){
              this_vax_history$doses_delivered_this_date[this_vax_history$date ==  as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d] & 
                                                                   this_vax_history$dose==d &
                                                                   this_vax_history$age_group == age_group_labels[i]]
+
          }
        }
      }
@@ -170,6 +171,64 @@ for (r in 1:RISK){
      }
    }
 }
+    
+    #### BOOSTER TO PREVIOUS PRIMARY
+    #NB: using '8' as a flag for a booster to a previously primary delivered individaul
+  if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
+    for (r in 1:RISK){
+      this_risk_group = risk_group_labels[r]   
+      for (t in 1:num_vax_types){ #iterating over vaccine types FROM
+        for (d in 1:D){
+          this_vax = vax_type_list[t]
+          
+          this_vax_history = vaccination_history_FINAL %>%
+            filter(FROM_vaccine_type == this_vax & FROM_dose == d & risk_group == this_risk_group)
+          
+          if (nrow(this_vax_history)>0){
+            if (nrow(this_vax_history[this_vax_history$dose != '8',])>0){stop('incorrect dose flagged as a booster')}
+            
+            booster_type = unique(this_vax_history$vaccine_type)
+            if (booster_type == 'Johnson & Johnson'){
+              booster_dose_number = 2
+            } else{
+              booster_dose_number = 3
+            }
+            
+            # (1/3) recorded vax
+            VR_this_step = crossing(age_group = age_group_labels,
+                                    doses = 0)
+            for (i in 2:J){ #COMEBACK - could be faster with less for loop, assumption that don't vaccinate 0-4  
+              if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == booster_dose_number],]) >0){
+                VR_this_step$doses[VR_this_step$age_group == age_group_labels[i]] =
+                  this_vax_history$doses_delivered_this_date[this_vax_history$date ==  as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == booster_dose_number] &
+                                                               this_vax_history$age_group == age_group_labels[i]]
+              }
+            }
+            
+            for (i in 1:num_age_groups){ # across age groups
+              increase = VR_this_step$doses[VR_this_step$age_group == age_group_labels[i]] 
+              
+              for (j in 1:4){ #let's assume all SEIR vaccinated
+                class=class_name_list[j]
+                
+                prop = prev_state$pop[prev_state$class == class & prev_state$risk_group == this_risk_group & prev_state$vaccine_type == this_vax &  prev_state$dose == d & prev_state$age_group == age_group_labels[i]]/
+                  sum(prev_state$pop[prev_state$risk_group == this_risk_group & prev_state$vaccine_type == this_vax & prev_state$dose == d & prev_state$age_group == age_group_labels[i]])
+                if (is.nan(prop) == TRUE){prop=0}
+                
+                next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == booster_type & next_state$dose == booster_dose_number & next_state$age_group == age_group_labels[i]] =
+                  next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == booster_type & next_state$dose == booster_dose_number & next_state$age_group == age_group_labels[i]] + increase * prop
+                
+                next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == this_vax & next_state$dose == d & next_state$age_group == age_group_labels[i]] =
+                  next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == this_vax & next_state$dose == d & next_state$age_group == age_group_labels[i]] - increase * prop
+                
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+    
     
     if (seed_date != date_start & seed_date == date_now){
       seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
@@ -259,6 +318,7 @@ for (r in 1:RISK){
     colnames(workshop) = c('dose','VE')
     workshop$date = date_now
     VE_tracker_dataframe = rbind(VE_tracker_dataframe,workshop)
+    
 
 ### INCIDENCE CALCULATIONS 
 J=num_age_groups
