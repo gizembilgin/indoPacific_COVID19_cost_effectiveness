@@ -1,12 +1,32 @@
 options(scipen = 100)
 
-# > next_state[next_state$pop<0,]
-# pop class age_group dose vaccine_type     risk_group
-# -522.27680     S    45 to 59    0 unvaccinated general_public
-# -31.22528      E    45 to 59    0 unvaccinated general_public
-# -79.22216      I    45 to 59    0 unvaccinated general_public
-# -201.76144     R    45 to 59    0 unvaccinated general_public
-
+prev_state[prev_state$pop<0,]
+next_state[next_state$pop<0,]
+# pop class temp age_group dose vaccine_type     risk_group
+# 60  -0.0519922640     S   11  30 to 44    1  AstraZeneca pregnant_women
+# 61  -0.0045129390     S   12  45 to 59    1  AstraZeneca pregnant_women
+# 73  -0.0187987614     S   24  18 to 29    1    Sinopharm pregnant_women
+# 80  -0.0271562281     S   31  18 to 29    2  AstraZeneca pregnant_women
+# 94  -0.0184321498     S   45  18 to 29    2    Sinopharm pregnant_women
+# 95  -0.0351051520     S   46  30 to 44    2    Sinopharm pregnant_women
+# 158 -0.0128650019     E   11  30 to 44    1  AstraZeneca pregnant_women
+# 159 -0.0006648597     E   12  45 to 59    1  AstraZeneca pregnant_women
+# 171 -0.0042926947     E   24  18 to 29    1    Sinopharm pregnant_women
+# 178 -0.0061146146     E   31  18 to 29    2  AstraZeneca pregnant_women
+# 192 -0.0041658027     E   45  18 to 29    2    Sinopharm pregnant_women
+# 193 -0.0085908380     E   46  30 to 44    2    Sinopharm pregnant_women
+# 256 -0.0823107208     I   11  30 to 44    1  AstraZeneca pregnant_women
+# 257 -0.0042479391     I   12  45 to 59    1  AstraZeneca pregnant_women
+# 269 -0.0277019749     I   24  18 to 29    1    Sinopharm pregnant_women
+# 276 -0.0396234877     I   31  18 to 29    2  AstraZeneca pregnant_women
+# 290 -0.0269650989     I   45  18 to 29    2    Sinopharm pregnant_women
+# 291 -0.0551490507     I   46  30 to 44    2    Sinopharm pregnant_women
+# 354 -0.5021220201     R   11  30 to 44    1  AstraZeneca pregnant_women
+# 355 -0.0269528247     R   12  45 to 59    1  AstraZeneca pregnant_women
+# 367 -0.1670789347     R   24  18 to 29    1    Sinopharm pregnant_women
+# 374 -0.2351441722     R   31  18 to 29    2  AstraZeneca pregnant_women
+# 388 -0.1607191575     R   45  18 to 29    2    Sinopharm pregnant_women
+# 389 -0.3323915185     R   46  30 to 44    2    Sinopharm pregnant_women
 
 aggregate(next_state$pop, by=list(next_state$age_group), FUN=sum)
 pop
