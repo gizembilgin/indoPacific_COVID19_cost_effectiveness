@@ -13,6 +13,8 @@ VE_time_step <- function(strain_now,date_now,outcome){
   
   #(2) doses delivered to this date
   vax_to_this_date <- vaccination_history_FINAL[vaccination_history_FINAL$date <= date_now,]
+  source(paste(getwd(),"/(function) vaccine occupancy tracker.R",sep=""))
+  vax_to_this_date <- vaccine_occupancy_tracker
   vax_to_this_date <- vax_to_this_date %>% # rearrange AIR dataset
     select(risk_group,vaccine_type,dose,date,age_group,doses_delivered_this_date) %>%
     rename(doses = doses_delivered_this_date)
@@ -57,19 +59,25 @@ VE_time_step <- function(strain_now,date_now,outcome){
   colnames(workshop) <- c('risk_group','dose','vaccine_type','age_group','VE')
   
   #<interim> add none covered vaccines
-  for (i in 1:num_vax_types){
-    for (r in 1:num_risk_groups){
-      this_vax = vax_type_list[i]
-      if (!( this_vax %in% unique(workshop$vaccine_type[workshop$risk_group == risk_group_labels[r]]))){
-        workshop2 = crossing(risk_group = risk_group_labels[r],
-                             dose = c(1:num_vax_doses),
-                             vaccine_type = this_vax,
-                             age_group = age_group_labels,
-                             VE =0) 
-        workshop = rbind(workshop,workshop2)
-      } 
+  
+  for (i in 1:J){
+    for (t in 1:num_vax_types){
+      for (d in 1:D){
+        for (r in 1:num_risk_groups){
+          this_vax = vax_type_list[t]
+          if (!( this_vax %in% unique(workshop$vaccine_type[workshop$risk_group == risk_group_labels[r] & workshop$dose == d & workshop$age_group == age_group_labels[i]]))){
+            workshop2 = crossing(risk_group = risk_group_labels[r],
+                                 dose = d,
+                                 vaccine_type = this_vax,
+                                 age_group = age_group_labels[i],
+                                 VE =0) 
+            workshop = rbind(workshop,workshop2)
+          } 
+        }
+      }
     }
   }
+
 
   # #(5) Transpose to ODE format VE[type,dose]
   # VE_result <- pivot_wider(workshop,
