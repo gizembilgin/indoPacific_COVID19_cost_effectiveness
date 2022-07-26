@@ -1,0 +1,5 @@
+vaccine_type,dose_from,dose_to,interval
+AstraZeneca,1,2,84
+Johnson & Johnson,1,2,180
+Pfizer,1,2,21
+Pfizer,2,3,180
