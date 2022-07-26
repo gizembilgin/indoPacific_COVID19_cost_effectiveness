@@ -1,37 +1,34 @@
 
-#This program runs results for section 2 of SpecialityMedic (SM)
-#It estimates of the providing booster doses to the at risk group (general public still recieve full scheudle only)
+#This program runs results for section 1 of FleetMedic (FM)
+#It estimates of the impact prioritising the delivery of primary doses to the at risk group
 
 ### (1) Overarching trackers #####################################################################################################
-receipt = 2
 warehouse_table = data.frame() 
 warehouse_plot = data.frame()
-baseline_to_compare = "no booster"
+baseline_to_compare = "RR = 1"
+
+apply_risk_strategy_toggles = 
+  list(
+    vax_risk_strategy = 'Y',             # options: 'Y','N'
+    vax_risk_proportion = default_prioritisation_proportion,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
+    vax_doses_general = 1,               # number of doses delivered to general pop
+    vax_doses_risk = 1                  # number of doses delivered to risk group
+    )
 
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
 
-#(A/B) Baseline - no booster
-this_run = list(
-  vax_risk_strategy = 'Y',           
-  vax_risk_proportion = default_prioritisation_proportion,  
-  vax_doses_general = 1,              
-  vax_doses_risk = 1              
-)
+queue[[1]] = list(vax_strategy_description = "RR = 1",
+                  RR_switch = 1)
 
-queue[[1]] = list(vax_strategy_description = "no booster",
-                  apply_risk_strategy_toggles = this_run)
+queue[[2]] = list(vax_strategy_description = "RR = 1.5",
+                  RR_switch = 1.5)
 
+queue[[3]] = list(vax_strategy_description = "RR = 2 (default)",
+                  RR_switch = 2)
 
-#(B/B) Provision of booster
-this_run$vax_doses_risk = 2
-vax_strategy_toggles$vax_strategy_vaccine_interval = 365/4
-queue[[2]] = list(vax_strategy_description = 'booster at three months',
-                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
-
-vax_strategy_toggles$vax_strategy_vaccine_interval = 365/2
-queue[[2]] = list(vax_strategy_description = 'booster at six months',
-                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+queue[[4]] = list(vax_strategy_description = "RR = 3",
+                  RR_switch = 3)
 
 
 ### (3) Run  ##################################################################################################
@@ -40,7 +37,7 @@ for (ticket in 1:length(queue)){
   commands = queue[[ticket]]
   
   vax_strategy_description = commands$vax_strategy_description
-  apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
+  RR_estimate = commands$RR_switch
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
@@ -49,10 +46,11 @@ for (ticket in 1:length(queue)){
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
   
   row = row %>% mutate(scenario = vax_strategy_description,
-                       date_complete_at_risk_group = date_complete_at_risk_group) %>% 
+                       RR_estimate = RR_estimate) %>% 
     relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
 }
+RR_estimate = RR_default
 #____________________________________________________________________________________________________________________________________
 
 ### (4) Save outputs  ##################################################################################################
@@ -101,5 +99,5 @@ results_warehouse_entry[[4]]= table_list
 
 #____________________________________________________________________________________________________________________________________
 
-results_warehouse_SM[[receipt]] = results_warehouse_entry
+results_warehouse_FM[[subreceipt]] = results_warehouse_entry
 

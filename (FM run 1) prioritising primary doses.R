@@ -1,9 +1,8 @@
 
-#This program runs results for section 1 of SpecialityMedic (SM)
+#This program runs results for section 1 of FleetMedic (FM)
 #It estimates of the impact prioritising the delivery of primary doses to the at risk group
 
 ### (1) Overarching trackers #####################################################################################################
-receipt = 1
 warehouse_table = data.frame() 
 warehouse_plot = data.frame()
 baseline_to_compare = "no prioritisation"
@@ -13,10 +12,11 @@ queue = list()
 
 #(A/B) Baseline - no prioritisation
 this_run = list(
-  vax_risk_strategy = 'N',             # options: 'Y','N'
-  vax_risk_proportion = 0,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
-  vax_doses_general = 1,               # number of doses delivered to general pop
-  vax_doses_risk = 1                  # number of doses delivered to risk group
+  vax_risk_strategy = 'N',           
+  vax_risk_proportion = 0,         
+  vax_doses_general = 1,               
+  vax_doses_risk = 1,
+  risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov
 )
 
 queue[[1]] = list(vax_strategy_description = "no prioritisation",
@@ -105,5 +105,7 @@ results_warehouse_entry[[4]]= table_list
 
 #____________________________________________________________________________________________________________________________________
 
-results_warehouse_SM[[receipt]] = results_warehouse_entry
+
+results_warehouse_entry[[5]] = risk_group_name
+results_warehouse_FM[[subreceipt]] = results_warehouse_entry
 
