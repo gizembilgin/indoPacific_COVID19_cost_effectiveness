@@ -45,7 +45,7 @@ apply_risk_strategy <- function(
   ### BRANCH TWO: What % priority are the at risk group receiving? 
   at_risk_delivery_outline = vax_strategy(vax_delivery_group = 'at_risk',
                                             vax_dose_strategy              = vax_doses_risk,       
-                                            vax_strategy_roll_out_speed    = vax_strategy_toggles$vax_strategy_roll_out_speed* vax_risk_proportion ,            
+                                            vax_strategy_roll_out_speed    = vax_strategy_toggles$vax_strategy_roll_out_speed* vax_risk_proportion,            
                                             vax_strategy_max_expected_cov  = risk_group_acceptability,
                                             vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date,
                                             vax_strategy_num_doses         = vax_strategy_toggles$vax_strategy_num_doses,
@@ -55,8 +55,8 @@ apply_risk_strategy <- function(
     )
   at_risk_delivery_outline = at_risk_delivery_outline %>% mutate(risk_group = risk_group_name)
    
-  ggplot(at_risk_delivery_outline2) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
-  sum(at_risk_delivery_outline2$doses_delivered_this_date)
+  ggplot(at_risk_delivery_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
+  sum(at_risk_delivery_outline$doses_delivered_this_date)
   #___________________________________________________________
   
   
@@ -81,9 +81,9 @@ apply_risk_strategy <- function(
   
   #<interim make doses available per day tracker>
   limiter = at_risk_delivery_outline %>% group_by(date) %>% 
-    summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% 
-    filter(doses_delivered_this_date > 0 ) %>%
-    mutate(doses_avaliable = vax_strategy_toggles$vax_strategy_roll_out_speed - doses_delivered_this_date,
+    summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) 
+   # filter(doses_delivered_this_date > 0 ) %>%
+  limiter = limiter %>% mutate(doses_avaliable = vax_strategy_toggles$vax_strategy_roll_out_speed - doses_delivered_this_date,
            day = as.numeric(date - min(limiter$date) + 1),
            cumsum = cumsum(doses_avaliable)) #see line 315 in function vax strategy
   #<fin>
@@ -102,7 +102,7 @@ apply_risk_strategy <- function(
   )
   generalPublic_leftover_outline = generalPublic_leftover_outline %>% mutate(risk_group = 'general_public')
   
-  vaccination_history_MODF = rbind(vaccination_history_TRUE,at_risk_delivery_outline,generalPublic_leftover_outline)
+  vaccination_history_MODF = bind_rows(vaccination_history_TRUE,at_risk_delivery_outline,generalPublic_leftover_outline)
 
   ###CHECKS
   #CHECK 1: total doses delivered <= total doses available
@@ -130,14 +130,14 @@ apply_risk_strategy <- function(
 }
 
 #TEST
-test = apply_risk_strategy(
-    vax_risk_strategy = 'Y',             # options: 'Y','N'
-    vax_risk_proportion = 0.8,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
-    vax_doses_general = 2,             # number of doses delivered to general pop
-    vax_doses_risk = 2,                # number of doses delivered to risk group
-    risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov
-)
-#View(test)
-sum(at_risk_delivery_outline$doses_delivered_this_date) + sum(generalPublic_leftover_outline$doses_delivered_this_date)
-sum(test$doses_delivered_this_date) - sum(vaccination_history_TRUE$doses_delivered_this_date)
-vax_strategy_toggles$vax_strategy_num_doses
+# test = apply_risk_strategy(
+#     vax_risk_strategy = 'Y',             # options: 'Y','N'
+#     vax_risk_proportion = 0.75,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
+#     vax_doses_general = 1,             # number of doses delivered to general pop
+#     vax_doses_risk = 2,                # number of doses delivered to risk group
+#     risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov
+# )
+# #View(test)
+# sum(at_risk_delivery_outline$doses_delivered_this_date) + sum(generalPublic_leftover_outline$doses_delivered_this_date)
+# sum(test$doses_delivered_this_date) - sum(vaccination_history_TRUE$doses_delivered_this_date)
+# vax_strategy_toggles$vax_strategy_num_doses
