@@ -71,6 +71,7 @@ covidODE <- function(t, state, parameters){
                               VE$risk_group == risk_group_labels[r] &
                               VE$vaccine_type == vax_type_list[t] &
                               VE$age_group == age_group_labels[i]] #COMEBACK_RISK tidy for VE modifications!
+            if (length(VE_step) == 0){ VE_step = 0 } #no VE calculated because doses not delivered for this t/d/i combination
             
             dS[B] = omega*R[B]              - tau[i]*(1-VE_step)*S[B] 
             dE[B] = tau[i]*(1-VE_step)*S[B] - lambda*E[B] + tau[i]*(1-VE_step)*(1-rho)*R[B]
