@@ -15,19 +15,59 @@ library(ggpubr)
 library(tidyverse)
 
 debug = "off"
-#rm(list=ls())  # clear global environment
-
-if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
-}else if (Sys.info()[['user']] == 'gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
 #_________________________________________________________________
+
+
+
+####DEBUG
+if (debug == "on"){
+  rm(list=ls())  # clear global environment
+  baseline_date_start = Sys.Date() + 30
+  
+  outbreak_post_rollout = "off"
+  RR_estimate = RR_default = 2
+  vax_strategy_toggle = "on"
+  vax_risk_strategy_toggle = "on"
+  risk_group_toggle = "on" 
+  risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
+  risk_group_prioritisation_to_date = NA
+  default_prioritisation_proportion = 0.5
+  
+  vax_strategy_toggles =
+    list(vax_strategy_start_date        = baseline_date_start,
+         vax_strategy_num_doses         = as.integer(999999),
+         vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
+         vax_delivery_group             = 'universal',
+         vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
+         vax_dose_strategy              = 1,                    # options: 1,2
+         vax_strategy_vaccine_type      = "Johnson & Johnson" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
+         vax_strategy_vaccine_interval  = c(7*3) ,                 # (days) interval between doses, you must specify multiple intervals if multiple doses e.g. c(21,90)
+         vax_strategy_max_expected_cov  = 0.88                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
+    )
+  
+  apply_risk_strategy_toggles = list(
+    vax_risk_strategy = 'Y',             # options: 'Y','N'
+    vax_risk_proportion = 0.8,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
+    vax_doses_general = 1,               # number of doses delivered to general pop
+    vax_doses_risk = 2                  # number of doses delivered to risk group
+  )
+  
+  waning_toggle_acqusition = TRUE
+  waning_toggle_severe_outcome = FALSE
+  waning_toggle_rho_acqusition = TRUE
+  rho_severe_disease = "on"
+}
 
 
 
 #       (2/4) User choice / Model toggles              
 ####################################################################
+if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
+}else if (Sys.info()[['user']] == 'gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
+
 setting = "SLE"
 
-baseline_date_start = as.Date('2022-07-01')
+baseline_date_start = Sys.Date() + 30
 
 if(outbreak_post_rollout == "on"){
   date_start = max(vaccination_history_FINAL$date)
@@ -36,32 +76,11 @@ if(outbreak_post_rollout == "on"){
   date_start = baseline_date_start
   seed_date = baseline_date_start
 }
+date_now = date_start
 
 strain_inital = 'omicron'             #options:'WT','delta','omicron'
 model_weeks = 52          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
-
-#vax_strategy_toggle = "on"
-# vax_strategy_toggles =
-#   list(vax_strategy_start_date                  = as.Date('2022-08-20'),
-#        vax_strategy_num_doses         = 2090592,
-#        vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
-#        vax_delivery_group             = 'universal',
-#        vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
-#        vax_dose_strategy              = 1,                    # options: 1,2
-#        vax_strategy_vaccine_type      = "Johnson & Johnson" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-#        vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
-#        vax_strategy_max_expected_cov  = 0.88                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
-#   )
-
-#RR_estimate = 2
-#risk_group_toggle = "off"
-#risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
-#vax_risk_strategy_toggle = "off"
-
-#waning_toggle_rho_acqusition = TRUE
-#rho_severe_disease = "on"
-
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
 underascertainment_est = 43
@@ -92,8 +111,12 @@ num_disease_classes = 4                                 # SEIR
 if (exists("prev_setting") == FALSE){ prev_setting = "NONE"}
 if (exists("prev_risk_num") == FALSE){ prev_risk_num = "NONE"}
 if (exists("prev_risk_group") == FALSE){ prev_risk_group = "NONE"}
-if (setting != prev_setting | num_risk_groups != prev_risk_num | risk_group_name != prev_risk_group){source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))} #load setting stats if new setting
+if (exists("prev_run_date") == FALSE){ prev_run_date = as.Date('1900-01-01')}
+if (setting != prev_setting | num_risk_groups != prev_risk_num | risk_group_name != prev_risk_group | prev_run_date != Sys.Date()){
+  source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))
+} #load setting stats if new setting
 prev_setting = setting
+prev_run_date = Sys.Date()
 prev_risk_num = num_risk_groups 
 prev_risk_group = risk_group_name
 seed = 0.001*sum(pop)
@@ -113,6 +136,8 @@ source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
 source(paste(getwd(),"/(function)_rho_time_step.R",sep=""))
 source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
 source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
+
+if (exists("VE_estimates_imputed") == FALSE){source(paste(getwd(),"/(mech shop) VE point estimate.R",sep=""))}
 
 
 ##(C) Run the model!
@@ -143,6 +168,7 @@ if (complete_model_runs>1){
 #       (4/4) Basic plots            
 # ####################################################################
 # NOTE: more advanced plots in scripts title '(plot)_...'
+if (exists("ticket") == FALSE){ ticket = 1 }
 if (ticket ==1){
 
 #raw number - daily and cumulative
@@ -218,11 +244,16 @@ if (debug == "on"){
   plot5 = ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
   lay <- rbind(c(1,2),c(3,3),c(4,5))
   grid.arrange(plot1, plot2, plot3,plot4,plot5, layout_matrix = lay)
+  
+  ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
 } else{
   grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
 }
 
 }
+
+
+
 #either incidence per 100,000 or % of total population
 #__________________________________________________________________ 
 
