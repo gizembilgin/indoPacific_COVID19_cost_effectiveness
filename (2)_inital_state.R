@@ -5,7 +5,7 @@
 
 ###### (1/4) Vaccination
 #(A/B) Coverage 
-#(i/iv) Delay ____________________________________
+#(i/iv) Delay & Interval ____________________________________
 vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
 vaxCovDelay = vaxCovDelay %>%
   mutate(delay = case_when(
@@ -13,7 +13,7 @@ vaxCovDelay = vaxCovDelay %>%
     TRUE ~ 14 #all other doses
   ))
 
-
+vaccineDoseInterval <- read.csv("1_inputs/vaccine_dose_intervals.csv", header=TRUE)
 
 #(ii/iv) #Vaccine coverage at end of true history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% filter(date == max(vaccination_history_TRUE$date)) %>%
@@ -35,21 +35,37 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
     )
   
   #recalculate!
-  num_vax_doses = D = length(unique(vaccination_history_FINAL$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
+  list_doses = unique(vaccination_history_FINAL$dose)
+  list_doses = list_doses[! list_doses %in% c(8)]
+  num_vax_doses = D = length(list_doses)  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
   
   
 } else if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "on"){
-  vaccination_history_FINAL = 
-    apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
-                        vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
-                        vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
-                        vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk  )
+  
+  if(risk_group_acceptability %in% apply_risk_strategy_toggles){
+    vaccination_history_FINAL = 
+      apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
+                          vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
+                          vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
+                          vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk,
+                          risk_group_acceptability = apply_risk_strategy_toggles$risk_group_acceptability
+      )
+  } else{
+    vaccination_history_FINAL = 
+      apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
+                          vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
+                          vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
+                          vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk
+      )
+  }
   
   #recalculate!
-  num_vax_doses = D = length(unique(vaccination_history_FINAL$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
+  list_doses = unique(vaccination_history_FINAL$dose)
+  list_doses = list_doses[! list_doses %in% c(8)]
+  num_vax_doses = D = length(list_doses)  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
@@ -77,7 +93,8 @@ if(outbreak_post_rollout == "on"){
 vaccination_history_FINAL = vaccination_history_FINAL %>% left_join(pop_risk_group_dn) %>%
   group_by(risk_group,age_group,vaccine_type,dose) %>%
   mutate(coverage_this_date = 100*cumsum(doses_delivered_this_date)/pop) %>%
-  select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group)
+  select(-pop)
+vaccination_history_FINAL$coverage_this_date[is.na(vaccination_history_FINAL$coverage_this_date)] = NA
 
 #calc
 vaccine_coverage = crossing(risk_group = risk_group_labels,
@@ -140,7 +157,7 @@ vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
   mutate(outcome = 'any_infection')
-  
+
 # part_one = VE_waning_distribution[VE_waning_distribution$outcome %in% c('any_infection','symptomatic_disease') &
 #                                     VE_waning_distribution$waning == waning_toggle_acqusition,]
 # part_two = VE_waning_distribution[VE_waning_distribution$outcome %in% c('severe_disease','death') &
@@ -359,5 +376,22 @@ Exposed_incidence_inital = rep(0,J*2)
 state=c(state_tidy$state_inital,Incidence_inital,Exposed_incidence_inital) 
 
 if (round(sum(state)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
+
+
+
+### Use historical cases to estimate rho and R0/Reff (->beta)
+if (waning_toggle_rho_acqusition == TRUE ){
+  rho_inital = rho_time_step('symptomatic_disease',date_start)
+} else{
+  rho_inital = 0.95 #Chemaitelly et al. 2 week estimate
+}
+if (rho_inital > 1){stop('rho is > 1')}
+
+#LIMITATION WARNING: no age-specific susceptibility to infection is included (no delta data available)
+source(paste(getwd(),"/(function)_calculate_R0_Reff.R",sep=""))
+beta = beta_optimised
+
+R0_beta; beta_check; beta_optimised; beta
+
 
 
