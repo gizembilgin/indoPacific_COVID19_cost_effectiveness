@@ -96,7 +96,7 @@ ggplot() +
 # 
 # grid.arrange(plot, table,nrow =1,widths=c(2,0.5))#, nrow = 1, ncol = 2, widths=c(2,0.5))
 ####
-
+save(predicted_distribution, file = '1_inputs/VE_predicted_distribution.Rdata')
 
 
 
@@ -158,8 +158,16 @@ for (s in c('omicron','delta')){
             mutate(dose = d, vaccine_type = this_vax)
           
           ratio_top = VE_estimates_imputed %>% filter(vaccine_type == this_vax & strain == s & outcome == 'any_infection' & dose == d)
+          
           ratio_bottom = VE_estimates_imputed %>% filter(vaccine_type == "AstraZeneca" & strain == s & outcome == 'any_infection' & dose == d)
+          
+          if (this_vax == "Johnson & Johnson" & d == 1){ 
+            #correction otherwise J&J d=1 outtrumps AZ d=1 so entirely that J&J d=1>>d=2
+            ratio_bottom = VE_estimates_imputed %>% filter(vaccine_type == "AstraZeneca" & strain == s & outcome == 'any_infection' & dose == 2)
+          }
+          
           ratio = ratio_top$VE/ratio_bottom$VE
+          ratio
           
           workshop$VE = workshop$VE * ratio
           workshop$VE[workshop$VE>100] = 100
