@@ -29,7 +29,7 @@ if (setting == "SLE"){
          vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
          vax_dose_strategy              = 1,                    # options: 1,2
          vax_strategy_vaccine_type      = "Johnson & Johnson" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
+         vax_strategy_vaccine_interval  = c(90) ,                 # (days) interval between doses
          vax_strategy_max_expected_cov  = 0.88                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
     )
 } else if (setting == "PNG"){
@@ -46,7 +46,7 @@ if (setting == "SLE"){
          vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
          vax_dose_strategy              = 2,                    # options: 1,2
          vax_strategy_vaccine_type      = "Pfizer" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-         vax_strategy_vaccine_interval  = 7*3 ,                 # (days) interval between first and second dose
+         vax_strategy_vaccine_interval  = c(21) ,                 # (days) interval between first and second dose
          vax_strategy_max_expected_cov  = 0.74                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
     )
 } else { stop ('pick a valid setting!')}
@@ -80,9 +80,14 @@ source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
-### (4) Other sensitivity analysis
+### (4) At risk group analysis
 receipt = 5
-#COMEBACK - need to code/decide
+risk_group_name = "pregnant_women"
+results_warehouse_pregnant_women = results_warehouse_FM
+
+receipt = 6
+risk_group_name = "adults_with_comorbidities"
+results_warehouse_adults_comorb = results_warehouse_FM
 #________________________________________________________________________________________________________________
 
 
