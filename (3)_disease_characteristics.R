@@ -4,7 +4,7 @@
 
 strain = strain_inital
 
-### (A/E) Transmission
+### (A/D) Transmission
 load(file = "1_inputs/param_age.Rdata")
 #COMEBACK uncertainty?
 #COMEBACK gamma seems too low!
@@ -14,7 +14,7 @@ gamma =param_age$value[param_age$param == 'prop_sympt']        # (ii) proportion
 lota = 0.5                                                     # (iii) modification factor on infectiousness of asymptomatic cases
 
 
-### (B/E) Latent period 
+### (B/D) Latent period 
 if (run_type == "point"){  
   if (strain_inital == 'delta' | strain_inital == 'WT'){
     AverageLatentPeriod = 3.71
@@ -26,7 +26,7 @@ if (run_type == "point"){
 lambda = 1/AverageLatentPeriod
 
 
-### (C/E) Symptomatic period
+### (C/D) Symptomatic period
 if (run_type == "point"){
   if (strain_inital == 'delta' | strain_inital == 'WT'){
     AverageSymptomaticPeriod = 10.9
@@ -38,26 +38,10 @@ if (run_type == "point"){
 delta = 1/AverageSymptomaticPeriod
 
 
-### (D/E) Waning of infection-derived immunity
+### (D/D) Waning of infection-derived immunity
 lengthInfectionDerivedImmunity = 365 #days #COMEBACK - need actual value!
 omega = 1/lengthInfectionDerivedImmunity
 
-if (waning_toggle_rho_acqusition == TRUE ){
-  rho_inital = rho_time_step('symptomatic_disease',date_start)
-} else{
-  rho_inital = 0.95 #Chemaitelly et al. 2 week estimate
-}
-if (rho_inital > 1){stop('rho is > 1')}
 
-
-
-### (E/E) Beta - fitting parameter
-
-
-#LIMITATION WARNING: no age-specific susceptibility to infection is included (no delta data available)
-source(paste(getwd(),"/(function)_calculate_R0_Reff.R",sep=""))
-beta = beta_optimised
-
-R0_beta; beta_check; beta_optimised; beta
 
 
