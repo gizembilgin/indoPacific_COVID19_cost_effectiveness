@@ -1,0 +1,17 @@
+scenario,death,hosp,severe_disease,YLL,cases,date_complete_at_risk_group,label
+booster at three months (at risk only),0,0,0,0,0,2023-01-30,abs
+booster at six months (at risk only),0,0,0,0,0,2023-01-30,abs
+booster at three months (all),0,0,0,0,0,2023-01-30,abs
+booster at six months (all),0,0,0,0,0,2023-01-30,abs
+decreased vaccine hesistance to 7%,0,0,0,0,0,2023-01-30,abs
+decreased vaccine hesistance to 2%,0,0,0,0,0,2023-01-30,abs
+make 100% priority,0,0,0,0,0,2023-01-30,abs
+make 75% priority,0,0,0,0,0,2023-01-30,abs
+booster at three months (at risk only),0,0,0,0,0,2023-01-30,rel
+booster at six months (at risk only),0,0,0,0,0,2023-01-30,rel
+booster at three months (all),0,0,0,0,0,2023-01-30,rel
+booster at six months (all),0,0,0,0,0,2023-01-30,rel
+decreased vaccine hesistance to 7%,0,0,0,0,0,2023-01-30,rel
+decreased vaccine hesistance to 2%,0,0,0,0,0,2023-01-30,rel
+make 100% priority,0,0,0,0,0,2023-01-30,rel
+make 75% priority,0,0,0,0,0,2023-01-30,rel
