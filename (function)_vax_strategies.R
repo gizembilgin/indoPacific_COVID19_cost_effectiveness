@@ -86,7 +86,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     #consideration of 'unreachable' % either for vaccine hesitancy or access
     unreachable = 1-vax_strategy_max_expected_cov 
     workshop_pop_dn = workshop_touched %>% 
-      left_join(this_pop) %>%
+      left_join(this_pop, by = "age_group") %>%
       mutate(pop_touched = pop*cov,
              pop_untouched = pop - pop*unreachable - pop*cov)
     
@@ -137,7 +137,8 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   
   #now remove vaccinated, and vaccine hesistant
   unreachable = 1-vax_strategy_max_expected_cov
-  eligible_pop <- eligible_pop %>% left_join(existing_coverage) %>%
+  eligible_pop <- eligible_pop %>% 
+    left_join(existing_coverage, by = c("age_group", "dose")) %>%
     mutate(eligible_individuals = eligible_individuals *(1-(cov_to_date+unreachable))) %>%
     select(age_group,dose,eligible_individuals)
   
@@ -149,7 +150,8 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   #####(2/4) Place priority # on age group by strategy ############################
   if (vax_age_strategy %in% unique(prioritisation_csv$strategy)) {
     elected_strategy = prioritisation_csv[prioritisation_csv$strategy == vax_age_strategy,c('age_group','priority')]
-    eligible_pop <- eligible_pop %>% left_join(elected_strategy)
+    eligible_pop <- eligible_pop %>% 
+      left_join(elected_strategy, by = "age_group")
   } else if (vax_age_strategy == "manual_overwrite"){
     eligible_pop <- eligible_pop %>%
       mutate(priority= case_when(
@@ -227,7 +229,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   priority_num = 1
   priority_group  = as.character(unique(VA$age_group[VA$priority == priority_num]))
   
-  ceiling = min(sum(eligible_pop$doses_delivered),primary_dose_allocation) #max delivery (either limited by eligible individuals, or available doses!)
+  ceiling = min(sum(eligible_pop$doses_delivered),primary_dose_allocation) #max delivery of doses (either limited by eligible individuals, or available doses!)
   
   if (vax_dose_strategy == 1){
     timeframe = ceiling/primary_rollout_speed
@@ -250,14 +252,13 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   #modify if available doses restricted
   if (nrow(vax_roll_out_speed_modifier)>0){
     exception_list = unique(primary_speed_modifier$day)
-    workshop = primary_speed_modifier %>% filter(cumsum<ceiling)
+    workshop = primary_speed_modifier %>% filter(cumsum<ceiling/vax_dose_strategy)
     workshop = nrow(workshop) + 1
-    
-    if (max(primary_speed_modifier$cumsum)+daily_per_dose>ceiling){
+    if (max(primary_speed_modifier$cumsum)+daily_per_dose>ceiling/vax_dose_strategy){
       timeframe = workshop
     } else{
       extension_time = (ceiling - max(primary_speed_modifier$cumsum))/daily_per_dose
-      timeframe = timeframe + extension_time
+      timeframe = workshop + extension_time
     }
   } else{
     exception_list = c(-1)
@@ -277,9 +278,10 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
                                    age_group = age_group_labels,
                                    doses_delivered = c(0))
   
+  #VA = save
   for (day in 1:timeframe){
-  #for (day in 1:9){
-  #for (day in 1:(timeframe-1)){
+  #for (day in 1:105){
+  #for (day in 10:(timeframe-2)){
     avaliable = daily_per_dose
     daily_per_dose_here = daily_per_dose
     
@@ -341,7 +343,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
             for (dose in 2:vax_dose_strategy){
               vax_delivery_outline$doses_delivered[vax_delivery_outline$day == day + vax_strategy_vaccine_interval[dose-1] &
                                                      vax_delivery_outline$dose == dose &
-                                                     vax_delivery_outline$age_group == workshop_age] = workshop_calc
+                                                     vax_delivery_outline$age_group == workshop_age] = workshop_calc  
               VA$doses_left[VA$age_group == workshop_age & VA$dose == dose] = VA$doses_left[VA$age_group == workshop_age & VA$dose == dose] - workshop_calc
             }
           }
@@ -359,7 +361,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
         stop('negative doses left, reconsider!')
       }
     } #<end while loop>
-    
+    #if(!round(sum(vax_delivery_outline$doses_delivered[vax_delivery_outline$day == day])) == primary_rollout_speed ){warning(paste('issue on day',day))}
   }
   
   ### formating vax_delivery_outline to align with vaccination_history_TRUE
@@ -411,7 +413,49 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     booster_dose_allocation = round(vax_strategy_num_doses* vax_proportion_booster*(1/vax_dose_strategy))
     if (nrow(vax_roll_out_speed_modifier)>0){
       booster_speed_modifier =  vax_roll_out_speed_modifier %>% mutate(doses_avaliable = doses_avaliable * vax_proportion_booster,cumsum = cumsum * vax_proportion_booster)
+    } else{
+      booster_speed_modifier = crossing(date = unique(vax_delivery_outline$date),
+                                        doses_avaliable = booster_rollout_speed) %>%
+        mutate(cumsum = cumsum(doses_avaliable))
     }
+    
+    ### EXTEND FOR ELIGB
+    check_elig = vaccination_history_TRUE %>% #NB: using TRUE because hypoth proj should already be boosted
+      mutate(primary_schedule_complete = case_when(
+        vaccine_type == "Johnson & Johnson" ~  'Y',
+        dose %in% c(2,3) ~ 'Y',
+        TRUE ~ 'N'),
+        boosted = case_when(
+          vaccine_type == "Johnson & Johnson" & dose == 2 ~ 'Y',
+          dose == 3 ~ 'Y',
+          TRUE ~ 'N'))  %>%
+      filter(risk_group %in% risk_group_name &
+               # primary_schedule_complete == "Y" & #CAN CHANGE THIS TOGGLE
+               boosted == "N" &
+               coverage_this_date > 0) %>%
+      mutate(date = date + booster_dose_interval) %>% 
+      ungroup() %>% group_by(date) %>% summarise(total_doses = sum(doses_delivered_this_date)) %>%
+      ungroup() %>% mutate(individuals_eligible = cumsum(total_doses)) %>%
+      select(-total_doses)
+
+    booster_speed_modifier = booster_speed_modifier %>% 
+      left_join(check_elig, by = "date")
+    
+    check_less_than = booster_speed_modifier  %>%
+      filter(cumsum > individuals_eligible) 
+    
+    while(nrow(check_less_than)>0){
+      booster_speed_modifier = booster_speed_modifier %>% 
+         mutate(difference = cumsum - individuals_eligible)
+      this_date = check_less_than$date[1]
+      booster_speed_modifier$doses_avaliable[booster_speed_modifier$date == this_date] = 
+        booster_speed_modifier$doses_avaliable[booster_speed_modifier$date == this_date] - booster_speed_modifier$difference[booster_speed_modifier$date == this_date]
+      booster_speed_modifier = booster_speed_modifier %>% 
+        mutate(cumsum = cumsum(doses_avaliable))
+      check_less_than = booster_speed_modifier %>% filter(cumsum>individuals_eligible)
+    }
+    ###
+    
     
     eligible_pop = this_pop
     colnames(eligible_pop) = c('age_group','eligible_individuals') 
@@ -438,7 +482,8 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
       } 
     }
     
-    eligible_pop <- eligible_pop %>% left_join(existing_coverage) %>%
+    eligible_pop <- eligible_pop %>% 
+      left_join(existing_coverage, by = "age_group") %>%
       mutate(eligible_individuals = eligible_individuals *cov_to_date) %>%
       select(age_group,dose,vaccine_type,eligible_individuals)
     
@@ -450,7 +495,8 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     #####(2/?) Place priority # on age group by strategy ############################
     if (vax_age_strategy %in% unique(prioritisation_csv$strategy)) {
       elected_strategy = prioritisation_csv[prioritisation_csv$strategy == vax_age_strategy,c('age_group','priority')]
-      eligible_pop <- eligible_pop %>% left_join(elected_strategy)
+      eligible_pop <- eligible_pop %>% 
+        left_join(elected_strategy, by = "age_group")
     } else if (vax_age_strategy == "manual_overwrite"){
       eligible_pop <- eligible_pop %>%
         mutate(priority= case_when(
@@ -538,7 +584,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
                                          doses_delivered = c(0))
     
     for (day in 1:timeframe){
-    #for (day in 1:19){
+    #for (day in 1:91){
     #for (day in 1:14){
     #for (day in 1:(timeframe-1)){
       avaliable = daily_per_dose
@@ -556,7 +602,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
         avaliable = min(booster_dose_allocation-workshop_leftover,daily_per_dose)
         #CHECK
         if(! round(workshop_leftover) %in% c(round((timeframe-1)*daily_per_dose))){
-          if (round(workshop_leftover) %in% round(sum(vax_roll_out_speed_modifier$doses_avaliable[vax_roll_out_speed_modifier$day < timeframe])*vax_proportion_booster)){
+          if (round(workshop_leftover) %in% round(sum(booster_speed_modifier$doses_avaliable[booster_speed_modifier$day < timeframe]))){
           } else{
             stop('ERROR line 528 of vax strategies function')
           }
@@ -688,8 +734,9 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
       ungroup() %>% mutate(cum_doses_delivered = cumsum(total_doses)) %>%
       select(-total_doses)
     
-    check_less_than = check_elig %>% left_join(hypoth_delivery) %>%
-      filter(cum_doses_delivered > individuals_eligible)
+    check_less_than = check_elig %>% 
+      left_join(hypoth_delivery, by = "date") %>%
+      filter(round(cum_doses_delivered) > round(individuals_eligible))
     
     if (nrow(check_less_than) > 0 ){
       ggplot() +

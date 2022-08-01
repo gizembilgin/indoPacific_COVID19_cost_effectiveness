@@ -1,12 +1,8 @@
 ### To have a dynamic rho need:
 # (1) shape of rho waning
-# (3) tracking of days since infection of people in Recovered class
+# (2) tracking of days since infection of people in Recovered class
 
-#Assumptions log:
-# assume that no additional immunity from repeat infections
-
-#Limitations:
-# can not track individuals
+#ASSUMPTION: assume that no additional immunity from repeat infections
 
 #Approach
 # use omega (180 day) cut-off, and see density of days since in this period
@@ -35,11 +31,11 @@ rho_est_plot = ggplot() + geom_line(data = rho_dn[rho_dn$outcome == 'symptomatic
 
 
 ### (2) Tracking of days since infection (proxy) for people in Recovered class ########################
-
+this_rho = rho_dn %>% filter(outcome == 'symptomatic_disease')
 
 rho_time_step <- function(this_outcome,date_now){
   
-  this_rho = rho_dn %>% filter(outcome == this_outcome)
+  #this_rho = rho_dn %>% filter(outcome == this_outcome)
   
   if (date_now>date_start+2){
     workshop = incidence_log %>% select(date,daily_cases)
@@ -50,19 +46,20 @@ rho_time_step <- function(this_outcome,date_now){
   
   #LIMITATION - gap in dates between today and date start of model
   
-  workshop = workshop[workshop$date <= date_now & workshop$date > date_now - 1/omega,] %>%
-    mutate(days = as.numeric(date_now - date)) 
-  
+  workshop = workshop %>%
+    filter(date <= date_now & date > (date_now - 1/omega)) %>%
+    mutate(days = as.numeric(date_now - date))
   workshop = workshop %>% mutate(prop_window = daily_cases/sum(workshop$daily_cases))
+ 
+  #ggplot(workshop) + geom_line(aes(date,prop_window))  
   
-  ggplot(workshop) + geom_line(aes(date,prop_window))  
-  
-  if (nrow(workshop) == 0){return(rho_dn$protection[rho_dn$days ==0 & rho_dn$outcome == this_outcome])} #COMEBACK - rho for seroprev ==?
+  if (nrow(workshop) == 0){
+    return(this_rho$protection[this_rho$days ==0 & this_rho$outcome == this_outcome])
+  } #COMEBACK - rho for seroprev ==?
   
   if (round(sum(workshop$prop_window),digits=5) != 1){stop('error in rho_time_step')}
   
-  
-  workshop = workshop %>% left_join(this_rho) %>%
+  workshop = workshop %>% left_join(this_rho,by='days') %>%
     mutate(interim = protection * prop_window)
   
   return(sum(workshop$interim))

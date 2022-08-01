@@ -20,7 +20,7 @@ reinfection_protection = exposed_log %>%
 ##### Genuine projection from incidence!
 #(A/D) Join incidence_log_tidy with severe outcome incidence by vax status
 workshop = severe_outcome_this_run %>%
-  left_join(incidence_log_tidy) %>%
+  left_join(incidence_log_tidy, by = c("date", "age_group", "risk_group", "vaccine_type", "dose")) %>%
   mutate(proj = incidence*percentage) #calculate incidence -> severe outcome
 if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('something has gone amiss')
 } else if (!nrow(severe_outcome_this_run) == nrow(workshop)){warning('more doses left to give in this simulation')}
@@ -28,7 +28,7 @@ if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_l
 
 if (rho_severe_disease == "on"){
   workshop = workshop %>%
-    left_join(reinfection_protection) %>%
+    left_join(reinfection_protection, by = c("date", "age_group")) %>%
     mutate(proj = proj*(1-protection))
   #hosp_incid = subset(hosp_incid, select = -c(protection))
 }
@@ -40,7 +40,7 @@ if (exists("age_split_results") == FALSE){ age_split_results = "N"}
 if (age_split_results == "N"){
   workshop_2 = workshop %>%
     group_by(date,outcome) %>%
-    summarise(proj=sum(proj))
+    summarise(proj=sum(proj),.groups = "keep")
   
   #(C/D) Add cases as an outcome
   workshop_incid =  incidence_log_unedited[,c('date','daily_cases')] %>%
@@ -92,7 +92,7 @@ if (age_split_results == "N"){
       TRUE ~ 'adults'
     )) %>%
     group_by(date,macro_age_group,outcome) %>%
-    summarise(proj=sum(proj))
+    summarise(proj=sum(proj),.groups = "keep")
   
   #(C/D) Add cases as an outcome
   workshop_incid =  incidence_log_tidy[,c('date','incidence','age_group')] %>%
@@ -102,7 +102,7 @@ if (age_split_results == "N"){
       TRUE ~ 'adults'
     )) %>%
     group_by(date,macro_age_group,outcome) %>%
-    summarise(proj=sum(incidence)) %>%
+    summarise(proj=sum(incidence),.groups = "keep") %>%
     select(date,macro_age_group,outcome,proj)
   
   workshop_2 = rbind(workshop_2,workshop_incid)

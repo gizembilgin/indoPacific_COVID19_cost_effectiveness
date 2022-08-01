@@ -46,7 +46,7 @@ covidODE <- function(t, state, parameters){
           tau[i]=tau[i]+contact_matrix[i,j]*(total_infected_mod*(lota*(1-gamma[j])+gamma[j]))/(total)
         
         }
-        tau[i]=tau[i]*(1-NPI*(1+behaviour_mod))*beta[i]*uniform_mod*suscept[i]
+        tau[i]=tau[i]*NPI*beta[i]*suscept[i]
         tau[i]=max(min(1,tau[i]),0) #transmission can not be more than 1 (100%)
     }
     

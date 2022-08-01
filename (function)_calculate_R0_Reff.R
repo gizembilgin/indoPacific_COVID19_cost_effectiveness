@@ -1,5 +1,4 @@
 #### This program calculates R0, and Reff
-require(tidyverse)
 
 #### R0 #########################################################################
 # R0 = p(NGM) - spectral radius, i.e., absolute maximum eigenvalue
@@ -9,14 +8,8 @@ require(tidyverse)
 if (strain == 'WT'){R0_to_fit = 2.79
 } else if (strain == "delta"){R0_to_fit = 5.08
 } else if (strain == "omicron"){R0_to_fit = 5.08*1.64} #World Health Organization. (2022). COVID-19 weekly epidemiological update, edition 82, 8 March 2022. World Health Organization. https://apps.who.int/iris/handle/10665/352390. License: CC BY-NC-SA 3.0 IGO
-#} else if (strain == "omicron"){R0_to_fit = 5.08}
 
-#COMEBACK - is R0 lower in SLE and PNG?
-#R0_to_fit = R0_to_fit*0.79
-
-##testing reduced R0
-# if (setting == "PNG"){ R0_to_fit = R0_to_fit*0.7
-# } else if (setting == "SLE"){ R0_to_fit = R0_to_fit * 0.8}
+#R0_to_fit = R0_to_fit*0.79 #COMEBACK - is R0 lower in SLE 
 
 contact_matrix_adjust = matrix(data = 0, nrow = num_age_groups, ncol = num_age_groups)
 for (i in 1:num_age_groups){
@@ -63,32 +56,28 @@ R0_beta; R0_to_fit #COMEBACK - should these match?
 #### Reff ######################################################################
 Reff_time_step <- function(parameters,next_state){
 
-#NGM_modified = NGM_R0 * (1-NPI) * (1-pre-existing immunity)
+#NGM_modified = NGM_R0 * NPI * (1-pre-existing immunity)
 
 #(A) NPI  
-NGM_modified = NGM_R0 * (1-parameters$NPI*(1+behaviour_mod))  
+NGM_modified = NGM_R0 * parameters$NPI  
   
 #(B) pre-existing immunity, i.e., vax and recovery
 if (round(sum(next_state$pop) - sum(pop),digits =0 ) == 0) {
-  next_state_immunity = next_state
+  next_state_immunity = next_state %>%
+    mutate(pop = 
+             case_when(
+               class == 'R' ~ pop * (1-parameters$rho), #immunity from infection
+               TRUE ~ pop
+               ))
   
-  #immunity from infection
-  next_state_immunity$pop[next_state_immunity$class == 'R'] = next_state_immunity$pop[next_state_immunity$class == 'R']  * (1-rho)
+  next_state_immunity = next_state_immunity %>% 
+    left_join(parameters$VE, by = c("age_group", "dose", "vaccine_type", "risk_group"))
+  next_state_immunity$VE[is.na(next_state_immunity$VE) == TRUE] = 0
+  next_state_immunity = next_state_immunity %>% mutate(pop = pop * (1-VE)) #immunity from vaccination
+ 
+  next_state_immunity = sum(next_state_immunity$pop)/sum(pop)
   
-  #immunity from vaccination
-  for (i in 1:J){
-    for (t in 1:T){
-      for (d in 1:D){
-        next_state_immunity$pop[next_state_immunity$dose == d & next_state_immunity$vaccine_type == vax_type_list[t] & next_state$age_group == age_group_labels[i]] = 
-          next_state_immunity$pop[next_state_immunity$dose == d & next_state_immunity$vaccine_type == vax_type_list[t] & next_state$age_group == age_group_labels[i]] * 
-          (1-VE$VE[VE$dose==d & VE$vaccine_type == vax_type_list[t]& VE$age_group == age_group_labels[i]])
-      }
-    }
-  }
-  
-  immunity = sum(next_state_immunity$pop)/sum(pop)
-  
-  NGM_modified = NGM_modified * immunity
+  NGM_modified = NGM_modified * next_state_immunity
   
 } else{
   stop("issue with time_step population fluctating")
