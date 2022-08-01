@@ -65,7 +65,7 @@ apply_risk_strategy <- function(
   #<interim update vaccine_coverage_end_history so eligible pop is correct>
   vaccination_history_MODF = rbind(vaccination_history_TRUE,at_risk_delivery_outline)
   
-  vaccination_history_MODF = vaccination_history_MODF %>% left_join(pop_risk_group_dn) %>%
+  vaccination_history_MODF = vaccination_history_MODF %>% left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
     group_by(risk_group,age_group,vaccine_type,dose) %>%
     mutate(coverage_this_date = cumsum(doses_delivered_this_date)/pop) 
   
@@ -118,7 +118,18 @@ apply_risk_strategy <- function(
     check_df_daily_comp = bind_rows(df1,df2,check_df_daily)
     ggplot(check_df_daily_comp) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(label)))
     
-    stop('Error line 179 of vax strategies risk - more doses delivered per day than capacity')
+    nrow_greater = nrow(check_df_daily[round(check_df_daily$doses_delivered_this_date)>vax_strategy_toggles$vax_strategy_roll_out_speed,])
+    
+    warning('Caution, more doses delivered per day than capacity for',paste(nrow_greater),' days')
+    
+    if (nrow_greater>10){
+      stop('Error maximum daily doses exceeded for more than 10 days')
+    }
+    if ((max(check_df_daily$doses_delivered_this_date)-vax_strategy_toggles$vax_strategy_roll_out_speed )/vax_strategy_toggles$vax_strategy_roll_out_speed > 0.1){
+      stop('Error maximum daily doses exceeded by 10%')
+    }
+    #NOTE - 10% leeway, unless want more complicated limiter on booster dose
+    
   }
   
   ggplot(check_df[check_df$risk_group == 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
