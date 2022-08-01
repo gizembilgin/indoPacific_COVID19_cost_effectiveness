@@ -1,4 +1,6 @@
 #This file will control all sensitivity analysis
 
-#to run/write:
-#(sensitivity)_rho
+#(A) different time since outbreak
+#check impact on booster dose q
+
+#(sensitivity rho)

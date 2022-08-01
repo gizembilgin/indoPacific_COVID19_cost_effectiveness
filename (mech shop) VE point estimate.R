@@ -52,7 +52,8 @@ severe_disease = VE_estimates[VE_estimates$outcome == 'severe_disease',] %>%
   select(strain,vaccine_type,dose,VE) %>%
   rename(severe_disease = VE)
 
-workshop = death %>% left_join(severe_disease) %>%
+workshop = death %>% 
+  left_join(severe_disease, by = c("strain", "vaccine_type", "dose")) %>%
   mutate(ratio = severe_disease/death)
 workshop %>% summarise(mean = mean(ratio,na.rm=TRUE),
                        sd = sd(ratio,na.rm=TRUE))
@@ -75,7 +76,8 @@ any_infection = VE_estimates[VE_estimates$outcome == 'any_infection',] %>%
   select(strain,vaccine_type,dose,VE) %>%
   rename(any_infection = VE)
 
-workshop = symptomatic_disease %>% left_join(any_infection) %>%
+workshop = symptomatic_disease %>% 
+  left_join(any_infection, by = c("strain", "vaccine_type", "dose")) %>%
   mutate(ratio = any_infection/symptomatic_disease)
 workshop %>% summarise(mean = mean(ratio,na.rm=TRUE),
                        sd = sd(ratio,na.rm=TRUE))
@@ -110,7 +112,8 @@ omicron = VE_estimates[VE_estimates$strain == 'omicron',] %>%
   select(outcome,vaccine_type,dose,VE) %>%
   rename(omicron = VE)
 
-workshop = delta %>% left_join(omicron) %>%
+workshop = delta %>% 
+  left_join(omicron, by = c("outcome", "vaccine_type", "dose")) %>%
   mutate(ratio = omicron/delta)
 workshop %>% summarise(mean = mean(ratio,na.rm=TRUE),
                        sd = sd(ratio,na.rm=TRUE))
@@ -148,7 +151,8 @@ dose_two = VE_estimates[VE_estimates$dose == 2,] %>%
   select(strain,outcome,vaccine_type,VE) %>%
   rename(dose_two = VE)
 
-workshop = dose_one %>% left_join(dose_two) %>%
+workshop = dose_one %>% 
+  left_join(dose_two, by = c("strain", "outcome", "vaccine_type")) %>%
   mutate(ratio = dose_one/dose_two)
 # mean        sd
 # 1 0.7445608 0.1569164
@@ -340,6 +344,7 @@ VE_estimates_imputed = workshop %>%
 strain = 'omicron'
 to_plot = VE_estimates_imputed[VE_estimates_imputed$strain == strain &VE_estimates_imputed$dose !=3,]
 
+#to_plot = VE_estimates_imputed %>% filter(vaccine_type %in% c('Moderna','Pfizer','AstraZeneca'), strain == 'omicron')
 
 plot_list = list()
 for (i in 1:length(unique(to_plot$outcome))){

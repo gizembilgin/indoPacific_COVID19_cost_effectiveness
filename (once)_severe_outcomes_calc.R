@@ -30,7 +30,7 @@ VE_tracker= crossing(risk_group = risk_group_labels,
 workshop = VE_estimates_imputed %>% filter(strain == strain_now) %>% 
   select(vaccine_type,dose,outcome,VE) %>% mutate(VE=VE/100) %>%
   rename(outcome_VE = outcome)
-VE_tracker = VE_tracker %>% left_join(workshop)
+VE_tracker = VE_tracker %>% left_join(workshop, by = c("dose", "vaccine_type", "outcome_VE"))
 
 workshop = crossing(risk_group = risk_group_labels,
                     dose = 0,
@@ -74,9 +74,17 @@ if (risk_group_toggle == "on"){
 }
 
 #(C/C) calculate severe outcome incidence by vax_status
-severe_outcome_this_run = severe_outcome_FINAL %>% left_join(VE_tracker) %>%
-  mutate(percentage = percentage*(1-VE)) %>%
-  select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
+if (risk_group_toggle == "on"){
+  severe_outcome_this_run = severe_outcome_FINAL %>% 
+    left_join(VE_tracker, by = c("age_group", "outcome_VE", "risk_group")) %>%
+    mutate(percentage = percentage*(1-VE)) %>%
+    select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
+} else{
+  severe_outcome_this_run = severe_outcome_FINAL %>% 
+    left_join(VE_tracker, by = c("age_group", "outcome_VE")) %>%
+    mutate(percentage = percentage*(1-VE)) %>%
+    select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
+}
 #_______________________________________________________________________________
 
 

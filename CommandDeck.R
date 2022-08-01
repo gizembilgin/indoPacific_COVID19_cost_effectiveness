@@ -15,14 +15,21 @@ library(ggpubr)
 library(tidyverse)
 
 debug = "off"
+debug_type = "full" #options: "full", "partial"
 #_________________________________________________________________
 
 
 
 ####DEBUG
-if (debug == "on"){
-  rm(list=ls())  # clear global environment
+if ( debug == "on"){
+  warning('Debugging is on')
+  
+  if (debug_type == "full"){rm(list=ls());debug = "on"}  # clear global environment
+  
+  setting = "SLE"
   baseline_date_start = Sys.Date() + 30
+  
+  plotting = "on"
   
   outbreak_post_rollout = "off"
   RR_estimate = RR_default = 2
@@ -32,6 +39,7 @@ if (debug == "on"){
   risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
   risk_group_prioritisation_to_date = NA
   default_prioritisation_proportion = 0.5
+  VE_at_risk_suppress = 1 #i.e. do not suppress VE at risk
   
   vax_strategy_toggles =
     list(vax_strategy_start_date        = baseline_date_start,
@@ -41,7 +49,7 @@ if (debug == "on"){
          vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
          vax_dose_strategy              = 1,                    # options: 1,2
          vax_strategy_vaccine_type      = "Johnson & Johnson" ,            # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-         vax_strategy_vaccine_interval  = c(7*3) ,                 # (days) interval between doses, you must specify multiple intervals if multiple doses e.g. c(21,90)
+         vax_strategy_vaccine_interval  = c(30*3) ,                 # (days) interval between doses, you must specify multiple intervals if multiple doses e.g. c(21,90)
          vax_strategy_max_expected_cov  = 0.88                   # value between 0-1 of age group willing to be vaccinated (vaccine hesitancy est in discussion)
     )
   
@@ -56,6 +64,10 @@ if (debug == "on"){
   waning_toggle_severe_outcome = FALSE
   waning_toggle_rho_acqusition = TRUE
   rho_severe_disease = "on"
+  
+  Reff_tracker = data.frame()
+  rho_tracker_dataframe = data.frame()
+  VE_tracker_dataframe = data.frame()
 }
 
 
@@ -65,28 +77,12 @@ if (debug == "on"){
 if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
 }else if (Sys.info()[['user']] == 'gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
 
-setting = "SLE"
-
-baseline_date_start = Sys.Date() + 30
-
-if(outbreak_post_rollout == "on"){
-  date_start = max(vaccination_history_FINAL$date)
-  seed_date = baseline_date_start 
-}else if(outbreak_post_rollout == "off"){ #i.e. rolling out vaccine during outbreak
-  date_start = baseline_date_start
-  seed_date = baseline_date_start
-}
-date_now = date_start
-
-strain_inital = 'omicron'             #options:'WT','delta','omicron'
+strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicron'
 model_weeks = 52          # how many weeks should the model run for?
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
 underascertainment_est = 43
-
-behaviour_mod = 0  #0.268 if start 01/03/21
-uniform_mod=1
 
 discounting_rate = 0 #discounting on YLL
 #__________________________________________________________________
@@ -99,8 +95,6 @@ discounting_rate = 0 #discounting on YLL
 # time saving tactics! Load setting if not yet loaded
 if (complete_model_runs == 1){run_type="point"
 } else if (complete_model_runs > 1){run_type="rand"}
-if (setting == "PNG"){setting_long = "Papua New Guinea"
-} else if (setting == "SLE"){setting_long = "Sierra Leone"}
 
 if (risk_group_toggle == "on"){
   num_risk_groups = 2
@@ -108,17 +102,19 @@ if (risk_group_toggle == "on"){
 
 num_disease_classes = 4                                 # SEIR 
 
+#load setting stats if new setting
 if (exists("prev_setting") == FALSE){ prev_setting = "NONE"}
 if (exists("prev_risk_num") == FALSE){ prev_risk_num = "NONE"}
 if (exists("prev_risk_group") == FALSE){ prev_risk_group = "NONE"}
 if (exists("prev_run_date") == FALSE){ prev_run_date = as.Date('1900-01-01')}
 if (setting != prev_setting | num_risk_groups != prev_risk_num | risk_group_name != prev_risk_group | prev_run_date != Sys.Date()){
   source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))
-} #load setting stats if new setting
+} 
 prev_setting = setting
 prev_run_date = Sys.Date()
 prev_risk_num = num_risk_groups 
 prev_risk_group = risk_group_name
+
 seed = 0.001*sum(pop)
 
 if (exists("prev_discounting_rate") == FALSE){ prev_discounting_rate = discounting_rate}
@@ -161,6 +157,7 @@ if (complete_model_runs>1){
                      UCI = CI(daily_cases)[1], 
                      LCI = CI(daily_cases)[3]) 
 }
+rm(incidence_log_tracker)
 
 #__________________________________________________________________
 
@@ -169,7 +166,7 @@ if (complete_model_runs>1){
 # ####################################################################
 # NOTE: more advanced plots in scripts title '(plot)_...'
 if (exists("ticket") == FALSE){ ticket = 1 }
-if (ticket ==1){
+if (ticket == 1 | plotting == "on"){
 
 #raw number - daily and cumulative
 plot1 <- ggplot() + 
@@ -216,7 +213,7 @@ plot1 <-
         axis.line = element_line(color = 'black'))
 
 plot2 <- ggplot() + 
-  geom_line(data=incidence_log,aes(x=date,y=Reff),na.rm=TRUE) +
+  geom_line(data=Reff_tracker,aes(x=date,y=Reff),na.rm=TRUE) +
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
   #ylim(0,6) +
@@ -244,11 +241,8 @@ if (debug == "on"){
   plot5 = ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
   lay <- rbind(c(1,2),c(3,3),c(4,5))
   grid.arrange(plot1, plot2, plot3,plot4,plot5, layout_matrix = lay)
-  
   ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
-} else{
-  grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
-}
+} 
 
 }
 
@@ -260,4 +254,4 @@ if (debug == "on"){
 
 time.end.CommandDeck=proc.time()[[3]]
 time.end.CommandDeck-time.start.CommandDeck
-## current runtime (19/05) 8 minutes for 52 weeks with 2 risk groups, 6 mins with 1 risk
+## current runtime (19/05) 8 minutes for 52 weeks with 2 risk groups, 6 mins with 1 risk - COMEBACK - time!
