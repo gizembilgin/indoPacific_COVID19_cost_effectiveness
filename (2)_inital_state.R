@@ -45,7 +45,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   
 } else if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "on"){
   
-  if(risk_group_acceptability %in% apply_risk_strategy_toggles){
+  if('risk_group_acceptability' %in% names(apply_risk_strategy_toggles)){
     vaccination_history_FINAL = 
       apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
                           vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
@@ -83,14 +83,17 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 if(outbreak_post_rollout == "on"){
   date_start = max(vaccination_history_FINAL$date)
   seed_date = date_start
+} else{
+  date_start = seed_date = baseline_date_start
 }
+date_now = date_start
 
 
 #_________________________________________________
 
 #(iv/iv)  Initial coverage _______________________
 #Including coverage_this_date for projected doses
-vaccination_history_FINAL = vaccination_history_FINAL %>% left_join(pop_risk_group_dn) %>%
+vaccination_history_FINAL = vaccination_history_FINAL %>% left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
   group_by(risk_group,age_group,vaccine_type,dose) %>%
   mutate(coverage_this_date = 100*cumsum(doses_delivered_this_date)/pop) %>%
   select(-pop)
@@ -153,17 +156,16 @@ vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 
 
 #(B/B) Vaccine Effectiveness (VE)
-#load( file = '1_inputs/VE_waning_distribution.Rdata')
+# last date to run occupancy tracker
+workshop = vaccination_history_FINAL %>%
+  filter(doses_delivered_this_date > 0)
+workshop = workshop %>% filter(date == max(workshop$date))
+workshop_delay = max(vaxCovDelay$delay[vaxCovDelay$dose %in% workshop$dose])
+max_occupany_run_date = max(workshop$date) + workshop_delay
+
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
   mutate(outcome = 'any_infection')
-
-# part_one = VE_waning_distribution[VE_waning_distribution$outcome %in% c('any_infection','symptomatic_disease') &
-#                                     VE_waning_distribution$waning == waning_toggle_acqusition,]
-# part_two = VE_waning_distribution[VE_waning_distribution$outcome %in% c('severe_disease','death') &
-#                                     VE_waning_distribution$waning == waning_toggle_severe_outcome,]
-# VE_waning_distribution = rbind(part_one,part_two)
-# rm(part_one,part_two)
 
 VE =  crossing(dose = c(1:num_vax_doses),
                vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
@@ -173,6 +175,8 @@ if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_hi
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
   #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
 }
+
+
 #___________________________________________________________________
 
 
@@ -190,10 +194,6 @@ if (as.numeric(format(date_start, format="%Y")) > 2022){
 
 
 ###### (3/4) NPI
-if (NPI_toggle == 'stringency'){ NPI_estimates = NPI_estimates_full[,-c(3)]
-} else if (NPI_toggle == 'contain_health'){ NPI_estimates = NPI_estimates_full[,-c(2)]}
-colnames(NPI_estimates) <- c('date','NPI')
-
 if(date_start <=max(NPI_estimates$date)){
   NPI_inital = NPI_estimates$NPI[NPI_estimates$date==date_start]
 } else {
@@ -201,12 +201,11 @@ if(date_start <=max(NPI_estimates$date)){
     NPI_inital = NPI_estimates$NPI[NPI_estimates$date == max(NPI_estimates$date)] # peak is 40.8
   } 
   if (NPI_outbreak_toggle == "delta_peaks"){
-    #NPI_inital = NPI_estimates$NPI[NPI_estimates$date == as.Date('2021-07-07')] #peak is 62.3
     NPI_inital = mean(NPI_estimates$NPI[NPI_estimates$date > as.Date('2021-01-01')&NPI_estimates$date<as.Date('2021-08-01')])
     #average of two delta peaks in 2021
   }
 }
-NPI = NPI_inital = as.numeric(NPI_inital)/100
+NPI = NPI_inital = 1 - as.numeric(NPI_inital)/100 #effective NPI is (1-NPI), calculate here so we don't have to keep calculating
 #________________________________________________________________
 
 
@@ -251,7 +250,7 @@ if (seed>0 & seed_date == date_start) { #overwrite
 }
 if (date_start > max(case_history$date)){
   
-  initialRecovered = seroprev %>% left_join(pop_setting) %>% mutate(R = seroprev*pop/100) %>%
+  initialRecovered = seroprev %>% left_join(pop_setting, by = "age_group") %>% mutate(R = seroprev*pop/100) %>%
     select(age_group,R)
   
   date = seq(1,lengthInfectionDerivedImmunity)
@@ -260,11 +259,13 @@ if (date_start > max(case_history$date)){
   workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
   hist_cases = workshop
   
-  recovered_risk = initialRecovered %>% left_join(risk_dn) %>%
+  recovered_risk = initialRecovered %>% 
+    left_join(risk_dn, by = "age_group") %>%
     mutate(risk_group = risk_group_name,
            R = R*prop) %>% 
     select(risk_group,age_group,R)
-  recovered_general_public   = initialRecovered %>% left_join(risk_dn) %>%
+  recovered_general_public   = initialRecovered %>% 
+    left_join(risk_dn, by = "age_group") %>%
     mutate(risk_group = 'general_public',
            R = R*(1-prop)) %>% 
     select(risk_group,age_group,R)
@@ -277,7 +278,7 @@ if (date_start > max(case_history$date)){
 initialClasses = pop_risk_group_dn %>% ungroup() %>% 
   mutate(I = initialInfected*pop/sum(pop),
          E = initialExposed*pop/sum(pop)) %>% 
-  left_join(initialRecovered) %>%
+  left_join(initialRecovered, by = c("risk_group", "age_group")) %>%
   mutate(S = pop - E - I - R) %>%
   select(-pop) %>%
   pivot_longer(
@@ -305,6 +306,8 @@ empty_vaccinated = crossing(class = disease_class_list,
                             age_group = age_group_labels,
                             state_inital = 0)
 state_tidy = rbind(empty_unvaccinated,empty_vaccinated)
+
+
 
 for (num in 1:num_disease_classes){
   
@@ -374,6 +377,9 @@ Incidence_inital=(rep(0,J*(T*D+1)*RISK))
 Exposed_incidence_inital = rep(0,J*2)
 
 state=c(state_tidy$state_inital,Incidence_inital,Exposed_incidence_inital) 
+
+rm (empty_unvaccinated,empty_vaccinated,state_tidy)
+
 
 if (round(sum(state)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
 
