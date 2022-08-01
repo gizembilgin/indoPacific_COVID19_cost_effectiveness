@@ -52,6 +52,8 @@ Proportion of population willing to be vaccinated (at risk group) | `r paste(vax
 Increased risk of risk group | `r paste(RR_estimate)` | 
 Default_prioritisation_proportion | `r paste(default_prioritisation_proportion)` | 
 
+
+`r risk_group_visulation`
 ***
 
 # Prioritising primary dose coverage by x%
@@ -65,17 +67,27 @@ kable(results_warehouse_FM[[1]][[4]]$relative, caption = 'Relative difference in
 ***
 
 # Delivery of booster doses to at risk group
+```{r echo=FALSE , fig.width=10,fig.height=5}
 
+results_warehouse_FM[[2]][[3]]
+kable(results_warehouse_FM[[2]][[4]]$absolute, caption = 'Absolute difference in outcomes (compared to no prioritisation)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse_FM[[2]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
+```
 ***
 
 # Sensitivity analysis
 ## Range of possible RR
 ```{r echo=FALSE , fig.width=10,fig.height=5}
 
-#results_warehouse_FM[[3]][[3]]
-#kable(results_warehouse_FM[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes compared to no #difference in risk (RR=1)',digits=0,format.args = list(big.mark = ","))
-#kable(results_warehouse_FM[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
+results_warehouse_FM[[3]][[3]]
+kable(results_warehouse_FM[[3]][[4]]$absolute, caption = 'Absolute difference in outcomes compared to no #difference in risk (RR=1)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse_FM[[3]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
 ```
 ## Reduced VE
-## Altered contact patterns
-## Vaccine hesitancy
+Note: reduced VE in older pop might be good sensitivity analysis for the general model
+```{r echo=FALSE , fig.width=10,fig.height=5}
+
+results_warehouse_FM[[4]][[3]]
+kable(results_warehouse_FM[[4]][[4]]$absolute, caption = 'Absolute difference in outcomes compared to no #difference in risk (RR=1)',digits=0,format.args = list(big.mark = ","))
+kable(results_warehouse_FM[[4]][[4]]$relative, caption = 'Relative difference in outcomes',digits=2) 
+```

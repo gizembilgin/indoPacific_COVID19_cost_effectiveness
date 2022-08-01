@@ -7,6 +7,9 @@ warehouse_table = data.frame()
 warehouse_plot = data.frame()
 baseline_to_compare = "RR = 1"
 
+#standard run
+vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
+
 apply_risk_strategy_toggles = 
   list(
     vax_risk_strategy = 'Y',             # options: 'Y','N'
@@ -14,6 +17,8 @@ apply_risk_strategy_toggles =
     vax_doses_general = 1,               # number of doses delivered to general pop
     vax_doses_risk = 1                  # number of doses delivered to risk group
     )
+
+source(paste(getwd(),"/CommandDeck.R",sep=""))
 
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
@@ -39,7 +44,8 @@ for (ticket in 1:length(queue)){
   vax_strategy_description = commands$vax_strategy_description
   RR_estimate = commands$RR_switch
   
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
+  source(paste(getwd(),"/(once)_severe_outcomes_calc.R",sep="")) # COMEBACK - should this just save its results somewhere?
+  source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
   
   severe_outcome_projections = severe_outcome_log %>% 
     mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))

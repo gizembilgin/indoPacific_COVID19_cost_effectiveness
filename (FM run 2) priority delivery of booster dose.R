@@ -50,8 +50,8 @@ this_run_vax_strategy$vax_strategy_vaccine_interval = 365/2
 queue[[5]] = list(vax_strategy_description = 'booster at six months (all)',
                   vax_strategy_toggles = this_run_vax_strategy,
                   apply_risk_strategy_toggles = this_run_risk_strategy)  #roll out vaccine DURING outbreak
-
 this_run_risk_strategy$vax_doses_general = 1
+this_run_vax_strategy$vax_strategy_vaccine_interval = 365/4
 
 
 #(D/F) Difference in risk group acceptability
@@ -90,11 +90,11 @@ this_run_risk_strategy$vax_risk_proportion = default_prioritisation_proportion
 
 ### (3) Run  ##################################################################################################
 for (ticket in 1:length(queue)){
-  
+
   commands = queue[[ticket]]
   
   vax_strategy_description = commands$vax_strategy_description
-  vax_strategy_toggles = commands$this_run_vax_strategy 
+  vax_strategy_toggles = commands$vax_strategy_toggles 
   apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
 
   
@@ -149,9 +149,9 @@ for (i in 1:(length(queue)-1)){
   averted_table_rel[i,c(2:end)] = 100 * averted_table[i,c(2:end)]/
     warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)]
 }
+
 table_list = list(absolute = averted_table, 
                   relative = averted_table_rel) #COMEBACK could be merged
-table_list
 
 results_warehouse_entry[[4]]= table_list
 
@@ -160,3 +160,16 @@ results_warehouse_entry[[4]]= table_list
 results_warehouse_entry[[5]] = risk_group_name
 results_warehouse_FM[[subreceipt]] = results_warehouse_entry
 
+
+averted_table = averted_table %>% mutate(label = "abs")
+averted_table_rel = averted_table_rel %>% mutate(label = "rel")
+table_to_print = rbind(averted_table,averted_table_rel)
+
+file_name = paste("FM run 2 ",risk_group_name, Sys.time(),".csv",sep="")
+file_name = gsub(' ','_',file_name)
+file_name = gsub(':','-',file_name)
+
+write_csv(table_to_print, file = paste("x_results/",file_name,sep=""))
+
+file_name = gsub('.csv','.Rdata',file_name)
+save(results_warehouse_entry, file = paste("x_results/",file_name,sep=""))
