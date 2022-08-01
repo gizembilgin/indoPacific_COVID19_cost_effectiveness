@@ -7,8 +7,6 @@ num_time_steps = model_weeks *7
 
 parameters = c(
   suscept = suscept,
-  behaviour_mod=behaviour_mod,
-  uniform_mod = uniform_mod,
   beta=beta,
   NPI=NPI_inital,
   contact_matrix=contact_matrix,
@@ -30,9 +28,7 @@ parameters = c(
   num_vax_doses=num_vax_doses)
 
 
-Reff_tracker = data.frame()
-rho_tracker_dataframe = data.frame()
-VE_tracker_dataframe = data.frame()
+
 
 for (increments_number in 1:num_time_steps){
 #for (increments_number in 1:48){ 
@@ -43,12 +39,16 @@ for (increments_number in 1:num_time_steps){
     sol_log <- sol
     sol_log_unedited <- sol
     
-    Reff <- NA
-    Reff_tracker = rbind(Reff_tracker,Reff)
-    colnames(Reff_tracker) <- c('Reff')
+    if (debug == "on"){
+      Reff <- NA
+      Reff_tracker = rbind(Reff_tracker,Reff)
+      colnames(Reff_tracker) <- c('Reff')
+    }
     
   } else{
     
+    time.start = proc.time()[[3]]    
+
     date_now = date_start + increments_number*time_step
     
     if (date_now <= max(NPI_estimates$date)){
@@ -85,9 +85,11 @@ for (increments_number in 1:num_time_steps){
     class_name_list = c('S','E','I','R')
     #HERE!!!
     for (i in 1:num_disease_classes){
-      workshop = data.frame(t(class_list[[i]]))
+      #workshop = data.frame(t(class_list[[i]]))
+      workshop = data.frame(class_list[[i]])
       colnames(workshop) = c('pop')
-      workshop$class = class_name_list[i]
+      row.names(workshop) = NULL
+      workshop = workshop %>% mutate(class =  class_name_list[i])
       workshop$temp = rep(seq(1,(num_age_groups*num_vax_classes)),RISK)
       workshop$age_group = rep(age_group_labels,num_vax_classes*RISK)
       workshop$dose = 0
@@ -104,6 +106,7 @@ for (increments_number in 1:num_time_steps){
       }
       prev_state = rbind(prev_state,workshop)
     }
+    prev_state$pop  = as.numeric(prev_state$pop)
     if (round(sum(prev_state$pop))!= sum(pop)){stop('prev state not equal to pop size! (~line 100 in time step)')}
     
     next_state=prev_state # initialise next state
@@ -120,6 +123,7 @@ for (r in 1:RISK){
      # (1/3) recorded vax
      #COMEBACK delay of J&J first does is 21 days, is this right?
      
+     #FASTER
      VR_this_step = crossing(dose = seq(1:D),
                              age_group = age_group_labels,
                              doses = 0)
@@ -136,6 +140,8 @@ for (r in 1:RISK){
      }
      
       for (i in 1:num_age_groups){ # across age groups
+        
+        #FASTER
         increase = rep(0,num_vax_doses)
         for (d in 1:D){
           increase[d] = VR_this_step$doses[VR_this_step$dose == d & VR_this_step$age_group == age_group_labels[i]] 
@@ -254,27 +260,6 @@ for (r in 1:RISK){
     }
 
     
-    # if (importation_toggle == "on"){
-    #   #Let's assume all importations from lowest vax class
-    #    imported_this_date = 3/7
-    #    
-    #   rand_age = round(runif(1,min=1,max=num_age_groups))
-    #   
-    #   if (length(imported_this_date) > 0 ){
-    #   x=2 #import to exposed or to infected?
-    #     if (next_state[1,rand_age] >= imported_this_date ){ #if someone who is Sunvax
-    #       next_state[1,rand_age] = next_state[1,rand_age] - imported_this_date
-    #       next_state[1+x*4,rand_age] = next_state[1+x*4,rand_age] + imported_this_date
-    #     } else if (next_state[2,rand_age] >= imported_this_date ){ #if someone who is Sv1
-    #       next_state[2,rand_age] = next_state[2,rand_age] - imported_this_date
-    #       next_state[2+x*4,rand_age] = next_state[2+x*4,rand_age] + imported_this_date
-    #     } else if (next_state[3,rand_age] >= imported_this_date ){ #if someone who is Sv2
-    #       next_state[3,rand_age] = next_state[3,rand_age] - imported_this_date
-    #       next_state[3+x*4,rand_age] = next_state[3+x*4,rand_age] + imported_this_date
-    #     }
-    #   }
-    #}
-    
     if (round(sum(next_state$pop))!= round(sum(prev_state$pop))){stop('pop not retained between next_state and prev_state!')}
     if (round(sum(next_state$pop))!= sum(pop)) {stop('pop in next_state not equal to setting population')}
     if(nrow(next_state[round(next_state$pop)<0,])>0){ stop('(4)_time_step line 224')}
@@ -294,8 +279,7 @@ for (r in 1:RISK){
     I_next=next_state$pop[next_state$class == 'I']
     R_next=next_state$pop[next_state$class == 'R']
     
-    Reff <- Reff_time_step(parameters,next_state)
-    Reff_tracker = rbind(Reff_tracker,Reff)
+
 
     
     next_state_FINAL=as.numeric(c(S_next,E_next,I_next,R_next,
@@ -310,6 +294,38 @@ for (r in 1:RISK){
     sol_log <- rbind(sol_log,sol)
     sol_log_unedited <- rbind(sol_log_unedited,sol)
 
+
+
+  ### INCIDENCE CALCULATIONS 
+  J=num_age_groups
+  T=num_vax_types
+  D=num_vax_doses
+  RISK=num_risk_groups
+  A=RISK*J*(T*D+1) # +1 is unvax
+  
+  #WEEKLY
+  #Incid by age and vax class
+  incidence_log_unedited <- sol_log_unedited[, c(1,(A*num_disease_classes+2):(A*(num_disease_classes+1)+1))]
+  
+  # select weekly end points 
+  incidence_log_unedited <- incidence_log_unedited %>% filter (time %% time_step == 0, rowSums(incidence_log_unedited) != time)
+  incidence_log_unedited <- distinct(round(incidence_log_unedited,digits=2))
+  incidence_log_unedited$date <- date_start + incidence_log_unedited$time
+  incidence_log_unedited$daily_cases  <- rowSums(incidence_log_unedited[,2:(A+1)])
+  
+  
+  incidence_log <- incidence_log_unedited %>% 
+    select(date,daily_cases) %>%
+    mutate(rolling_average = (daily_cases + lag(daily_cases) + lag(daily_cases,n=2)+lag(daily_cases,n=3)
+                              +lag(daily_cases,n=4)+lag(daily_cases,n=5)+lag(daily_cases,n=6))/7) %>%
+    mutate(rolling_average_percentage = 100*rolling_average/sum(pop)) %>%
+    mutate(cumulative_incidence = cumsum(daily_cases)) %>%
+    mutate(cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
+  
+  if (debug == "on"){
+    Reff <- Reff_time_step(parameters,next_state)
+    Reff_tracker = rbind(Reff_tracker,Reff)
+    
     rho_tracker_dataframe = rbind(rho_tracker_dataframe,parameters$rho) 
     
     workshop = parameters$VE
@@ -318,39 +334,11 @@ for (r in 1:RISK){
     colnames(workshop) = c('dose','VE')
     workshop$date = date_now
     VE_tracker_dataframe = rbind(VE_tracker_dataframe,workshop)
-    
-
-### INCIDENCE CALCULATIONS 
-J=num_age_groups
-T=num_vax_types
-D=num_vax_doses
-RISK=num_risk_groups
-A=RISK*J*(T*D+1) # +1 is unvax
-
-#WEEKLY
-#Incid by age and vax class
-incidence_log_unedited <- sol_log_unedited[, c(1,(A*num_disease_classes+2):(A*(num_disease_classes+1)+1))]
-
-# select weekly end points 
-incidence_log_unedited <- incidence_log_unedited %>% filter (time %% time_step == 0, rowSums(incidence_log_unedited) != time)
-incidence_log_unedited <- distinct(round(incidence_log_unedited,digits=2))
-incidence_log_unedited$date <- date_start + incidence_log_unedited$time
-incidence_log_unedited$daily_cases  <- rowSums(incidence_log_unedited[,2:(A+1)])
-
-
-incidence_log <- incidence_log_unedited %>% 
-  select(date,daily_cases) %>%
-  mutate(rolling_average = (daily_cases + lag(daily_cases) + lag(daily_cases,n=2)+lag(daily_cases,n=3)
-                            +lag(daily_cases,n=4)+lag(daily_cases,n=5)+lag(daily_cases,n=6))/7) %>%
-  mutate(rolling_average_percentage = 100*rolling_average/sum(pop)) %>%
-  mutate(cumulative_incidence = cumsum(daily_cases)) %>%
-  mutate(cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
-
-incidence_log <- cbind(incidence_log,Reff_tracker)
-
   }
-}
-#incidence log moved within loop to allow rho_time_step to access
+  time.end=proc.time()[[3]]
+  time.end-time.start    
+  }
+} ### END INCREMENT (#incidence log moved within loop to allow rho_time_step to access)
 
 check <- sol_log_unedited
 check$Incid = rowSums(sol_log_unedited[,(A*4+2):(A*5+1)])
@@ -405,11 +393,8 @@ for (d in 1:num_vax_doses){
 #CHECKED: yes aligns as expected
 
 
-colnames(rho_tracker_dataframe) = c('rho')
-rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = incidence_log$date[2:nrow(incidence_log)])
-
-
-incidence_log_tidy = workshop %>% left_join(workshop2)
+incidence_log_tidy = workshop %>% 
+  left_join(workshop2, by = "temp")
 incidence_log_tidy = subset(incidence_log_tidy,select=-c(temp))
 
 
@@ -438,7 +423,8 @@ workshop2 = workshop2 %>% mutate(infection_type = case_when(
   temp > num_age_groups ~ "reinfection"))
 #View(workshop2) #CHECKED: yes aligns as expected
 
-exposed_log = workshop %>% left_join(workshop2)
+exposed_log = workshop %>% 
+  left_join(workshop2, by = "temp")
 exposed_log_tidy = subset(exposed_log,select=-c(temp))
 
 #reinfection ratio
@@ -449,14 +435,13 @@ exposed_log = exposed_log_tidy %>% ungroup() %>% pivot_wider(
 
 exposed_log = exposed_log %>% mutate(reinfection_ratio = reinfection/(new_infection+reinfection))
 
-ggplot(exposed_log) + geom_line(aes(x=date,y=reinfection_ratio,color=as.factor(age_group)))
+#ggplot(exposed_log) + geom_line(aes(x=date,y=reinfection_ratio,color=as.factor(age_group)))
 
 
-
-
-# rm(workshop2,workshop,check,
-#    increase_one,increase_two,
-#    sol,
-#    S,E,I,R,
-#    this_vax_history,this_vax,
-#    state_working)  
+if (debug == "on"){
+  colnames(rho_tracker_dataframe) = c('rho')
+  rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = incidence_log$date[2:nrow(incidence_log)])
+  
+  Reff_tracker <- cbind(incidence_log$date,Reff_tracker)
+  colnames(Reff_tracker) = c('date','Reff')
+}
