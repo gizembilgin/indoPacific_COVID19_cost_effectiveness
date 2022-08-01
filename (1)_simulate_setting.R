@@ -8,11 +8,8 @@
 ### (5) Proxy estimate of TTIQ/PHSM i.e. NPI
 
 ### COMEBACK - still need importation
+if (setting == "SLE"){setting_long = "Sierra Leone"}
 #______________________________________________________________________________________________________________________________________
-
-### Static toggles
-NPI_toggle = 'contain_health'   #options: contain_health, stringency
-
 
 ### (1/5) Age structure of population
 ##(A/B) Without risk groups
@@ -54,11 +51,11 @@ if (num_risk_groups>1){
     select(age_group,prop)
   risk_group_labels[2] = risk_group_name
   
-  pop_high_risk = pop_setting %>% left_join(risk_dn) %>%
+  pop_high_risk = pop_setting %>% left_join(risk_dn, by = "age_group") %>%
     mutate(risk_group = risk_group_name,
            pop = round(pop*prop)) %>% 
     select(risk_group,age_group,pop)
-  pop_general_public   = pop_setting %>% left_join(risk_dn) %>%
+  pop_general_public   = pop_setting %>% left_join(risk_dn, by = "age_group") %>%
     mutate(risk_group = 'general_public',
            pop = round(pop*(1-prop))) %>% 
     select(risk_group,age_group,pop)
@@ -101,7 +98,7 @@ sum_1 = aggregate(pop_Prem$model_group_percent, by=list(category= pop_Prem$agegr
 colnames(sum_1) = c('agegroup_MODEL','agegroup_PREM','model_group_percentage')
 sum_2 = aggregate(pop_Prem$prem_group_percent, by=list(category= pop_Prem$agegroup_MODEL,pop_Prem$agegroup_PREM), FUN=sum)
 colnames(sum_2) = c('agegroup_MODEL','agegroup_PREM','prem_group_percentage')
-pop_Prem = sum_1 %>% left_join(sum_2)
+pop_Prem = sum_1 %>% left_join(sum_2, by = c("agegroup_MODEL", "agegroup_PREM"))
 #View(pop_Prem)
 
 
@@ -159,22 +156,22 @@ workshop_cases <- workshop_cases %>%
 workshop_cases <- workshop_cases %>%
   mutate(date =as.Date(workshop_cases$date, "%m/%d/%y"))
 
-workshop_deaths <- readr::read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
-workshop_deaths = workshop_deaths[workshop_deaths$'Country/Region' == setting_long,]
-workshop_deaths <- workshop_deaths %>%
-  pivot_longer(
-    cols = 5:ncol(workshop_deaths) ,
-    names_to = 'date',
-    values_to = 'deaths'
-  )
-workshop_deaths <- workshop_deaths %>%
-  mutate(date =as.Date(workshop_deaths$date, "%m/%d/%y"))
+# workshop_deaths <- readr::read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+# workshop_deaths = workshop_deaths[workshop_deaths$'Country/Region' == setting_long,]
+# workshop_deaths <- workshop_deaths %>%
+#   pivot_longer(
+#     cols = 5:ncol(workshop_deaths) ,
+#     names_to = 'date',
+#     values_to = 'deaths'
+#   )
+# workshop_deaths <- workshop_deaths %>%
+#   mutate(date =as.Date(workshop_deaths$date, "%m/%d/%y"))
 
 workshop <- workshop_cases %>%
-  left_join(workshop_deaths) %>%
-  select(date, cases,deaths) %>%
+  #left_join(workshop_deaths) %>%
+  #select(date, cases,deaths) %>%
   mutate(new = cases - lag(cases),
-         case_fatality_ratio = deaths/cases,
+         #case_fatality_ratio = deaths/cases,
          rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
                             +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
 
@@ -189,23 +186,23 @@ ggplot() +
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
 
-ggplot() + 
-  geom_point(data=workshop,aes(x=date,y=case_fatality_ratio),na.rm=TRUE) + 
-  xlab("") + 
-  scale_x_date(date_breaks="1 month", date_labels="%b") +
-  ylab("case fatality (%)") +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        panel.border = element_blank(),
-        axis.line = element_line(color = 'black'))
+# ggplot() + 
+#   geom_point(data=workshop,aes(x=date,y=case_fatality_ratio),na.rm=TRUE) + 
+#   xlab("") + 
+#   scale_x_date(date_breaks="1 month", date_labels="%b") +
+#   ylab("case fatality (%)") +
+#   theme_bw() + 
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(), 
+#         panel.border = element_blank(),
+#         axis.line = element_line(color = 'black'))
 
 #ASSUMPTION: cases remain active for 14 days
 case_history = workshop %>%
   mutate(active = cases - lag(cases,n=14,default=0),
          recovered = cases - active)
 
-rm(workshop, workshop_cases, workshop_deaths)
+rm(workshop, workshop_cases)
 #NB: will have to make assumptions about age-distribution of cases
 #______________________________________________________________________________________________________________________________________
 
@@ -266,7 +263,7 @@ setting_vaccine_2 <- setting_vaccine_2 %>%
   )
 
 vaccination_history_2 <- vaccination_history %>%
-  left_join(setting_vaccine_2) %>%
+  left_join(setting_vaccine_2, by = "dose_charac") %>%
   select(date, vaccine_type, dose_charac, num, prop) %>%
   mutate(coverage_this_date_num = round(num*prop),
          coverage_this_date = 100 * coverage_this_date_num / sum(pop))
@@ -358,7 +355,8 @@ if (risk_group_toggle == "off"){
 } 
 
 #Let's recalculate coverage_this_date here
-vaccination_history_TRUE = vaccination_history_TRUE %>% left_join(pop_risk_group_dn) %>%
+vaccination_history_TRUE = vaccination_history_TRUE %>% 
+  left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
   group_by(risk_group,age_group,vaccine_type,dose) %>%
   mutate(coverage_this_date = case_when(
     pop > 0 ~ cumsum(doses_delivered_this_date)/pop,
@@ -405,34 +403,38 @@ rm(workshop)
 #https://github.com/OxCGRT/covid-policy-tracker/tree/master/data
 #https://github.com/OxCGRT/covid-policy-tracker/blob/master/documentation/codebook.md
 
-workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index.csv")
-workshop <- workshop[workshop$country_code == setting,]%>%
-  pivot_longer(
-    cols = 4:ncol(workshop) ,
-    names_to = 'date',
-    values_to = 'stringency'
-  ) 
+### Static toggles
+NPI_toggle = 'contain_health'   #options: contain_health, stringency
 
-workshop <- workshop[,c('date','stringency')] %>%
-  mutate(date =as.Date(workshop$date, "%d%b%Y"))
-
-workshop2 <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/containment_health_index.csv")
-workshop2 <- workshop2[workshop2$country_code == setting,]%>%
-  pivot_longer(
-    cols = 4:ncol(workshop2) ,
-    names_to = 'date',
-    values_to = 'contain_health'
-  ) 
-workshop2 <- workshop2[,c('date','contain_health')] %>%
-  mutate(date =as.Date(workshop2$date, "%d%b%Y"))
-
-NPI_estimates_full <- workshop %>%
-  left_join(workshop2)
-NPI_estimates_full = na.omit(NPI_estimates_full) #removing last two weeks where hasn't yet been calculated
+if (NPI_toggle == 'stringency'){
+  workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index_avg.csv")
+  workshop <- workshop[workshop$country_code == setting,]%>%
+    pivot_longer(
+      cols = 7:ncol(workshop) ,
+      names_to = 'date',
+      values_to = 'NPI'
+    ) 
+  
+  NPI_estimates <- workshop[,c('date','NPI')] %>%
+    mutate(date =as.Date(workshop$date, "%d%b%Y"))
+  
+} else if (NPI_toggle == 'contain_health'){
+  workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/containment_health_index_avg.csv")
+  workshop <- workshop[workshop$country_code == setting,]%>%
+    pivot_longer(
+      cols = 7:ncol(workshop) ,
+      names_to = 'date',
+      values_to = 'NPI'
+    ) 
+  
+  NPI_estimates <- workshop[,c('date','NPI')] %>%
+    mutate(date =as.Date(workshop$date, "%d%b%Y"))
+}
+NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
 #two metrics to give a go!
 
 
-rm(workshop, workshop2)
+rm(workshop)
 
-Ox_tracker_complete <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
-Ox_tracker_complete <- Ox_tracker_complete[Ox_tracker_complete$CountryCode == setting,]
+#Ox_tracker_complete <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
+#Ox_tracker_complete <- Ox_tracker_complete[Ox_tracker_complete$CountryCode == setting,]
