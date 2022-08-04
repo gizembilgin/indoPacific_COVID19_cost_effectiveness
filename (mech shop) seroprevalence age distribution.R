@@ -73,7 +73,7 @@ sum(check$interim) #=2.6
 SLE_2021 = workshop %>% mutate(year = 2021, setting = "SLE")
 
 #(F) multiply to achieve 2022 estimates
-est_2022 = 10
+est_2022 = 40.5
 factor = est_2022/sum(check$interim)
 SLE_2022 = SLE_2021 %>% mutate(seroprev = seroprev*factor,
                                year = 2022)
