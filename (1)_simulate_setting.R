@@ -175,7 +175,7 @@ workshop <- workshop_cases %>%
          rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
                             +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
 
-ggplot() + 
+reported_cases_plot = ggplot() + 
   geom_point(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) + 
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
@@ -431,6 +431,7 @@ if (NPI_toggle == 'stringency'){
     mutate(date =as.Date(workshop$date, "%d%b%Y"))
 }
 NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
+#ggplot(NPI_estimates) + geom_line(aes(date,NPI))
 #two metrics to give a go!
 
 
