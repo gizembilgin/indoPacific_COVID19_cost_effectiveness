@@ -33,7 +33,8 @@ if (rho_severe_disease == "on"){
   #hosp_incid = subset(hosp_incid, select = -c(protection))
 }
 
-severe_outcome_log_tidy = workshop %>% select(date,risk_group,age_group,dose,vaccine_type,outcome,proj) 
+severe_outcome_log_tidy = workshop %>% select(date,risk_group,age_group,dose,vaccine_type,outcome,proj) %>%
+  filter(date >= date_start)
 
 #(B/D) Sum across age groups, doses and vaccination status to get overall severe incidence per day
 if (exists("age_split_results") == FALSE){ age_split_results = "N"}
@@ -49,13 +50,24 @@ if (age_split_results == "N"){
   workshop_2 = rbind(workshop_2,workshop_incid)
   
   #(D/D) Calculate cumulative severe outcomes by outcome type
-  severe_outcome_log = workshop_2 %>%
+  if (seed_date == as.Date('1900-01-01')){use_date = date_start
+  } else{
+    use_date = seed_date
+  }
+  
+  severe_outcome_log = workshop_2 %>% 
+    filter(date >= use_date) %>%
+    group_by(outcome) %>%
+    mutate(proj_cum = cumsum(proj))
+  
+  severe_outcome_log_plot = workshop_2 %>% 
+    filter(date >= date_start) %>%
     group_by(outcome) %>%
     mutate(proj_cum = cumsum(proj))
   
   plot1 <- 
     ggplot() + 
-    geom_line(data=severe_outcome_log[severe_outcome_log$outcome != 'cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
+    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     #ylim(0,40) +
@@ -67,7 +79,7 @@ if (age_split_results == "N"){
           axis.line = element_line(color = 'black'))
   
   plot2 <- ggplot() + 
-    geom_line(data=severe_outcome_log[severe_outcome_log$outcome != 'cases',],aes(x=date,y=proj_cum,color=as.factor(outcome)),na.rm=TRUE) +
+    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases',],aes(x=date,y=proj_cum,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     ylab("cumulative incidence") +
@@ -108,13 +120,24 @@ if (age_split_results == "N"){
   workshop_2 = rbind(workshop_2,workshop_incid)
   
   #(D/D) Calculate cumulative severe outcomes by outcome type
-  severe_outcome_log = workshop_2 %>%
+  if (seed_date == as.Date('1900-01-01')){use_date = date_start
+  } else{
+    use_date = seed_date
+  }
+  
+  severe_outcome_log = workshop_2 %>% 
+    filter(date >= use_date)%>%
+    group_by(outcome,macro_age_group) %>%
+    mutate(proj_cum = cumsum(proj))
+  
+  severe_outcome_log_plot = workshop_2 %>% 
+    filter(date >= date_start) %>%
     group_by(outcome,macro_age_group) %>%
     mutate(proj_cum = cumsum(proj))
   
   plot1_children <- 
     ggplot() + 
-    geom_line(data=severe_outcome_log[severe_outcome_log$outcome != 'cases' & severe_outcome_log$macro_age_group == 'children',]
+    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'children',]
               ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +
@@ -128,7 +151,7 @@ if (age_split_results == "N"){
           axis.line = element_line(color = 'black'))
   plot1_adults <- 
     ggplot() + 
-    geom_line(data=severe_outcome_log[severe_outcome_log$outcome != 'cases' & severe_outcome_log$macro_age_group == 'adults',]
+    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'adults',]
               ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +

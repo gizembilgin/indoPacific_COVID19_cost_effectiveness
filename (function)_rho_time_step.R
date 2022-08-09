@@ -11,19 +11,21 @@
 
 ### (1) Shape of waning ###############################################################################
 #See rho.xlsx in parameter estimation
-rho_dn = crossing(strain = 'omicron',
+rho_dn = crossing(strain = c('omicron','delta'),
                   outcome = c('symptomatic_disease','severe_outcome'),
                   days = seq(0,365*2)
 )
 rho_dn = rho_dn %>% mutate(
   protection = case_when(
-    outcome == 'symptomatic_disease' ~ 0.9932*exp(-0.004*days),
+    outcome == 'symptomatic_disease' & strain == 'omicron' ~ 0.9932*exp(-0.004*days),
+    outcome == 'symptomatic_disease' & strain == 'delta' ~ 0.9654*exp(-0.0002*days),
     outcome == 'severe_outcome' ~ 0.88 
   )
 )
 
-rho_est_plot = ggplot() + geom_line(data = rho_dn[rho_dn$outcome == 'symptomatic_disease',],
-                                          aes(days,protection)) + ylim(0,1) +labs(title = 'symptomatic_disease')
+rho_est_plot = ggplot() + 
+  geom_line(data = rho_dn[rho_dn$outcome == 'symptomatic_disease',],aes(days,protection,color=as.factor(strain))) + 
+  ylim(0,1) +labs(title = 'symptomatic_disease')
 
 
 #######################################################################################################
@@ -33,9 +35,13 @@ rho_est_plot = ggplot() + geom_line(data = rho_dn[rho_dn$outcome == 'symptomatic
 ### (2) Tracking of days since infection (proxy) for people in Recovered class ########################
 this_rho = rho_dn %>% filter(outcome == 'symptomatic_disease')
 
-rho_time_step <- function(this_outcome,date_now){
+rho_time_step <- function(this_outcome,date_now,strain_now){
   
   #this_rho = rho_dn %>% filter(outcome == this_outcome)
+  this_strain = strain_now
+  if (this_strain == 'WT'){this_strain = 'delta'}
+  
+  this_rho = this_rho %>% filter(strain == this_strain) 
   
   if (date_now>date_start+2){
     workshop = incidence_log %>% select(date,daily_cases)

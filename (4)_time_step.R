@@ -4,7 +4,10 @@
 time_step = 1
 num_time_steps = model_weeks *7
 
-
+if (outbreak_timing == "after"){
+  num_time_steps = model_weeks *7 + as.numeric(seed_date-date_start) -7
+}
+  
 parameters = c(
   suscept = suscept,
   beta=beta,
@@ -36,10 +39,12 @@ for (increments_number in 1:num_time_steps){
   if (increments_number == 1){
     
     sol = as.data.frame(ode(y=state,times=(seq(0,time_step,by=1)),func=covidODE,parms=parameters))
+    
     sol_log <- sol
     sol_log_unedited <- sol
-    
-    if (debug == "on"){
+   
+
+    if (debug == "on" | fitting == "on"){
       Reff <- NA
       Reff_tracker = rbind(Reff_tracker,Reff)
       colnames(Reff_tracker) <- c('Reff')
@@ -60,7 +65,7 @@ for (increments_number in 1:num_time_steps){
       parameters$VE = VE_time_step(strain,date_now,'any_infection')
     }
     if (waning_toggle_rho_acqusition == TRUE ){
-      parameters$rho = rho_time_step('symptomatic_disease',date_now)
+      parameters$rho = rho_time_step('symptomatic_disease',date_now,strain_now)
       rho = parameters$rho
     }
     
@@ -235,8 +240,20 @@ for (r in 1:RISK){
     }
   }
     
-    
-    if (seed_date != date_start & seed_date == date_now){
+    if (fitting == "on" & date_now == as.Date('2021-11-14')){next_state_FIT = next_state}
+    if (! date_start %in% seed_date & date_now %in% seed_date){
+      if (fitting == "on"){
+        if (date_now == seed_date[1]){
+          strain_now = 'delta'
+        } else if (date_now == seed_date[2]){
+          strain_now = 'omicron'
+          parameters$lambda = 1/2.22
+          parameters$delta = 1/9.87
+          
+        }
+        parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)
+      } 
+      
       seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
       seed.Exposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
 
@@ -258,6 +275,10 @@ for (r in 1:RISK){
         
       }
     }
+    if (fitting == "off" & date_now>=seed_date){
+        parameters$VE$VE = parameters$VE$VE * 0.9
+        parameters$rho = parameters$rho * 0.9
+    }
 
     
     if (round(sum(next_state$pop))!= round(sum(prev_state$pop))){stop('pop not retained between next_state and prev_state!')}
@@ -278,9 +299,6 @@ for (r in 1:RISK){
     E_next=next_state$pop[next_state$class == 'E']
     I_next=next_state$pop[next_state$class == 'I']
     R_next=next_state$pop[next_state$class == 'R']
-    
-
-
     
     next_state_FINAL=as.numeric(c(S_next,E_next,I_next,R_next,
                                   Incidence_inital,Exposed_incidence_inital)) #setting Incid to repeated 0s
@@ -310,19 +328,28 @@ for (r in 1:RISK){
   # select weekly end points 
   incidence_log_unedited <- incidence_log_unedited %>% filter (time %% time_step == 0, rowSums(incidence_log_unedited) != time)
   incidence_log_unedited <- distinct(round(incidence_log_unedited,digits=2))
+  
+
   incidence_log_unedited$date <- date_start + incidence_log_unedited$time
   incidence_log_unedited$daily_cases  <- rowSums(incidence_log_unedited[,2:(A+1)])
   
   
   incidence_log <- incidence_log_unedited %>% 
-    select(date,daily_cases) %>%
-    mutate(rolling_average = (daily_cases + lag(daily_cases) + lag(daily_cases,n=2)+lag(daily_cases,n=3)
-                              +lag(daily_cases,n=4)+lag(daily_cases,n=5)+lag(daily_cases,n=6))/7) %>%
-    mutate(rolling_average_percentage = 100*rolling_average/sum(pop)) %>%
-    mutate(cumulative_incidence = cumsum(daily_cases)) %>%
-    mutate(cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
+    select(date,daily_cases) 
   
-  if (debug == "on"){
+  if (! fitting == "on"){
+    load(file = 'fitted_incidence_log.Rdata')
+    incidence_log = rbind(incidence_log,fitted_incidence_log)
+  }
+  
+  incidence_log = incidence_log %>%
+    mutate(rolling_average = (daily_cases + lag(daily_cases) + lag(daily_cases,n=2)+lag(daily_cases,n=3)
+                              +lag(daily_cases,n=4)+lag(daily_cases,n=5)+lag(daily_cases,n=6))/7,
+           rolling_average_percentage = 100*rolling_average/sum(pop),
+           cumulative_incidence = cumsum(daily_cases),
+           cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
+  
+  if (debug == "on" | fitting == "on"){
     Reff <- Reff_time_step(parameters,next_state)
     Reff_tracker = rbind(Reff_tracker,Reff)
     
@@ -330,10 +357,13 @@ for (r in 1:RISK){
     
     workshop = parameters$VE
     workshop = workshop[workshop$VE>0,] %>% mutate(immunity = paste(vaccine_type,dose))
-    workshop = aggregate(workshop$VE, by=list(category=workshop$immunity), FUN=mean)
-    colnames(workshop) = c('dose','VE')
-    workshop$date = date_now
-    VE_tracker_dataframe = rbind(VE_tracker_dataframe,workshop)
+    if (nrow(workshop)>0){
+      workshop = aggregate(workshop$VE, by=list(category=workshop$immunity), FUN=mean)
+      colnames(workshop) = c('dose','VE')
+      workshop$date = date_now
+      VE_tracker_dataframe = rbind(VE_tracker_dataframe,workshop)
+    }
+
   }
   time.end=proc.time()[[3]]
   time.end-time.start    
@@ -397,6 +427,11 @@ incidence_log_tidy = workshop %>%
   left_join(workshop2, by = "temp")
 incidence_log_tidy = subset(incidence_log_tidy,select=-c(temp))
 
+if (! fitting == "on"){
+  load(file = 'fitted_incidence_log_tidy.Rdata')
+  incidence_log_tidy = rbind(incidence_log_tidy,fitted_incidence_log_tidy)
+}
+
 
 
 ### EXPOSED LOG TIDY
@@ -404,9 +439,11 @@ skip = (num_disease_classes+1)*(num_age_groups*num_vax_classes)*RISK
 exposed_log = sol_log_unedited %>% 
   select(1, (skip + 2):(skip + 2*J + 1))
 exposed_log = exposed_log %>%
-  filter (time %% time_step == 0, rowSums(exposed_log) != time) %>%
-  mutate(date =  date_start + time)
+  filter (time %% time_step == 0, rowSums(exposed_log) != time)
+  
+exposed_log$date <- date_start + exposed_log$time
 
+ 
 workshop = subset(exposed_log, select = -c(time))
 workshop = pivot_longer(
   workshop,
@@ -428,6 +465,10 @@ exposed_log = workshop %>%
 exposed_log_tidy = subset(exposed_log,select=-c(temp))
 
 #reinfection ratio
+CHECK = exposed_log_tidy %>% group_by(date,age_group) %>%
+  summarise(n=n()) %>%
+  filter(!n == 2)
+
 exposed_log = exposed_log_tidy %>% ungroup() %>% pivot_wider(
   id_cols = c(date,age_group),
   names_from = infection_type,
@@ -438,10 +479,24 @@ exposed_log = exposed_log %>% mutate(reinfection_ratio = reinfection/(new_infect
 #ggplot(exposed_log) + geom_line(aes(x=date,y=reinfection_ratio,color=as.factor(age_group)))
 
 
-if (debug == "on"){
+if (debug == "on" | fitting == "on"){
   colnames(rho_tracker_dataframe) = c('rho')
-  rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = incidence_log$date[2:nrow(incidence_log)])
+  rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = incidence_log$date[(nrow(incidence_log)-nrow(rho_tracker_dataframe)+1):nrow(incidence_log)])
   
-  Reff_tracker <- cbind(incidence_log$date,Reff_tracker)
+  Reff_tracker <- cbind(incidence_log$date[(nrow(incidence_log)-nrow(Reff_tracker)+1):nrow(incidence_log)],
+                        Reff_tracker)
   colnames(Reff_tracker) = c('date','Reff')
+}
+
+if (fitting_save == "on"){
+  save(date_now,file = '1_inputs/last_fit_date.Rdata')
+  
+  save(next_state,file = '1_inputs/fitted_next_state.Rdata') #TIDY
+  
+  fitted_incidence_log_tidy = incidence_log_tidy 
+  save(fitted_incidence_log_tidy, file = 'fitted_incidence_log_tidy.Rdata')
+  
+  fitted_incidence_log = incidence_log %>% select(date,daily_cases)
+  save(fitted_incidence_log, file = 'fitted_incidence_log.Rdata')
+
 }

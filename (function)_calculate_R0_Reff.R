@@ -5,49 +5,63 @@
 # NGM = contact_matrix_adjusted * diag{beta*suscept*(gamma+lota(1-gamme)*1/delta)}
 
 #(A) setup
-if (strain == 'WT'){R0_to_fit = 2.79
-} else if (strain == "delta"){R0_to_fit = 5.08
-} else if (strain == "omicron"){R0_to_fit = 5.08*1.64} #World Health Organization. (2022). COVID-19 weekly epidemiological update, edition 82, 8 March 2022. World Health Organization. https://apps.who.int/iris/handle/10665/352390. License: CC BY-NC-SA 3.0 IGO
+beta_fitted_values = data.frame()
+strain_list = c('WT','delta','omicron')
+NGM_R0_list = list()
 
-#R0_to_fit = R0_to_fit*0.79 #COMEBACK - is R0 lower in SLE 
-
-contact_matrix_adjust = matrix(data = 0, nrow = num_age_groups, ncol = num_age_groups)
-for (i in 1:num_age_groups){
-  for (j in 1:num_age_groups){
-    contact_matrix_adjust[i,j] = contact_matrix[i,j] * pop[i]/pop[j]
+for (loop in 1:length(strain_list)){
+  strain = strain_list[loop]
+  if (strain == 'WT'){R0_to_fit = 2.79
+  } else if (strain == "delta"){R0_to_fit = 5.08
+  #} else if (strain == "omicron"){R0_to_fit = 5.08*1.64} #World Health Organization. (2022). COVID-19 weekly epidemiological update, edition 82, 8 March 2022. World Health Organization. https://apps.who.int/iris/handle/10665/352390. License: CC BY-NC-SA 3.0 IGO
+  #Transmission advantage is x 2.9 with just modifications to rho and VE!!!
+  } else if (strain == "omicron"){R0_to_fit = 5.08} 
+  
+  contact_matrix_adjust = matrix(data = 0, nrow = num_age_groups, ncol = num_age_groups)
+  for (i in 1:num_age_groups){
+    for (j in 1:num_age_groups){
+      contact_matrix_adjust[i,j] = contact_matrix[i,j] * pop[i]/pop[j]
+    }
   }
-}
-
-#(B) ballpark beta
-contact_sum = rowSums(contact_matrix[,1:ncol(contact_matrix)])
-contact_ave=sum(contact_sum*(pop/sum(pop))) 
-beta_ball_park = R0_to_fit/(contact_ave*AverageSymptomaticPeriod)
-
-#(C) fit!
-minimise_this <- function(beta) {
-  diag_matrix = beta*AverageSymptomaticPeriod*(gamma+(1-gamma)*lota)
+  
+  #(B) ballpark beta
+  contact_sum = rowSums(contact_matrix[,1:ncol(contact_matrix)])
+  contact_ave=sum(contact_sum*(pop/sum(pop))) 
+  beta_ball_park = R0_to_fit/(contact_ave*AverageSymptomaticPeriod)
+  
+  #(C) fit!
+  minimise_this <- function(beta) {
+    diag_matrix = beta*AverageSymptomaticPeriod*(gamma+(1-gamma)*lota)
+    diag_matrix = diag(diag_matrix,num_age_groups)
+    diag_matrix = suscept*diag_matrix
+    
+    NGM_R0 <- contact_matrix_adjust %*% diag_matrix
+    R0_beta <- abs(eigen(NGM_R0)$values[1])
+    
+    fit = abs(R0_to_fit-R0_beta)
+    
+    return(fit)
+  }
+  
+  #(D) check fit!
+  beta_optimised = optimize(minimise_this,c(beta_ball_park*1/4,beta_ball_park*4))$minimum
+  beta_optimised = rep(beta_optimised,num_age_groups)
+  
+  beta_check = beta_optimised[1]
+  diag_matrix = beta_check*AverageSymptomaticPeriod*(gamma+(1-gamma)*lota)
   diag_matrix = diag(diag_matrix,num_age_groups)
   diag_matrix = suscept*diag_matrix
-  
   NGM_R0 <- contact_matrix_adjust %*% diag_matrix
   R0_beta <- abs(eigen(NGM_R0)$values[1])
   
-  fit = abs(R0_to_fit-R0_beta)
+  if (! round(R0_beta,digits = 2) == round(R0_to_fit,digits=2)){stop('beta fitting is not working!')}
+
+  row = data.frame(beta_optimised[1],strain)
+  colnames(row) = c('beta_optimised','strain')
+  beta_fitted_values = rbind(beta_fitted_values,row)
   
-  return(fit)
+  NGM_R0_list[[loop]] = NGM_R0
 }
-
-#(D) check fit!
-beta_optimised = optimize(minimise_this,c(beta_ball_park*1/2,beta_ball_park*2))$minimum
-beta_optimised = rep(beta_optimised,num_age_groups)
-
-beta_check = beta_optimised[1]
-diag_matrix = beta_check*AverageSymptomaticPeriod*(gamma+(1-gamma)*lota)
-diag_matrix = diag(diag_matrix,num_age_groups)
-diag_matrix = suscept*diag_matrix
-NGM_R0 <- contact_matrix_adjust %*% diag_matrix
-R0_beta <- abs(eigen(NGM_R0)$values[1])
-R0_beta; R0_to_fit #COMEBACK - should these match?
 #_______________________________________________________________________________
 
 
@@ -59,6 +73,9 @@ Reff_time_step <- function(parameters,next_state){
 #NGM_modified = NGM_R0 * NPI * (1-pre-existing immunity)
 
 #(A) NPI  
+num = which(strain_list == strain_now)
+NGM_R0 = NGM_R0_list[[num]]
+
 NGM_modified = NGM_R0 * parameters$NPI  
   
 #(B) pre-existing immunity, i.e., vax and recovery

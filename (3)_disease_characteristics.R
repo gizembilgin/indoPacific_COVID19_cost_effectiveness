@@ -39,7 +39,7 @@ delta = 1/AverageSymptomaticPeriod
 
 
 ### (D/D) Waning of infection-derived immunity
-lengthInfectionDerivedImmunity = 365 #days #COMEBACK - need actual value!
+lengthInfectionDerivedImmunity = 180 #days #COMEBACK - need actual value!
 omega = 1/lengthInfectionDerivedImmunity
 
 
