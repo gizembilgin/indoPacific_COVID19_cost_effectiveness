@@ -280,7 +280,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   
   #VA = save
   for (day in 1:timeframe){
-  #for (day in 1:105){
+  #for (day in 1:114){
   #for (day in 10:(timeframe-2)){
     avaliable = daily_per_dose
     daily_per_dose_here = daily_per_dose
@@ -303,7 +303,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     
     while(avaliable>0 & priority_num <= highest_priority){
       
-      if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
+      if(round(sum(VA$doses_left[VA$priority == priority_num]),digits=4)>0){ 
         #i.e., while we still have doses to deliver in this priority group
         
         if(0 %in% VA$doses_left[VA$priority == priority_num & VA$dose == 1]){
@@ -351,10 +351,10 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
           
         }
         
-        avaliable = min(avaliable - workshop_doses,sum(vax_delivery_outline$doses_delivered) - ceiling)
+        avaliable = min(avaliable - workshop_doses,ceiling - sum(vax_delivery_outline$doses_delivered))
         
         
-      } else if (sum(VA$doses_left[VA$priority == priority_num])==0){
+      } else if (round(sum(VA$doses_left[VA$priority == priority_num]),digits=4)==0){
         priority_num = priority_num+1
         priority_group = as.character(unique(VA$age_group[VA$priority == priority_num]))
       } else{

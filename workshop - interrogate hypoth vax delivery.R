@@ -35,4 +35,8 @@ delivered = delivered %>% left_join(join_ready)
 
 
 vax_delivery_outline  %>% group_by(dose,age_group) %>% 
-  summarise(doses_delivered_this_date = sum(doses_delivered))
+  summarise(doses_delivered = sum(doses_delivered))
+
+vax_delivery_outline  %>% group_by(day) %>% 
+  summarise(doses_delivered = sum(doses_delivered)) %>%
+  filter(round(doses_delivered) < primary_rollout_speed)
