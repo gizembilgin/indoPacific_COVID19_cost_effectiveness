@@ -65,7 +65,8 @@ results_warehouse_entry[[1]] = warehouse_table
 results_warehouse_entry[[2]] = warehouse_plot
 
 #(A/B) absolute outcome plot
-warehouse_plot = warehouse_plot %>% mutate(time = day)
+warehouse_plot = warehouse_plot %>% 
+  mutate(time = day)
 
 plot_list = list()
 for (i in 1:length(unique(warehouse_plot$outcome))){

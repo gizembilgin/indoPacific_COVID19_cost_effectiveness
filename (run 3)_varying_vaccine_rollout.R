@@ -1,7 +1,7 @@
 
 #This program runs results for section 3 of FleetAdmiral
 
-outbreak_post_rollout = "off"  #i.e. rolling out vaccine during outbreak
+outbreak_timing = "off"  #i.e. rolling out vaccine in steadystate
 
 
 ### (1) Overarching trackers #####################################################################################################
@@ -54,39 +54,44 @@ results_warehouse_entry[[1]] = warehouse_table
 results_warehouse_entry[[2]] = warehouse_plot
 
 #(A/B) Plot
-warehouse_plot = warehouse_plot %>% mutate(time = date)
+warehouse_plot = warehouse_plot %>% 
+  mutate(time = date) 
 
-plot_list = list()
+abs_plot_list = list()
 for (i in 1:length(unique(warehouse_plot$outcome))){
   outcome = unique(warehouse_plot$outcome)[i]
-  plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
-    geom_point(aes(x=time,y=proj,color=as.factor(label))) +
+  abs_plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
+    geom_line(aes(x=time,y=proj,color=as.factor(label))) +
     labs(title=paste(outcome)) +
+    labs(colour = "") +
     theme_bw() + 
     xlab("") + 
     ylab("")}
 # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
-plot = ggarrange(plot_list[[5]], plot_list[[1]], 
+
+cum_plot_list = list()
+for (i in 1:length(unique(warehouse_plot$outcome))){
+  outcome = unique(warehouse_plot$outcome)[i]
+  cum_plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
+    geom_line(aes(x=time,y=proj_cum,color=as.factor(label))) +
+    labs(title=paste(outcome)) +
+    labs(colour = "") +
+    theme_bw() + 
+    xlab("") + 
+    ylab("")
+}
+
+
+# 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
+plot = ggarrange(abs_plot_list[[5]],cum_plot_list[[5]],
+                 abs_plot_list[[2]],cum_plot_list[[2]],
+                 abs_plot_list[[3]], cum_plot_list[[3]],
+                 abs_plot_list[[1]],  cum_plot_list[[1]],
                  common.legend = TRUE,
-                 legend="bottom")
-annotate_figure(plot, top = text_grob('absolute outcome by scenario', face = 'bold', size = 16))
-
+                 legend="bottom",
+                 ncol = 2,
+                 nrow = 4)
 results_warehouse_entry[[3]]= plot
-
-plot_list = list()
-for (i in 1:length(unique(warehouse_plot$outcome))){
-  outcome = unique(warehouse_plot$outcome)[i]
-  plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
-    geom_point(aes(x=time,y=proj_cum,color=as.factor(label))) +
-    labs(title=paste(outcome)) +
-    theme_bw() + 
-    xlab("") + 
-    ylab("")}
-# 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
-cum_plot = ggarrange(plot_list[[5]], plot_list[[1]], 
-                     common.legend = TRUE,
-                     legend="bottom")
-annotate_figure(cum_plot, top = text_grob('absolute outcome by scenario', face = 'bold', size = 16))
 
 
 #(B/B) Table

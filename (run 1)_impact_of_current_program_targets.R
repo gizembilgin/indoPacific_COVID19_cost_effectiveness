@@ -14,18 +14,18 @@ queue = list()
 #(A/B) No further roll-out
 queue[[1]] = list(vax_strategy_description = "no further vaccine rollout",
                   vax_strategy_toggle = "off",
-                  outbreak_post_rollout = "off")
+                  outbreak_timing = "during")
 
 
 #(B/B) Current program targets
 queue[[2]] = list(vax_strategy_description = 'current roll-out DURING outbreak',
                   vax_strategy_toggle = "on",
-                  outbreak_post_rollout = "off",
+                  outbreak_timing = "during",
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)  #roll out vaccine DURING outbreak
 
 queue[[3]] = list(vax_strategy_description = 'current roll-out PRIOR to outbreak',
                   vax_strategy_toggle = "on",
-                  outbreak_post_rollout = "on",
+                  outbreak_timing = "after",
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)  #roll out vaccine PRIOR TO outbreak
 
 
@@ -34,10 +34,9 @@ queue[[3]] = list(vax_strategy_description = 'current roll-out PRIOR to outbreak
 ### (3) Run  ##################################################################################################
 for (ticket in 1:length(queue)){
   commands = queue[[ticket]]
-  
   vax_strategy_description = commands$vax_strategy_description
   vax_strategy_toggle = commands$vax_strategy_toggle
-  outbreak_post_rollout = commands$outbreak_post_rollout
+  outbreak_timing = commands$outbreak_timing
   if ('vax_strategy_toggles' %in% names(commands)){
     vax_strategy_toggles = commands$vax_strategy_toggles
   }
@@ -45,7 +44,7 @@ for (ticket in 1:length(queue)){
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   severe_outcome_projections = severe_outcome_log %>% 
-    mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
+    mutate(label = vax_strategy_description, day = as.numeric(date - seed_date )) # day = start of outbreak
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
   
   row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
@@ -59,41 +58,45 @@ results_warehouse_entry[[1]] = warehouse_table
 results_warehouse_entry[[2]] = warehouse_plot
 
 #(A/B) Plot
-warehouse_plot = warehouse_plot %>% mutate(time = day)
+warehouse_plot = warehouse_plot %>% 
+  mutate(time = day) %>%
+  filter(time>=0)
 
-plot_list = list()
+abs_plot_list = list()
 for (i in 1:length(unique(warehouse_plot$outcome))){
   outcome = unique(warehouse_plot$outcome)[i]
-  plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
-    geom_point(aes(x=time,y=proj,color=as.factor(label))) +
+  abs_plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
+    geom_line(aes(x=time,y=proj,color=as.factor(label))) +
     labs(title=paste(outcome)) +
+    labs(colour = "") +
     theme_bw() + 
     xlab("") + 
     ylab("")}
 # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
-plot = ggarrange(plot_list[[5]], plot_list[[1]], 
-                 common.legend = TRUE,
-                 legend="bottom")
-annotate_figure(plot, top = text_grob('absolute outcome by scenario', face = 'bold', size = 16))
 
+cum_plot_list = list()
+for (i in 1:length(unique(warehouse_plot$outcome))){
+  outcome = unique(warehouse_plot$outcome)[i]
+  cum_plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
+    geom_line(aes(x=time,y=proj_cum,color=as.factor(label))) +
+    labs(title=paste(outcome)) +
+    labs(colour = "") +
+    theme_bw() + 
+    xlab("") + 
+    ylab("")
+}
+
+
+# 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
+plot = ggarrange(abs_plot_list[[5]],cum_plot_list[[5]],
+                 abs_plot_list[[2]],cum_plot_list[[2]],
+                 abs_plot_list[[3]], cum_plot_list[[3]],
+                 abs_plot_list[[1]],  cum_plot_list[[1]],
+                 common.legend = TRUE,
+                 legend="bottom",
+                 ncol = 2,
+                 nrow = 4)
 results_warehouse_entry[[3]]= plot
-
-
-plot_list = list()
-for (i in 1:length(unique(warehouse_plot$outcome))){
-  outcome = unique(warehouse_plot$outcome)[i]
-  plot_list [[i]] <- ggplot(data=warehouse_plot[warehouse_plot$outcome==outcome,]) + 
-    geom_point(aes(x=time,y=proj_cum,color=as.factor(label))) +
-    labs(title=paste(outcome)) +
-    theme_bw() + 
-    xlab("") + 
-    ylab("")}
-# 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
-cum_plot = ggarrange(plot_list[[5]], plot_list[[1]], 
-                 common.legend = TRUE,
-                 legend="bottom")
-annotate_figure(cum_plot, top = text_grob('absolute outcome by scenario', face = 'bold', size = 16))
-
 
 #(B/B) Table
 averted_table = warehouse_table[warehouse_table$scenario != baseline_to_compare,]

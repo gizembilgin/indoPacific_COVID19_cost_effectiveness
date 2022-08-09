@@ -109,9 +109,9 @@ scenario_table_list = list()
 scenario_plot_list = list()
 
 #(A/B) absolute outcome plot
-if (outbreak_post_rollout == "on"){
+if (outbreak_timing == "after"){
   warehouse_plot = warehouse_plot %>% mutate(time = day)
-} else if (outbreak_post_rollout == "off"){
+} else if (outbreak_timing %in% c("during","off")){
   warehouse_plot = warehouse_plot %>% mutate(time = date)
 }
 
