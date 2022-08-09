@@ -15,7 +15,10 @@ library(ggpubr)
 library(tidyverse)
 
 debug = "off"
-debug_type = "full" #options: "full", "partial"
+debug_type = "partial" #options: "full", "partial"
+
+fitting = "off"
+fitting_save = "off"
 #_________________________________________________________________
 
 
@@ -27,23 +30,40 @@ if ( debug == "on"){
   if (debug_type == "full"){rm(list=ls());debug = "on"}  # clear global environment
   
   setting = "SLE"
-  baseline_date_start = Sys.Date() + 30
+  
+  
+  ## options for run from fit with omicron onwards
+  outbreak_timing = "during"
+  strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicron'
+  load(file = '1_inputs/last_fit_date.Rdata')
+  fitted_max_date = date_now
+  date_start = date_now+1 ##latest fit date
+  model_weeks = 52          # how many weeks should the model run for?
+  
+  
+  ##options for run from start
+  # date_start = as.Date('2021-03-31')
+  # strain_inital = strain_now = 'WT'             #options:'WT','delta','omicron'
+  # seed_date = c(as.Date('2021-04-25'),as.Date('2021-11-07'),) #first is seed date for delta, second is omicron
+  # model_weeks = as.numeric((ceiling(Sys.Date()-date_start)/7))+52
+  
+  
   
   plotting = "on"
   
-  outbreak_post_rollout = "off"
+
   RR_estimate = RR_default = 2
-  vax_strategy_toggle = "on"
-  vax_risk_strategy_toggle = "on"
-  risk_group_toggle = "on" 
+  vax_strategy_toggle = "off"
+  vax_risk_strategy_toggle = "off"
+  risk_group_toggle = "off" 
   risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
   risk_group_prioritisation_to_date = NA
   default_prioritisation_proportion = 0.5
   VE_at_risk_suppress = 1 #i.e. do not suppress VE at risk
   
   vax_strategy_toggles =
-    list(vax_strategy_start_date        = baseline_date_start,
-         vax_strategy_num_doses         = as.integer(999999),
+    list(vax_strategy_start_date        = date_start,
+         vax_strategy_num_doses         = as.integer(1642011),
          vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
          vax_delivery_group             = 'universal',
          vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform", OTHER?
@@ -70,6 +90,38 @@ if ( debug == "on"){
   VE_tracker_dataframe = data.frame()
 }
 
+### FITTING
+if ( fitting == "on"){
+  warning('Fitting is on')
+  
+  setting = "SLE"
+  date_start = as.Date('2021-03-31')
+  strain_inital = strain_now = 'WT'             #options:'WT','delta','omicron'
+  
+  seed_date = c(as.Date('2021-04-25'),c(as.Date('2021-11-07'))) #first is seed date for delta, second is omicron
+  
+  #model_weeks = as.numeric(ceiling((max('2021-12-01')-date_start)/7))
+  model_weeks = as.numeric((ceiling(Sys.Date()-date_start)/7))
+  #model_weeks = as.numeric(floor((seed_date[2]-date_start)/7))
+  
+  plotting = "on"
+  
+  outbreak_timing = "off"
+  vax_strategy_toggle = "off"
+  vax_risk_strategy_toggle = "off"
+  risk_group_toggle = "off" 
+ 
+  waning_toggle_acqusition = TRUE
+  waning_toggle_severe_outcome = FALSE
+  waning_toggle_rho_acqusition = TRUE
+  rho_severe_disease = "on"
+  
+  Reff_tracker = data.frame()
+  rho_tracker_dataframe = data.frame()
+  VE_tracker_dataframe = data.frame()
+}
+
+
 
 
 #       (2/4) User choice / Model toggles              
@@ -77,8 +129,7 @@ if ( debug == "on"){
 if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
 }else if (Sys.info()[['user']] == 'gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
 
-strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicron'
-model_weeks = 52          # how many weeks should the model run for?
+
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
 NPI_outbreak_toggle = "delta_peaks"   #options: final, delta_peaks
@@ -168,10 +219,12 @@ rm(incidence_log_tracker)
 if (exists("ticket") == FALSE){ ticket = 1 }
 if (ticket == 1 | plotting == "on"){
 
+  incidence_log_plot = incidence_log %>% filter(date >= date_start)
+  
 #raw number - daily and cumulative
 plot1 <- ggplot() + 
-  geom_line(data=incidence_log,aes(x=date,y=rolling_average),na.rm=TRUE) +
-  geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
+  geom_line(data=incidence_log_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log_plot$date),],
              aes(x=date,y=rolling_average*underascertainment_est),na.rm=TRUE) + 
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
@@ -183,7 +236,7 @@ plot1 <- ggplot() +
         axis.line = element_line(color = 'black'))
 
 plot2 <- ggplot() + 
-  geom_line(data=incidence_log,aes(x=date,y=cumulative_incidence),na.rm=TRUE) +
+  geom_line(data=incidence_log_plot,aes(x=date,y=cumulative_incidence),na.rm=TRUE) +
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
   ylab("cumulative cases") +
@@ -193,58 +246,57 @@ plot2 <- ggplot() +
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
 
-#grid.arrange(plot1, plot2, nrow=2)
+grid.arrange(plot1, plot2, nrow=2)
+}
 
+if (debug == "on" | fitting == "on"){
+  #number as % of whole population
+  lay <- rbind(c(1,2),c(3,3))
+  plot1 <- 
+    ggplot() + 
+    geom_line(data=incidence_log_plot,aes(x=date,y=rolling_average_percentage),na.rm=TRUE) +
+    geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log_plot$date),],
+               aes(x=date,y=rolling_average*5000*underascertainment_est/sum(pop)),na.rm=TRUE) + 
+    xlab("") + #ylim(0,1.0)+ 
+    scale_x_date(date_breaks="1 month", date_labels="%b") +
+    ylab("daily cases % whole pop") +
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          panel.border = element_blank(),
+          axis.line = element_line(color = 'black')) 
+  
+  plot2 <- ggplot() + 
+    geom_line(data=Reff_tracker,aes(x=date,y=Reff),na.rm=TRUE) +
+    xlab("") + 
+    scale_x_date(date_breaks="1 month", date_labels="%b") +
+    #ylim(0,6) +
+    ylab("Reff") +
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          panel.border = element_blank(),
+          axis.line = element_line(color = 'black'))
+  
+  plot3<- ggplot() + 
+    geom_line(data=incidence_log_plot,aes(x=date,y=cumulative_incidence_percentage),na.rm=TRUE) +
+    xlab("") + 
+    scale_x_date(date_breaks="1 month", date_labels="%b") +
+    ylab("cumulative cases % whole pop") +
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          panel.border = element_blank(),
+          axis.line = element_line(color = 'black'))
+  
+  grid.arrange(plot1, plot2, plot3, layout_matrix = lay)
 
-#number as % of whole population
-lay <- rbind(c(1,2),c(3,3))
-plot1 <- 
-  ggplot() + 
-  geom_line(data=incidence_log,aes(x=date,y=rolling_average_percentage),na.rm=TRUE) +
-  geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
-             aes(x=date,y=rolling_average*100*underascertainment_est/sum(pop)),na.rm=TRUE) + 
-  xlab("") + 
-  scale_x_date(date_breaks="1 month", date_labels="%b") +
-  ylab("daily cases % whole pop") +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        panel.border = element_blank(),
-        axis.line = element_line(color = 'black'))
-
-plot2 <- ggplot() + 
-  geom_line(data=Reff_tracker,aes(x=date,y=Reff),na.rm=TRUE) +
-  xlab("") + 
-  scale_x_date(date_breaks="1 month", date_labels="%b") +
-  #ylim(0,6) +
-  ylab("Reff") +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        panel.border = element_blank(),
-        axis.line = element_line(color = 'black'))
-
-plot3<- ggplot() + 
-  geom_line(data=incidence_log,aes(x=date,y=cumulative_incidence_percentage),na.rm=TRUE) +
-  xlab("") + 
-  scale_x_date(date_breaks="1 month", date_labels="%b") +
-  ylab("cumulative cases % whole pop") +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        panel.border = element_blank(),
-        axis.line = element_line(color = 'black'))
-
-
-if (debug == "on"){
   plot4 = ggplot(rho_tracker_dataframe) + geom_line(aes(x=date,y=rho))
   plot5 = ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
   lay <- rbind(c(1,2),c(3,3),c(4,5))
   grid.arrange(plot1, plot2, plot3,plot4,plot5, layout_matrix = lay)
-  ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
+  #ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
 } 
-
-}
 
 
 

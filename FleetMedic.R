@@ -12,7 +12,7 @@ time.start.FleetMedic=proc.time()[[3]]
 results_warehouse_FM = list()
 subreceipt = 0
 
-outbreak_post_rollout = "off" ###ASSUMPTION
+outbreak_timing = "off" ###ASSUMPTION
 
 age_split_results = "N"
 vax_strategy_toggle = "on"

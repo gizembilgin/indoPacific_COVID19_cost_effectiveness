@@ -31,7 +31,7 @@ Note: This document includes results for the prioritisation of  **`r paste(risk_
 Variable | Value | Source
 ---------|--------|--------
 Circulating strain | `r paste(strain_inital)`|
-Delivery of doses post outbreak | `r paste(outbreak_post_rollout)`|
+Delivery of doses post outbreak | `r paste(outbreak_timing)`|
 Length of model run | `r paste(model_weeks)`|
 Current vaccine coverage | dose one: `r paste(round(current_coverage[1]),'%',sep='')`; dose two: `r paste(round(current_coverage[2]),'%',sep='')`| John Hopkins COVID-19 vaccination data
 Current vaccine coverage target | `r paste(gov_target*100,'%',sep='')` | Government target in COVAX documentation May 2021
