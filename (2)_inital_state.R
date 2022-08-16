@@ -13,8 +13,6 @@ vaxCovDelay = vaxCovDelay %>%
     TRUE ~ 14 #all other doses
   ))
 
-vaccineDoseInterval <- read.csv("1_inputs/vaccine_dose_intervals.csv", header=TRUE)
-
 #(ii/iv) #Vaccine coverage at end of true history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% filter(date == max(vaccination_history_TRUE$date)) %>%
   select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
@@ -164,10 +162,7 @@ load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
   mutate(outcome = 'any_infection')
 
-VE =  crossing(dose = c(1:num_vax_doses),
-               vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
-               age_group = age_group_labels,
-               VE = c(0)) 
+
 if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_POP$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
   #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
@@ -193,17 +188,14 @@ waning_shape_plot_list = ggplot() +
 
 
 ###### (2/4) Seroprevalence
-if (fitting == "on"){
+load(file = "1_inputs/seroprev.Rdata")
+seroprev = seroprev[seroprev$setting == setting & seroprev$year == 
+                      as.numeric(format(date_start, format="%Y")),]
+if (as.numeric(format(date_start, format="%Y")) > 2022){
   load(file = "1_inputs/seroprev.Rdata")
-  seroprev = seroprev[seroprev$setting == setting & seroprev$year == 
-                        as.numeric(format(date_start, format="%Y")),]
-  if (as.numeric(format(date_start, format="%Y")) > 2022){
-    load(file = "1_inputs/seroprev.Rdata")
-    seroprev = seroprev[seroprev$setting == setting & seroprev$year ==  2022,]
-  }
-} else{
-  seroprev$seroprev = 40.5
+  seroprev = seroprev[seroprev$setting == setting & seroprev$year ==  2022,]
 }
+
 #___________________________________________________________________
 
 
@@ -367,42 +359,42 @@ if (fitting == "on"){
   state=c(state_tidy$state_inital,Incidence_inital,Exposed_incidence_inital) 
   
   rm (empty_unvaccinated,empty_vaccinated,state_tidy)
+  if (round(sum(state)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
   
 } else if (! fitting == "on"){
-  load(file = '1_inputs/fitted_next_state.Rdata')
+  
   
   #include vaccine strategy vaccine type
-  if (! length(unique(next_state$vaccine_type)) == length(unique(vaccination_history_FINAL$vaccine_type))+1){ #+1 for unvaccinated
-    this_vax = unique(vaccination_history_FINAL$vaccine_type)[!  unique(vaccination_history_FINAL$vaccine_type) %in% unique(next_state$vaccine_type)]
-    copy_vax = unique(vaccination_history_FINAL$vaccine_type)[unique(vaccination_history_FINAL$vaccine_type) %in% unique(next_state$vaccine_type)][1]
+  if (! length(unique(fitted_next_state$vaccine_type)) == length(unique(vaccination_history_FINAL$vaccine_type))+1){ #+1 for unvaccinated
+    this_vax = unique(vaccination_history_FINAL$vaccine_type)[!  unique(vaccination_history_FINAL$vaccine_type) %in% unique(fitted_next_state$vaccine_type)]
+    copy_vax = unique(vaccination_history_FINAL$vaccine_type)[unique(vaccination_history_FINAL$vaccine_type) %in% unique(fitted_next_state$vaccine_type)][1]
     
-    filler = next_state %>% 
+    filler = fitted_next_state %>% 
       filter(vaccine_type == copy_vax) %>%
       mutate(pop = 0, 
              vaccine_type = this_vax)
     
-    next_state = rbind(next_state,filler)
+    fitted_next_state = rbind(fitted_next_state,filler)
     
-    next_state = next_state %>% arrange(class,risk_group,dose,vaccine_type,age_group)
+    fitted_next_state = fitted_next_state %>% arrange(class,risk_group,dose,vaccine_type,age_group)
   }
-  
-  
-  S_next=next_state$pop[next_state$class == 'S']
-  E_next=next_state$pop[next_state$class == 'E']
-  I_next=next_state$pop[next_state$class == 'I']
-  R_next=next_state$pop[next_state$class == 'R']
+
+  S_next=fitted_next_state$pop[fitted_next_state$class == 'S']
+  E_next=fitted_next_state$pop[fitted_next_state$class == 'E']
+  I_next=fitted_next_state$pop[fitted_next_state$class == 'I']
+  R_next=fitted_next_state$pop[fitted_next_state$class == 'R']
 
   Incidence_inital=(rep(0,J*(T*D+1)*RISK)) 
   Exposed_incidence_inital = rep(0,J*2)
   
-  state=as.numeric(c(S_next,E_next,I_next,R_next,
+  next_state_FINAL=as.numeric(c(S_next,E_next,I_next,R_next,
                                 Incidence_inital,Exposed_incidence_inital)) #setting Incid to repeated 0s
+  
+  if (round(sum(next_state_FINAL)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
 }
 
 
 
-
-if (round(sum(state)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
 
 
 
