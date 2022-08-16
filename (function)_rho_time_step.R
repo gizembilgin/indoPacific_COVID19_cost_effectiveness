@@ -43,21 +43,20 @@ rho_time_step <- function(this_outcome,date_now,strain_now){
   
   this_rho = this_rho %>% filter(strain == this_strain) 
   
-  if (date_now>date_start+2){
+  if (nrow(incidence_log)>0){
     workshop = incidence_log %>% select(date,daily_cases)
     workshop = rbind(workshop,hist_cases)
+    
   } else{
     workshop = hist_cases
   }
-  
-  #LIMITATION - gap in dates between today and date start of model
-  
+ 
   workshop = workshop %>%
     filter(date <= date_now & date > (date_now - 1/omega)) %>%
     mutate(days = as.numeric(date_now - date))
   workshop = workshop %>% mutate(prop_window = daily_cases/sum(workshop$daily_cases))
  
-  #ggplot(workshop) + geom_line(aes(date,prop_window))  
+  ggplot(workshop) + geom_line(aes(date,prop_window))  
   
   if (nrow(workshop) == 0){
     return(this_rho$protection[this_rho$days ==0 & this_rho$outcome == this_outcome])
@@ -67,6 +66,7 @@ rho_time_step <- function(this_outcome,date_now,strain_now){
   
   workshop = workshop %>% left_join(this_rho,by='days') %>%
     mutate(interim = protection * prop_window)
+  #sum(workshop$interim)
   
   return(sum(workshop$interim))
 }
