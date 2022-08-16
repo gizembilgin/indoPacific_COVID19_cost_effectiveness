@@ -50,9 +50,9 @@ if (age_split_results == "N"){
   workshop_2 = rbind(workshop_2,workshop_incid)
   
   #(D/D) Calculate cumulative severe outcomes by outcome type
-  if (seed_date == as.Date('1900-01-01')){use_date = date_start
+  if (as.Date('1900-01-01') %in% seed_date){use_date = date_start
   } else{
-    use_date = seed_date
+    use_date = seed_date[1]
   }
   
   severe_outcome_log = workshop_2 %>% 
@@ -63,31 +63,37 @@ if (age_split_results == "N"){
   severe_outcome_log_plot = workshop_2 %>% 
     filter(date >= date_start) %>%
     group_by(outcome) %>%
-    mutate(proj_cum = cumsum(proj))
+    mutate(proj = case_when(
+      is.na(proj) ~ 0,
+      TRUE ~ proj),
+      proj_cum = cumsum(proj)) %>%
+    filter(! outcome == 'cases' & !date %in% seed_date)
   
-  plot1 <- 
-    ggplot() + 
-    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases',],aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
-    xlab("") + 
-    scale_x_date(date_breaks="1 month", date_labels="%b") +
-    #ylim(0,40) +
-    ylab("incidence") +
-    theme_bw() + 
+  standard_plot_formatting =     theme_bw() + 
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), 
           panel.border = element_blank(),
           axis.line = element_line(color = 'black'))
   
-  plot2 <- ggplot() + 
+  plot1 <- 
+    ggplot() + 
+    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases',],
+              aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
+    xlab("") + 
+    scale_x_date(date_breaks="1 month", date_labels="%b") +
+    #ylim(0,40) +
+    labs(color="")+
+    ylab("incidence") + 
+    standard_plot_formatting
+
+  plot2 <- 
+    ggplot() + 
     geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases',],aes(x=date,y=proj_cum,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     ylab("cumulative incidence") +
-    theme_bw() + 
-    theme(panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(), 
-          panel.border = element_blank(),
-          axis.line = element_line(color = 'black'))
+    standard_plot_formatting + 
+    labs(color="")
   grid.arrange(plot1, plot2)
   
   #create row for table comparing vaccine strategies
@@ -100,7 +106,8 @@ if (age_split_results == "N"){
 } else if (age_split_results == "Y"){
   workshop_2 = workshop %>%
     mutate(macro_age_group = case_when(
-      age_group %in% c('0 to 4','5 to 17') ~ 'children',
+      age_group %in% c('0 to 4') ~ 'children <5',
+      age_group %in% c('5 to 17') ~ 'children 5-17',
       TRUE ~ 'adults'
     )) %>%
     group_by(date,macro_age_group,outcome) %>%
@@ -110,7 +117,8 @@ if (age_split_results == "N"){
   workshop_incid =  incidence_log_tidy[,c('date','incidence','age_group')] %>%
     mutate(outcome ='cases') %>%
     mutate(macro_age_group = case_when(
-      age_group %in% c('0 to 4','5 to 17') ~ 'children',
+      age_group %in% c('0 to 4') ~ 'children <5',
+      age_group %in% c('5 to 17') ~ 'children 5-17',
       TRUE ~ 'adults'
     )) %>%
     group_by(date,macro_age_group,outcome) %>%
@@ -120,9 +128,9 @@ if (age_split_results == "N"){
   workshop_2 = rbind(workshop_2,workshop_incid)
   
   #(D/D) Calculate cumulative severe outcomes by outcome type
-  if (seed_date == as.Date('1900-01-01')){use_date = date_start
+  if (as.Date('1900-01-01') %in% seed_date){use_date = date_start
   } else{
-    use_date = seed_date
+    use_date = seed_date[1]
   }
   
   severe_outcome_log = workshop_2 %>% 
@@ -135,11 +143,12 @@ if (age_split_results == "N"){
     group_by(outcome,macro_age_group) %>%
     mutate(proj_cum = cumsum(proj))
   
-  plot1_children <- 
+  plot_children_0_4 <- 
     ggplot() + 
-    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'children',]
+    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'children <5',]
               ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
+    labs(color="")+
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     #ylim(0,40) +
     ylab("incidence") +
@@ -149,11 +158,29 @@ if (age_split_results == "N"){
           panel.grid.minor = element_blank(), 
           panel.border = element_blank(),
           axis.line = element_line(color = 'black'))
-  plot1_adults <- 
+  
+  plot_children_5_17 <- 
+    ggplot() + 
+    geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'children 5-17',]
+              ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
+    xlab("") +
+    labs(color="")+
+    scale_x_date(date_breaks="1 month", date_labels="%b") +
+    #ylim(0,40) +
+    ylab("incidence") +
+    labs(title='children')+
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          panel.border = element_blank(),
+          axis.line = element_line(color = 'black'))
+  
+  plot_adults <- 
     ggplot() + 
     geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'adults',]
               ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     xlab("") + 
+    labs(color="")+
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     labs(title='adults')+
     #ylim(0,40) +
@@ -164,7 +191,7 @@ if (age_split_results == "N"){
           panel.border = element_blank(),
           axis.line = element_line(color = 'black'))
  
-  grid.arrange(plot1_children, plot1_adults)
+  grid.arrange(plot_children_0_4, plot_children_5_17, plot1_adults)
   
   #create row for table comparing vaccine strategies
   row = severe_outcome_log %>% 
