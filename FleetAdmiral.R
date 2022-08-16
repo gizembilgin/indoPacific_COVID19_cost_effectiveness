@@ -11,8 +11,7 @@ results_warehouse = list()
 #COMEBACK - test with rm()
 
 load(file = '1_inputs/last_fit_date.Rdata')
-fitted_max_date = date_now
-date_start = fitted_max_date+1 ##latest fit date
+date_start = fitted_max_date ##latest fit date
 
 strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicron'
 model_weeks = 52          # how many weeks should the model run for?
@@ -32,7 +31,7 @@ if (setting == "SLE"){
   workshop_doses = round(workshop_doses * sum(pop))
   
   vax_strategy_toggles_CURRENT_TARGET =
-    list(vax_strategy_start_date                  = date_start,
+    list(vax_strategy_start_date        = date_start,
          vax_strategy_num_doses         = as.integer(workshop_doses),
          vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
          vax_delivery_group             = 'universal',
@@ -47,22 +46,12 @@ if (setting == "SLE"){
 
 
 
-###(1/4) Impact of current program targets
+###(Table 2) cumulative outcomes for prioritisation strategies including children (one year of endemic Omicron transmission)
 receipt = 1
-source(paste(getwd(),"/(run 1)_impact_of_current_program_targets.R",sep=""))
-#________________________________________________________________________________________________________________
-
-
-### (2) Varying levels of coverage - w and w/out children
-receipt = 2
 outbreak_timing = "off" 
 #Note: roll-out during steady state
-source(paste(getwd(),"/(run 2)_varying_coverage.R",sep=""))
+source(paste(getwd(),"/(Table 2)_varying_eligb_age.R",sep=""))
 
-receipt = 3
-outbreak_timing = "during" 
-#Note: roll-out during outbreak
-source(paste(getwd(),"/(run 2)_varying_coverage.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
