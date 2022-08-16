@@ -16,14 +16,12 @@ library(tidyverse)
 
 debug = "off"
 debug_type = "partial" #options: "full", "partial"
-
-fitting = "off"
-fitting_save = "off"
 #_________________________________________________________________
 
 
 
 ####DEBUG
+if (fitting == "on"){debug = "off"}
 if ( debug == "on"){
   warning('Debugging is on')
   
@@ -33,11 +31,10 @@ if ( debug == "on"){
   
   
   ## options for run from fit with omicron onwards
-  outbreak_timing = "during"
+  outbreak_timing = "off"
   strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicron'
   load(file = '1_inputs/last_fit_date.Rdata')
-  fitted_max_date = date_now
-  date_start = date_now+1 ##latest fit date
+  date_start = fitted_max_date ##latest fit date
   model_weeks = 52          # how many weeks should the model run for?
   
   
@@ -48,14 +45,13 @@ if ( debug == "on"){
   # model_weeks = as.numeric((ceiling(Sys.Date()-date_start)/7))+52
   
   
-  
   plotting = "on"
   
 
   RR_estimate = RR_default = 2
   vax_strategy_toggle = "off"
   vax_risk_strategy_toggle = "off"
-  risk_group_toggle = "off" 
+  risk_group_toggle = "on" 
   risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
   risk_group_prioritisation_to_date = NA
   default_prioritisation_proportion = 0.5
@@ -84,51 +80,50 @@ if ( debug == "on"){
   waning_toggle_severe_outcome = FALSE
   waning_toggle_rho_acqusition = TRUE
   rho_severe_disease = "on"
-  
-  Reff_tracker = data.frame()
-  rho_tracker_dataframe = data.frame()
-  VE_tracker_dataframe = data.frame()
 }
-
-### FITTING
-if ( fitting == "on"){
+if (fitting == "on"){
   warning('Fitting is on')
-  
-  setting = "SLE"
-  date_start = as.Date('2021-03-31')
-  strain_inital = strain_now = 'WT'             #options:'WT','delta','omicron'
-  
-  seed_date = c(as.Date('2021-04-25'),c(as.Date('2021-11-07'))) #first is seed date for delta, second is omicron
-  
-  #model_weeks = as.numeric(ceiling((max('2021-12-01')-date_start)/7))
-  model_weeks = as.numeric((ceiling(Sys.Date()-date_start)/7))
-  #model_weeks = as.numeric(floor((seed_date[2]-date_start)/7))
-  
-  plotting = "on"
-  
-  outbreak_timing = "off"
-  vax_strategy_toggle = "off"
-  vax_risk_strategy_toggle = "off"
-  risk_group_toggle = "off" 
- 
-  waning_toggle_acqusition = TRUE
-  waning_toggle_severe_outcome = FALSE
-  waning_toggle_rho_acqusition = TRUE
-  rho_severe_disease = "on"
-  
+  if (debug == "on"){debug = "off"}
+} else{
+  load(file = '1_inputs/last_fit_date.Rdata')
+  if (as.numeric(abs(fitted_max_date - Sys.Date()))>30){ 
+    warning('refitted')
+    source(paste(getwd(),"/(function)_fitting_model.R",sep=""))
+  } else{
+    load(file = '1_inputs/fitted_results.Rdata')
+    if (risk_group_toggle == "off"){
+      loaded_fit = fitted_results[[1]]
+    } else if (risk_group_name == 'pregnant_women'){
+      loaded_fit = fitted_results[[2]]
+    } else if (risk_group_name == 'adults_with_comorbidities'){
+      loaded_fit = fitted_results[[3]]
+    }
+    if (risk_group_toggle == "on"){if(!loaded_fit[[5]] == risk_group_name){stop('risk group name != fitted risk group name')}}
+    
+    parameters = loaded_fit[[1]]
+    fitted_next_state = loaded_fit[[2]]
+    
+    fitted_incidence_log_tidy = loaded_fit[[3]]
+    fitted_incidence_log = loaded_fit[[4]]
+    fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) # CHECKED last of fitted log = first of new log
+    fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
+    
+    if ((is.na(risk_group_prioritisation_to_date) == FALSE) | (! default_prioritisation_proportion == 0.5) | (!VE_at_risk_suppress == 1)){
+      stop('change fitting to this change in risk group characteristic')
+    }
+  }
+}
+if ( debug == "on" | fitting == "on"){
   Reff_tracker = data.frame()
   rho_tracker_dataframe = data.frame()
   VE_tracker_dataframe = data.frame()
 }
-
-
 
 
 #       (2/4) User choice / Model toggles              
 ####################################################################
 if (Sys.info()[['user']] == 'u6044061'){ rootpath = 'C:/Users/u6044061/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'
 }else if (Sys.info()[['user']] == 'gizem'){ rootpath = 'C:/Users/gizem/Documents/PhD/Research/2_scarce_COVID_vaccine_supply/4_code/'}
-
 
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 
@@ -219,7 +214,9 @@ rm(incidence_log_tracker)
 if (exists("ticket") == FALSE){ ticket = 1 }
 if (ticket == 1 | plotting == "on"){
 
-  incidence_log_plot = incidence_log %>% filter(date >= date_start)
+  incidence_log_plot = incidence_log %>% filter(date >= date_start) %>%
+    mutate(           cumulative_incidence = cumsum(daily_cases),
+                      cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
   
 #raw number - daily and cumulative
 plot1 <- ggplot() + 
@@ -229,6 +226,7 @@ plot1 <- ggplot() +
   xlab("") + 
   scale_x_date(date_breaks="1 month", date_labels="%b") +
   ylab("daily cases") +
+  ylim(0,150000)+
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
@@ -294,8 +292,7 @@ if (debug == "on" | fitting == "on"){
   plot4 = ggplot(rho_tracker_dataframe) + geom_line(aes(x=date,y=rho))
   plot5 = ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
   lay <- rbind(c(1,2),c(3,3),c(4,5))
-  grid.arrange(plot1, plot2, plot3,plot4,plot5, layout_matrix = lay)
-  #ggplot(VE_tracker_dataframe) + geom_line(aes(x=date,y=VE,color=as.factor(dose)))
+  grid.arrange(plot1,plot2,plot3,plot4,plot5, layout_matrix = lay)
 } 
 
 
