@@ -7,74 +7,59 @@ aggregate(vaccination_history_POP$doses_delivered_this_date,by=list(vaccination_
 #dose 1 = 1987563
 #dose 2 = 1315830
 
-aggregate(vaccination_history_TRUE$doses_delivered_this_date,by=list(vaccination_history_TRUE$dose),FUN=sum)
-#dose 1 = 1987563
-#dose 2 = 1315830
-
-aggregate(vaccination_history_TRUE$doses_delivered_this_date,by=list(vaccination_history_TRUE$dose,vaccination_history_TRUE$age_group),FUN=sum)
-# Dose      Age_group  Doses
-#       1    0 to 4      0.00
-#       2    0 to 4      0.00
-#       1  18 to 29 814054.87
-#       2  18 to 29 538930.25
-#       1  30 to 44 657887.25
-#       2  30 to 44 435542.31
-#       1  45 to 59 341937.72
-#      2  45 to 59 226373.66
-#      1   5 to 17      0.00
-#      2   5 to 17      0.00
-#      1  60 to 69 110195.41
-#      2  60 to 69  72952.87
-#      1 70 to 100  63487.75
-#      2 70 to 100  42030.91
 
 workshop = aggregate(vaccination_history_TRUE$doses_delivered_this_date,by=list(vaccination_history_TRUE$dose,vaccination_history_TRUE$age_group),FUN=sum)
 colnames(workshop) = c('dose','age_group','doses')
 print(workshop %>% left_join(pop_setting) %>% mutate(cov = doses/pop), row.names = FALSE)
-# dose age_group     doses     pop       cov
-# 1    0 to 4      0.00 1181771 0.0000000
-# 2    0 to 4      0.00 1181771 0.0000000
-# 1  18 to 29 814054.87 1823027 0.4465402
-# 2  18 to 29 538930.25 1823027 0.2956238
-# 1  30 to 44 657887.25 1473299 0.4465402
-# 2  30 to 44 435542.31 1473299 0.2956238
-# 1  45 to 59 341937.72  765749 0.4465402
-# 2  45 to 59 226373.66  765749 0.2956238
-# 1   5 to 17      0.00 2673643 0.0000000
-# 2   5 to 17      0.00 2673643 0.0000000
-# 1  60 to 69 110195.41  246776 0.4465402
-# 2  60 to 69  72952.87  246776 0.2956238
-# 1 70 to 100  63487.75  142177 0.4465402
-# 2 70 to 100  42030.91  142177 0.2956238
+# dose age_group      doses     pop       cov
+# 1    0 to 4       0.00 1181771 0.0000000
+# 2    0 to 4       0.00 1181771 0.0000000
+# 1  10 to 17       0.00 1583312 0.0000000
+# 2  10 to 17       0.00 1583312 0.0000000
+# 1  18 to 29 1180725.92 1823027 0.6476733
+# 2  18 to 29  888911.14 1823027 0.4876017
+# 1  30 to 44  954216.43 1473299 0.6476733
+# 2  30 to 44  718383.16 1473299 0.4876017
+# 1  45 to 59  495955.18  765749 0.6476733
+# 2  45 to 59  373380.55  765749 0.4876017
+# 1    5 to 9       0.00 1090331 0.0000000
+# 2    5 to 9       0.00 1090331 0.0000000
+# 1  60 to 69  159830.23  246776 0.6476733
+# 2  60 to 69  120328.41  246776 0.4876017
+# 1 70 to 100   92084.25  142177 0.6476733
+# 2 70 to 100   69325.75  142177 0.4876017
 
 
 workshop = aggregate(vaccine_coverage_end_history$coverage_this_date,by=list(vaccine_coverage_end_history$dose,vaccine_coverage_end_history$age_group, vaccine_coverage_end_history$risk_group),FUN=sum)
 print(workshop, row.names = FALSE)
-#      Dose Age_group Coverage(%)
 # 1    0 to 4 general_public 0.0000000
 # 2    0 to 4 general_public 0.0000000
-# 1  18 to 29 general_public 0.4465402
-# 2  18 to 29 general_public 0.2956238
-# 1  30 to 44 general_public 0.4465402
-# 2  30 to 44 general_public 0.2956238
-# 1  45 to 59 general_public 0.4465402
-# 2  45 to 59 general_public 0.2956238
-# 1   5 to 17 general_public 0.0000000
-# 2   5 to 17 general_public 0.0000000
-# 1  60 to 69 general_public 0.4465402
-# 2  60 to 69 general_public 0.2956238
-# 1 70 to 100 general_public 0.4465402
-# 2 70 to 100 general_public 0.2956238
+# 1  10 to 17 general_public 0.0000000
+# 2  10 to 17 general_public 0.0000000
+# 1  18 to 29 general_public 0.6476733
+# 2  18 to 29 general_public 0.4876017
+# 1  30 to 44 general_public 0.6476733
+# 2  30 to 44 general_public 0.4876017
+# 1  45 to 59 general_public 0.6476733
+# 2  45 to 59 general_public 0.4876017
+# 1    5 to 9 general_public 0.0000000
+# 2    5 to 9 general_public 0.0000000
+# 1  60 to 69 general_public 0.6476733
+# 2  60 to 69 general_public 0.4876017
+# 1 70 to 100 general_public 0.6476733
+# 2 70 to 100 general_public 0.4876017
 # 1    0 to 4 pregnant_women 0.0000000
 # 2    0 to 4 pregnant_women 0.0000000
-# 1  18 to 29 pregnant_women 0.4465402
-# 2  18 to 29 pregnant_women 0.2956238
-# 1  30 to 44 pregnant_women 0.4465402
-# 2  30 to 44 pregnant_women 0.2956238
-# 1  45 to 59 pregnant_women 0.4465402
-# 2  45 to 59 pregnant_women 0.2956238
-# 1   5 to 17 pregnant_women 0.0000000
-# 2   5 to 17 pregnant_women 0.0000000
+# 1  10 to 17 pregnant_women 0.0000000
+# 2  10 to 17 pregnant_women 0.0000000
+# 1  18 to 29 pregnant_women 0.6476733
+# 2  18 to 29 pregnant_women 0.4876017
+# 1  30 to 44 pregnant_women 0.6476733
+# 2  30 to 44 pregnant_women 0.4876017
+# 1  45 to 59 pregnant_women 0.6476733
+# 2  45 to 59 pregnant_women 0.4876017
+# 1    5 to 9 pregnant_women 0.0000000
+# 2    5 to 9 pregnant_women 0.0000000
 # 1  60 to 69 pregnant_women 0.0000000
 # 2  60 to 69 pregnant_women 0.0000000
 # 1 70 to 100 pregnant_women 0.0000000
@@ -83,23 +68,39 @@ print(workshop, row.names = FALSE)
 
 
 ### These are added to the vax_delivery_outline
-aggregate(at_risk_delivery_outline$doses_delivered_this_date,by=list(at_risk_delivery_outline$dose),FUN=sum)
-# 1       1 135215
-# 2       2      0
-aggregate(generalPublic_restricted_outline$doses_delivered_this_date,by=list(generalPublic_restricted_outline$dose),FUN=sum)
-# 1       1 33050.72
-# 2       2     0.00
-aggregate(generalPublic_leftover_outline$doses_delivered_this_date,by=list(generalPublic_leftover_outline$dose),FUN=sum)
-# 1       1 4113881
-# 2       2       0
+aggregate(at_risk_delivery_outline$doses_delivered_this_date,by=list(at_risk_delivery_outline$dose,at_risk_delivery_outline$risk_group),FUN=sum)
+# 1       1 pregnant_women  56720.01
+# 2       2 pregnant_women  56720.01
+# 3       8 pregnant_women 158122.31 #57.6% OF POP
+
+pop_risk_group
+# risk_group     pop
+# 1 general_public 8032082
+# 2 pregnant_women  274360 
+
+booster = at_risk_delivery_outline %>% filter(dose == 8)
+aggregate(booster$doses_delivered_this_date,by=list(booster$dose,booster$risk_group,booster$FROM_vaccine_type,booster$FROM_dose),FUN=sum)
+# 1       8 pregnant_women AstraZeneca       1 15955.60
+# 2       8 pregnant_women   Sinopharm       1 23124.11
+# 3       8 pregnant_women AstraZeneca       2 48603.21
+# 4       8 pregnant_women   Sinopharm       2 70439.39
+
+booster_target = vaccination_history_TRUE %>% filter(risk_group == risk_group_name)
+workshop = aggregate(booster_target$doses_delivered_this_date,by=list(booster_target$dose,booster_target$vaccine_type),FUN=sum)
+colnames(workshop) = c('dose','vaccine_type','doses')
+print(workshop, row.names = FALSE)
+# dose vaccine_type    doses
+# 1  AstraZeneca 64558.81 # = 2 - 1
+# 2  AstraZeneca 48603.21
+# 1    Sinopharm 93563.50
+# 2    Sinopharm 70439.39
 
 
-aggregate(vaccination_history_FINAL$doses_delivered_this_date,by=list(vaccination_history_FINAL$dose),FUN=sum)
-# 1       1 6269710
-# 2       2 1315830
 
 
-aggregate(vaccination_history_FINAL$doses_delivered_this_date,by=list(vaccination_history_FINAL$dose,vaccination_history_FINAL$age_group),FUN=sum)
+
+
+workshop = aggregate(vaccination_history_FINAL$doses_delivered_this_date,by=list(vaccination_history_FINAL$vaccine_type,vaccination_history_FINAL$dose,vaccination_history_FINAL$age_group),FUN=sum)
 #RISK = 2
 # Dose      Age_group  Doses
 # 1        1    0 to 4       0.00
