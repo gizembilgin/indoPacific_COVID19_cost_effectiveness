@@ -14,7 +14,7 @@ library(gridExtra)
 library(ggpubr)
 library(tidyverse)
 
-debug = "off"
+debug = "on"
 debug_type = "partial" #options: "full", "partial"
 #_________________________________________________________________
 
@@ -49,8 +49,8 @@ if ( debug == "on"){
   
 
   RR_estimate = RR_default = 2
-  vax_strategy_toggle = "off"
-  vax_risk_strategy_toggle = "off"
+  vax_strategy_toggle = "on"
+  vax_risk_strategy_toggle = "on"
   risk_group_toggle = "on" 
   risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
   risk_group_prioritisation_to_date = NA
@@ -58,7 +58,7 @@ if ( debug == "on"){
   VE_at_risk_suppress = 1 #i.e. do not suppress VE at risk
   
   vax_strategy_toggles =
-    list(vax_strategy_start_date        = date_start,
+    list(vax_strategy_start_date        = date_start+30,
          vax_strategy_num_doses         = as.integer(1642011),
          vax_strategy_roll_out_speed    = 11075 ,               # doses delivered per day
          vax_delivery_group             = 'universal',
