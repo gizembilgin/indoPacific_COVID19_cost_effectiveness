@@ -8,6 +8,12 @@ ASFR = read.csv("1_inputs/SLE_ASFR.csv",header=TRUE)
 women_pop = read.csv(paste(rootpath,"inputs/pop_estimates_female.csv",sep=''),header=TRUE)
 
 
+### add 10-14 pregnancy as reported in DHS 2019 with retrospective data
+row_10_14 = data.frame(' 10-14 ',4/1000,NA,NA)
+colnames(row_10_14) = colnames(ASFR)
+ASFR = rbind(row_10_14,ASFR)
+
+
 ### plot ASFR
 #View(ASFR)
 ggplot(data=ASFR) + 
@@ -15,7 +21,11 @@ ggplot(data=ASFR) +
  # xlim(0,1) +
   xlab("Age-specific fertility ratio (%)") + 
   ylab("") + 
-  labs(title="")
+  labs(title="") +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(color = 'black'))
 
 
 ### calculate and plot female ratio estimates
@@ -33,7 +43,8 @@ ggplot(data=pop_together) +
 
 ### convert ASFR to whole-population values (apply female ratio estimates)
 ASFR_labels = ASFR$AGE
-ASFR_breaks = c(15,19,24,29,34,39,44,49)
+ASFR_breaks = c(10,14,19,24,29,34,39,44,49)
+#ASFR_breaks = c(15,19,24,29,34,39,44,49)
 pop_together = pop_together %>%
   mutate(agegroup_ASFR = cut(age,breaks = ASFR_breaks, include.lowest = T, labels = ASFR_labels)) %>%
   ungroup() %>%
@@ -71,6 +82,13 @@ prevalence_pregnancy = model_pregnancy_agegroups %>%
   mutate(risk_group = 'pregnant_women',
          source = 'DHS analysis + UN Pop prospects female ratio')
 prevalence_pregnancy
+
+ggplot(data=prevalence_pregnancy) + 
+  geom_point(aes(x=prop*100,y=age_group)) +
+  # xlim(0,1) +
+  xlab("Age-specific fertility ratio (%)") + 
+  ylab("model age groups") + 
+  labs(title="") 
 
 save(prevalence_pregnancy, file = "1_inputs/prevalence_pregnancy.Rdata")
 
