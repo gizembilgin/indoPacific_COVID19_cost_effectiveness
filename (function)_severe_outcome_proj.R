@@ -107,7 +107,7 @@ if (age_split_results == "N"){
   workshop_2 = workshop %>%
     mutate(macro_age_group = case_when(
       age_group %in% c('0 to 4') ~ 'children <5',
-      age_group %in% c('5 to 17') ~ 'children 5-17',
+      age_group %in% c('5 to 9','10 to 17') ~ 'children 5-17',
       TRUE ~ 'adults'
     )) %>%
     group_by(date,macro_age_group,outcome) %>%
@@ -118,7 +118,7 @@ if (age_split_results == "N"){
     mutate(outcome ='cases') %>%
     mutate(macro_age_group = case_when(
       age_group %in% c('0 to 4') ~ 'children <5',
-      age_group %in% c('5 to 17') ~ 'children 5-17',
+      age_group %in% c('5 to 9','10 to 17') ~ 'children 5-17',
       TRUE ~ 'adults'
     )) %>%
     group_by(date,macro_age_group,outcome) %>%

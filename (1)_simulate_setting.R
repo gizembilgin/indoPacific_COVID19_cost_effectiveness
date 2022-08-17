@@ -15,8 +15,8 @@ if (setting == "SLE"){setting_long = "Sierra Leone"}
 ##(A/B) Without risk groups
 #NOTE: this program has been configured so that the age_groups can be modified on a whim,
 # however, some other programs aren't as flexible
-age_groups = c(0,4,17,29,44,59,69,110)
-age_group_labels = c('0 to 4','5 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
+age_groups = c(0,4,9,17,29,44,59,69,110)
+age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
 
 num_age_groups = J = length(age_group_labels)          
 age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
@@ -317,10 +317,10 @@ if (risk_group_toggle == "off"){
   
 } else if (risk_group_toggle == "on"){
   
-  adult_pop = sum(pop[3:num_age_groups])
+  adult_pop = sum(pop_setting$pop[!pop_setting$age_group %in% c('0 to 4','5 to 9','10 to 17')])
   age_risk_split =  pop_risk_group_dn %>%
     mutate(split = case_when(
-      age_group %in% c('0 to 4','5 to 17') ~ 0,
+      age_group %in% c('0 to 4','5 to 9','10 to 17') ~ 0,
       TRUE ~ pop/adult_pop
     ))
   

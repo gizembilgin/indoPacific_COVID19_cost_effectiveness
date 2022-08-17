@@ -155,12 +155,13 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   } else if (vax_age_strategy == "manual_overwrite"){
     eligible_pop <- eligible_pop %>%
       mutate(priority= case_when(
-        age_group == '70 to 100' ~ 6,
-        age_group == '60 to 69' ~ 5,
-        age_group == '45 to 59' ~ 4,
-        age_group == '30 to 44' ~ 3,
-        age_group == '18 to 29' ~ 2,
-        age_group == '5 to 17' ~ 1,
+        age_group == '70 to 100' ~ 7,
+        age_group == '60 to 69' ~ 6,
+        age_group == '45 to 59' ~ 5,
+        age_group == '30 to 44' ~ 4,
+        age_group == '18 to 29' ~ 3,
+        age_group == '10 to 17' ~ 2,
+        age_group == '5 to 9' ~ 1,
         age_group == '0 to 4' ~ 99
       ))
   }
@@ -500,12 +501,13 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     } else if (vax_age_strategy == "manual_overwrite"){
       eligible_pop <- eligible_pop %>%
         mutate(priority= case_when(
-          age_group == '70 to 100' ~ 6,
-          age_group == '60 to 69' ~ 5,
-          age_group == '45 to 59' ~ 4,
-          age_group == '30 to 44' ~ 3,
-          age_group == '18 to 29' ~ 2,
-          age_group == '5 to 17' ~ 1,
+          age_group == '70 to 100'~ 7,
+          age_group == '60 to 69' ~ 6,
+          age_group == '45 to 59' ~ 5,
+          age_group == '30 to 44' ~ 4,
+          age_group == '18 to 29' ~ 3,
+          age_group == '10 to 17' ~ 2,
+          age_group == '5 to 9' ~ 1,
           age_group == '0 to 4' ~ 99
         ))
     }
