@@ -39,7 +39,8 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
-  
+  parameters$num_vax_types = num_vax_types
+  parameters$num_vax_doses = num_vax_doses
   
 } else if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "on"){
   
@@ -67,7 +68,8 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
- 
+  parameters$num_vax_types = num_vax_types
+  parameters$num_vax_doses = num_vax_doses
   
   date_complete_at_risk_group = vaccination_history_FINAL %>% 
     filter(risk_group == risk_group_name) %>%
@@ -77,6 +79,9 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
+
+
+
 
 if (fitting == "on"){ #seed date specified in Command Deck
 } else if (outbreak_timing == "after"){ seed_date =  max(vaccination_history_FINAL$date) #outbreak after vaccine rollout
@@ -375,6 +380,11 @@ if (fitting == "on"){
              vaccine_type = this_vax)
     
     fitted_next_state = rbind(fitted_next_state,filler)
+    
+    fitted_next_state$class = factor(fitted_next_state$class, levels = disease_class_list)
+    fitted_next_state$risk_group = factor(fitted_next_state$risk_group, levels = risk_group_labels)
+    fitted_next_state$age_group = factor(fitted_next_state$age_group, levels = age_group_labels)
+    fitted_next_state$vaccine_type = factor(fitted_next_state$vaccine_type, levels = vax_type_list)
     
     fitted_next_state = fitted_next_state %>% arrange(class,risk_group,dose,vaccine_type,age_group)
   }

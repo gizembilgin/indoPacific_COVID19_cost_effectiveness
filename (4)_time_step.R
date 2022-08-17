@@ -28,7 +28,6 @@ for (increments_number in 1:num_time_steps){
       omega=omega,
       rho=rho_inital,
       age_group_labels=age_group_labels,
-      vax_type_list=vax_type_list,
       risk_group_labels = risk_group_labels,
       VE=VE,
       # VE_onwards=VE_onwards,
@@ -180,6 +179,7 @@ for (increments_number in 1:num_time_steps){
          }
       }
         
+       
         #### BOOSTER TO PREVIOUS PRIMARY
         #NB: using '8' as a flag for a booster to a previously primary delivered individaul
       if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
@@ -463,7 +463,7 @@ if (debug == "on" | fitting == "on"){
   colnames(rho_tracker_dataframe) = c('rho')
   rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe),by="days"))
   if (debug == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe),by="days"))}
-  if (fitting == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+2,date_start+nrow(rho_tracker_dataframe)+1,by="days"))}
+  if (fitting == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe)+1,by="days"))}
   colnames(Reff_tracker) = c('Reff','date')
 }
 
