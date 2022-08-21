@@ -7,7 +7,9 @@ apply_risk_strategy <- function(
     vax_risk_proportion,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
     vax_doses_general,             # number of doses delivered to general pop
     vax_doses_risk,                # number of doses delivered to risk group
-    risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov
+    risk_group_accessibility = FALSE,
+    risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov,
+    risk_group_age_broaden = FALSE
 ){
   
   ### WARNINGS 
@@ -43,20 +45,34 @@ apply_risk_strategy <- function(
   
   
   ### BRANCH TWO: What % priority are the at risk group receiving? 
+  if (risk_group_accessibility == FALSE){
+    speed_risk_group_rollout =  vax_strategy_toggles$vax_strategy_roll_out_speed* vax_risk_proportion
+  } else if (risk_group_accessibility == TRUE){
+    speed_risk_group_rollout = round(sum(pop_high_risk$pop)/(365/12*4.2)) #median first antenatal care visit
+  }
+  if (risk_group_age_broaden == TRUE){
+    save_age_strategy = vax_strategy_toggles$vax_age_strategy 
+    vax_strategy_toggles$vax_age_strategy = 'uniform'
+  }
+  
   at_risk_delivery_outline = vax_strategy(vax_delivery_group = 'at_risk',
                                             vax_dose_strategy              = vax_doses_risk,       
-                                            vax_strategy_roll_out_speed    = vax_strategy_toggles$vax_strategy_roll_out_speed* vax_risk_proportion,            
+                                            vax_strategy_roll_out_speed    = speed_risk_group_rollout,            
                                             vax_strategy_max_expected_cov  = risk_group_acceptability,
                                             vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date,
                                             vax_strategy_num_doses         = vax_strategy_toggles$vax_strategy_num_doses,
                                             vax_age_strategy               = vax_strategy_toggles$vax_age_strategy,            
                                             vax_strategy_vaccine_type      = vax_strategy_toggles$vax_strategy_vaccine_type,            
                                             vax_strategy_vaccine_interval  = vax_strategy_toggles$vax_strategy_vaccine_interval
-    )
+  )
   at_risk_delivery_outline = at_risk_delivery_outline %>% mutate(risk_group = risk_group_name)
    
   ggplot(at_risk_delivery_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
   sum(at_risk_delivery_outline$doses_delivered_this_date)
+  
+  if (risk_group_age_broaden == TRUE){
+    vax_strategy_toggles$vax_age_strategy = save_age_strategy
+  }
   #___________________________________________________________
   
   
@@ -80,19 +96,25 @@ apply_risk_strategy <- function(
   #<fin>
   
   #<interim make doses available per day tracker>
-  limiter = at_risk_delivery_outline %>% group_by(date) %>% 
-    summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) 
-   # filter(doses_delivered_this_date > 0 ) %>%
-  limiter = limiter %>% mutate(doses_avaliable = vax_strategy_toggles$vax_strategy_roll_out_speed - doses_delivered_this_date,
-           day = as.numeric(date - min(limiter$date) + 1),
-           cumsum = cumsum(doses_avaliable)) #see line 315 in function vax strategy
+  limiter = data.frame()
+  leftover_doses = vax_strategy_toggles$vax_strategy_num_doses
+  if (risk_group_accessibility == FALSE){
+    limiter = at_risk_delivery_outline %>% group_by(date) %>% 
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) 
+    # filter(doses_delivered_this_date > 0 ) %>%
+    limiter = limiter %>% mutate(doses_avaliable = vax_strategy_toggles$vax_strategy_roll_out_speed - doses_delivered_this_date,
+                                 day = as.numeric(date - min(limiter$date) + 1),
+                                 cumsum = cumsum(doses_avaliable)) #see line 315 in function vax strategy
+    
+    leftover_doses = vax_strategy_toggles$vax_strategy_num_doses - sum(at_risk_delivery_outline$doses_delivered_this_date)
+  } 
   #<fin>
   
-  generalPublic_leftover_outline = vax_strategy(vax_delivery_group = 'general_public',
+  generalPublic_leftover_outline = vax_strategy(vax_delivery_group             = 'general_public',
                                                 vax_dose_strategy              = vax_doses_general,       
                                                 vax_strategy_roll_out_speed    = vax_strategy_toggles$vax_strategy_roll_out_speed,
                                                 vax_roll_out_speed_modifier    = limiter,
-                                                vax_strategy_num_doses         = vax_strategy_toggles$vax_strategy_num_doses - sum(at_risk_delivery_outline$doses_delivered_this_date) ,
+                                                vax_strategy_num_doses         = leftover_doses ,
                                                 vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date,
                                                 vax_age_strategy               = vax_strategy_toggles$vax_age_strategy,            
                                                 vax_strategy_vaccine_type      = vax_strategy_toggles$vax_strategy_vaccine_type,            
@@ -102,34 +124,40 @@ apply_risk_strategy <- function(
   )
   generalPublic_leftover_outline = generalPublic_leftover_outline %>% mutate(risk_group = 'general_public')
   
+  ggplot(generalPublic_leftover_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
+  sum(generalPublic_leftover_outline$doses_delivered_this_date)
+  
+  
   vaccination_history_MODF = bind_rows(vaccination_history_TRUE,at_risk_delivery_outline,generalPublic_leftover_outline)
 
   ###CHECKS
   #CHECK 1: total doses delivered <= total doses available
-  check_df = bind_rows(at_risk_delivery_outline,generalPublic_leftover_outline)
-  if (round(sum(check_df$doses_delivered_this_date)) > vax_strategy_toggles$vax_strategy_num_doses){stop('Total doses delivered > total doses avaliable!')}
-  
-  check_df_daily = check_df %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% mutate(label ='total')
-  if (nrow(check_df_daily[round(check_df_daily$doses_delivered_this_date)>vax_strategy_toggles$vax_strategy_roll_out_speed,])>0){
-    ggplot(check_df_daily) + geom_point(aes(x=date,y=doses_delivered_this_date))
+  if (risk_group_accessibility == FALSE){
+    check_df = bind_rows(at_risk_delivery_outline,generalPublic_leftover_outline)
+    if (round(sum(check_df$doses_delivered_this_date)) > vax_strategy_toggles$vax_strategy_num_doses){stop('Total doses delivered > total doses avaliable!')}
     
-    df1 = at_risk_delivery_outline  %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% mutate(label = 'at risk delivery')
-    df2 = generalPublic_leftover_outline  %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% mutate(label = 'general public leftover')
-    check_df_daily_comp = bind_rows(df1,df2,check_df_daily)
-    ggplot(check_df_daily_comp) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(label)))
-    
-    nrow_greater = nrow(check_df_daily[round(check_df_daily$doses_delivered_this_date)>vax_strategy_toggles$vax_strategy_roll_out_speed,])
-    
-    warning('Caution, more doses delivered per day than capacity for',paste(nrow_greater),' days')
-    
-    if (nrow_greater>10){
-      stop('Error maximum daily doses exceeded for more than 10 days')
+    check_df_daily = check_df %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% mutate(label ='total')
+    if (nrow(check_df_daily[round(check_df_daily$doses_delivered_this_date)>vax_strategy_toggles$vax_strategy_roll_out_speed,])>0){
+      ggplot(check_df_daily) + geom_point(aes(x=date,y=doses_delivered_this_date))
+      
+      df1 = at_risk_delivery_outline  %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% mutate(label = 'at risk delivery')
+      df2 = generalPublic_leftover_outline  %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% mutate(label = 'general public leftover')
+      check_df_daily_comp = bind_rows(df1,df2,check_df_daily)
+      ggplot(check_df_daily_comp) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(label)))
+      
+      nrow_greater = nrow(check_df_daily[round(check_df_daily$doses_delivered_this_date)>vax_strategy_toggles$vax_strategy_roll_out_speed,])
+      
+      warning('Caution, more doses delivered per day than capacity for',paste(nrow_greater),' days')
+      
+      if (nrow_greater>10){
+        stop('Error maximum daily doses exceeded for more than 10 days')
+      }
+      if ((max(check_df_daily$doses_delivered_this_date)-vax_strategy_toggles$vax_strategy_roll_out_speed )/vax_strategy_toggles$vax_strategy_roll_out_speed > 0.1){
+        stop('Error maximum daily doses exceeded by 10%')
+      }
+      #NOTE - 10% leeway, unless want more complicated limiter on booster dose
+      
     }
-    if ((max(check_df_daily$doses_delivered_this_date)-vax_strategy_toggles$vax_strategy_roll_out_speed )/vax_strategy_toggles$vax_strategy_roll_out_speed > 0.1){
-      stop('Error maximum daily doses exceeded by 10%')
-    }
-    #NOTE - 10% leeway, unless want more complicated limiter on booster dose
-    
   }
   
   ggplot(check_df[check_df$risk_group == 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
@@ -148,7 +176,7 @@ apply_risk_strategy <- function(
 #     vax_doses_risk = 2,                # number of doses delivered to risk group
 #     risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov
 # )
-# #View(test)
-# sum(at_risk_delivery_outline$doses_delivered_this_date) + sum(generalPublic_leftover_outline$doses_delivered_this_date)
-# sum(test$doses_delivered_this_date) - sum(vaccination_history_TRUE$doses_delivered_this_date)
-# vax_strategy_toggles$vax_strategy_num_doses
+ #View(test)
+ #sum(at_risk_delivery_outline$doses_delivered_this_date) + sum(generalPublic_leftover_outline$doses_delivered_this_date)
+ #sum(test$doses_delivered_this_date) - sum(vaccination_history_TRUE$doses_delivered_this_date)
+ # vax_strategy_toggles$vax_strategy_num_doses
