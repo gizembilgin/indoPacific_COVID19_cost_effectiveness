@@ -44,22 +44,26 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   
 } else if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "on"){
   
-  if('risk_group_acceptability' %in% names(apply_risk_strategy_toggles)){
-    vaccination_history_FINAL = 
-      apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
-                          vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
-                          vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
-                          vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk,
-                          risk_group_acceptability = apply_risk_strategy_toggles$risk_group_acceptability
-      )
-  } else{
-    vaccination_history_FINAL = 
-      apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
-                          vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
-                          vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
-                          vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk
-      )
+  if (!'risk_group_accessibility' %in% names(apply_risk_strategy_toggles)){
+    apply_risk_strategy_toggles$risk_group_accessibility = FALSE
   }
+  if (!'risk_group_acceptability' %in% names(apply_risk_strategy_toggles)){
+    apply_risk_strategy_toggles$risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov
+  }
+  if (!'risk_group_age_broaden' %in% names(apply_risk_strategy_toggles)){
+    apply_risk_strategy_toggles$risk_group_age_broaden = FALSE
+  }
+  
+    vaccination_history_FINAL = 
+     apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
+                         vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
+                         vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
+                         vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk,
+                         risk_group_acceptability = apply_risk_strategy_toggles$risk_group_acceptability,
+                         risk_group_accessibility = apply_risk_strategy_toggles$risk_group_accessibility,
+                         risk_group_age_broaden   = apply_risk_strategy_toggles$risk_group_age_broaden
+     )
+
   
   #recalculate!
   list_doses = unique(vaccination_history_FINAL$dose)
