@@ -34,7 +34,7 @@ if (rho_severe_disease == "on"){
 }
 
 severe_outcome_log_tidy = workshop %>% select(date,risk_group,age_group,dose,vaccine_type,outcome,proj) %>%
-  filter(date >= date_start)
+  filter(date >= date_start+1)
 
 #(B/D) Sum across age groups, doses and vaccination status to get overall severe incidence per day
 if (exists("age_split_results") == FALSE){ age_split_results = "N"}
@@ -50,7 +50,7 @@ if (age_split_results == "N"){
   workshop_2 = rbind(workshop_2,workshop_incid)
   
   #(D/D) Calculate cumulative severe outcomes by outcome type
-  if (as.Date('1900-01-01') %in% seed_date){use_date = date_start
+  if (as.Date('1900-01-01') %in% seed_date){use_date = date_start +1
   } else{
     use_date = seed_date[1]
   }
