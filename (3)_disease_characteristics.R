@@ -2,7 +2,7 @@
 ### Delta is the strain currently informing these parameters, there is insufficient info on Omicron
 ### COMEBACK count = 1
 
-strain = strain_inital
+strain_now = strain_inital
 
 ### (A/D) Transmission
 load(file = "1_inputs/param_age.Rdata")
