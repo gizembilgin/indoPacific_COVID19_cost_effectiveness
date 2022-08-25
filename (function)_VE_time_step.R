@@ -81,6 +81,8 @@ VE_time_step <- function(strain_now,date_now,outcome){
                         , FUN=sum)
   colnames(workshop) <- c('risk_group','dose','vaccine_type','age_group','VE')
   
+  if(nrow(workshop[round(workshop$VE,digits=2)>1,])){stop('VE > 1!')}
+  
   #<interim> add none covered vaccines
   
   for (i in 1:J){

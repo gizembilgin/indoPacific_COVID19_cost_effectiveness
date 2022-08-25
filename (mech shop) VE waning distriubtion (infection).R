@@ -197,7 +197,7 @@ waning_to_plot = together %>%
 
 strain_test = 'omicron'
 
-waning_shape_plot_list = ggplot() +
+ggplot() +
   geom_line(data=waning_to_plot[waning_to_plot$strain == strain_test,],
             aes(x=days,y=VE_days,color=as.factor(immunity)),na.rm=TRUE) +
   labs(title=(paste("Waning of VE against infection","(",strain_test,")"))) +
