@@ -1,0 +1,210 @@
+
+
+### (1) Overarching trackers #####################################################################################################
+warehouse_table = data.frame() 
+warehouse_plot = data.frame()
+
+
+### (2) Queue strategies to run ##################################################################################################
+queue = list()
+
+### Baseline - no prioritisation
+this_run = list(
+  vax_risk_strategy = 'N',           
+  vax_risk_proportion = 0,         
+  vax_doses_general = 1,               
+  vax_doses_risk = 1,
+  risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov,
+  risk_group_accessibility = FALSE,
+  risk_group_age_broaden = FALSE
+)
+
+queue[[1]] = list(vax_strategy_description = "no prioritisation",
+                  apply_risk_strategy_toggles = this_run)
+
+
+#(A/C) Prioritisation of existing doses
+this_run$vax_risk_strategy = 'Y'
+
+### single dose
+this_run$vax_risk_proportion = 0.25
+queue[[2]] = list(vax_strategy_description = '25% prioritisation',
+                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+
+this_run$vax_risk_proportion = 0.5
+queue[[3]] = list(vax_strategy_description = '50% prioritisation',
+                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+
+this_run$vax_risk_proportion = 0.75
+queue[[4]] = list(vax_strategy_description = '75% prioritisation',
+                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+
+this_run$vax_risk_proportion = default_prioritisation_proportion
+###______________
+
+### booster doses
+this_run$vax_doses_risk = 2
+vax_strategy_toggles$vax_strategy_vaccine_interval = 365/4
+queue[[5]] = list(vax_strategy_description = 'booster at three months (at risk only)',
+                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+this_run$vax_doses_risk = 1
+#___________________________________
+
+
+#(B/C) Providing additional doses
+this_run$risk_group_accessibility = TRUE
+### single dose
+this_run$vax_doses_risk = 1
+queue[[6]] = list(vax_strategy_description = 'additional primary doses',
+                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+###______________
+
+### booster doses
+this_run$vax_doses_risk = 2
+queue[[7]] = list(vax_strategy_description = 'additional booster doses',
+                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+#___________________________________
+
+
+#(C/C) Else
+this_run$vax_doses_risk = 1
+this_run$risk_group_age_broaden = TRUE
+queue[[8]] = list(vax_strategy_description = 'broaden to <18 pregnant individuals',
+                  apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
+#___________________________________
+
+### (3) Run  ##################################################################################################
+for (ticket in 1:length(queue)){
+  
+  commands = queue[[ticket]]
+  
+  vax_strategy_description = commands$vax_strategy_description
+  apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
+  
+  source(paste(getwd(),"/CommandDeck.R",sep=""))
+  
+  severe_outcome_projections = severe_outcome_log %>% 
+    mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
+  warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
+  
+  row = row %>% mutate(scenario = vax_strategy_description,
+                       date_complete_at_risk_group = date_complete_at_risk_group) %>% 
+    relocate(scenario, .before = colnames(row)[[1]])
+  warehouse_table = rbind(warehouse_table,row)
+}
+#____________________________________________________________________________________________________________________________________
+
+### (5) Save outputs  ##################################################################################################
+results_warehouse_entry = list()
+results_warehouse_entry[[1]] = warehouse_table
+results_warehouse_entry[[2]] = warehouse_plot
+
+### quick plot
+warehouse_plot = warehouse_plot %>% 
+  mutate(time = day) %>%
+  filter(time>=0)
+
+if (risk_group_name == 'adults_with_comorbidities'){warehouse_plot = warehouse_plot[! warehouse_plot$label %in% c("broaden to <18 pregnant individuals"),]}
+
+section_1 = c("no prioritisation" ,"25% prioritisation" ,"50% prioritisation" ,"75% prioritisation", "booster at three months (at risk only)" )
+section_2 = c("no prioritisation","additional primary doses","additional booster doses","broaden to <18 pregnant individuals")
+section_list = list(section_1,section_2)
+
+for (section in 1:length(section_list)){
+  list_plot_commands = section_list[[section]]
+  workshop = warehouse_plot[warehouse_plot$label %in% list_plot_commands, ]
+  
+  abs_plot_list = list()
+  for (i in 1:length(unique(workshop$outcome))){
+    outcome = unique(workshop$outcome)[i]
+    abs_plot_list [[i]] <- ggplot(data=workshop[workshop$outcome==outcome,]) + 
+      geom_line(aes(x=time,y=proj,color=as.factor(label))) +
+      labs(title=paste(outcome)) +
+      labs(colour = "") +
+      theme_bw() + 
+      xlab("") + 
+      ylab("")}
+  # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
+  
+  cum_plot_list = list()
+  for (i in 1:length(unique(workshop$outcome))){
+    outcome = unique(workshop$outcome)[i]
+    cum_plot_list [[i]] <- ggplot(data=workshop[workshop$outcome==outcome,]) + 
+      geom_line(aes(x=time,y=proj_cum,color=as.factor(label))) +
+      labs(title=paste(outcome)) +
+      labs(colour = "") +
+      theme_bw() + 
+      xlab("") + 
+      ylab("")
+  }
+  
+  
+  # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
+  ggarrange(abs_plot_list[[5]],cum_plot_list[[5]],
+                   abs_plot_list[[2]],cum_plot_list[[2]],
+                   abs_plot_list[[3]], cum_plot_list[[3]],
+                   abs_plot_list[[1]],  cum_plot_list[[1]],
+                   common.legend = TRUE,
+                   legend="bottom",
+                   ncol = 2,
+                   nrow = 4)
+}
+
+### Cumulative outcome table ############
+baseline_to_compare = "no prioritisation"
+
+table3 = warehouse_table %>% 
+  select(-date_complete_at_risk_group)
+table3 = table3  %>% 
+  pivot_longer(
+    cols = 2:ncol(table3) ,
+    names_to = 'outcome',
+    values_to = 'num'
+  ) 
+
+#compare to baseline
+baseline = table3 %>% 
+  filter(scenario == baseline_to_compare) %>%
+  rename(baseline_num=num) %>%
+  select(-scenario)
+
+table3 = table3 %>%
+  left_join(baseline,by=c('outcome'))  %>%
+  mutate(abs_reduction = num - baseline_num,
+         rel_reduction = 100*(num - baseline_num)/baseline_num)
+
+table3$outcome = factor(table3$outcome,levels=c('cases','severe_disease','hosp','death','YLL'))
+table3$scenario = factor(table3$scenario, levels = 
+                           c("no prioritisation",                      "25% prioritisation",                     "50% prioritisation",                    
+                             "75% prioritisation",                     "booster at three months (at risk only)", "additional primary doses",              
+                             "additional booster doses",               "broaden to <18 pregnant individuals" ))
+table3 = table3 %>% arrange(scenario,outcome)
+
+options(scipen = 1000)
+print = table3 %>% 
+  filter(! scenario %in% c(baseline_to_compare))  %>%
+  mutate(abs_reduction = round(abs_reduction),
+         rel_reduction = round(rel_reduction,digits=1),
+         together_value = paste(format(abs_reduction, format="f", big.mark=",", digits=1),
+                                ' (',rel_reduction,'%)',sep=''),
+         together_outcome = paste(outcome,sep='_')) %>%
+  ungroup() %>%
+  select(-num,-baseline_num,-abs_reduction,-rel_reduction,-outcome) %>%
+  pivot_wider(
+    id_cols = scenario,
+    names_from = together_outcome,
+    values_from = together_value)
+
+time = Sys.time()
+time = gsub(':','-',time)
+write.csv(print,file=paste('x_results/table3 prioritising',risk_group_name,time,'.csv'))
+
+
+
+### SAVE
+results_warehouse_entry[[4]]= print
+
+#____________________________________________________________________________________________________________________________________
+
+results_warehouse[[receipt]] = results_warehouse_entry
+
