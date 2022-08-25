@@ -58,10 +58,11 @@ for (increments_number in 1:num_time_steps){
       } #i.e. assume after end date that NPI constant
         
       if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
-        parameters$VE = VE_time_step(strain,date_now,'any_infection')
+        parameters$VE = VE_time_step(strain_now,date_now,'any_infection')
       }
       if (waning_toggle_rho_acqusition == TRUE ){
-        parameters$rho = rho_time_step('symptomatic_disease',date_now,strain_now)
+        #parameters$rho = rho_time_step('symptomatic_disease',date_now,strain_now)
+        parameters$rho = rho_time_step(date_now)
         rho = parameters$rho
       }
       
@@ -194,13 +195,6 @@ for (increments_number in 1:num_time_steps){
               
               if (nrow(this_vax_history)>0){
                 if (nrow(this_vax_history[this_vax_history$dose != '8',])>0){stop('incorrect dose flagged as a booster')}
-                
-                booster_type = unique(this_vax_history$vaccine_type)
-                if (booster_type == 'Johnson & Johnson'){
-                  booster_dose_number = 2
-                } else{
-                  booster_dose_number = 3
-                }
                 
                 # (1/3) recorded vax
                 VR_this_step = crossing(age_group = age_group_labels,
@@ -345,8 +339,13 @@ for (increments_number in 1:num_time_steps){
            cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
   
   if (debug == "on" | fitting == "on"){
-    Reff <- Reff_time_step(parameters,next_state)
-    Reff_tracker = rbind(Reff_tracker,Reff)
+    if (fitting == "off" & increments_number == 1){
+      
+    } else{
+      Reff <- Reff_time_step(parameters,next_state)
+      Reff_tracker = rbind(Reff_tracker,Reff)
+    }
+
     
     rho_tracker_dataframe = rbind(rho_tracker_dataframe,parameters$rho) 
     
@@ -462,7 +461,7 @@ exposed_log = exposed_log_tidy %>% ungroup() %>% pivot_wider(
 if (debug == "on" | fitting == "on"){
   colnames(rho_tracker_dataframe) = c('rho')
   rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe),by="days"))
-  if (debug == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe),by="days"))}
+  if (debug == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+2,date_start+nrow(rho_tracker_dataframe),by="days"))}
   if (fitting == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe)+1,by="days"))}
   colnames(Reff_tracker) = c('Reff','date')
 }
