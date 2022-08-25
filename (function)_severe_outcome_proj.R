@@ -60,6 +60,14 @@ if (age_split_results == "N"){
     group_by(outcome) %>%
     mutate(proj_cum = cumsum(proj))
   
+  #create row for table comparing vaccine strategies
+  row = severe_outcome_log %>% 
+    filter(date == max(severe_outcome_log$date)) %>%
+    select(-c(proj,date)) %>%
+    pivot_wider(names_from=outcome,
+                values_from=proj_cum) 
+  row
+  
   severe_outcome_log_plot = workshop_2 %>% 
     filter(date >= date_start) %>%
     group_by(outcome) %>%
@@ -96,13 +104,7 @@ if (age_split_results == "N"){
     labs(color="")
   grid.arrange(plot1, plot2)
   
-  #create row for table comparing vaccine strategies
-  row = severe_outcome_log %>% 
-    filter(date == max(severe_outcome_log$date)) %>%
-    select(-c(proj,date)) %>%
-    pivot_wider(names_from=outcome,
-                values_from=proj_cum) 
-  row
+
 } else if (age_split_results == "Y"){
   workshop_2 = workshop %>%
     mutate(macro_age_group = case_when(
