@@ -33,10 +33,10 @@ rho_est_plot = ggplot() +
 rho_dn_wide = rho_dn %>% 
   filter(outcome == 'symptomatic_disease') %>%
   pivot_wider(
-    id_cols = days,
-    names_from = type,
-    values_from = protection
-  )
+  id_cols = days,
+  names_from = type,
+  values_from = protection
+)
 #######################################################################################################
 
 
@@ -66,15 +66,15 @@ ggplot(intro_raw) + geom_point(aes(x=days,y=percentage))
 #     labs(title = paste(i))
 # }
 # plot_list
-days_to_predict = seq(0,365)
+
 smoothed_spline <- smooth.spline(x = intro_raw$days, y = intro_raw$percentage, df = 9)
 fitted.results = predict(smoothed_spline,days_to_predict,deriv = 0)
 fit = data.frame(fitted.results)
 colnames(fit) = c('days','percentage')
 
 ggplot() + geom_point(data = intro_raw, aes(x=days,y=percentage)) +
-  geom_line(data = fit, aes(x=days,y=percentage)) 
-
+       geom_line(data = fit, aes(x=days,y=percentage)) 
+ 
 synthetic_strain_shift = fit %>% filter(percentage >=0 & percentage <=1) 
 synthetic_strain_shift$days = synthetic_strain_shift$days -min(synthetic_strain_shift$days)
 
@@ -96,7 +96,7 @@ rho_time_step <- function(date_now){
     workshop = hist_cases
   }
   #______________________
-  
+
   
   #calculate proportion of individuals in recovery class by day since recovery
   workshop = workshop %>%
@@ -112,9 +112,9 @@ rho_time_step <- function(date_now){
   
   
   #calculate protection to latest versus previous strains
-  if (length(variant_change_date[variant_change_date<date_now])>0){ # do we have any new variants?
+  if (length(rho_change_dates[rho_change_dates<date_now])>0){ # do we have any new variants?
     
-    num_variants_introduced = length(variant_change_date[variant_change_date<date_now])
+    num_variants_introduced = length(rho_change_dates[rho_change_dates<date_now])
     
     
     #rho = how protected are people today from the circulating strains today?
@@ -138,7 +138,7 @@ rho_time_step <- function(date_now){
         protection_to_old = protection
       }
       
-      protection_to_new = workshop %>%
+    protection_to_new = workshop %>%
         left_join(rho_dn_wide, by = "days") %>% 
         left_join(this_variant_shift,by="date") %>%
         mutate(interim = case_when(
@@ -146,7 +146,7 @@ rho_time_step <- function(date_now){
           date >= this_variant_introduction & date <= max(this_variant_shift$date)~(prev_to_new*(1-percentage)+new_to_new*percentage)*prop_window,
           date > max(this_variant_shift$date) ~ new_to_new*prop_window
         ))
-      protection_to_new = sum(protection_to_new$interim,na.rm=TRUE)
+    protection_to_new = sum(protection_to_new$interim,na.rm=TRUE)
       
       if (date_now %in% this_variant_shift$date){
         percentage_new = this_variant_shift$percentage[this_variant_shift$date == date_now]
@@ -171,4 +171,4 @@ rho_time_step <- function(date_now){
   return(function_result)
 }
 
-#rho_time_step(date_now)
+rho_time_step(date_now)
