@@ -33,7 +33,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   
   ### WARNINGS 
   if (vax_strategy_start_date <= max(vaccination_history_TRUE$date)){ 
-    stop ('Your hypothetical vaccine campaign start date needs to be in the future!')
+    warning ('Your hypothetical vaccine campaign start date needs to be in the future!')
   }
   if (!(vax_strategy_vaccine_type %in% c("Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"))){
     stop('pick a valid vaccine type, or check your spelling!')
