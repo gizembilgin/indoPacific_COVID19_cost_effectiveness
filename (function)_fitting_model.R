@@ -1,6 +1,8 @@
 fitting = "on"
 
 fitted_results = list()
+
+new_variant_check = "off"
 #______________________________________________________________________________________________________________
 
 
@@ -9,11 +11,13 @@ setting = "SLE"
 
 date_start = as.Date('2021-03-31')
 strain_inital = strain_now = 'WT' 
-seed_date = c(as.Date('2021-04-25'),c(as.Date('2021-11-07'))) #first is seed date for delta, second is omicron
-
-#model_weeks = as.numeric(ceiling((max('2021-12-01')-date_start)/7))
+seed_date = c(as.Date('2021-04-25'),as.Date('2021-09-01')) #first is seed date for delta, second is omicron
 model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
-#model_weeks = model_weeks + 52 #too see expected trajectory
+
+if (new_variant_check == "on"){
+  seed_date = c(as.Date('2021-04-25'),as.Date('2021-09-01'),as.Date('2022-09-01')) #check new variant
+  model_weeks = model_weeks + 52 #too see expected trajectory
+}
 
 plotting = "on"
 
@@ -39,6 +43,35 @@ fitted_incidence_log = incidence_log %>% select(date,daily_cases)
 fitted_results[[1]] = list(parameters, next_state,fitted_incidence_log_tidy,fitted_incidence_log)
 
 fit_wout_risk_group = date_now
+
+#CHECK
+wOmicron = Reff_tracker %>% filter(date>=seed_date[2] & date<(seed_date[2]+3*30))
+wOmicron = mean(wOmicron$Reff)
+
+wDelta = Reff_tracker %>% filter(date<seed_date[2] & date>=(seed_date[2]-1*30))
+wDelta = mean(wDelta$Reff)
+
+wOmicron/wDelta # 1.666128
+#Estimated 'growth advantage' of 1.64
+#World Health Organization. (2022). COVID-19 weekly epidemiological update, edition 82, 8 March 2022. World Health Organization. https://apps.who.int/iris/handle/10665/352390. License: CC BY-NC-SA 3.0 IGO
+
+
+
+#CHECK
+if (new_variant_check == "on"){
+  wNew = Reff_tracker %>% filter(date>=seed_date[3] & date<(seed_date[3]+3*30))
+  wNew = mean(wNew$Reff)
+
+  wOmicron = Reff_tracker %>% filter(date<seed_date[3] & date>=(seed_date[3]-1*30))
+  wOmicron = mean(wOmicron$Reff)
+
+  wNew/wOmicron
+  
+  incidence_log_outbreak = incidence_log
+} else{
+  incidence_log_fit = incidence_log
+}
+
 #______________________________________________________________________________________________________________
 
 
@@ -104,12 +137,9 @@ ggplot() +
   geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
              aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
   geom_line(data=incidence_log,aes(x=date,y=rolling_average)) + 
-  
   scale_y_continuous(
-    
     # Features of the first axis
     name = "Model projections",
-    
     # Add a second axis and specify its features
     sec.axis = sec_axis(~.*coeff, name="Reported cases")
   )+
@@ -117,9 +147,34 @@ ggplot() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.line = element_line(color = 'black'))
+
+
+
+
+if (new_variant_check == "on"){
+  ggplot() +
+    geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
+               aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
+    geom_line(data=incidence_log_outbreak,aes(x=date,y=rolling_average)) + 
+    geom_line(data = incidence_log_fit,aes(x=date,y=rolling_average),linetype = "dashed") +
+    scale_y_continuous(
+      # Features of the first axis
+      name = "Model projections",
+      # Add a second axis and specify its features
+      sec.axis = sec_axis(~.*coeff, name="Reported cases")
+    )+
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(color = 'black'))
+}
+  
+
+
 #______________________________________________________________________________________________________________
 
 
 ###TURN OFF FITTING 
 fitting = "off"
+rm(incidence_log_fit)
 #______________________________________________________________________________________________________________
