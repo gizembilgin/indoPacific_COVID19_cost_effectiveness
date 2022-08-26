@@ -76,7 +76,16 @@ ggplot() + geom_point(data = intro_raw, aes(x=days,y=percentage)) +
   geom_line(data = fit, aes(x=days,y=percentage)) 
 
 synthetic_strain_shift = fit %>% filter(percentage >=0 & percentage <=1) 
-synthetic_strain_shift$days = synthetic_strain_shift$days -min(synthetic_strain_shift$days)
+synthetic_strain_shift$days = synthetic_strain_shift$days - min(synthetic_strain_shift$days)
+
+ggplot() + geom_point(data = intro_raw, aes(x=days,y=percentage)) +
+  geom_line(data = synthetic_strain_shift, aes(x=days,y=percentage)) +
+  ylab('percentage of circulating strains') +
+  xlab('days since introduction')+
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(color = 'black'))
 
 #######################################################################################################
 
