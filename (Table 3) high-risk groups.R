@@ -4,6 +4,16 @@
 warehouse_table = data.frame() 
 warehouse_plot = data.frame()
 
+#resets
+outbreak_timing = "off"
+vax_strategy_toggle = "on"
+vax_risk_strategy_toggle = "on"
+risk_group_toggle = "on" 
+vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
+risk_group_prioritisation_to_date = NA
+default_prioritisation_proportion = 0.5
+VE_at_risk_suppress = 1
+RR_estimate = RR_default = 2
 
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
