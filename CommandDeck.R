@@ -14,7 +14,7 @@ library(gridExtra)
 library(ggpubr)
 library(tidyverse)
 
-debug = "on"
+debug = "off"
 debug_type = "partial" #options: "full", "partial"
 #_________________________________________________________________
 
@@ -35,7 +35,7 @@ if ( debug == "on"){
   strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicron'
   load(file = '1_inputs/last_fit_date.Rdata')
   date_start = fitted_max_date ##latest fit date
-  model_weeks = 52          # how many weeks should the model run for?
+  model_weeks = 25          # how many weeks should the model run for?
   
   
   ##options for run from start
@@ -149,6 +149,7 @@ if (risk_group_toggle == "on"){
 num_disease_classes = 4                                 # SEIR 
 
 #load setting stats if new setting
+if (exists("ticket") == FALSE){ ticket = 1 }
 if (exists("prev_setting") == FALSE){ prev_setting = "NONE"}
 if (exists("prev_risk_num") == FALSE){ prev_risk_num = "NONE"}
 if (exists("prev_risk_group") == FALSE){ prev_risk_group = "NONE"}
@@ -167,6 +168,7 @@ if (exists("prev_discounting_rate") == FALSE){ prev_discounting_rate = discounti
 if (prev_discounting_rate != discounting_rate){stop('need to re-run "(mech shop) severe outcome setting-specific rates" to apply new discounting rate')}
 
 #making some interim variables to assist with configuring states
+disease_class_list = c('S','E','I','R')
 num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
 vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
@@ -211,7 +213,6 @@ rm(incidence_log_tracker)
 #       (4/4) Basic plots            
 # ####################################################################
 # NOTE: more advanced plots in scripts title '(plot)_...'
-if (exists("ticket") == FALSE){ ticket = 1 }
 if (ticket == 1 | plotting == "on"){
 
   incidence_log_plot = incidence_log %>% filter(date >= date_start) %>%

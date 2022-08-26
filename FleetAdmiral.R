@@ -8,8 +8,6 @@
 time.start.FleetAdmiral=proc.time()[[3]]
 results_warehouse = list()
 
-#COMEBACK - test with rm()
-
 load(file = '1_inputs/last_fit_date.Rdata')
 date_start = fitted_max_date ##latest fit date
 
@@ -17,7 +15,7 @@ strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicro
 model_weeks = 52          # how many weeks should the model run for?
 
 waning_toggle_acqusition = TRUE
-waning_toggle_severe_outcome = FALSE
+waning_toggle_severe_outcome = TRUE
 waning_toggle_rho_acqusition = TRUE
 rho_severe_disease = "on"
 
@@ -26,7 +24,8 @@ vax_risk_strategy_toggle = "off"
 
 setting = "SLE"
 if (setting == "SLE"){
-  gov_target = 0.516
+  #gov_target = 0.516
+  gov_target = 0.7
   workshop_doses = gov_target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
   workshop_doses = round(workshop_doses * sum(pop))
   
@@ -55,23 +54,29 @@ source(paste(getwd(),"/(Table 2)_varying_eligb_age.R",sep=""))
 #________________________________________________________________________________________________________________
 
 
-### (3) Varying speed of vaccine roll-out
-receipt = 4
-source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
+
+###(Table 3) At risk group analysis
+receipt = 2
+risk_group_name = "pregnant_women"
+source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
+results_warehouse_pregnant_women = results_warehouse_FM
+
+receipt = 3
+risk_group_name = "adults_with_comorbidities"
+source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
+results_warehouse_adults_comorb = results_warehouse_FM
 #________________________________________________________________________________________________________________
 
 
-### (4) At risk group analysis
-receipt = 5
-print(receipt) 
-risk_group_name = "pregnant_women"
-#source(paste(getwd(),"/FleetMedic.R",sep=""))
-results_warehouse_pregnant_women = results_warehouse_FM
 
-receipt = 6
-risk_group_name = "adults_with_comorbidities"
-#source(paste(getwd(),"/FleetMedic.R",sep=""))
-results_warehouse_adults_comorb = results_warehouse_FM
+### FIGURE 2 (-> supplementary)
+receipt = 4
+source(paste(getwd(),"/((run 1)_impact_of_current_program_targets.R",sep=""))
+receipt = 5
+source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
+
+results_warehouse[[4]][[3]]
+results_warehouse[[5]][[3]]
 #________________________________________________________________________________________________________________
 
 
@@ -92,7 +97,7 @@ time = gsub(':','-',time)
 file_name = paste( "x_results/Vaccine allocation project results",time)
 file_name = gsub(' ','_',file_name)
 
-library(rmarkdown); library(tinytex)
-render('FleetAdmiral_compiler.Rmd',output_file = file_name)
+#library(rmarkdown); library(tinytex)
+#render('FleetAdmiral_compiler.Rmd',output_file = file_name)
 #render('FleetAdmiral_compiler.Rmd',output_file = file_name, output_format = "pdf_document")
 #render('FleetAdmiral_compiler.Rmd',output_file = file_name, output_format = "word_document")
