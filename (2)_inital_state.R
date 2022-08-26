@@ -84,14 +84,29 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vaccination_history_FINAL = vaccination_history_TRUE
 }
 
+if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
+  booster_type = unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$dose == 8])
+  if (booster_type == 'Johnson & Johnson'){
+    booster_dose_number = 2
+  } else{
+    booster_dose_number = 3
+  }
+}
 
 
+fitted_seed_dates =  c(as.Date('2021-04-25'),c(as.Date('2021-09-01')))
 
 if (fitting == "on"){ #seed date specified in Command Deck
+  if (length(fitted_seed_dates[! fitted_seed_dates %in% seed_date])>0 ){stop('seed dates for fitting have changed')}
 } else if (outbreak_timing == "after"){ seed_date =  max(vaccination_history_FINAL$date) #outbreak after vaccine rollout
 } else if(outbreak_timing == "during"){ seed_date = date_start + 7                       #outbreak during vaccine rollout
 } else if(outbreak_timing == "off")   { seed_date = as.Date('1900-01-01')                #no outbreak
 }
+
+variant_change_date = c(fitted_seed_dates,seed_date)
+variant_change_date = unique(sort(variant_change_date))
+variant_change_date = variant_change_date[variant_change_date>as.Date('2021-06-01')] #because delta is not immune escape
+
 date_now = date_start
 #_________________________________________________
 
@@ -170,28 +185,35 @@ max_occupany_run_date = max(workshop$date) + workshop_delay
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
   mutate(outcome = 'any_infection')
-
+load( file = '1_inputs/VE_waning_distribution_SO.Rdata')
+VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(waning == waning_toggle_severe_outcome )
+VE_waning_distribution = rbind(VE_waning_distribution,VE_waning_distribution_SO)
 
 if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_POP$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
   #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
 }
 
-waning_to_plot = VE_waning_distribution %>% 
-  filter(waning=TRUE) %>%
-  filter(dose < 3) %>%
-  filter(vaccine_type %in% vax_type_list) %>%
-  mutate(immunity = paste(vaccine_type,dose))
-waning_shape_plot_list = ggplot() +
-  geom_line(data=waning_to_plot[waning_to_plot$strain == strain_now,],
-            aes(x=days,y=VE_days,color=as.factor(immunity)),na.rm=TRUE) +
-  labs(title=(paste("Waning of VE against infection","(",strain_now,")"))) +
-  xlab("days since vaccination") +
-  ylab("% max protection") +
-  ylim(0,1)+
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
-
+if (fitting == "off"){
+  waning_shape_plot_list = list()
+  waning_to_plot = VE_waning_distribution %>% 
+    filter(dose < 3 & 
+             vaccine_type %in% vax_type_list &
+             strain == strain_now) %>%
+    mutate(immunity = paste(vaccine_type,dose))
+  
+  for (o in 1:length(unique(waning_to_plot$outcome))){
+    waning_shape_plot_list[[o]] = ggplot() +
+      geom_line(data=waning_to_plot[waning_to_plot$outcome == unique(waning_to_plot$outcome)[o],],
+                aes(x=days,y=VE_days,color=as.factor(immunity)),na.rm=TRUE) +
+      labs(title=(paste("Waning of VE against",paste(unique(waning_to_plot$outcome)[o]),"(",strain_now,")"))) +
+      xlab("days since vaccination") +
+      ylab("% max protection") +
+      ylim(0,1)+
+      theme_bw() +
+      theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+  }
+}
 #___________________________________________________________________
 
 
@@ -231,23 +253,25 @@ D=num_vax_doses
 RISK=num_risk_groups
 count=J*(T*D+1)*RISK # +1 is unvax
 
+
+initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
+initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
+initialRecovered = seroprev %>% left_join(pop_setting, by = "age_group") %>% mutate(R = seroprev*pop/100) %>%
+  select(age_group,R)
+
+date = seq(1,lengthInfectionDerivedImmunity)
+date = date_start - date
+workshop = as.data.frame(date)
+workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
+hist_cases = workshop
+
+
 if (fitting == "on"){
 
   S_inital=E_inital=I_inital=R_inital=(rep(0,count)) 
   
   #(B/F): number of active infected/recovered cases
 
-  initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
-  initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
-  initialRecovered = seroprev %>% left_join(pop_setting, by = "age_group") %>% mutate(R = seroprev*pop/100) %>%
-      select(age_group,R)
-    
-    date = seq(1,lengthInfectionDerivedImmunity)
-    date = date_start - date
-    workshop = as.data.frame(date)
-    workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
-    hist_cases = workshop
-    
     recovered_risk = initialRecovered %>% 
       left_join(risk_dn, by = "age_group") %>%
       mutate(risk_group = risk_group_name,
@@ -280,7 +304,6 @@ if (fitting == "on"){
   
     # Step Four B: distribute across vaccine classes 
     # COMEBACK, assumption infections are spread equally across vax classes
-  disease_class_list = c('S','E','I','R')
   
   empty_unvaccinated = crossing(class = disease_class_list,
                                 risk_group = risk_group_labels,
@@ -372,6 +395,8 @@ if (fitting == "on"){
   
 } else if (! fitting == "on"){
   
+  incidence_log = fitted_incidence_log #for rho_inital
+  
   
   #include vaccine strategy vaccine type
   if (! length(unique(fitted_next_state$vaccine_type)) == length(unique(vaccination_history_FINAL$vaccine_type))+1){ #+1 for unvaccinated
@@ -414,7 +439,8 @@ if (fitting == "on"){
 
 ### Use historical cases to estimate rho and R0/Reff (->beta)
 if (waning_toggle_rho_acqusition == TRUE ){
-  rho_inital = rho_time_step('symptomatic_disease',date_start,strain_inital)
+  #rho_inital = rho_time_step('symptomatic_disease',date_start,strain_inital)
+  rho_inital = rho_time_step(date_start)
 } else{
   rho_inital = 0.95 #Chemaitelly et al. 2 week estimate
 }
