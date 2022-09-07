@@ -56,7 +56,7 @@ if (age_split_results == "N"){
   }
   
   severe_outcome_log = workshop_2 %>% 
-    filter(date >= use_date) %>%
+    filter(date > use_date) %>%
     group_by(outcome) %>%
     mutate(proj_cum = cumsum(proj))
   
@@ -136,7 +136,7 @@ if (age_split_results == "N"){
   }
   
   severe_outcome_log = workshop_2 %>% 
-    filter(date >= use_date)%>%
+    filter(date > use_date)%>%
     group_by(outcome,macro_age_group) %>%
     mutate(proj_cum = cumsum(proj))
   
@@ -154,7 +154,7 @@ if (age_split_results == "N"){
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     #ylim(0,40) +
     ylab("incidence") +
-    labs(title='children')+
+    labs(title='children 0-4')+
     theme_bw() + 
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), 
@@ -170,7 +170,7 @@ if (age_split_results == "N"){
     scale_x_date(date_breaks="1 month", date_labels="%b") +
     #ylim(0,40) +
     ylab("incidence") +
-    labs(title='children')+
+    labs(title='children 5-17')+
     theme_bw() + 
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), 
@@ -193,7 +193,7 @@ if (age_split_results == "N"){
           panel.border = element_blank(),
           axis.line = element_line(color = 'black'))
  
-  grid.arrange(plot_children_0_4, plot_children_5_17, plot1_adults)
+  grid.arrange(plot_children_0_4, plot_children_5_17, plot_adults)
   
   #create row for table comparing vaccine strategies
   row = severe_outcome_log %>% 
