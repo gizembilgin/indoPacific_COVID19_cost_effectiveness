@@ -8,7 +8,7 @@ if (waning_toggle_severe_outcome == TRUE){
   if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
     VE_tracker = data.frame()
     for (outcome in c('death','severe_disease')){
-      for (day in 1:num_time_steps){
+      for (day in 0:num_time_steps){
         workshop = VE_time_step(strain_now,date_start+day,outcome)
         workshop = workshop %>% mutate(date=day,
                                        outcome_VE=outcome)
@@ -73,10 +73,29 @@ if (risk_group_toggle == "on"){
 
 #(C/C) calculate severe outcome incidence by vax_status
 if (risk_group_toggle == "on"){
+  ### add neonatal outcomes
+  if (risk_group_name == "pregnant_women"){
+    #ASSUMPTION - no dependence on pregnant woman's age
+    stillbirth_prev = 15.6/1000
+    stillbirth_risk = 1.80
+    preterm_prev = 6.2/1000 #Excess neonatal deaths due to increased risk of stillbirth or preterm delivery
+    preterm_risk = 1.47
+    
+    row = crossing(outcome    = 'neonatal_deaths',
+                              outcome_long = 'adverse pregnancy outcome resulting in neonatal death',
+                              age_group  = age_group_labels,
+                              percentage = ((stillbirth_risk-1)*stillbirth_prev + (preterm_risk-1)*preterm_prev),
+                              outcome_VE = 'severe_disease',
+                              risk_group = 'pregnant_women') 
+    severe_outcome_FINAL = rbind(severe_outcome_FINAL,row)
+    
+  }
+  
   severe_outcome_this_run = severe_outcome_FINAL %>% 
     left_join(VE_tracker, by = c("age_group", "outcome_VE", "risk_group")) %>%
     mutate(percentage = percentage*(1-VE)) %>%
     select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
+  
 } else{
   severe_outcome_this_run = severe_outcome_FINAL %>% 
     left_join(VE_tracker, by = c("age_group", "outcome_VE")) %>%
