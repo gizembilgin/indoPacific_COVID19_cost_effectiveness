@@ -20,12 +20,14 @@ waning_toggle_rho_acqusition = TRUE
 rho_severe_disease = "on"
 
 risk_group_toggle = "off"
+risk_group_lower_cov_ratio = NA
 vax_risk_strategy_toggle = "off"
+sensitivity_analysis_toggles = list()
 
 setting = "SLE"
 if (setting == "SLE"){
-  #gov_target = 0.516
-  gov_target = 0.7
+  gov_target = 0.516
+  #gov_target = 0.7
   workshop_doses = gov_target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
   workshop_doses = round(workshop_doses * sum(pop))
   
@@ -49,7 +51,7 @@ if (setting == "SLE"){
 receipt = 1
 outbreak_timing = "off" 
 #Note: roll-out during steady state
-source(paste(getwd(),"/(Table 2)_varying_eligb_age.R",sep=""))
+#source(paste(getwd(),"/(Table 2)_varying_eligb_age.R",sep=""))
 
 #________________________________________________________________________________________________________________
 
@@ -59,26 +61,40 @@ source(paste(getwd(),"/(Table 2)_varying_eligb_age.R",sep=""))
 receipt = 2
 risk_group_name = "pregnant_women"
 source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
-results_warehouse_pregnant_women = results_warehouse_FM
 
 receipt = 3
 risk_group_name = "adults_with_comorbidities"
-source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
-results_warehouse_adults_comorb = results_warehouse_FM
+source(paste(getwd(),"/(Table 3) high-risk groups.R",sep="")) 
 #________________________________________________________________________________________________________________
+
 
 
 
 ### FIGURE 2 (-> supplementary)
+risk_group_toggle = "off"
+vax_risk_strategy_toggle = "off"
 receipt = 4
-source(paste(getwd(),"/((run 1)_impact_of_current_program_targets.R",sep=""))
+#source(paste(getwd(),"/(run 1)_impact_of_current_program_targets.R",sep=""))
 receipt = 5
-source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
+#source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
 
-results_warehouse[[4]][[3]]
-results_warehouse[[5]][[3]]
+#results_warehouse[[4]][[3]]
+#results_warehouse[[5]][[3]]
 #________________________________________________________________________________________________________________
 
+
+
+###(SENSITIVITY ANALYSIS) At risk group analysis
+receipt = 6
+sensitivity_analysis_toggles$RR_risk_group = list(1,1.5,2.4,3)
+risk_group_name = "pregnant_women"
+source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
+
+receipt = 7
+sensitivity_analysis_toggles$RR_risk_group = list(1,1.5,2,3)
+risk_group_name = "adults_with_comorbidities"
+source(paste(getwd(),"/(Table 3) high-risk groups.R",sep="")) 
+#________________________________________________________________________________________________________________
 
 
 current_coverage = c(sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose ==1]),

@@ -24,20 +24,36 @@ pop
 
 #pick an age to trouble shoot off
 this_age = '30 to 44'
-
-workshop= next_state %>% filter(risk_group == risk_group_name & age_group == this_age)
+dataset = fitted_next_state
+  
+workshop= dataset %>% filter(age_group == this_age)
 workshop = aggregate(workshop$pop, by=list(workshop$age_group,workshop$risk_group,workshop$dose,workshop$vaccine_type), FUN=sum)
 colnames(workshop) = c('age_group','risk_group','dose','vaccine_type','state')
 workshop = workshop %>% left_join(pop_risk_group_dn) %>% mutate(cov = state/pop) %>% select(-pop)
 print(workshop, row.names = FALSE)
-# age_group     risk_group dose      vaccine_type      state          cov
-# 30 to 44 pregnant_women    1       AstraZeneca  3491.6649  0.041371417
-# 30 to 44 pregnant_women    2       AstraZeneca 10636.1493  0.126023713
-# 30 to 44 pregnant_women    1 Johnson & Johnson 11310.9805  0.134019532
-# 30 to 44 pregnant_women    2 Johnson & Johnson 32649.6971  0.386853919
-# 30 to 44 pregnant_women    1         Sinopharm  -255.3737 -0.003025827
-# 30 to 44 pregnant_women    2         Sinopharm     0.0000  0.000000000
-# 30 to 44 pregnant_women    0      unvaccinated 26564.8820  0.314757245
+# age_group     risk_group dose vaccine_type      state        cov
+# 30 to 44 general_public    1  AstraZeneca  92246.194 0.06641668
+# 30 to 44 pregnant_women    1  AstraZeneca   3971.153 0.04705269
+# 30 to 44 general_public    2  AstraZeneca 280996.124 0.20231544
+# 30 to 44 pregnant_women    2  AstraZeneca  12096.744 0.14332974
+# 30 to 44 general_public    1    Sinopharm 133690.467 0.09625630
+# 30 to 44 pregnant_women    1    Sinopharm   5755.308 0.06819247
+# 30 to 44 general_public    2    Sinopharm 407240.493 0.29321060
+# 30 to 44 pregnant_women    2    Sinopharm  17531.501 0.20772413
+
+# age_group     risk_group dose      vaccine_type      state        cov
+# 30 to 44 general_public    1       AstraZeneca  60583.287 0.04361959
+# 30 to 44 pregnant_women    1       AstraZeneca   3681.406 0.04361959
+# 30 to 44 general_public    2       AstraZeneca 276502.519 0.19908008
+# 30 to 44 pregnant_women    2       AstraZeneca  16801.960 0.19908008
+# 30 to 44 general_public    1 Johnson & Johnson      0.000 0.00000000
+# 30 to 44 pregnant_women    1 Johnson & Johnson      0.000 0.00000000
+# 30 to 44 general_public    2 Johnson & Johnson      0.000 0.00000000
+# 30 to 44 pregnant_women    2 Johnson & Johnson      0.000 0.00000000
+# 30 to 44 general_public    1         Sinopharm  87801.956 0.06321686
+# 30 to 44 pregnant_women    1         Sinopharm   5335.376 0.06321686
+# 30 to 44 general_public    2         Sinopharm 400728.026 0.28852166
+# 30 to 44 pregnant_women    2         Sinopharm  24350.651 0.28852166
 
 #expected up to this point
 workshop = vaccination_history_FINAL %>% filter(risk_group == risk_group_name & age_group == this_age & date<=date_now)
