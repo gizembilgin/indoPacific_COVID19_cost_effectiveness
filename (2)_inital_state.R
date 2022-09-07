@@ -5,20 +5,12 @@
 
 ###### (1/4) Vaccination
 #(A/B) Coverage 
-#(i/iv) Delay & Interval ____________________________________
-vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
-vaxCovDelay = vaxCovDelay %>%
-  mutate(delay = case_when(
-    dose == 1 ~ 21,#number of days till protection from first dose, COMEBACK - J&J full protection after 14 days?
-    TRUE ~ 14 #all other doses
-  ))
-
-#(ii/iv) #Vaccine coverage at end of true history
+#(i/iv) #Vaccine coverage at end of true history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% filter(date == max(vaccination_history_TRUE$date)) %>%
   select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
 #_________________________________________________
 
-#(iii/iv) Add hypothetical campaign (if 'on') ____
+#(ii/iv) Add hypothetical campaign (if 'on') ____
 if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vaccination_history_FINAL = 
     vax_strategy(vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date,
@@ -35,7 +27,8 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   #recalculate!
   list_doses = unique(vaccination_history_FINAL$dose)
   list_doses = list_doses[! list_doses %in% c(8)]
-  num_vax_doses = D = length(list_doses)  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
+  num_vax_doses = D = length(list_doses)
+  num_vax_doses = max(num_vax_doses,vax_strategy_toggles$vax_dose_strategy)
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
@@ -68,7 +61,8 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   #recalculate!
   list_doses = unique(vaccination_history_FINAL$dose)
   list_doses = list_doses[! list_doses %in% c(8)]
-  num_vax_doses = D = length(list_doses)  # dose 1, dose 2, COMEBACK no boosters yet in these settings 
+  num_vax_doses = D = length(list_doses)
+  num_vax_doses = max(num_vax_doses,vax_strategy_toggles$vax_dose_strategy)
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
@@ -109,6 +103,17 @@ variant_change_date = variant_change_date[variant_change_date>as.Date('2021-06-0
 
 date_now = date_start
 #_________________________________________________
+
+
+#(iii/iv) Delay & Interval ____________________________________
+vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
+vaxCovDelay = vaxCovDelay %>%
+  mutate(delay = case_when(
+    dose == 1 ~ 21,#number of days till protection from first dose, COMEBACK - J&J full protection after 14 days?
+    TRUE ~ 14 #all other doses
+  ))
+#_________________________________________________
+
 
 #(iv/iv)  Initial coverage _______________________
 #Including coverage_this_date for projected doses
@@ -188,6 +193,15 @@ VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning ==
 load( file = '1_inputs/VE_waning_distribution_SO.Rdata')
 VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(waning == waning_toggle_severe_outcome )
 VE_waning_distribution = rbind(VE_waning_distribution,VE_waning_distribution_SO)
+
+###ASSUMPTION - merging VE dose 3
+workshop = VE_waning_distribution %>% 
+  filter(dose == 3 & strain == strain_now) %>%
+  group_by(strain,outcome,vaccine_type,dose,days,waning) %>%
+  summarise(VE_days = mean(VE_days),.groups = "keep")
+#ggplot(workshop) +  geom_line(data=workshop[workshop$waning == TRUE,],aes(x=days,y=VE_days,linetype = as.factor(outcome) ))
+VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
+VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 
 if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_POP$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
@@ -417,7 +431,27 @@ if (fitting == "on"){
     
     fitted_next_state = fitted_next_state %>% arrange(class,risk_group,dose,vaccine_type,age_group)
   }
-
+  
+  #include additional doses if don't exist
+  if (! length(unique(fitted_next_state$dose)) == length(unique(vaccination_history_FINAL$dose[!vaccination_history_FINAL$dose == 8]))+1){  #+1 for unvaccinated
+    this_dose = max(fitted_next_state$dose) +1
+    copy_dose = max(fitted_next_state$dose)
+    
+    filler = fitted_next_state %>% 
+      filter(dose == copy_dose) %>%
+      mutate(pop = 0, 
+             dose = this_dose)
+    
+    fitted_next_state = rbind(fitted_next_state,filler)
+    
+    fitted_next_state$class = factor(fitted_next_state$class, levels = disease_class_list)
+    fitted_next_state$risk_group = factor(fitted_next_state$risk_group, levels = risk_group_labels)
+    fitted_next_state$age_group = factor(fitted_next_state$age_group, levels = age_group_labels)
+    fitted_next_state$vaccine_type = factor(fitted_next_state$vaccine_type, levels = vax_type_list)
+    
+    fitted_next_state = fitted_next_state %>% arrange(class,risk_group,dose,vaccine_type,age_group)
+  }
+  
   S_next=fitted_next_state$pop[fitted_next_state$class == 'S']
   E_next=fitted_next_state$pop[fitted_next_state$class == 'E']
   I_next=fitted_next_state$pop[fitted_next_state$class == 'I']
