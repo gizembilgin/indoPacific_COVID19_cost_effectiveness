@@ -149,8 +149,11 @@ apply_distribution = apply_distribution %>%
 
 
 #(B) apply to point estimates
+load(file = "1_inputs/VE_estimates_imputed.Rdata")
+load(file = "1_inputs/VE_booster_estimates.Rdata")
+
 point_estimates = VE_estimates_imputed %>% 
-  filter(outcome_family == 'severe_outcome') %>%
+  filter(outcome_family == 'severe_outcome' & !(vaccine_type == 'Pfizer' & dose == 3)) %>%
   select(strain,vaccine_type,dose,outcome,outcome_family,VE) %>%
   mutate(schedule = case_when(
     dose > 2 ~ 'booster',
@@ -158,7 +161,12 @@ point_estimates = VE_estimates_imputed %>%
     TRUE ~ 'primary'
   ))
 
+point_estimates_booster = VE_booster_estimates %>% 
+  filter(outcome_family == 'severe_outcome') %>%
+  select(strain,vaccine_type,primary_if_booster,dose,outcome,outcome_family,VE) %>%
+  mutate(schedule = 'booster')
 
+point_estimates = bind_rows(point_estimates,point_estimates_booster)
 
 together = point_estimates %>% 
   left_join(apply_distribution, by = c('outcome_family','schedule')) %>%
@@ -169,7 +177,7 @@ together = point_estimates %>%
 
 ###(3/3) Plot distributions and save VE_waning_distribution
 #(A/B) Plot
-if (exists("vax_type_list") == FALSE){  vax_type_list = c("AstraZeneca","Johnson & Johnson",  "Sinopharm" ) }
+if (exists("vax_type_list") == FALSE){  vax_type_list = c("AstraZeneca","Johnson & Johnson", "Pfizer", "Sinopharm" ) }
 
 waning_to_plot = together %>%
   filter(vaccine_type %in% vax_type_list) %>%
@@ -181,7 +189,7 @@ outcome_test = 'severe_disease'
 ggplot() +
   geom_line(data=waning_to_plot[waning_to_plot$strain == strain_test  & waning_to_plot$outcome == outcome_test,],
             aes(x=days,y=VE_days,color=as.factor(immunity)),na.rm=TRUE) +
-  labs(title=(paste("Waning of VE against infection","(",strain_test,")"))) +
+  labs(title=(paste("Waning of VE against","(",strain_test,")"))) +
   xlab("days since vaccination") +
   ylab("% max protection") +
   ylim(0,1)+
@@ -190,11 +198,11 @@ ggplot() +
 
 waning = together %>% mutate(waning = TRUE)
 no_waning = together %>% mutate(waning = FALSE) %>%
-  group_by(strain,vaccine_type,dose,outcome) %>%
+  group_by(strain,vaccine_type,primary_if_booster,dose,outcome) %>%
   mutate(VE_days = max(VE_days))
 
 
-VE_waning_distribution_SO = rbind(waning,no_waning) %>% select(strain, vaccine_type, dose, outcome,days,VE_days,waning)
+VE_waning_distribution_SO = rbind(waning,no_waning) %>% select(strain, vaccine_type,primary_if_booster, dose, outcome,days,VE_days,waning)
 save(VE_waning_distribution_SO, file = '1_inputs/VE_waning_distribution_SO.Rdata')
 
 
