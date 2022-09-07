@@ -131,7 +131,7 @@ for (increments_number in 1:num_time_steps){
                                    doses = 0)
            for (d in 1:D){
              for (i in 2:J){ #COMEBACK - could be faster with less for loop, assumption that don't vaccinate 0-4  
-               if (nrow(this_vax_history[this_vax_history$date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d],]) >0){
+               if (nrow(this_vax_history[this_vax_history$dose == d & this_vax_history$date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d],]) >0){
                  VR_this_step$doses[VR_this_step$dose == d & VR_this_step$age_group == age_group_labels[i]] =
                    this_vax_history$doses_delivered_this_date[this_vax_history$date ==  as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d] & 
                                                                         this_vax_history$dose==d &
