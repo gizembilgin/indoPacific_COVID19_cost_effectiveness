@@ -316,41 +316,79 @@ if (risk_group_toggle == "off"){
   vaccination_history_TRUE$risk_group = "general_public"
   
 } else if (risk_group_toggle == "on"){
+  if (is.na(risk_group_lower_cov_ratio)){
   
-  adult_pop = sum(pop_setting$pop[!pop_setting$age_group %in% c('0 to 4','5 to 9','10 to 17')])
-  age_risk_split =  pop_risk_group_dn %>%
-    mutate(split = case_when(
-      age_group %in% c('0 to 4','5 to 9','10 to 17') ~ 0,
-      TRUE ~ pop/adult_pop
-    ))
-  
-  if (is.na(risk_group_prioritisation_to_date) == FALSE){
-
-    workshop = age_risk_split
-    age_list = unique(workshop$age_group)[!(unique(workshop$age_group) %in% workshop$age_group[workshop$split == 0])]
+    age_risk_split =  pop_risk_group_dn %>%
+      mutate(adult_pop = case_when(
+        age_group %in% c('0 to 4','5 to 9','10 to 17') ~ 0,
+        TRUE ~ pop)) %>%
+      mutate(split = adult_pop/sum(adult_pop)) %>%
+      select(-adult_pop)
     
-    for (i in 1:length(age_list)){
-      age_risk_split$split[ age_risk_split$risk_group == risk_group_name &  age_risk_split$age_group == age_list[i]] =  
-        sum(workshop$split[ age_risk_split$age_group == age_list[i]]) * risk_group_prioritisation_to_date 
+    if (is.na(risk_group_prioritisation_to_date) == FALSE){
+  
+      workshop = age_risk_split
+      age_list = unique(workshop$age_group)[!(unique(workshop$age_group) %in% workshop$age_group[workshop$split == 0])]
       
-      age_risk_split$split[ age_risk_split$risk_group == 'general_public' &  age_risk_split$age_group == age_list[i]] =  
-        sum(workshop$split[ age_risk_split$age_group == age_list[i]]) * (1-risk_group_prioritisation_to_date) 
+      for (i in 1:length(age_list)){
+        age_risk_split$split[ age_risk_split$risk_group == risk_group_name &  age_risk_split$age_group == age_list[i]] =  
+          sum(workshop$split[ age_risk_split$age_group == age_list[i]]) * risk_group_prioritisation_to_date 
+        
+        age_risk_split$split[ age_risk_split$risk_group == 'general_public' &  age_risk_split$age_group == age_list[i]] =  
+          sum(workshop$split[ age_risk_split$age_group == age_list[i]]) * (1-risk_group_prioritisation_to_date) 
+      }
     }
+    
+    if (sum(age_risk_split$split) != 1){stop('(1) simulate setting line 290: dn of doses >1')}
+    
+    for (r in 1:num_risk_groups){
+      for (j in 1:num_age_groups){
+      workshop = vaccination_history_POP
+      workshop <- workshop %>% mutate(
+        age_group = age_group_labels[j],
+        risk_group = risk_group_labels[r],
+        doses_delivered_this_date = doses_delivered_this_date*age_risk_split$split[age_risk_split$age_group == age_group_labels[j] & age_risk_split$risk_group == risk_group_labels[r]])
+      
+      vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
+      }
+    }
+    if (sum(vaccination_history_POP$doses_delivered_this_date) != sum(vaccination_history_TRUE$doses_delivered_this_date)){stop('(1) simulate setting line 305')}
+  
+  } else{
+    
+    #calculate if lower inital coverage in risk group due to vaccine hesistancy
+    workshop_ratio = sum(pop_high_risk$pop[!pop_high_risk$age_group %in% c('0 to 4','5 to 9','10 to 17')])/sum(pop_general_public$pop[!pop_general_public$age_group %in% c('0 to 4','5 to 9','10 to 17')])
+    apply_cov_ratio = 1+risk_group_lower_cov_ratio*workshop_ratio
+    apply_cov_ratio = (1/apply_cov_ratio)
+    
+    age_risk_split =  pop_risk_group_dn %>%
+      mutate(adult_pop = case_when(
+        age_group %in% c('0 to 4','5 to 9','10 to 17') ~ 0,
+        TRUE ~ pop)) %>%
+      group_by(risk_group) %>%
+      mutate(split = adult_pop/sum(adult_pop)) %>%
+      select(-adult_pop)
+    
+    if (sum(age_risk_split$split) != 2){stop('(1) simulate setting line 290: dn of doses >1')}
+    
+    for (r in 1:num_risk_groups){
+      for (j in 1:num_age_groups){
+        workshop = vaccination_history_POP
+        workshop <- workshop %>% mutate(
+          age_group = age_group_labels[j],
+          risk_group = risk_group_labels[r],
+          doses_delivered_this_date = case_when(
+            risk_group_labels[r] == risk_group_name ~ doses_delivered_this_date*(1-apply_cov_ratio)*age_risk_split$split[age_risk_split$age_group == age_group_labels[j] & age_risk_split$risk_group == risk_group_labels[r]],
+            TRUE ~ doses_delivered_this_date*apply_cov_ratio*age_risk_split$split[age_risk_split$age_group == age_group_labels[j] & age_risk_split$risk_group == risk_group_labels[r]]))
+        
+        vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
+      }
+    }
+    if (sum(vaccination_history_POP$doses_delivered_this_date) != sum(vaccination_history_TRUE$doses_delivered_this_date)){stop('(1) simulate setting line 305')}
+    
   }
   
-  if (sum(age_risk_split$split) != 1){stop('(1) simulate setting line 290: dn of doses >1')}
-  
-  for (r in 1:num_risk_groups){
-    for (j in 1:num_age_groups){
-    workshop = vaccination_history_POP
-    workshop <- workshop %>% mutate(
-      age_group = age_group_labels[j],
-      risk_group = risk_group_labels[r],
-      doses_delivered_this_date = doses_delivered_this_date*age_risk_split$split[age_risk_split$age_group == age_group_labels[j] & age_risk_split$risk_group == risk_group_labels[r]])
-    vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
-    }
-  }
-  if (sum(vaccination_history_POP$doses_delivered_this_date) != sum(vaccination_history_TRUE$doses_delivered_this_date)){stop('(1) simulate setting line 305')}
+ 
 
 } 
 
