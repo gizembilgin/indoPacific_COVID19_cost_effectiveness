@@ -55,7 +55,7 @@ results_warehouse_entry[[2]] = warehouse_plot
 
 #(A/B) Plot
 warehouse_plot = warehouse_plot %>% 
-  mutate(time = date) 
+  mutate(time = day) 
 
 abs_plot_list = list()
 for (i in 1:length(unique(warehouse_plot$outcome))){
