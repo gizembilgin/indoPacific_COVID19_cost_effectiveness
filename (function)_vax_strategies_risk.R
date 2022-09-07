@@ -69,6 +69,8 @@ apply_risk_strategy <- function(
    
   ggplot(at_risk_delivery_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
   sum(at_risk_delivery_outline$doses_delivered_this_date)
+  total = at_risk_delivery_outline %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date),.groups = "keep")
+  ggplot(total) + geom_point(aes(x=date,y=doses_delivered_this_date))
   
   if (risk_group_age_broaden == TRUE){
     vax_strategy_toggles$vax_age_strategy = save_age_strategy
@@ -100,11 +102,27 @@ apply_risk_strategy <- function(
   leftover_doses = vax_strategy_toggles$vax_strategy_num_doses
   if (risk_group_accessibility == FALSE){
     limiter = at_risk_delivery_outline %>% group_by(date) %>% 
-      summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) 
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date),.groups = "keep") 
     # filter(doses_delivered_this_date > 0 ) %>%
-    limiter = limiter %>% mutate(doses_avaliable = vax_strategy_toggles$vax_strategy_roll_out_speed - doses_delivered_this_date,
+    limiter = limiter  %>% ungroup() %>% 
+      mutate(doses_avaliable = vax_strategy_toggles$vax_strategy_roll_out_speed - doses_delivered_this_date,
                                  day = as.numeric(date - min(limiter$date) + 1),
                                  cumsum = cumsum(doses_avaliable)) #see line 315 in function vax strategy
+    if (vax_doses_general>1){
+      #check that second dose of general avalibilitiy is = to first dose of general avaliability
+      for (d in 2:vax_doses_general){
+        workshop = limiter %>% mutate(day = day - vax_strategy_toggles$vax_strategy_vaccine_interval[d-1]) %>%
+          rename(next_dose_avaliab = doses_avaliable) %>%
+          select(day,next_dose_avaliab) 
+        limiter = limiter %>% left_join(workshop, by = "day")
+        limiter = limiter %>% ungroup() %>% 
+          mutate(doses_avaliable = case_when(
+          doses_avaliable>next_dose_avaliab ~ next_dose_avaliab,
+          TRUE ~ doses_avaliable)) %>%
+          mutate( cumsum = cumsum(doses_avaliable))
+      }
+    }
+    
     
     leftover_doses = vax_strategy_toggles$vax_strategy_num_doses - sum(at_risk_delivery_outline$doses_delivered_this_date)
   } 
@@ -126,7 +144,8 @@ apply_risk_strategy <- function(
   
   ggplot(generalPublic_leftover_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
   sum(generalPublic_leftover_outline$doses_delivered_this_date)
-  
+  total = generalPublic_leftover_outline %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date),.groups = "keep")
+  ggplot(total) + geom_point(aes(x=date,y=doses_delivered_this_date))  
   
   vaccination_history_MODF = bind_rows(vaccination_history_TRUE,at_risk_delivery_outline,generalPublic_leftover_outline)
 
@@ -158,10 +177,11 @@ apply_risk_strategy <- function(
       #NOTE - 10% leeway, unless want more complicated limiter on booster dose
       
     }
+    ggplot(check_df[check_df$risk_group == 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
+    ggplot(check_df[check_df$risk_group != 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
   }
   
-  ggplot(check_df[check_df$risk_group == 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
-  ggplot(check_df[check_df$risk_group != 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
+
   
   
   return(vaccination_history_MODF)

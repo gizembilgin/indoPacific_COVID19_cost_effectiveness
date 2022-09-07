@@ -30,12 +30,15 @@ VE_time_step <- function(strain_now,date_now,outcome){
     vax_to_this_date <- vaccine_occupancy_tracker
     
   } else{
-    vax_to_this_date <- vaccination_history_FINAL[vaccination_history_FINAL$date <= date_now,] %>% mutate(
+    vax_to_this_date <- vaccination_history_FINAL[vaccination_history_FINAL$date <= date_now,] 
+    if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
+      vax_to_this_date = vax_to_this_date %>% mutate(
       dose = case_when(
         dose == 8 ~ booster_dose_number,
         TRUE ~ dose
       )
     )
+    }
   }
   
   vax_to_this_date <- vax_to_this_date %>% # rearrange AIR dataset
