@@ -10,19 +10,21 @@ rm(list=ls())
 
 ###(1/3) Load distribution
 andrews <- read.csv(file = '1_inputs/VE_Andrews_shape.csv',header=TRUE)
-andrews <- andrews %>%  filter(dose<3) #COMEBACK - booster dose waning not included
 
 ### INITIAL VISULALISATION 
-plot1 = ggplot(data = andrews[andrews$strain == 'delta',]) + 
+dose_number = 2
+plot1 = ggplot(data = andrews[andrews$strain == 'delta' & andrews$dose == dose_number,]) + 
   ggtitle(paste('Delta')) +
   geom_point(aes(x=week,y=VE,color=as.factor(vaccine_type))) + 
   geom_errorbar(aes(x=week, ymin=VE_lower, ymax=VE_upper))
-plot2 = ggplot(data = andrews[andrews$strain == 'omicron',]) + 
+plot2 = ggplot(data = andrews[andrews$strain == 'omicron' & andrews$dose == dose_number,]) + 
   ggtitle(paste('Omicron')) +
   geom_point(aes(x=week,y=VE,color=as.factor(vaccine_type))) + 
   geom_errorbar(aes(x=week, ymin=VE_lower, ymax=VE_upper))
 grid.arrange(plot1, plot2, nrow=2)
 
+
+andrews <- andrews %>%  filter(dose<3) #COMEBACK - booster dose waning not included
 andrews_to_fit = andrews
 andrews_to_fit$days = andrews_to_fit$week * 7
 
@@ -132,6 +134,8 @@ direct = apply_distribution %>%
 #         Note: this may not be true, but also not relevant for a long period
 # (2) dose 1 and 2 from 'closest' vaccine (mode = viral) i.e. AZ for J&J, Sinopharm and Sinovac
 #         Note: possible issue with J&J and later boosters
+D = 2
+load(file = "1_inputs/VE_estimates_imputed.Rdata")
 
 imputed = data.frame()
 for (s in c('omicron','delta')){
@@ -192,7 +196,7 @@ together = rbind(imputed,direct) %>%
 #(A/B) Plot
 waning_to_plot = together %>%
   filter(dose < 3) %>%
-  filter(vaccine_type %in% vax_type_list) %>%
+  #filter(vaccine_type %in% vax_type_list) %>%
   mutate(immunity = paste(vaccine_type,dose))
 
 strain_test = 'omicron'
