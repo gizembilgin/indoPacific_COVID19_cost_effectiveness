@@ -14,6 +14,14 @@ VE_time_step <- function(strain_now,date_now,outcome){
     VE_distribution <- VE_waning_distribution[VE_waning_distribution$outcome == outcome &
                                                 VE_waning_distribution$strain == 'delta',] 
   }
+  if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
+    if ('age_group' %in% colnames(VE_distribution)){
+      if (length(unique(VE_distribution$age_group)) == 1){
+        VE_distribution = VE_distribution %>% ungroup() %>% select(-age_group)
+      }
+    }
+  }
+  
   
   #(2) doses delivered to this date
   occupancy = "off"
@@ -72,10 +80,17 @@ VE_time_step <- function(strain_now,date_now,outcome){
   }
 
   #(3) Bring VE d'n and AIR history together
-  workshop <- vax_to_this_date %>%
-    left_join(VE_distribution, by = c("vaccine_type", "dose", "days")) %>%
-    select(risk_group,vaccine_type,dose,days,age_group,VE_days,prop) %>%
-    mutate(VE_weighted = VE_days*prop)
+  if ('age_group' %in% colnames(VE_distribution) ){
+    workshop <- vax_to_this_date %>%
+      left_join(VE_distribution, by = c("vaccine_type", "dose", "days",'age_group')) %>%
+      select(risk_group,vaccine_type,dose,days,age_group,VE_days,prop) %>%
+      mutate(VE_weighted = VE_days*prop)
+  } else{
+    workshop <- vax_to_this_date %>%
+      left_join(VE_distribution, by = c("vaccine_type", "dose", "days")) %>%
+      select(risk_group,vaccine_type,dose,days,age_group,VE_days,prop) %>%
+      mutate(VE_weighted = VE_days*prop)
+  }
   
   
   #(4) Aggregate to estimate population VE for doses
