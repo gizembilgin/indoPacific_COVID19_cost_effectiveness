@@ -78,6 +78,7 @@ for (ticket in 1:length(queue)){
   row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
 }
+age_split_results = "N"
 #____________________________________________________________________________________________________________________________________
 
 ### (5) Save outputs  ##################################################################################################
@@ -171,23 +172,31 @@ table2$scenario = factor(table2$scenario, levels =
 table2 = table2 %>% arrange(scenario,macro_age_group,outcome)
 
 options(scipen = 1000)
-print = table2 %>% 
+print = table2 %>%
   filter(! scenario %in% c(baseline_to_compare))  %>%
   mutate(abs_reduction = round(abs_reduction),
          rel_reduction = round(rel_reduction,digits=1),
-         together_value = paste(format(abs_reduction, format="f", big.mark=",", digits=1),
-                                ' (',rel_reduction,'%)',sep=''),
          together_outcome = paste(outcome,macro_age_group,sep='_')) %>%
   ungroup() %>%
-  select(-num,-baseline_num,-abs_reduction,-rel_reduction,-macro_age_group,-outcome) %>%
+  select(-num,-baseline_num,-macro_age_group,-outcome) 
+
+print_num = print %>% mutate(value = abs_reduction,type = 'absolute') %>%
   pivot_wider(
     id_cols = scenario,
     names_from = together_outcome,
-    values_from = together_value)
+    values_from = value)
+print_abs = print %>% mutate(value = paste(rel_reduction,"%",sep=''),type = 'relative') %>%
+  pivot_wider(
+    id_cols = scenario,
+    names_from = together_outcome,
+    values_from = value)
+
+print = rbind(print_num,print_abs) %>%
+  arrange(scenario)
 
 time = Sys.time()
 time = gsub(':','-',time)
-write.csv(print,file=paste('x_results/table2 outbreak timing =',outbreak_timing,time,'.csv'))
+write.csv(print,file=paste('x_results/table2',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,time,'.csv'))
 
 
 
@@ -197,4 +206,4 @@ results_warehouse_entry[[4]]= print
 #____________________________________________________________________________________________________________________________________
 
 results_warehouse[[receipt]] = results_warehouse_entry
-age_split_results = "N"
+
