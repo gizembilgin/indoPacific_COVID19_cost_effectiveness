@@ -21,6 +21,7 @@ rho_severe_disease = "on"
 
 risk_group_toggle = "off"
 risk_group_lower_cov_ratio = NA
+risk_group_prioritisation_to_date = NA
 vax_risk_strategy_toggle = "off"
 sensitivity_analysis_toggles = list()
 
@@ -95,6 +96,32 @@ sensitivity_analysis_toggles$RR_risk_group = list(1,1.5,2,3)
 risk_group_name = "adults_with_comorbidities"
 source(paste(getwd(),"/(Table 3) high-risk groups.R",sep="")) 
 #________________________________________________________________________________________________________________
+
+
+
+###(SENSITIVITY ANALYSIS) Reduced VE in older adults and adults with comorbidities
+#S4.4 Reduced vaccine effectiveness in older adults - Table S4.4
+receipt = 8
+outbreak_timing = "off" 
+sensitivity_analysis_toggles = list(VE_older_adults = "reduced")
+source(paste(getwd(),"/(Table 2)_varying_eligb_age.R",sep=""))
+
+#S4.4 Reduced vaccine effectiveness in older adults - Table S4.5
+receipt = 9
+risk_group_name = "pregnant_women"
+sensitivity_analysis_toggles = list(VE_older_adults = "reduced")
+source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
+
+#S4.4 Reduced vaccine effectiveness in older adults - Table S4.5 AND
+#S4.5 Reduced vaccine effectiveness in older adults and adults with comorbidities - Table S4.6
+receipt = 10
+risk_group_name = "adults_with_comorbidities"
+sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)
+source(paste(getwd(),"/(Table 3) high-risk groups.R",sep="")) 
+
+sensitivity_analysis_toggles = list()
+#________________________________________________________________________________________________________________
+
 
 
 current_coverage = c(sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose ==1]),
