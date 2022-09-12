@@ -1,7 +1,36 @@
-
-
-
 time.start=proc.time()[[3]]
+
+if (exists("VE_loop") == FALSE){ VE_loop = 0}
+if (VE_loop == 0){
+  save_VE_waning_distribution = VE_waning_distribution
+  load( file = '1_inputs/VE_waning_distribution_SO.Rdata')
+  VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(waning == waning_toggle_severe_outcome )
+  VE_waning_distribution = bind_rows(VE_waning_distribution,VE_waning_distribution_SO)
+  
+  workshop = VE_waning_distribution %>% 
+    filter(dose == 3 & strain == strain_now) %>%
+    group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+    summarise(VE_days = mean(VE_days),.groups = "keep")
+  #ggplot(workshop) +  geom_line(data=workshop[workshop$waning == TRUE,],aes(x=days,y=VE_days,linetype = as.factor(outcome) ))
+  VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
+  VE_waning_distribution = rbind(VE_waning_distribution,workshop)
+  
+} else if (VE_loop == 1 &'VE_older_adults' %in% names(sensitivity_analysis_toggles)){
+  #Note: VE_loop == 2 (comorb) will use this same dn
+  load( file = '1_inputs/SA_VE_older_muted_SO.Rdata')
+  VE_waning_distribution_SO = SA_VE_older_muted_SO %>% filter(waning == waning_toggle_severe_outcome )
+  VE_waning_distribution = bind_rows(save_VE_waning_distribution,VE_waning_distribution_SO)
+  VE_waning_distribution = VE_waning_distribution %>% group_by(age_group)
+  
+  workshop = VE_waning_distribution %>% 
+    filter(dose == 3 & strain == strain_now) %>%
+    group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+    summarise(VE_days = mean(VE_days),.groups = "keep")
+  #ggplot(workshop) +  geom_line(data=workshop[workshop$waning == TRUE,],aes(x=days,y=VE_days,linetype = as.factor(outcome) ))
+  VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
+  VE_waning_distribution = rbind(VE_waning_distribution,workshop)
+}  
+
 
 #(A/C) calculate VE against severe outcomes by day
 if (waning_toggle_severe_outcome == TRUE){
@@ -38,6 +67,14 @@ workshop = crossing(risk_group = risk_group_labels,
                     outcome_VE = c('death','severe_disease'),
                     VE = 0)
 VE_tracker = rbind(VE_tracker,workshop)
+
+if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){
+  VE_tracker =  VE_tracker %>%
+    mutate(VE = case_when(
+      risk_group == risk_group_name & age_group %in% c("30 to 44","45 to 59") ~ VE * sensitivity_analysis_toggles$VE_adults_comorb,
+      TRUE ~ VE
+    ))
+}
 
 
 
