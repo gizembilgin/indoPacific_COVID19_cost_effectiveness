@@ -9,11 +9,18 @@ outbreak_timing = "off"
 vax_strategy_toggle = "on"
 vax_risk_strategy_toggle = "on"
 risk_group_toggle = "on" 
-vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
 risk_group_prioritisation_to_date = NA
+vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
 default_prioritisation_proportion = 0.5
 VE_at_risk_suppress = 1
-RR_estimate = RR_default = 2
+
+if (risk_group_name == "pregnant_women"){
+  RR_estimate  = RR_default =  2.4
+} else if (risk_group_name == "adults_with_comorbidities"){
+  RR_estimate  = RR_default = 2
+}
+
+
 
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
@@ -22,12 +29,15 @@ queue = list()
 this_run = list(
   vax_risk_strategy = 'N',           
   vax_risk_proportion = 0,         
-  vax_doses_general = 1,               
-  vax_doses_risk = 1,
+  vax_doses_general = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy,               
+  vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy,
   risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov,
   risk_group_accessibility = FALSE,
   risk_group_age_broaden = FALSE
 )
+if ('vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
+  this_run$risk_group_acceptability = sensitivity_analysis_toggles$vax_hesistancy_risk_group
+}
 
 queue[[1]] = list(vax_strategy_description = "no prioritisation",
                   apply_risk_strategy_toggles = this_run)
@@ -53,31 +63,30 @@ this_run$vax_risk_proportion = default_prioritisation_proportion
 ###______________
 
 ### booster doses
-this_run$vax_doses_risk = 2
-vax_strategy_toggles$vax_strategy_vaccine_interval = 365/4
+this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy + 1
 queue[[5]] = list(vax_strategy_description = 'booster at three months (at risk only)',
                   apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
-this_run$vax_doses_risk = 1
+this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy
 #___________________________________
 
 
 #(B/C) Providing additional doses
 this_run$risk_group_accessibility = TRUE
 ### single dose
-this_run$vax_doses_risk = 1
+this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy
 queue[[6]] = list(vax_strategy_description = 'additional primary doses',
                   apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
 ###______________
 
 ### booster doses
-this_run$vax_doses_risk = 2
+this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy + 1
 queue[[7]] = list(vax_strategy_description = 'additional booster doses',
                   apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
 #___________________________________
 
 
 #(C/C) Else
-this_run$vax_doses_risk = 1
+this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy
 this_run$risk_group_age_broaden = TRUE
 queue[[8]] = list(vax_strategy_description = 'broaden to <18 pregnant individuals',
                   apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
@@ -85,9 +94,11 @@ queue[[8]] = list(vax_strategy_description = 'broaden to <18 pregnant individual
 
 ### (3) Run  ##################################################################################################
 for (ticket in 1:length(queue)){
+#for (ticket in 1:3){ 
   
   commands = queue[[ticket]]
   
+  VE_loop = 0
   vax_strategy_description = commands$vax_strategy_description
   apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
   
@@ -101,6 +112,63 @@ for (ticket in 1:length(queue)){
                        date_complete_at_risk_group = date_complete_at_risk_group) %>% 
     relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
+  
+  
+  ### code for RR sensitivity analysis
+  if ('RR_risk_group' %in% names(sensitivity_analysis_toggles)){
+    RR_to_test_list = sensitivity_analysis_toggles$RR_risk_group 
+    if (ticket == 1){SA_RR_warehouse_table = data.frame()} 
+    
+    for (RR_loop in 1:length(RR_to_test_list)){
+      RR_estimate = RR_to_test_list[[RR_loop]]
+      
+      source(paste(getwd(),"/(once)_severe_outcomes_calc.R",sep="")) 
+      source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
+      
+      row = row %>% mutate(scenario = vax_strategy_description,
+                           RR_estimate = RR_estimate) %>% 
+        relocate(scenario, .before = colnames(row)[[1]])
+      SA_RR_warehouse_table = rbind(SA_RR_warehouse_table,row)
+    }
+    save(SA_RR_warehouse_table,file =  paste("x_results/sensitivity_analysis_RR_",Sys.Date(),".Rdata",sep=''))
+    RR_estimate = RR_default
+  }
+  
+  ### code for VE sensitivity analysis
+  if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
+    save_toggles = sensitivity_analysis_toggles
+    
+    if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){VE_loop_length = 2
+    } else{VE_loop_length = 1}
+      
+    if (ticket == 1){SA_VE_warehouse_table = warehouse_table %>% 
+      select(-date_complete_at_risk_group) %>%
+      mutate(VE_mod = 'none')
+    } else{
+      workshop = row %>% 
+        select(-date_complete_at_risk_group) %>%
+        mutate(VE_mod = 'none')
+      SA_VE_warehouse_table = rbind(SA_VE_warehouse_table,workshop)
+    }
+    
+    for (VE_loop in 1:VE_loop_length){
+      if ('VE_older_adults' %in% names(sensitivity_analysis_toggles) & 'VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){this_sensitivity_analysis = 'VE_comorb'
+      } else{this_sensitivity_analysis = 'VE_older_adults'} #COMEBACK - there MUST be a simpler way to do this in R, but a quick 30min search yielded no results
+      
+      source(paste(getwd(),"/(once)_severe_outcomes_calc.R",sep="")) 
+      source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
+      
+      row = row %>% mutate(scenario = vax_strategy_description,
+                           VE_mod = this_sensitivity_analysis) %>% 
+        relocate(scenario, .before = colnames(row)[[1]])
+      SA_VE_warehouse_table = rbind(SA_VE_warehouse_table,row)
+      
+      sensitivity_analysis_toggles = sensitivity_analysis_toggles[!names(sensitivity_analysis_toggles) %in% c('VE_adults_comorb')] #remove for second loop
+    }
+    
+    save(SA_VE_warehouse_table,file =  paste("x_results/sensitivity_analysis_VE_",Sys.Date(),".Rdata",sep=''))
+    sensitivity_analysis_toggles = save_toggles
+  }
 }
 #____________________________________________________________________________________________________________________________________
 
@@ -114,7 +182,7 @@ warehouse_plot = warehouse_plot %>%
   mutate(time = day) %>%
   filter(time>=0)
 
-if (risk_group_name == 'adults_with_comorbidities'){warehouse_plot = warehouse_plot[! warehouse_plot$label %in% c("broaden to <18 pregnant individuals"),]}
+if (risk_group_name == 'adults_with_comorbidities'){warehouse_plot = warehouse_plot[! warehouse_plot$label %in% c('broaden to <18 pregnant individuals'),]}
 
 section_1 = c("no prioritisation" ,"25% prioritisation" ,"50% prioritisation" ,"75% prioritisation", "booster at three months (at risk only)" )
 section_2 = c("no prioritisation","additional primary doses","additional booster doses","broaden to <18 pregnant individuals")
@@ -163,58 +231,94 @@ for (section in 1:length(section_list)){
 ### Cumulative outcome table ############
 baseline_to_compare = "no prioritisation"
 
-table3 = warehouse_table %>% 
-  select(-date_complete_at_risk_group)
-table3 = table3  %>% 
-  pivot_longer(
-    cols = 2:ncol(table3) ,
-    names_to = 'outcome',
-    values_to = 'num'
-  ) 
+iteration_num = 1
+if ('RR_risk_group' %in% names(sensitivity_analysis_toggles)){iteration_num = length(RR_to_test_list)}
+if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){iteration_num = 3
+} else if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){iteration_num = 2 #include default
+}
+  
+for (i in 1:iteration_num){
+  
+  if ('RR_risk_group' %in% names(sensitivity_analysis_toggles)){
+    workshop = SA_RR_warehouse_table %>% 
+      filter(RR_estimate == RR_to_test_list[[i]] ) %>% 
+      select(-RR_estimate)
+  } else if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
+    workshop = SA_VE_warehouse_table %>% 
+      filter(VE_mod == unique(SA_VE_warehouse_table$VE_mod)[i] ) %>% 
+      select(-VE_mod)
+  } else {
+    workshop = warehouse_table %>% 
+    select(-date_complete_at_risk_group)
+  }
+  
+  table3 = workshop %>% 
+    pivot_longer(
+      cols = 2:ncol(workshop) ,
+      names_to = 'outcome',
+      values_to = 'num'
+    ) 
+  
+  #compare to baseline
+  baseline = table3 %>% 
+    filter(scenario == baseline_to_compare) %>%
+    rename(baseline_num=num) %>%
+    select(-scenario)
+  
+  table3 = table3 %>%
+    left_join(baseline,by=c('outcome'))  %>%
+    mutate(abs_reduction = num - baseline_num,
+           rel_reduction = 100*(num - baseline_num)/baseline_num)
+  
+  
+  if (risk_group_name == "pregnant_women"){
+    table3$outcome = factor(table3$outcome,levels=c('cases','severe_disease','hosp','death','YLL','neonatal_deaths'))
+  } else{
+    table3$outcome = factor(table3$outcome,levels=c('cases','severe_disease','hosp','death','YLL'))
+  }
+  
+  table3$scenario = factor(table3$scenario, levels = 
+                             c("no prioritisation",                      "25% prioritisation",                     "50% prioritisation",                    
+                               "75% prioritisation",                     "booster at three months (at risk only)", "additional primary doses",              
+                               "additional booster doses",               "broaden to <18 pregnant individuals" ))
+  table3 = table3 %>% arrange(scenario,outcome)
+  
+  options(scipen = 1000)
+  print = table3 %>% 
+    filter(! scenario %in% c(baseline_to_compare))  %>%
+    mutate(abs_reduction = round(abs_reduction),
+           rel_reduction = round(rel_reduction,digits=1),
+           together_value = paste(format(abs_reduction, format="f", big.mark=",", digits=1),
+                                  ' (',rel_reduction,'%)',sep=''),
+           together_outcome = paste(outcome,sep='_')) %>%
+    ungroup() %>%
+    select(-num,-baseline_num,-abs_reduction,-rel_reduction,-outcome) %>%
+    pivot_wider(
+      id_cols = scenario,
+      names_from = together_outcome,
+      values_from = together_value)
+  
+  time = Sys.time()
+  time = gsub(':','-',time)
+  
+  if ('RR_risk_group' %in% names(sensitivity_analysis_toggles)){
+    this_RR = RR_to_test_list[[i]]
+    
+    write.csv(print,file=paste('x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,'RR',this_RR,time,'.csv'))
+    
+  } else if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
+    this_VE_mod = unique(SA_VE_warehouse_table$VE_mod)[i] 
+    
+    write.csv(print,file=paste('x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,this_VE_mod,time,'.csv'))
+    
+  } else{
+    write.csv(print,file=paste('x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,gov_target,time,'.csv'))
+    ### SAVE
+    results_warehouse_entry[[4]]= print
+    results_warehouse[[receipt]] = results_warehouse_entry
+  }
+  
+}
 
-#compare to baseline
-baseline = table3 %>% 
-  filter(scenario == baseline_to_compare) %>%
-  rename(baseline_num=num) %>%
-  select(-scenario)
 
-table3 = table3 %>%
-  left_join(baseline,by=c('outcome'))  %>%
-  mutate(abs_reduction = num - baseline_num,
-         rel_reduction = 100*(num - baseline_num)/baseline_num)
-
-table3$outcome = factor(table3$outcome,levels=c('cases','severe_disease','hosp','death','YLL'))
-table3$scenario = factor(table3$scenario, levels = 
-                           c("no prioritisation",                      "25% prioritisation",                     "50% prioritisation",                    
-                             "75% prioritisation",                     "booster at three months (at risk only)", "additional primary doses",              
-                             "additional booster doses",               "broaden to <18 pregnant individuals" ))
-table3 = table3 %>% arrange(scenario,outcome)
-
-options(scipen = 1000)
-print = table3 %>% 
-  filter(! scenario %in% c(baseline_to_compare))  %>%
-  mutate(abs_reduction = round(abs_reduction),
-         rel_reduction = round(rel_reduction,digits=1),
-         together_value = paste(format(abs_reduction, format="f", big.mark=",", digits=1),
-                                ' (',rel_reduction,'%)',sep=''),
-         together_outcome = paste(outcome,sep='_')) %>%
-  ungroup() %>%
-  select(-num,-baseline_num,-abs_reduction,-rel_reduction,-outcome) %>%
-  pivot_wider(
-    id_cols = scenario,
-    names_from = together_outcome,
-    values_from = together_value)
-
-time = Sys.time()
-time = gsub(':','-',time)
-write.csv(print,file=paste('x_results/table3 prioritising',risk_group_name,time,'.csv'))
-
-
-
-### SAVE
-results_warehouse_entry[[4]]= print
-
-#____________________________________________________________________________________________________________________________________
-
-results_warehouse[[receipt]] = results_warehouse_entry
 
