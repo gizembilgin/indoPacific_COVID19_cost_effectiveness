@@ -190,14 +190,11 @@ max_occupany_run_date = max(workshop$date) + workshop_delay
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
   mutate(outcome = 'any_infection')
-load( file = '1_inputs/VE_waning_distribution_SO.Rdata')
-VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(waning == waning_toggle_severe_outcome )
-VE_waning_distribution = rbind(VE_waning_distribution,VE_waning_distribution_SO)
 
 ###ASSUMPTION - merging VE dose 3
 workshop = VE_waning_distribution %>% 
   filter(dose == 3 & strain == strain_now) %>%
-  group_by(strain,outcome,vaccine_type,dose,days,waning) %>%
+  group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
   summarise(VE_days = mean(VE_days),.groups = "keep")
 #ggplot(workshop) +  geom_line(data=workshop[workshop$waning == TRUE,],aes(x=days,y=VE_days,linetype = as.factor(outcome) ))
 VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
