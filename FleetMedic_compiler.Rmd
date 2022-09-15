@@ -12,15 +12,15 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 options(scipen=10000); require(ggpubr); require(knitr)
 
-list_poss_Rdata = list.files(path="x_results/",pattern = "FleetMedic_run_*")
+list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = "FleetMedic_run_*")
 list_poss_Rdata_details = double()
 for (i in 1:length(list_poss_Rdata)){
   list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                 file.info(paste('x_results/',list_poss_Rdata[[i]],sep=''))$mtime)
+                                 file.info(paste(rootpath,'x_results/',list_poss_Rdata[[i]],sep=''))$mtime)
 }
 latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
 
-load(paste('x_results/',latest_file,sep=''))
+load(paste(rootpath,'x_results/',latest_file,sep=''))
 ```
 
 # Introduction

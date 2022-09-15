@@ -28,7 +28,6 @@ pop_setting <- pop_setting_orig %>%
 pop_setting <- aggregate(pop_setting$population, by=list(category=pop_setting$agegroup), FUN=sum)
 colnames(pop_setting) <-c('age_group','pop')
 pop <- pop_setting$pop
-#write.csv(pop_setting,file = 'x_results/pop_scrap.csv')
 #_______________________________________________________
 
 

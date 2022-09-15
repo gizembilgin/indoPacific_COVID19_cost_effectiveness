@@ -169,7 +169,7 @@ file_name = paste("FM run 2 ",risk_group_name, Sys.time(),".csv",sep="")
 file_name = gsub(' ','_',file_name)
 file_name = gsub(':','-',file_name)
 
-write_csv(table_to_print, file = paste("x_results/",file_name,sep=""))
+write_csv(table_to_print, file = paste(rootpath,"x_results/",file_name,sep=""))
 
 file_name = gsub('.csv','.Rdata',file_name)
-save(results_warehouse_entry, file = paste("x_results/",file_name,sep=""))
+save(results_warehouse_entry, file = paste(rootpath,"x_results/",file_name,sep=""))

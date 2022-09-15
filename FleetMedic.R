@@ -58,7 +58,7 @@ source(paste(getwd(),"/(FM sensitivity 2) Reduced VE in 'at risk'.R",sep=""))
 
 
 
-save.image(file = paste("x_results/FleetMedic_run_",Sys.Date(),risk_group_name,".Rdata",sep=''))
+save.image(file = paste(rootpath,"x_results/FleetMedic_run_",Sys.Date(),risk_group_name,".Rdata",sep=''))
 
 time.end.FleetMedic=proc.time()[[3]]
 time.end.FleetMedic-time.start.FleetMedic 
@@ -68,7 +68,7 @@ time.end.FleetMedic-time.start.FleetMedic
 time = Sys.time()
 time = gsub(':','-',time)
 
-file_name = paste( "x_results/FleetMedic",risk_group_name,time)
+file_name = paste( rootpath,"x_results/FleetMedic",risk_group_name,time)
 file_name = gsub(' ','_',file_name)
 
 library(rmarkdown)

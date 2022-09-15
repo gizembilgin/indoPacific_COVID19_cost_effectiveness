@@ -92,7 +92,7 @@ risk_group_name = "pregnant_women"
 source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
 
 receipt = 7
-sensitivity_analysis_toggles$RR_risk_group = list(1,1.5,2,3)
+sensitivity_analysis_toggles$RR_risk_group = list(1,1.5,1.95,3)
 risk_group_name = "adults_with_comorbidities"
 source(paste(getwd(),"/(Table 3) high-risk groups.R",sep="")) 
 #________________________________________________________________________________________________________________
@@ -128,7 +128,7 @@ current_coverage = c(sum(vaccination_history_POP$coverage_this_date[vaccination_
                      sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose ==2])) #COMEBACK - if J&J in use!
 if ("Johnson & Johnson" %in% unique(vaccination_history_POP$vaccine_type)){warning('True vaccine coverage MUST consider J&J dose 1')}
 
-save.image(file = paste("x_results/complete_model_run_",Sys.Date(),".Rdata",sep=''))
+save.image(file = paste(rootpath,"x_results/complete_model_run_",Sys.Date(),".Rdata",sep=''))
 
 time.end.FleetAdmiral=proc.time()[[3]]
 time.end.FleetAdmiral-time.start.FleetAdmiral 
@@ -137,7 +137,7 @@ time.end.FleetAdmiral-time.start.FleetAdmiral
 
 time = Sys.time()
 time = gsub(':','-',time)
-file_name = paste( "x_results/Vaccine allocation project results",time)
+file_name = paste(rootpath,"x_results/Vaccine allocation project results",time)
 file_name = gsub(' ','_',file_name)
 
 #library(rmarkdown); library(tinytex)

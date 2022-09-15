@@ -196,7 +196,7 @@ print = rbind(print_num,print_abs) %>%
 
 time = Sys.time()
 time = gsub(':','-',time)
-write.csv(print,file=paste('x_results/table2',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,time,'.csv'))
+write.csv(print,file=paste(rootpath,'x_results/table2',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,time,'.csv'))
 
 
 

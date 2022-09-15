@@ -141,7 +141,7 @@ current_coverage = c(sum(vaccination_history_POP$coverage_this_date[vaccination_
                      sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose ==2])) #COMEBACK - if J&J in use!
 if ("Johnson & Johnson" %in% unique(vaccination_history_POP$vaccine_type)){warning('True vaccine coverage MUST consider J&J dose 1')}
 
-save.image(file = paste("x_results/sensitivity_analysis_vax_hest_",Sys.Date(),".Rdata",sep=''))
+save.image(file = paste(rootpath,"x_results/sensitivity_analysis_vax_hest_",Sys.Date(),".Rdata",sep=''))
 
 time.end.FleetAdmiral=proc.time()[[3]]
 time.end.FleetAdmiral-time.start.FleetAdmiral 
