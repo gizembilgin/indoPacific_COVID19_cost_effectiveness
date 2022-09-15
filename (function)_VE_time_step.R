@@ -24,29 +24,14 @@ VE_time_step <- function(strain_now,date_now,outcome){
   
   
   #(2) doses delivered to this date
-  occupancy = "off"
-  if (occupancy == "on"){   
-    if (date_now <= max_occupany_run_date){
-      source(paste(getwd(),"/(function) vaccine occupancy tracker.R",sep=""))
-      if (nrow(vaccine_occupancy_tracker) == 0){
-        vaccine_occupancy_tracker = vaccination_history_FINAL %>% 
-          filter(date == min(vaccination_history_FINAL$date)) %>%
-          mutate(doses_delivered_this_date = 0)
-      }
-    }
-    
-    vax_to_this_date <- vaccine_occupancy_tracker
-    
-  } else{
-    vax_to_this_date <- vaccination_history_FINAL[vaccination_history_FINAL$date <= date_now,] 
-    if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
-      vax_to_this_date = vax_to_this_date %>% mutate(
-      dose = case_when(
-        dose == 8 ~ booster_dose_number,
-        TRUE ~ dose
+  vax_to_this_date <- vaccination_history_FINAL[vaccination_history_FINAL$date <= date_now,] 
+  if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
+    vax_to_this_date = vax_to_this_date %>% mutate(
+    dose = case_when(
+      dose == 8 ~ booster_dose_number,
+      TRUE ~ dose
       )
     )
-    }
   }
   
   vax_to_this_date <- vax_to_this_date %>% # rearrange AIR dataset
