@@ -75,9 +75,9 @@ source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
 risk_group_toggle = "off"
 vax_risk_strategy_toggle = "off"
 receipt = 4
-#source(paste(getwd(),"/(run 1)_impact_of_current_program_targets.R",sep=""))
+#source(paste(getwd(),"/(sensitivity)_new_variant_timing_of_outbreak.R",sep=""))
 receipt = 5
-#source(paste(getwd(),"/(run 3)_varying_vaccine_rollout.R",sep=""))
+#source(paste(getwd(),"/(sensitivity)_new_variant_rollout_speed.R",sep=""))
 
 #results_warehouse[[4]][[3]]
 #results_warehouse[[5]][[3]]
