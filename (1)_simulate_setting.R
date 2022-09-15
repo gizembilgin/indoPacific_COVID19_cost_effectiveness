@@ -36,7 +36,6 @@ pop_risk_group_dn = pop_setting %>% mutate(risk_group = 'general_public')
 risk_group_labels = c('general_public')
 
 if (num_risk_groups>1){
-  #COMEBACK_RISK these are DUMMY VALUES (~DHS fertility rate)
   risk_dn = read.csv('1_inputs/risk_group.csv')
   
   if(risk_group_name %in% c('adults_with_comorbidities')){
