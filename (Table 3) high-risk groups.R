@@ -17,7 +17,7 @@ VE_at_risk_suppress = 1
 if (risk_group_name == "pregnant_women"){
   RR_estimate  = RR_default =  2.4
 } else if (risk_group_name == "adults_with_comorbidities"){
-  RR_estimate  = RR_default = 2
+  RR_estimate  = RR_default = 1.95
 }
 
 
@@ -130,7 +130,7 @@ for (ticket in 1:length(queue)){
         relocate(scenario, .before = colnames(row)[[1]])
       SA_RR_warehouse_table = rbind(SA_RR_warehouse_table,row)
     }
-    save(SA_RR_warehouse_table,file =  paste("x_results/sensitivity_analysis_RR_",Sys.Date(),".Rdata",sep=''))
+    save(SA_RR_warehouse_table,file =  paste(rootpath,"x_results/sensitivity_analysis_RR_",Sys.Date(),".Rdata",sep=''))
     RR_estimate = RR_default
   }
   
@@ -166,7 +166,7 @@ for (ticket in 1:length(queue)){
       sensitivity_analysis_toggles = sensitivity_analysis_toggles[!names(sensitivity_analysis_toggles) %in% c('VE_adults_comorb')] #remove for second loop
     }
     
-    save(SA_VE_warehouse_table,file =  paste("x_results/sensitivity_analysis_VE_",Sys.Date(),".Rdata",sep=''))
+    save(SA_VE_warehouse_table,file =  paste(rootpath,"x_results/sensitivity_analysis_VE_",Sys.Date(),".Rdata",sep=''))
     sensitivity_analysis_toggles = save_toggles
   }
 }
@@ -304,15 +304,15 @@ for (i in 1:iteration_num){
   if ('RR_risk_group' %in% names(sensitivity_analysis_toggles)){
     this_RR = RR_to_test_list[[i]]
     
-    write.csv(print,file=paste('x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,'RR',this_RR,time,'.csv'))
+    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,'RR',this_RR,time,'.csv'))
     
   } else if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
     this_VE_mod = unique(SA_VE_warehouse_table$VE_mod)[i] 
     
-    write.csv(print,file=paste('x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,this_VE_mod,time,'.csv'))
+    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,this_VE_mod,time,'.csv'))
     
   } else{
-    write.csv(print,file=paste('x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,gov_target,time,'.csv'))
+    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,gov_target,time,'.csv'))
     ### SAVE
     results_warehouse_entry[[4]]= print
     results_warehouse[[receipt]] = results_warehouse_entry
