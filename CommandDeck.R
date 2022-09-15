@@ -88,7 +88,7 @@ if (fitting == "on"){
   load(file = '1_inputs/last_fit_date.Rdata')
   if (as.numeric(abs(fitted_max_date - Sys.Date()))>30){ 
     warning('refitted')
-    source(paste(getwd(),"/(function)_fitting_model.R",sep=""))
+    source(paste(getwd(),"/(0)_fitting_model.R",sep=""))
   } else{
     load(file = '1_inputs/fitted_results.Rdata')
     if (risk_group_toggle == "off"){
