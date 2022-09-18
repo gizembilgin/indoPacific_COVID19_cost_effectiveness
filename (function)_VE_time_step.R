@@ -110,14 +110,6 @@ VE_time_step <- function(strain_now,date_now,outcome){
   
   VE_tidy = workshop
   
-  if (! VE_at_risk_suppress == 1){
-    VE_tidy = VE_tidy %>%
-      mutate(VE = case_when(
-        risk_group == risk_group_name ~ VE * VE_at_risk_suppress,
-        TRUE ~ VE
-      ))
-  }
-  
   return(VE_tidy)
   
 }

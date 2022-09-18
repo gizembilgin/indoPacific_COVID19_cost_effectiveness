@@ -12,7 +12,6 @@ risk_group_toggle = "on"
 risk_group_prioritisation_to_date = NA
 vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
 default_prioritisation_proportion = 0.5
-VE_at_risk_suppress = 1
 
 if (risk_group_name == "pregnant_women"){
   RR_estimate  = RR_default =  2.4

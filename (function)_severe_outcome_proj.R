@@ -26,12 +26,9 @@ if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_l
 } else if (!nrow(severe_outcome_this_run) == nrow(workshop)){warning('more doses left to give in this simulation')}
 #NOTE: number of rows in severe_outcome_this_run may be longer than run of model if more doses to give out than the run of the model
 
-if (rho_severe_disease == "on"){
-  workshop = workshop %>%
-    left_join(reinfection_protection, by = c("date", "age_group")) %>%
-    mutate(proj = proj*(1-protection))
-  #hosp_incid = subset(hosp_incid, select = -c(protection))
-}
+workshop = workshop %>%
+  left_join(reinfection_protection, by = c("date", "age_group")) %>%
+  mutate(proj = proj*(1-protection))
 
 severe_outcome_log_tidy = workshop %>% select(date,risk_group,age_group,dose,vaccine_type,outcome,proj) %>%
   filter(date >= date_start+1)

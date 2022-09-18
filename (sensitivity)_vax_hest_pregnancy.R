@@ -13,7 +13,6 @@ risk_group_toggle = "on"
 risk_group_name = "pregnant_women"
 risk_group_prioritisation_to_date = NA
 default_prioritisation_proportion = 0.5
-VE_at_risk_suppress = 1 #i.e. do not suppress VE at risk
 
 #risk_group_lower_cov_ratio = 52/73.4
 risk_group_lower_cov_ratio = 70/88
@@ -37,7 +36,6 @@ vax_risk_strategy_toggle = "off"
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = FALSE
 waning_toggle_rho_acqusition = TRUE
-rho_severe_disease = "on"
 
 source(paste(getwd(),"/CommandDeck.R",sep=""))
 
@@ -97,7 +95,7 @@ model_weeks = 52          # how many weeks should the model run for?
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = TRUE
 waning_toggle_rho_acqusition = TRUE
-rho_severe_disease = "on"
+
 
 setting = "SLE"
 if (setting == "SLE"){

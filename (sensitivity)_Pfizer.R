@@ -18,7 +18,6 @@ model_weeks = 52          # how many weeks should the model run for?
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = TRUE
 waning_toggle_rho_acqusition = TRUE
-rho_severe_disease = "on"
 
 risk_group_toggle = "off"
 risk_group_lower_cov_ratio = NA
