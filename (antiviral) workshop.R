@@ -1,34 +1,21 @@
 time.start.AntiviralModel=proc.time()[[3]]
 
-#DEPENDENCIES FROM PRIMARY MODE: severe_outcome_this_run, reinfection_protection, incidence_log_tidy, date_start, severe_outcome_log_tidy
-
-
-colnames(incidence_log_tidy)
-#"date"         "incidence"    "temp_risk"    "risk_group"   "age_group"    "dose"         "vaccine_type"   
-#NOTE: we are assuming incidence is day 0 of symptom onset
-
+#DEPENDENCIES FROM PRIMARY MODEL (n=5): incidence_log_tidy, severe_outcome_log_tidy, severe_outcome_this_run, reinfection_protection, param_age (-> prop_sympt)
+#DEPENDENCIES FROM '(antiviral) set up.R' (n=4): incidence_log_tidy,outcomes_without_antivirals,likelihood_severe_outcome,prop_sympt
 
 ### TOGGLES ################################################################
 toggle_antiviral_target = 'adults_with_comorbidities' #options: adults_with_comorbidities (baseline), unvaccinated_adults, pregnant_women, or all_adults
 toggle_antiviral_start_date = as.Date('2022-09-01')
 toggle_antiviral_delivery_capacity = 250 #daily capacity for antiviral delivery
 toggle_antiviral_effectiveness = 0.88 #could make stochastic
-toggle_number_of_runs = 1000
+toggle_number_of_runs = 100
 #____________________________________________________________________________
 
 
 ### INITALISE DATA FRAMES #################################################################
 this_scenario_tracker = data.frame()
 
-#COMEBACK - could make these likelihoods stochastic
-outcomes_without_antivirals = severe_outcome_log_tidy  %>%
-  group_by(outcome) %>%
-  summarise(overall = sum(proj))
 
-likelihood_severe_outcome = severe_outcome_this_run %>%
-  left_join(reinfection_protection, by = c("date", "age_group")) %>%
-  mutate(percentage = percentage*(1-protection)) %>%
-  select(-outcome_long,-protection)
 #____________________________________________________________________________
 
 
@@ -55,16 +42,12 @@ if (toggle_antiviral_target %in% c('adults_with_comorbidities','pregnant_women')
   stop('pick a valid toggle_antiviral_target!')
 }
 antiviral_target = antiviral_target %>% filter(incidence>0,
-                                               date > date_start)
+                                               date >= toggle_antiviral_start_date)
 #____________________________________________________________________________
 
 
 ### SELECT SYMPTOMATIC INDIVIDUAL#############################################
 #ASSUMPTION: vaccination does not affect the likelihood of an individual being symptomatic
-prop_sympt = param_age %>% 
-  filter(param == 'prop_sympt') %>%
-  select(-param)
-
 antiviral_target = antiviral_target %>% 
   left_join(prop_sympt, by = c('age_group' = 'agegroup')) %>%
   mutate(symptomatic = incidence * value) %>%
@@ -83,6 +66,8 @@ if(! nrow(workshop) == sum(antiviral_target_individuals$symptomatic)){stop('spli
 
 antiviral_target_individuals = workshop %>% select(-symptomatic)
 antiviral_target_individuals$ID <- seq.int(nrow(antiviral_target_individuals)) #helpful for checking
+
+total_target = nrow(antiviral_target_individuals)
 #____________________________________________________________________________
 
 ###### BEGIN STOCHASTIC
@@ -109,6 +94,8 @@ for (run_number in 1:toggle_number_of_runs){
   
   
   ### PATHWAY TO CARE STEP TWO: How many days after symptom onset can the individual access care?#######
+  #ASSUMPTION: incidence is day 0 of symptom onset
+  
   healthcare_access = function(age_group){
     #COMEBACK: need real data to estimate
     if (age_group %in% c( "0 to 4",    "5 to 9",    "10 to 17")){
@@ -169,7 +156,10 @@ for (run_number in 1:toggle_number_of_runs){
   this_scenario_tracker = rbind(this_scenario_tracker,prevented_by_antivirals)
   #____________________________________________________________________________
 }
+#____________________________________________________________________________
 
+
+### CREATE SUMMARY OVER RUNS #################################################
 summary_over_runs <- 
   this_scenario_tracker %>%
   group_by(outcome) %>%
@@ -183,11 +173,27 @@ summary_over_runs <-
          LCI_percentage = LCI/overall *100) %>%
   select(outcome,average,UCI,LCI,percentage,UCI_percentage,LCI_percentage)
 
-summary_over_runs 
+#monitor if daily capacity being used or not enough seeking/accessing care
+antiviral_rollout_capacity_utilised = round(100*nrow(antiviral_delivery_tracker)/(toggle_antiviral_delivery_capacity*antiviral_delivery_length),digits = 1)
+antiviral_eligible_pop_coverage = round(100*nrow(antiviral_delivery_tracker)/total_target,digits = 1) 
+#____________________________________________________________________________
+
+
+### PRINT SUMMARY OVER RUNS #################################################
+summary_over_runs
+paste("Antiviral rollout capacity utilised: ",antiviral_rollout_capacity_utilised,'%',sep='')
+paste("Antiviral eligible population covered: ",antiviral_eligible_pop_coverage,'%',sep='')
+#____________________________________________________________________________
+
+
+
+
 
 time.end.AntiviralModel=proc.time()[[3]]
 time.end.AntiviralModel-time.start.AntiviralModel
 
-#100 runs takes (15/09)
-#1000 runs takes (16/09)
+#1 run takes 7.36 seconds (16/09)
+#10 runs takes 65.54 seconds(16/09)
+#100 runs take 667.32 seconds (16/09)
+#estimating 1000 runs will take ~2 hours (although would CI converge too much?)
 
