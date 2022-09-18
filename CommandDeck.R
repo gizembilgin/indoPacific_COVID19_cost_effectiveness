@@ -55,7 +55,6 @@ if ( debug == "on"){
   risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
   risk_group_prioritisation_to_date = NA
   default_prioritisation_proportion = 0.5
-  VE_at_risk_suppress = 1 #i.e. do not suppress VE at risk
   
   vax_strategy_toggles =
     list(vax_strategy_start_date        = date_start+30,
@@ -79,7 +78,6 @@ if ( debug == "on"){
   waning_toggle_acqusition = TRUE
   waning_toggle_severe_outcome = FALSE
   waning_toggle_rho_acqusition = TRUE
-  rho_severe_disease = "on"
 }
 if (fitting == "on"){
   warning('Fitting is on')
@@ -109,7 +107,7 @@ if (fitting == "on"){
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
     
     if (risk_group_toggle == "on"){
-      if ((is.na(risk_group_prioritisation_to_date) == FALSE) | (! default_prioritisation_proportion == 0.5) | (!VE_at_risk_suppress == 1)){
+      if ((is.na(risk_group_prioritisation_to_date) == FALSE) | (! default_prioritisation_proportion == 0.5) ){
         stop('change fitting to this change in risk group characteristic')
       }
     }
