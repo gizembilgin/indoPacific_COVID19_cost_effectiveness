@@ -1,12 +1,11 @@
-### This program sets the state of the system to our study location
-###
-### COMEBACK count = 5
+### This script sets the initial state of the model
 
 
 ###### (1/4) Vaccination
 #(A/B) Coverage 
-#(i/iv) #Vaccine coverage at end of true history
-vaccine_coverage_end_history = vaccination_history_TRUE %>% filter(date == max(vaccination_history_TRUE$date)) %>%
+#(i/iv) #Vaccine coverage at end of known history
+vaccine_coverage_end_history = vaccination_history_TRUE %>% 
+  filter(date == max(vaccination_history_TRUE$date)) %>%
   select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
 #_________________________________________________
 
@@ -24,7 +23,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
                  vax_strategy_max_expected_cov  = vax_strategy_toggles$vax_strategy_max_expected_cov
     )
   
-  #recalculate!
+  #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
   list_doses = list_doses[! list_doses %in% c(8)]
   num_vax_doses = D = length(list_doses)
@@ -47,18 +46,18 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
     apply_risk_strategy_toggles$risk_group_age_broaden = FALSE
   }
   
-    vaccination_history_FINAL = 
-     apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
-                         vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
-                         vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
-                         vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk,
-                         risk_group_acceptability = apply_risk_strategy_toggles$risk_group_acceptability,
-                         risk_group_accessibility = apply_risk_strategy_toggles$risk_group_accessibility,
-                         risk_group_age_broaden   = apply_risk_strategy_toggles$risk_group_age_broaden
-     )
+  vaccination_history_FINAL = 
+   apply_risk_strategy(vax_risk_strategy     = apply_risk_strategy_toggles$vax_risk_strategy,            
+                       vax_risk_proportion   = apply_risk_strategy_toggles$vax_risk_proportion,      
+                       vax_doses_general     = apply_risk_strategy_toggles$vax_doses_general,      
+                       vax_doses_risk        = apply_risk_strategy_toggles$vax_doses_risk,
+                       risk_group_acceptability = apply_risk_strategy_toggles$risk_group_acceptability,
+                       risk_group_accessibility = apply_risk_strategy_toggles$risk_group_accessibility,
+                       risk_group_age_broaden   = apply_risk_strategy_toggles$risk_group_age_broaden
+   )
 
   
-  #recalculate!
+  #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
   list_doses = list_doses[! list_doses %in% c(8)]
   num_vax_doses = D = length(list_doses)
@@ -70,14 +69,15 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   parameters$num_vax_doses = num_vax_doses
   
   date_complete_at_risk_group = vaccination_history_FINAL %>% 
-    filter(risk_group == risk_group_name) %>%
-    filter(doses_delivered_this_date > 0)
+    filter(risk_group == risk_group_name &
+             doses_delivered_this_date > 0)
   date_complete_at_risk_group = max(date_complete_at_risk_group$date)
   
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
 
+#extract other attributes
 if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
   booster_type = unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$dose == 8])
   if (booster_type == 'Johnson & Johnson'){
@@ -88,11 +88,11 @@ if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
 }
 
 
-fitted_seed_dates =  c(as.Date('2021-04-25'),c(as.Date('2021-09-01')))
+fitted_seed_dates =  c(as.Date('2021-04-25'),c(as.Date('2021-09-01'))) #COMEBACK - this is hard coded :(
 
 if (fitting == "on"){ #seed date specified in Command Deck
   if (length(fitted_seed_dates[! fitted_seed_dates %in% seed_date])>0 ){stop('seed dates for fitting have changed')}
-} else if (outbreak_timing == "after"){ seed_date =  max(vaccination_history_FINAL$date) #outbreak after vaccine rollout
+} else if (outbreak_timing == "after"){ seed_date = max(vaccination_history_FINAL$date)  #outbreak after vaccine rollout
 } else if(outbreak_timing == "during"){ seed_date = date_start + 7                       #outbreak during vaccine rollout
 } else if(outbreak_timing == "off")   { seed_date = as.Date('1900-01-01')                #no outbreak
 }
@@ -117,18 +117,19 @@ vaxCovDelay = vaxCovDelay %>%
 
 #(iv/iv)  Initial coverage _______________________
 #Including coverage_this_date for projected doses
-vaccination_history_FINAL = vaccination_history_FINAL %>% left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
+vaccination_history_FINAL = vaccination_history_FINAL %>% 
+  left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
   group_by(risk_group,age_group,vaccine_type,dose) %>%
   mutate(coverage_this_date = 100*cumsum(doses_delivered_this_date)/pop) %>%
   select(-pop)
 vaccination_history_FINAL$coverage_this_date[is.na(vaccination_history_FINAL$coverage_this_date)] = NA
 
-#calc
+#calculate vaccine coverage of inital state
 vaccine_coverage = crossing(risk_group = risk_group_labels,
                             dose = c(1:num_vax_doses),
                             vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
                             age_group = age_group_labels,
-                            cov = c(0)) # CHECKED:vaccine coverage long like E/I/R structure
+                            cov = 0) 
 for (r in 1:num_risk_groups){ # risk group
   for (i in 1:J){             # age
     for (t in 1:T){           # vaccine type
@@ -180,24 +181,17 @@ vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 
 
 #(B/B) Vaccine Effectiveness (VE)
-# last date to run occupancy tracker
-workshop = vaccination_history_FINAL %>%
-  filter(doses_delivered_this_date > 0)
-workshop = workshop %>% filter(date == max(workshop$date))
-workshop_delay = max(vaxCovDelay$delay[vaxCovDelay$dose %in% workshop$dose])
-max_occupany_run_date = max(workshop$date) + workshop_delay
-
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
   mutate(outcome = 'any_infection')
 
-###ASSUMPTION - merging VE dose 3
+#ASSUMPTION - averaging across heterogeneous combinations of VE dose 3
 workshop = VE_waning_distribution %>% 
   filter(dose == 3 & strain == strain_now) %>%
   group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-  summarise(VE_days = mean(VE_days),.groups = "keep")
-#ggplot(workshop) +  geom_line(data=workshop[workshop$waning == TRUE,],aes(x=days,y=VE_days,linetype = as.factor(outcome) ))
-VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
+  summarise(VE_days = mean(VE_days),.groups = "keep") %>% 
+  filter(! dose == 3) %>% 
+  select(-primary_if_booster)
 VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 
 if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_POP$date)){
@@ -231,19 +225,19 @@ if (fitting == "off"){
 
 ###### (2/4) Seroprevalence
 load(file = "1_inputs/seroprev.Rdata")
-seroprev = seroprev[seroprev$setting == setting & seroprev$year == 
-                      as.numeric(format(date_start, format="%Y")),]
+seroprev = seroprev %>%
+  filter(setting == setting & 
+           year == as.numeric(format(date_start, format="%Y")))
 if (as.numeric(format(date_start, format="%Y")) > 2022){
   load(file = "1_inputs/seroprev.Rdata")
   seroprev = seroprev[seroprev$setting == setting & seroprev$year ==  2022,]
 }
-
 #___________________________________________________________________
 
 
 
 ###### (3/4) NPI
-if(date_start <=max(NPI_estimates$date)){
+if(date_start <= max(NPI_estimates$date)){
   NPI_inital = NPI_estimates$NPI[NPI_estimates$date==date_start]
 } else {
   #take average of last month on record
@@ -267,7 +261,9 @@ count=J*(T*D+1)*RISK # +1 is unvax
 
 initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
-initialRecovered = seroprev %>% left_join(pop_setting, by = "age_group") %>% mutate(R = seroprev*pop/100) %>%
+initialRecovered = seroprev %>% 
+  left_join(pop_setting, by = "age_group") %>% 
+  mutate(R = seroprev*pop/100) %>%
   select(age_group,R)
 
 date = seq(1,lengthInfectionDerivedImmunity)
