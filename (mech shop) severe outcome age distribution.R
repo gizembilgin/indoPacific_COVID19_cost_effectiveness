@@ -117,7 +117,7 @@ for (setting in c('SLE')){
   pop_w <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
   pop_w <- pop_w[pop_w$country == setting,] %>%
     mutate(agegroup_10 = cut(age,breaks = age_groups_10, include.lowest = T,labels = age_group_labels_10),
-           agegroup_model = cut(age,breaks = age_groups, include.lowest = T,labels = age_group_labels)) %>%
+           agegroup_model = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
     ungroup() %>%
     group_by(agegroup_model) %>%
     mutate(group_percent = population/sum(population)) %>%

@@ -38,7 +38,7 @@ SLE_pop <- pop_orig[pop_orig$country == "SLE",]
 underlying_age_grouping <- c(0,9,19,39,59,110)
 SLE_pop <- SLE_pop %>%
   mutate(agegroup_SERO = cut(age,breaks = underlying_age_grouping, include.lowest = T, labels = SLE_age$agegroup_SERO),
-         agegroup_MODEL = cut(age,breaks = age_groups, include.lowest = T, labels = age_group_labels)) %>%
+         agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
   ungroup() %>%
   group_by(agegroup_MODEL) %>%
   mutate(model_group_percent = population/sum(population))
@@ -100,7 +100,7 @@ PNG_pop <- pop_orig[pop_orig$country == "PNG",]
 underlying_age_grouping <- c(0,5,18,30,45,59,110)
 PNG_pop <- PNG_pop %>%
   mutate(agegroup_SERO = cut(age,breaks = underlying_age_grouping, include.lowest = T, labels = PNG_age$agegroup_SERO),
-         agegroup_MODEL = cut(age,breaks = age_groups, include.lowest = T, labels = age_group_labels)) %>%
+         agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
   ungroup() %>%
   group_by(agegroup_MODEL) %>%
   mutate(model_group_percent = population/sum(population))

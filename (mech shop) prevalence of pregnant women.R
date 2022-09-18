@@ -64,7 +64,7 @@ Pop_ASFR = ASFR %>% left_join(ASFR_group_ratios) %>%
 ### adapt ASFR to model age groups         
 pop_conversion = pop_setting_orig %>%
   mutate(agegroup_ASFR = cut(age,breaks = ASFR_breaks, include.lowest = T, labels = ASFR_labels),
-         agegroup_MODEL = cut(age,breaks = age_groups, include.lowest = T, labels = age_group_labels)) %>%
+         agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
   left_join(Pop_ASFR) %>%
   select(-agegroup_ASFR) %>%
   ungroup() %>% group_by(agegroup_MODEL) %>%

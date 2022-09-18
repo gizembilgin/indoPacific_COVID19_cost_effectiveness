@@ -90,7 +90,7 @@ rm(severe_outcome_0,severe_outcome_2)
 #####(5/7) Calculating YLL from death
 #requires average age in age-group and life_expectancy of this study setting
 workshop <- pop_setting_orig %>%
-  mutate(agegroup = cut(age,breaks = age_groups, include.lowest = T,labels = age_group_labels)) 
+  mutate(agegroup = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) 
 
 workshop_sum <- aggregate(workshop$population, by=list(category=workshop$agegroup), FUN=sum)
 colnames(workshop_sum) <-c('agegroup','pop')

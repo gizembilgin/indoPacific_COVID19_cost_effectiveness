@@ -112,7 +112,7 @@ apply_ratio = workshop_age %>% filter(days == 22) %>% rename(VE_ratio = VE_overa
 CS_age_groupings = c(0,59,79,110)
 pop_RAW <- pop_setting_orig %>%
   mutate(agegroup_RAW = cut(age,breaks = CS_age_groupings, include.lowest = T, labels = unique(apply_ratio$agegroup_RAW)),
-         agegroup_MODEL = cut(age,breaks = age_groups, include.lowest = T, labels = age_group_labels)) %>%
+         agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
   ungroup() %>%
   group_by(agegroup_MODEL) %>%
   mutate(model_group_percent = population/sum(population))

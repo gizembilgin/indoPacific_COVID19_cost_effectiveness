@@ -12,7 +12,7 @@ for (i in 1:length(setting_list)){
   pop_RAW =  pop_orig[pop_orig$country == setting,]
   pop_RAW <- pop_RAW %>%
     mutate(agegroup_RAW = cut(age,breaks = underlying_age_grouping, include.lowest = T, labels = unique(raw$age_group)),
-           agegroup_MODEL = cut(age,breaks = age_groups, include.lowest = T, labels = age_group_labels)) %>%
+           agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
     ungroup() %>%
     group_by(agegroup_MODEL) %>%
     mutate(model_group_percent = population/sum(population))
