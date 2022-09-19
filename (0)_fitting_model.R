@@ -84,14 +84,18 @@ if (new_variant_check == "on"){
 
 ### Fit with risk group _______________________________________________________________________________________
 risk_group_prioritisation_to_date = NA
+risk_group_lower_cov_ratio = NA
 default_prioritisation_proportion = 0.5
 
 risk_group_toggle = "on"
 risk_group_name_list = c('pregnant_women', 'adults_with_comorbidities')
+risk_group_RR_list = c(2.4,1.95)
 plot_list = list()
 
 for (fit_ticket in 1:length(risk_group_name_list)){
   risk_group_name = risk_group_name_list[fit_ticket]
+  RR_estimate = risk_group_RR_list[fit_ticket]
+  
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   plot_list[[fit_ticket]] = list(plot1,plot2,plot3,plot4,plot5)
