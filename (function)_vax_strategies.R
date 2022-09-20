@@ -44,8 +44,8 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   } else if (vax_delivery_group == 'at_risk'){ this_risk_group = risk_group_name}
   
   if (vax_delivery_group == 'universal'){ this_pop = data.frame(pop_setting)
-  } else if (vax_delivery_group == 'at_risk'){ this_pop = pop_risk_group_dn[pop_risk_group_dn == risk_group_name,] %>% select(age_group,pop)
-  } else if (vax_delivery_group == 'general_public'){ this_pop = pop_risk_group_dn[pop_risk_group_dn == 'general_public',] %>% select(age_group,pop)}
+  } else if (vax_delivery_group == 'at_risk'){ this_pop = pop_risk_group_dn[pop_risk_group_dn$risk_group == risk_group_name,] %>% select(age_group,pop)
+  } else if (vax_delivery_group == 'general_public'){ this_pop = pop_risk_group_dn[pop_risk_group_dn$risk_group == 'general_public',] %>% select(age_group,pop)}
   
   ### IS THIS A BOOSTER?
   booster_dose = "N"
