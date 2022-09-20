@@ -1,16 +1,17 @@
-
-#This program runs results for section 3 of FleetAdmiral
-
-outbreak_timing = "off"  #i.e. rolling out vaccine in steadystate
+# This program runs 'CommandDeck' multiple times to understand the impact of current program targets with varying speeds of rollout
+# It compiles the results from these runs into panel B of Figure S4.2 (in the Supplementary Material)
 
 
 ### (1) Overarching trackers #####################################################################################################
 warehouse_table = data.frame() 
 warehouse_plot = data.frame()
 
+
+
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
 vax_strategy_toggle = "on"
+outbreak_timing = "off"  #i.e. rolling out vaccine in steadystate
 
 # (A/B) Baseline _________________________________________
 queue[[1]] = list(vax_strategy_description = 'baseline - current roll-out',
@@ -41,12 +42,17 @@ for (ticket in 1:length(queue)){
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   severe_outcome_projections = severe_outcome_log %>% 
-    mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
-  row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
+    mutate(label = vax_strategy_description, 
+           day = as.numeric(date - date_start ))
+  row = row %>% 
+    mutate(scenario = vax_strategy_description) %>% 
+    relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
 }
 #____________________________________________________________________________________________________________________________________
+
+
 
 ### (4) Save outputs  ##################################################################################################
 results_warehouse_entry = list()
@@ -67,7 +73,6 @@ for (i in 1:length(unique(warehouse_plot$outcome))){
     theme_bw() + 
     xlab("") + 
     ylab("")}
-# 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
 
 cum_plot_list = list()
 for (i in 1:length(unique(warehouse_plot$outcome))){
@@ -80,7 +85,6 @@ for (i in 1:length(unique(warehouse_plot$outcome))){
     xlab("") + 
     ylab("")
 }
-
 
 # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
 plot = ggarrange(abs_plot_list[[5]],cum_plot_list[[5]],
@@ -103,17 +107,13 @@ for (i in 1:(length(queue)-1)){
   averted_table[i,c(2:end)] = 
     warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)] -
     averted_table[i,c(2:end)] 
-  
   averted_table_rel[i,c(2:end)] = 100 * averted_table[i,c(2:end)]/
     warehouse_table[warehouse_table$scenario == baseline_to_compare,c(2:end)]
 }
 table_list = list(absolute = averted_table, 
-                  relative = averted_table_rel) #COMEBACK could be merged
-#table_list
+                  relative = averted_table_rel) 
 
 results_warehouse_entry[[4]]= table_list
-
-#____________________________________________________________________________________________________________________________________
-
 results_warehouse[[receipt]] = results_warehouse_entry
+#____________________________________________________________________________________________________________________________________
 
