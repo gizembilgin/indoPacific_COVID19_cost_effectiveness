@@ -1,6 +1,8 @@
-time.start=proc.time()[[3]]
+### This script calculates the incidence of severe outcomes by age_group and vaccination status per time step of the model
+### Incidences of severe outcomes vary across time due to the waning of vaccine- and infection-derived immunity
 
-if (exists("VE_loop") == FALSE){ VE_loop = 0}
+# VE_loop set to 0 when no sensitivity analysis of reduced VE in older adults or adults with comorbidities is conducted
+if (exists("VE_loop") == FALSE){ VE_loop = 0} 
 if (VE_loop == 0){
   save_VE_waning_distribution = VE_waning_distribution
   load( file = '1_inputs/VE_waning_distribution_SO.Rdata')
@@ -32,6 +34,7 @@ if (VE_loop == 0){
 }  
 
 
+
 #(A/C) calculate VE against severe outcomes by day
 if (waning_toggle_severe_outcome == TRUE){
   if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
@@ -53,8 +56,10 @@ if (waning_toggle_severe_outcome == TRUE){
                        age_group = age_group_labels,
                        date = unique(incidence_log$date),
                        outcome_VE = c('death','severe_disease'))
-  workshop = VE_estimates_imputed %>% filter(strain == strain_now) %>% 
-    select(vaccine_type,dose,outcome,VE) %>% mutate(VE=VE/100) %>%
+  workshop = VE_estimates_imputed %>% 
+    filter(strain == strain_now) %>% 
+    select(vaccine_type,dose,outcome,VE) %>% 
+    mutate(VE=VE/100) %>%
     rename(outcome_VE = outcome)
   VE_tracker = VE_tracker %>% left_join(workshop, by = c("dose", "vaccine_type", "outcome_VE"))
 }
@@ -79,11 +84,13 @@ if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){
 
 
 #(B/C) 
-load(file = '1_inputs/severe_outcome_FINAL.Rdata') #adjusted values from Qatar
+load(file = '1_inputs/severe_outcome_FINAL.Rdata')
 if (risk_group_toggle == "on"){
+  #if risk-group included, then adjust general population incidence rate so pop-level estimates stay the same
+
   severe_outcomes_list = unique(severe_outcome_FINAL$outcome)
-  
   severe_outcome_FINAL_wRisk = data.frame()
+  
   for (o in 1:length(severe_outcomes_list)){
     this_outcome = severe_outcomes_list[o]
     for (i in 1:num_age_groups){
@@ -104,28 +111,30 @@ if (risk_group_toggle == "on"){
       severe_outcome_FINAL_wRisk = rbind(severe_outcome_FINAL_wRisk,row_gen,row_risk)
     }
   }
+  
   severe_outcome_FINAL_wRisk$percentage[is.na(severe_outcome_FINAL_wRisk$percentage)]=0
   severe_outcome_FINAL = severe_outcome_FINAL_wRisk
 }
 
+
+
 #(C/C) calculate severe outcome incidence by vax_status
 if (risk_group_toggle == "on"){
-  ### add neonatal outcomes
-  if (risk_group_name == "pregnant_women"){
+
+  if (risk_group_name == "pregnant_women"){  # Add excess neonatal deaths due to increased risk of stillbirth or preterm delivery
     #ASSUMPTION - no dependence on pregnant woman's age
     stillbirth_prev = 15.6/1000
     stillbirth_risk = 1.80
-    preterm_prev = 6.2/1000 #Excess neonatal deaths due to increased risk of stillbirth or preterm delivery
+    preterm_prev = 6.2/1000 
     preterm_risk = 1.47
     
-    row = crossing(outcome    = 'neonatal_deaths',
+    row = crossing(outcome = 'neonatal_deaths',
                               outcome_long = 'adverse pregnancy outcome resulting in neonatal death',
                               age_group  = age_group_labels,
                               percentage = ((stillbirth_risk-1)*stillbirth_prev + (preterm_risk-1)*preterm_prev),
                               outcome_VE = 'severe_disease',
                               risk_group = 'pregnant_women') 
     severe_outcome_FINAL = rbind(severe_outcome_FINAL,row)
-    
   }
   
   severe_outcome_this_run = severe_outcome_FINAL %>% 
@@ -140,9 +149,3 @@ if (risk_group_toggle == "on"){
     select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
 }
 #_______________________________________________________________________________
-
-
-time.end=proc.time()[[3]]
-time.end-time.start 
-
-#TIME BURNER 0.4 sec -> 31 sec
