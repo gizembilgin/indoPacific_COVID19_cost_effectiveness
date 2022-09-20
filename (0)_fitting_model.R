@@ -7,6 +7,9 @@
 
 
 ### Setup ___________________________________________________________________________________________
+#clear the field!
+rm(list=ls())
+
 #fitting toggles
 new_variant_check = "off"
 
@@ -18,6 +21,7 @@ plotting = "on"
 outbreak_timing = "off"
 vax_strategy_toggle = "off"
 vax_risk_strategy_toggle = "off"
+sensitivity_analysis_toggles = list()
 
 waning_toggle_acqusition = TRUE
 waning_toggle_severe_outcome = FALSE #let's save some time, this is not used in the modelling scenarios
@@ -47,6 +51,8 @@ fitted_results = list()
 
 ### Fit without risk group ____________________________________________________________________________________
 risk_group_toggle = "off" 
+risk_group_name = 'general_public'
+
 source(paste(getwd(),"/CommandDeck.R",sep=""))
 grid.arrange(plot1,plot2,plot3,plot4,plot5, layout_matrix = lay)
 
