@@ -1,17 +1,12 @@
 ### This program sets the disease parameters to the currently circulating strain of COVID-19
-### Delta is the strain currently informing these parameters, there is insufficient info on Omicron
-### COMEBACK count = 1
 
 strain_now = strain_inital
 
 ### (A/D) Transmission
 load(file = "1_inputs/param_age.Rdata")
-#COMEBACK uncertainty?
-#COMEBACK gamma seems too low!
-
-suscept = param_age$value[param_age$param == 'susceptibility'] # (i) age-specific susceptibility to infection
-gamma =param_age$value[param_age$param == 'prop_sympt']        # (ii) proportion of cases symptomatic
-lota = 0.5                                                     # (iii) modification factor on infectiousness of asymptomatic cases
+suscept = param_age$value[param_age$param == 'susceptibility']    # (i) age-specific susceptibility to infection
+gamma   = param_age$value[param_age$param == 'prop_sympt']        # (ii) proportion of cases symptomatic
+lota    = 0.5                                                     # (iii) modification factor on infectiousness of asymptomatic cases
 
 
 ### (B/D) Latent period 
@@ -39,9 +34,6 @@ delta = 1/AverageSymptomaticPeriod
 
 
 ### (D/D) Waning of infection-derived immunity
-lengthInfectionDerivedImmunity = 180 #days #COMEBACK - need actual value!
+lengthInfectionDerivedImmunity = 180 #days
 omega = 1/lengthInfectionDerivedImmunity
-
-
-
 
