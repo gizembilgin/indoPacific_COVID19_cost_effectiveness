@@ -4,7 +4,12 @@
 # VE_loop set to 0 when no sensitivity analysis of reduced VE in older adults or adults with comorbidities is conducted
 if (exists("VE_loop") == FALSE){ VE_loop = 0} 
 if (VE_loop == 0){
-  save_VE_waning_distribution = VE_waning_distribution
+  if (length(unique(VE_waning_distribution$outcome)) == 1){ #'any_infection'
+    save_VE_waning_distribution = VE_waning_distribution
+  } else{
+    VE_waning_distribution = save_VE_waning_distribution
+  }
+
   load( file = '1_inputs/VE_waning_distribution_SO.Rdata')
   VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(waning == waning_toggle_severe_outcome )
   VE_waning_distribution = bind_rows(VE_waning_distribution,VE_waning_distribution_SO)
