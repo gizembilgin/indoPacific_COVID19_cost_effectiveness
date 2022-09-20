@@ -2,9 +2,9 @@
 ###
 ### (1) Age structure of population
 ### (2) Contact patterns
-### (3) Live updates of # active cases/recovered
-### (4) Live updates of # vaccinated (if useful, otherwise .csv files)
-### (5) Proxy estimate of TTIQ/PHSM i.e. NPI
+### (3) Live updates of reported cases
+### (4) Live updates of # vaccinated 
+### (5) Estimate of NPI
 ###
 ### Dependencies: setting, num_risk_groups, risk_group_name
 ### Creates: pop_*, contact_matrix, vaccination_history_*, NPI_estimates
@@ -13,10 +13,12 @@
 if (setting == "SLE"){setting_long = "Sierra Leone"}
 #______________________________________________________________________________________________________________________________________
 
+
 ### (1/5) Age structure of population
 ##(A/B) Without risk groups
-#NOTE: this program has been configured so that the age_groups can be modified on a whim
+#This program has been configured so that the age_groups can be modified on a whim
 #HOWEVER, you will have to update age_group labels manually
+#AND rerun most (mech shop) scripts
 
 age_groups_num = c(0,4,9,17,29,44,59,69,110)
 age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
@@ -90,6 +92,7 @@ contact_matrix_setting <- contact_all[[setting]]
 Prem_et_al_age_list <- c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75)
 colnames(contact_matrix_setting) <- Prem_et_al_age_list; rownames(contact_matrix_setting) <- Prem_et_al_age_list
 
+
 #(B/C) calculate age weightings
 Prem_et_al_age_num <- c(0,4,9,14,19,24,29,34,39,44,49,54,59,64,69,74,110)
 pop_Prem <- pop_setting_orig %>%
@@ -104,10 +107,10 @@ pop_Prem <- pop_setting_orig %>%
   select(age,agegroup_PREM,agegroup_MODEL,model_group_percent,prem_group_percent)
 sum_1 = pop_Prem %>%
   group_by(agegroup_MODEL,agegroup_PREM) %>%
-  summarise(model_group_percentage = sum(model_group_percent))
+  summarise(model_group_percentage = sum(model_group_percent),.groups = "keep")
 sum_2 = pop_Prem %>%
   group_by(agegroup_MODEL,agegroup_PREM) %>%
-  summarise(prem_group_percentage = sum(prem_group_percent)) 
+  summarise(prem_group_percentage = sum(prem_group_percent),.groups = "keep") 
 pop_Prem = sum_1 %>% left_join(sum_2, by = c("agegroup_MODEL", "agegroup_PREM"))
 
 
@@ -158,7 +161,7 @@ workshop_cases <- workshop_cases %>%
   )
 workshop_cases$date = as.Date(workshop_cases$date, "%m/%d/%y")
 
-workshop <- workshop_cases %>%
+case_history <- workshop_cases %>%
   mutate(new = cases - lag(cases),
          rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
                             +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
@@ -174,12 +177,6 @@ workshop <- workshop_cases %>%
 #         panel.border = element_blank(),
 #         axis.line = element_line(color = 'black'))
 
-
-#ASSUMPTION: cases remain active for 14 days
-case_history = workshop %>%
-  mutate(active = cases - lag(cases,n=14,default=0),
-         recovered = cases - active)
-
 rm(workshop, workshop_cases)
 #______________________________________________________________________________________________________________________________________
 
@@ -191,18 +188,18 @@ rm(workshop, workshop_cases)
 workshop <- readr::read_csv("https://raw.githubusercontent.com/govex/COVID-19/master/data_tables/vaccine_data/global_data/time_series_covid19_vaccine_global.csv")
 workshop = workshop[workshop$'Country_Region' == setting_long,]
 
-vaccination_history = workshop[,c(2:5)]
-vaccination_history = vaccination_history[,c('Date','People_partially_vaccinated','People_fully_vaccinated')]
-colnames(vaccination_history) <- c('date','partial','full')
-vaccination_history <- vaccination_history %>%
+vaccination_history = workshop %>%
+  select(Date,People_partially_vaccinated,People_fully_vaccinated) %>%
+  rename(date = Date, 
+         partial = People_partially_vaccinated,
+         full = People_fully_vaccinated) %>%
   pivot_longer(
     cols='partial':'full',
     names_to='dose_charac',
     values_to = 'num'
   )
 
-#ASSUMPTION - some manual processing here due to lack of data using:https://mohs.gov.sl/download/sl_-covax-esmf-sierra-leone-final_june-22-2021-updated-docx/
-
+#LIMITATION: some manual processing here due to lack of data using:https://mohs.gov.sl/download/sl_-covax-esmf-sierra-leone-final_june-22-2021-updated-docx/
 setting_vaccine <- read.csv("1_inputs/vaccine_setting_history.csv",header=TRUE)
 setting_vaccine <- setting_vaccine[setting_vaccine$setting == setting,]
 
@@ -224,8 +221,8 @@ if ("Johnson & Johnson" %in% unique(setting_vaccine$vaccine_type)){
            partial=doses/sum(setting_vaccine$doses))
 }
 
-setting_vaccine_2 <- setting_vaccine[,c('vaccine_type','full','partial')]
-setting_vaccine_2 <- setting_vaccine_2 %>%
+setting_vaccine_2 <- setting_vaccine %>%
+  select(vaccine_type,full,partial) %>%
   pivot_longer(
     cols='full':'partial',
     names_to='dose_charac',
@@ -259,7 +256,8 @@ vaccination_history_3 <- vaccination_history_2 %>%
   filter(! dose == 0)
 vaccination_history_3 <- na.omit(vaccination_history_3) # nrows = 1365-5 = 1360
 
-vaccination_history_POP <- vaccination_history_3[,c('date','vaccine_type','vaccine_mode','dose','coverage_this_date','doses_delivered_this_date')] %>%
+vaccination_history_POP <- vaccination_history_3 %>%
+  select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date) %>%
   arrange(date,vaccine_type,dose)
 ##_____________________________________________________________________________
 
@@ -269,7 +267,6 @@ vaccination_history_POP <- vaccination_history_3[,c('date','vaccine_type','vacci
 vaccination_history_TRUE = data.frame() 
 
 if (risk_group_toggle == "off"){
-
   #ASSUMPTION uniform distribution in ages 18+
   age_split =  pop_setting  %>% 
     mutate(adult_pop = case_when(
@@ -279,9 +276,10 @@ if (risk_group_toggle == "off"){
     select(-adult_pop)
   
   for (j in 1:num_age_groups){
-    workshop = vaccination_history_POP %>% mutate(
-      age_group = age_group_labels[j],
-      doses_delivered_this_date = doses_delivered_this_date*age_split[j])
+    workshop = vaccination_history_POP %>% 
+      ungroup() %>%
+      mutate(age_group = age_group_labels[j],
+      doses_delivered_this_date = doses_delivered_this_date*age_split$split[j])
     vaccination_history_TRUE = rbind(vaccination_history_TRUE,workshop)
   }
   vaccination_history_TRUE$risk_group = "general_public"
@@ -328,7 +326,7 @@ if (risk_group_toggle == "off"){
   
   } else{
     
-    #calculate if lower inital coverage in risk group due to vaccine hesistancy
+    #calculate if lower initial coverage in risk group due to vaccine hesitancy
     workshop_ratio = sum(pop_high_risk$pop[!pop_high_risk$age_group %in% c('0 to 4','5 to 9','10 to 17')])/sum(pop_general_public$pop[!pop_general_public$age_group %in% c('0 to 4','5 to 9','10 to 17')])
     apply_cov_ratio = 1+risk_group_lower_cov_ratio*workshop_ratio
     apply_cov_ratio = (1/apply_cov_ratio)
@@ -367,7 +365,6 @@ vaccination_history_TRUE = vaccination_history_TRUE %>%
     pop > 0 ~ cumsum(doses_delivered_this_date)/pop,
     TRUE ~ 0)) %>%
   select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group)
-
 ##_____________________________________________________________________________
 
 
@@ -393,7 +390,7 @@ rm(workshop, vaccination_history_3, vaccination_history_2, vaccination_history, 
 
 
 
-###(5/5) TTIQ/PHSM i.e. NPI proxy - stringency index
+###(5/5) NPI proxy - stringency index
 #Government Response Stringency Index: composite measure based on 9 response indicators including 
 # school closures, workplace closures, and travel bans, rescaled to a value from 0 to 100 (100 = strictest response)
 #https://www.bsg.ox.ac.uk/research/research-projects/covid-19-government-response-tracker
@@ -401,7 +398,7 @@ rm(workshop, vaccination_history_3, vaccination_history_2, vaccination_history, 
 #https://github.com/OxCGRT/covid-policy-tracker/blob/master/documentation/codebook.md
 
 ### Static toggles
-NPI_toggle = 'contain_health'   #options: contain_health, stringency
+NPI_toggle = 'contain_health'   #choice of NPI metric: contain_health, stringency
 
 if (NPI_toggle == 'stringency'){
   workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index_avg.csv")
@@ -411,7 +408,6 @@ if (NPI_toggle == 'stringency'){
       names_to = 'date',
       values_to = 'NPI'
     ) 
-  
 } else if (NPI_toggle == 'contain_health'){
   workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/containment_health_index_avg.csv")
   workshop <- workshop[workshop$country_code == setting,]%>%
