@@ -1,14 +1,14 @@
-### This program contains the system of ordinary differential equations (ODEs) for COVID-19 transmission
+### This function contains the system of ordinary differential equations (ODEs) for COVID-19 transmission
 
 covidODE <- function(t, state, parameters){
   require(deSolve)
   
   with(as.list(c(state,parameters)),{
     
-    J=num_age_groups
-    T=num_vax_types
-    D=num_vax_doses
-    RISK=num_risk_groups
+    J = num_age_groups
+    T = num_vax_types
+    D = num_vax_doses
+    RISK = num_risk_groups
     
     A=RISK*J*(T*D+1) # +1 is unvax
     
@@ -18,20 +18,19 @@ covidODE <- function(t, state, parameters){
     R=state[(3*A+1):(4*A)]
     
     dS = dE = dI = dR = dIncidence  <- numeric(length=A)
-    dExposed_S  = dExposed_R        <- numeric(length=J)
+    dExposed_S = dExposed_R         <- numeric(length=J)
  
     tau =(rep(0,J)) 
     
     #calculating transmission to each age group
     for (i in 1:J){
       for (j in 1:J){
-  
+        
         total=0 #total in contact age j
         for(interval in 1:(num_disease_classes*RISK*(T*D+1))){
           total = total+state[j+(interval-1)*J] 
         }
         
-        # inclusion of reduced transmission from infected individuals
         total_infected_mod = 0 #total infected in age j
         for (r in 1:RISK){
           total_infected_mod = total_infected_mod + I[j+(r-1)*A/RISK] #unvax
@@ -43,13 +42,14 @@ covidODE <- function(t, state, parameters){
             }
           }
         }
-          tau[i]=tau[i]+contact_matrix[i,j]*(total_infected_mod*(lota*(1-gamma[j])+gamma[j]))/(total)
+        tau[i]=tau[i]+contact_matrix[i,j]*(total_infected_mod*(lota*(1-gamma[j])+gamma[j]))/(total)
         
-        }
-        tau[i]=tau[i]*NPI*beta[i]*suscept[i]
-        tau[i]=max(min(1,tau[i]),0) #transmission can not be more than 1 (100%)
+      }
+      tau[i]=tau[i]*NPI*beta[i]*suscept[i]
+      tau[i]=max(min(1,tau[i]),0) #transmission can not be more than 1 (100%)
     }
     
+    #system of ODEs
     for (r in 1:RISK){
       for (i in 1:J){
         #unvaccinated
@@ -70,7 +70,7 @@ covidODE <- function(t, state, parameters){
             VE_step = VE$VE[VE$dose==d & 
                               VE$risk_group == risk_group_labels[r] &
                               VE$vaccine_type == vax_type_list[t] &
-                              VE$age_group == age_group_labels[i]] #COMEBACK_RISK tidy for VE modifications!
+                              VE$age_group == age_group_labels[i]] 
             if (length(VE_step) == 0){ VE_step = 0 } #no VE calculated because doses not delivered for this t/d/i combination
             
             dS[B] = omega*R[B]              - tau[i]*(1-VE_step)*S[B] 
@@ -95,4 +95,5 @@ covidODE <- function(t, state, parameters){
     list(c(dS,dE,dI,dR,dIncidence,dExposed_S,dExposed_R))  
   })
 }
+
 
