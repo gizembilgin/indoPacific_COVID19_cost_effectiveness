@@ -1,8 +1,7 @@
 require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(tidyverse);
 rm(list=ls())
 
-#This program applies a waning distribution to the point estimates of VE (VE_estimates_imputed created in `(mech shop) VE point estimate.R`)
-
+### This (mech shop) applies a waning distribution to the point estimates of VE (VE_estimates_imputed created in `(mech shop) VE primary doses point estimates.R`)
 # We include two distributions:
 # 1. acquisition - covering any_infection and symptomatic_disease
 # 2. severe_outcomes - covering severe_disease and death
@@ -24,7 +23,7 @@ plot2 = ggplot(data = andrews[andrews$strain == 'omicron' & andrews$dose == dose
 grid.arrange(plot1, plot2, nrow=2)
 
 
-andrews <- andrews %>%  filter(dose<3) #COMEBACK - booster dose waning not included
+andrews <- andrews %>%  filter(dose<3)
 andrews_to_fit = andrews
 andrews_to_fit$days = andrews_to_fit$week * 7
 
@@ -37,8 +36,6 @@ for (j in 1:length(unique(andrews_to_fit$vaccine_type))){
                                      andrews_to_fit$vaccine_type == unique(andrews_to_fit$vaccine_type)[j],]
     attach(workshop_real)
     model = lm(log(VE)~days)
-    
-    #summary(model)
     model_rsquared = summary(model)$adj.r.squared
     detach(workshop_real)
     
@@ -86,18 +83,6 @@ ggplot() +
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
 
-
-# #### pretty display of R2 with fit
-# this_strain = 'omicron'
-# table = predicted_distribution %>%
-#   filter(strain == this_strain) %>%
-#   select(vaccine_type,rsquared) %>%
-#   mutate(rsquared = round(rsquared,digits=2))
-# table = unique.data.frame(table)
-# table = tableGrob(table,  rows = NULL)
-# 
-# grid.arrange(plot, table,nrow =1,widths=c(2,0.5))#, nrow = 1, ncol = 2, widths=c(2,0.5))
-####
 save(predicted_distribution, file = '1_inputs/VE_predicted_distribution.Rdata')
 
 
@@ -171,7 +156,6 @@ for (s in c('omicron','delta')){
           }
           
           ratio = ratio_top$VE/ratio_bottom$VE
-          ratio
           
           workshop$VE = workshop$VE * ratio
           workshop$VE[workshop$VE>100] = 100
@@ -200,7 +184,6 @@ waning_to_plot = together %>%
   mutate(immunity = paste(vaccine_type,dose))
 
 strain_test = 'omicron'
-
 ggplot() +
   geom_line(data=waning_to_plot[waning_to_plot$strain == strain_test,],
             aes(x=days,y=VE_days,color=as.factor(immunity)),na.rm=TRUE) +
@@ -220,6 +203,3 @@ no_waning = together %>% mutate(waning = FALSE) %>%
 
 VE_waning_distribution = rbind(waning,no_waning) %>% select(strain,vaccine_type,dose,days,VE_days,waning)
 save(VE_waning_distribution, file = '1_inputs/VE_waning_distribution.Rdata')
-
-
-

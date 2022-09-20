@@ -1,12 +1,9 @@
-#This program creates point estimates of booster dose VE by  vaccine_type and outcome
-
-# strains =   "omicron" (no booster doses till omicron in SLE)
-# outcomes = "any_infection"       "death"               "severe_disease"      "symptomatic_disease"
-# vaccine type =  "Pfizer"  (with previous vaccine equal to AZ, Sinovac or Pfizer)
-
 require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
 
-#NOTE: the four VE we calculate are VE against infection, death, severe disease and symptomatic disease. 
+### This (mech shop) creates point estimates of d = 3 (booster) heterologous combinations with Pfizer
+# strains  = "omicron" (no booster doses till omicron in SLE)
+# outcomes = "any_infection"       "death"               "severe_disease"      "symptomatic_disease"
+# vaccine type =  "Pfizer"  (with previous primary doses in AZ, Sinovac or Pfizer)
 
 
 #####  Visualise estimates from IVAC living systematic review ##########4#########################################################################
@@ -75,9 +72,6 @@ annotate_figure(plot_group,top=text_grob('booster dose'))
 
 
 
-
-
-
 #####  Impute missing values based on previous analysis ########################################################################################
 ##only 'any_infection' needs imputing
 imputed_rows = VE_estimates %>% 
@@ -90,7 +84,7 @@ VE_estimates = rbind(VE_estimates,imputed_rows)
 
 
 #####  Compare to dose 1 and 2 ########################################################################################
-to_plot = VE_estimates_imputed[VE_estimates_imputed$strain == strain &VE_estimates_imputed$dose !=3,]
+to_plot = VE_estimates_imputed[VE_estimates_imputed$strain == 'omicron' & VE_estimates_imputed$dose !=3,]
 plot_list = list()
 for (i in 1:length(unique(to_plot$outcome))){
   outcome = unique(to_plot$outcome)[i]
@@ -116,7 +110,6 @@ plot_VE_point_estimates
 
 
 #####  Save point estimate for booster doses ################################################################################
-
 VE_booster_estimates = VE_estimates %>%
   mutate(dose = 3,
   vaccine_type_long = case_when(
@@ -145,7 +138,3 @@ save(VE_booster_estimates,file = "1_inputs/VE_booster_estimates.Rdata")
 
 
 
-
-##### send to Cromer et al.
-# VE_severe_outcome_estimates_FINAL = VE_estimates_imputed[VE_estimates_imputed$outcome %in% c('death','severe_disease'), ]
-# write.csv(VE_severe_outcome_estimates_FINAL, file = 'x_results/VE_severe_outcome.Rdata')

@@ -1,13 +1,9 @@
-#This program creates point estimates of VE by dose, vaccine_type, outcome and strain
-
-# strains =  "delta"   "omicron"
-# outcomes = "any_infection"       "death"               "severe_disease"      "symptomatic_disease"
-# vaccine type = "AstraZeneca"       "Johnson & Johnson" "Moderna"           "Pfizer"            "Sinopharm"         "Sinovac"     
-
-
 require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
 
-#NOTE: the four VE we calculate are VE against infection, death, severe disease and symptomatic disease. 
+###This (mech shop) creates point estimates of VE by dose, vaccine_type, outcome and strain
+# strains  = "delta"   "omicron"
+# outcomes = "any_infection"       "death"               "severe_disease"      "symptomatic_disease"
+# vaccine type = "AstraZeneca"       "Johnson & Johnson" "Moderna"           "Pfizer"            "Sinopharm"         "Sinovac"     
 
 
 ##### (1/2) Inital estimates from IVAC living systematic review ##########4#########################################################################
@@ -38,12 +34,13 @@ annotate_figure(plot_group,top=text_grob(paste(this_strain)))
 
 #NOTES ON ODD BEHAVIOUR: Sinopharm -> J&J 3rd is higher than Sinopharm 1 & 2 but lower than J&J 2nd
 #repeat Sinopharm 3rd with J&J as J&J booster
-workshop = VE_estimates %>% filter(vaccine_type == 'Johnson & Johnson' & dose == 3 & outcome %in% c('severe_disease','death'))
+workshop = VE_estimates %>% 
+  filter(vaccine_type == 'Johnson & Johnson' & dose == 3 & outcome %in% c('severe_disease','death'))
 workshop$dose = 2
 VE_estimates = rbind(VE_estimates,workshop)
 
 
-###some analysis:
+###Calculate ratios:
 #(A/D) compare VE against death (where avaliable) to VE against severe disease
 death = VE_estimates[VE_estimates$outcome == 'death',] %>% 
   select(strain,vaccine_type,dose,VE) %>%
@@ -297,24 +294,6 @@ for (o in unique(workshop$outcome)){
   }
 }
 sum(workshop$source_extend =="omicron estimated from delta",na.rm=TRUE) # n=12
-
-
-#COMEBACK - is this still necessary?
-# t = "Johnson & Johnson"
-# d = 1
-# for (o in unique(workshop$outcome)){
-#        workshop_rows = workshop[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o, ]
-#         if (workshop_rows$source[workshop_rows$strain == "omicron"] == "imputed" & 
-#             is.na(workshop_rows$source_extend[workshop_rows$strain == 'omicron']) &
-#             is.na(workshop_rows$VE[workshop_rows$strain == 'delta']) == FALSE){
-#           estimate = workshop_rows$VE[workshop_rows$strain == 'delta'] * delta_omicron_ratio$mean[delta_omicron_ratio$outcome == o]
-#           workshop$VE[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = estimate
-#           workshop$source_extend[workshop$dose == d & workshop$vaccine_type == t & workshop$outcome == o & workshop$strain == "omicron"] = "omicron estimated from delta"
-#   }
-# }
-
-sum(workshop$source_extend =="omicron estimated from delta",na.rm=TRUE) #n=14
-
 if (nrow(workshop[is.na(workshop$VE),])>0){stop('Some values to go!')}
 
 
@@ -341,9 +320,9 @@ VE_estimates_imputed = workshop %>%
     
   ))
 
-strain = 'omicron'
-to_plot = VE_estimates_imputed[VE_estimates_imputed$strain == strain &VE_estimates_imputed$dose !=3,]
 
+to_plot = VE_estimates_imputed %>%
+  filter(strain == 'omicron' & dose !=3)
 #to_plot = VE_estimates_imputed %>% filter(vaccine_type %in% c('Moderna','Pfizer','AstraZeneca'), strain == 'omicron')
 
 plot_list = list()
@@ -363,12 +342,8 @@ for (i in 1:length(unique(to_plot$outcome))){
 plot_VE_point_estimates = ggarrange(plot_list[[1]],plot_list[[4]],plot_list[[3]],plot_list[[2]],
                                     common.legend = TRUE,
                                     legend="bottom")
-#annotate_figure(plot, top = text_grob(paste('VE estimates against',strain), size = 18))
 plot_VE_point_estimates
 
 save(VE_estimates_imputed,file = "1_inputs/VE_estimates_imputed.Rdata")
 
 
-##### send to Cromer et al.
-# VE_severe_outcome_estimates_FINAL = VE_estimates_imputed[VE_estimates_imputed$outcome %in% c('death','severe_disease'), ]
-# write.csv(VE_severe_outcome_estimates_FINAL, file = 'x_results/VE_severe_outcome.Rdata')

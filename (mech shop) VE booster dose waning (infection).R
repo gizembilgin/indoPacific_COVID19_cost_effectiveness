@@ -1,16 +1,14 @@
-
 require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(tidyverse);
 
-
-#This program applies a waning distribution to the point estimates of VE (VE_estimates_imputed created in `(mech shop) VE point estimate.R`)
+#This (mech shop) applies a waning distribution to the point estimates of VE (VE_estimates_imputed created in `(mech shop) VE booster dose point estimates.R`)
 
 # We include two distributions:
 # 1. acquisition - covering any_infection and symptomatic_disease
 # 2. severe_outcomes - covering severe_disease and death
 
 
-###Showing that Pfizer booster to CoronaVac EQ to Pfizer dose 2 waning
-rm(list=ls())
+### Showing that Pfizer booster to CoronaVac EQ to Pfizer dose 2 waning
+#rm(list=ls())
 raw <- read.csv(file = '1_inputs/VE_acq.csv',header=TRUE)
 raw = raw %>% filter(dose == 3 & age_group == 'overall') %>% select(dose,days,VE) %>% mutate(label = 'Pfizer booster with CoronaVac primary schedule')
 
@@ -57,7 +55,6 @@ predicted_distribution = data.frame()
   #_________________________________________________________________________________________________________________________________________
 
   
- 
   ### Internal VE
   apply_distribution <- predicted_distribution %>%
     group_by(dose) %>%
@@ -73,7 +70,6 @@ predicted_distribution = data.frame()
   
   ### Apply distribution
   load(file = "1_inputs/VE_booster_estimates.Rdata")
-  
   
   imputed = data.frame()
     for (t in 1:length(unique(VE_booster_estimates$primary_if_booster))){
@@ -108,10 +104,10 @@ predicted_distribution = data.frame()
           panel.grid.minor = element_blank(), 
           axis.line = element_line(color = 'black'))
  
-  
+  ###load booster from severe outcome `(mech shop) VE waning distribution (severe outcomes).R`
   check = waning_to_plot %>% filter(is.na(primary_if_booster) == FALSE)
   plot_2 = ggplot() +
-    geom_line(data=check[check$strain == strain_test & check$outcome == 'death',],
+    geom_line(data=check[check$strain == 'omicron' & check$outcome  == 'death',],
               aes(x=days,y=VE_days,color=as.factor(primary_if_booster)),na.rm=TRUE) +
     labs(title=(paste("VE against death")),color='primary schedule') +
     xlab("") +
@@ -121,7 +117,7 @@ predicted_distribution = data.frame()
     theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
   
   plot_3 = ggplot() +
-    geom_line(data=check[check$strain == strain_test & check$outcome == 'severe_disease',],
+    geom_line(data=check[check$strain == 'omicron' & check$outcome  == 'severe_disease',],
               aes(x=days,y=VE_days,color=as.factor(primary_if_booster)),na.rm=TRUE) +
     labs(title=(paste("VE against severe_disease")),color='primary schedule') +
     xlab("days since vaccination") +
@@ -131,7 +127,6 @@ predicted_distribution = data.frame()
     theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
   
   grid.arrange(plot_1,plot_2,plot_3, nrow =3 )
-  
   #_________________________________________________________________________________________________________________________________________
   
 
@@ -151,7 +146,6 @@ predicted_distribution = data.frame()
   VE_waning_distribution = bind_rows(VE_waning_distribution,together)
   
   save(VE_waning_distribution, file = '1_inputs/VE_waning_distribution.Rdata')
-  
   
   
   

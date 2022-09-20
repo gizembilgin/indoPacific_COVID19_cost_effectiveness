@@ -1,11 +1,7 @@
 require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(tidyverse);
 #rm(list=ls())
 
-#This program applies a waning distribution to the point estimates of VE (VE_estimates_imputed created in `(mech shop) VE point estimate.R`)
-
-# We include two distributions:
-# 1. acquisition - covering any_infection and symptomatic_disease
-# 2. severe_outcomes - covering severe_disease and death
+### This (mech shop) applies a waning distribution to the point estimates of VE against severe outcomes
 
 
 ###(1/3) Load distribution
@@ -204,6 +200,5 @@ no_waning = together %>% mutate(waning = FALSE) %>%
 
 VE_waning_distribution_SO = rbind(waning,no_waning) %>% select(strain, vaccine_type,primary_if_booster, dose, outcome,days,VE_days,waning)
 save(VE_waning_distribution_SO, file = '1_inputs/VE_waning_distribution_SO.Rdata')
-
 
 
