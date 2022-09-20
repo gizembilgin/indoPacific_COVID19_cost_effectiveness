@@ -307,15 +307,15 @@ for (i in 1:iteration_num){
   if ('RR_risk_group' %in% names(sensitivity_analysis_toggles)){
     this_RR = RR_to_test_list[[i]]
     
-    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,'RR',this_RR,time,'.csv'))
+    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,'RR',this_RR,time,'.csv',sep=''))
     
   } else if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
     this_VE_mod = unique(SA_VE_warehouse_table$VE_mod)[i] 
     
-    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,this_VE_mod,time,'.csv'))
+    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,this_VE_mod,time,'.csv',sep=''))
     
   } else{
-    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,gov_target,time,'.csv'))
+    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,gov_target,time,'.csv',sep=''))
     results_warehouse_entry[[4]]= print
     results_warehouse[[receipt]] = results_warehouse_entry
   }
