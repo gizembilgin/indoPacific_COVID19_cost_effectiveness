@@ -222,7 +222,8 @@ plot_standard = theme_bw() +
         panel.grid.minor = element_blank(), 
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
-  
+
+if (exists("plotting") == FALSE){plotting = "off"}  
 if (ticket == 1 | plotting == "on"){
 
 incidence_log_plot = incidence_log %>% filter(date >= date_start) %>%
