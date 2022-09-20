@@ -89,42 +89,46 @@ if (new_variant_check == "on"){
 
 
 ### Fit with risk group _______________________________________________________________________________________
-risk_group_prioritisation_to_date = NA
-risk_group_lower_cov_ratio = NA
-default_prioritisation_proportion = 0.5
-
-risk_group_toggle = "on"
-risk_group_name_list = c('pregnant_women', 'adults_with_comorbidities')
-risk_group_RR_list = c(2.4,1.95)
-plot_list = list()
-
-for (fit_ticket in 1:length(risk_group_name_list)){
-  risk_group_name = risk_group_name_list[fit_ticket]
-  RR_estimate = risk_group_RR_list[fit_ticket]
+if (new_variant_check == "off"){
+  risk_group_prioritisation_to_date = NA
+  risk_group_lower_cov_ratio = NA
+  default_prioritisation_proportion = 0.5
   
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
+  risk_group_toggle = "on"
+  risk_group_name_list = c('pregnant_women', 'adults_with_comorbidities')
+  risk_group_RR_list = c(2.4,1.95)
+  plot_list = list()
   
-  plot_list[[fit_ticket]] = list(plot1,plot2,plot3,plot4,plot5)
-  
-  fitted_incidence_log_tidy = incidence_log_tidy 
-  fitted_incidence_log = incidence_log %>% select(date,daily_cases)
-  fitted_results[[(fit_ticket+1)]] = list(parameters,next_state,fitted_incidence_log_tidy,fitted_incidence_log,risk_group_name)
+  for (fit_ticket in 1:length(risk_group_name_list)){
+    risk_group_name = risk_group_name_list[fit_ticket]
+    RR_estimate = risk_group_RR_list[fit_ticket]
+    
+    source(paste(getwd(),"/CommandDeck.R",sep=""))
+    
+    plot_list[[fit_ticket]] = list(plot1,plot2,plot3,plot4,plot5)
+    
+    fitted_incidence_log_tidy = incidence_log_tidy 
+    fitted_incidence_log = incidence_log %>% select(date,daily_cases)
+    fitted_results[[(fit_ticket+1)]] = list(parameters,next_state,fitted_incidence_log_tidy,fitted_incidence_log,risk_group_name)
+  }
+  grid.arrange(plot_list[[1]][[1]],plot_list[[1]][[2]],plot_list[[1]][[3]],plot_list[[1]][[4]],plot_list[[1]][[5]], layout_matrix = lay)
+  grid.arrange(plot_list[[2]][[1]],plot_list[[2]][[2]],plot_list[[2]][[3]],plot_list[[2]][[4]],plot_list[[2]][[5]], layout_matrix = lay)
 }
-grid.arrange(plot_list[[1]][[1]],plot_list[[1]][[2]],plot_list[[1]][[3]],plot_list[[1]][[4]],plot_list[[1]][[5]], layout_matrix = lay)
-grid.arrange(plot_list[[2]][[1]],plot_list[[2]][[2]],plot_list[[2]][[3]],plot_list[[2]][[4]],plot_list[[2]][[5]], layout_matrix = lay)
 #______________________________________________________________________________________________________________
 
 
 
 ### Save fitted results ______________________________________________________________________________________
-if (! Sys.Date() == date_now-1 ){
-  warning('fitted date not equal to current date')
-  if (Sys.Date() > date_now){stop('fitted date less than current date, may cause problems with real vaccines not being delivered!')}
+if (new_variant_check == "off"){
+  if (! Sys.Date() == date_now-1 ){
+    warning('fitted date not equal to current date')
+    if (Sys.Date() > date_now){stop('fitted date less than current date, may cause problems with real vaccines not being delivered!')}
+  }
+  
+  fitted_max_date = date_now-1  #incidence log always missed in first day of model
+  save(fitted_max_date,file = '1_inputs/last_fit_date.Rdata')
+  save(fitted_results, file = '1_inputs/fitted_results.Rdata')
 }
-
-fitted_max_date = date_now-1  #incidence log always missed in first day of model
-save(fitted_max_date,file = '1_inputs/last_fit_date.Rdata')
-save(fitted_results, file = '1_inputs/fitted_results.Rdata')
 #______________________________________________________________________________________________________________
 
 
@@ -133,7 +137,6 @@ save(fitted_results, file = '1_inputs/fitted_results.Rdata')
 #seroprevalence estimates
 workshop = next_state_FIT #November 2022
 workshop = next_state     #steady state in August 2022
-workshop = fitted_next_state
 
 sum(workshop$pop[workshop$class == "R"])/sum(workshop$pop)
 
