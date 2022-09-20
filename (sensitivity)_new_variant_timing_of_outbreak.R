@@ -1,6 +1,6 @@
+# This program runs 'CommandDeck' multiple times to understand the impact of current program targets (1) during an outbreak, and (2) if rolled out prior to an outbreak
+# It compiles the results from these runs into panel A of Figure S4.2 (in the Supplementary Material)
 
-#This program runs results for section 1 of FleetAdmiral
-#It estimates of the impact of current program targets (1) during an outbreak, and (2) if rolled out prior to an outbreak
 
 ### (1) Overarching trackers #####################################################################################################
 warehouse_table = data.frame() 
@@ -8,16 +8,14 @@ warehouse_plot = data.frame()
 baseline_to_compare = "no further vaccine rollout"
 
 
+
 ### (2) Queue strategies to run ##################################################################################################
 queue = list()
 
-#(A/B) No further roll-out
 queue[[1]] = list(vax_strategy_description = "no further vaccine rollout",
                   vax_strategy_toggle = "off",
                   outbreak_timing = "during")
 
-
-#(B/B) Current program targets
 queue[[2]] = list(vax_strategy_description = 'current roll-out DURING outbreak',
                   vax_strategy_toggle = "on",
                   outbreak_timing = "during",
@@ -30,13 +28,12 @@ queue[[3]] = list(vax_strategy_description = 'current roll-out PRIOR to outbreak
 
 
 
-
 ### (3) Run  ##################################################################################################
 for (ticket in 1:length(queue)){
   commands = queue[[ticket]]
   vax_strategy_description = commands$vax_strategy_description
-  vax_strategy_toggle = commands$vax_strategy_toggle
-  outbreak_timing = commands$outbreak_timing
+  vax_strategy_toggle      = commands$vax_strategy_toggle
+  outbreak_timing          = commands$outbreak_timing
   if ('vax_strategy_toggles' %in% names(commands)){
     vax_strategy_toggles = commands$vax_strategy_toggles
   }
@@ -44,13 +41,16 @@ for (ticket in 1:length(queue)){
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   severe_outcome_projections = severe_outcome_log %>% 
-    mutate(label = vax_strategy_description, day = as.numeric(date - seed_date )) # day = start of outbreak
+    mutate(label = vax_strategy_description, 
+           day = as.numeric(date - max(seed_date) )) # day = start of outbreak
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
   
   row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
 }
 #____________________________________________________________________________________________________________________________________
+
+
 
 ### (4) Save outputs  ##################################################################################################
 results_warehouse_entry = list()
@@ -72,7 +72,6 @@ for (i in 1:length(unique(warehouse_plot$outcome))){
     theme_bw() + 
     xlab("") + 
     ylab("")}
-# 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
 
 cum_plot_list = list()
 for (i in 1:length(unique(warehouse_plot$outcome))){
@@ -112,7 +111,6 @@ for (i in 1:(length(queue)-1)){
 }
 table_list = list(absolute = averted_table, 
                   relative = averted_table_rel) #COMEBACK could be merged
-table_list
 
 results_warehouse_entry[[4]]= table_list
 
