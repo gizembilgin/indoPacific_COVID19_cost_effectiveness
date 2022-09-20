@@ -1,6 +1,6 @@
-#This program runs results for section 2 of FleetAdmiral
-#It estimates of the impact of the current program strategy under varying levels of coverage:
-#(1) using current age-specific eligibility and (2) expanding eligibility to children
+# This program runs the 'CommandDeck' multiple times with varying prioritisation strategies including children 5 to 17
+# It compiles the results from these runs in Table 2 (in the main paper)
+
 
 ### (1) Overarching trackers #####################################################################################################
 warehouse_table = data.frame() 
@@ -8,23 +8,23 @@ warehouse_plot = data.frame()
 vax_strategy_toggle = "on"
 age_split_results = "Y"
 
+
 ### (2) Planning #################################################################################################################
 #calculating poss level of coverage
-current_level = sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1]) #0.318
-prop_18_plus = sum(pop[3:num_age_groups])/sum(pop) #0.54 for SLE
-prop_5_plus = sum(pop[2:num_age_groups])/sum(pop)  #0.86 for SLE
-
+sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1]) #0.318 current coverage
+sum(pop[3:num_age_groups])/sum(pop) #0.54 max for SLE with 18+ eligibility
+sum(pop[2:num_age_groups])/sum(pop)  #0.86 max for SLE with 5+ eligibility
 
 
 ### (3) Queue strategies to run ##################################################################################################
 queue = list()
 
-#Section (1/3) run baseline - current vaccination tarets
+#Section (1/3) run baseline - current vaccination targets
 queue[[1]] = list(vax_strategy_description = 'current vaccination targets (51.6%)',
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET) 
 
 
-#Section (2/3) - current plan (~50%) -> then kids 60,70,80%
+#Section (2/3) - current eligibility (~50%) -> then expand to kids 60,70,80%
 target_list = list(0.6,0.7,0.8)
 
 for (i in 1:length(target_list)){
@@ -39,7 +39,6 @@ for (i in 1:length(target_list)){
   queue[[(1+i)]] = list(vax_strategy_description = paste('current then expand to children ',target_percentage,'%',sep=''),
                         vax_strategy_toggles = this_vax_strategy) 
 }
-
 
 
 #Section (3/3) - expand now to include kids 
@@ -60,7 +59,6 @@ for (i in 1:length(target_list)){
 
 
 
-
 ### (4) Run  ##################################################################################################
 for (ticket in 1:length(queue)){
   
@@ -78,8 +76,11 @@ for (ticket in 1:length(queue)){
   row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
 }
+
 age_split_results = "N"
 #____________________________________________________________________________________________________________________________________
+
+
 
 ### (5) Save outputs  ##################################################################################################
 results_warehouse_entry = list()
@@ -108,7 +109,7 @@ for (section in 1:length(section_list)){
   workshop = workshop %>% 
     group_by(date,outcome,label,day,time) %>%
     summarise(proj = sum(proj),
-              proj_cum = sum(proj_cum))
+              proj_cum = sum(proj_cum),.groups = "keep")
   
   plot_list = list()
   for (i in 1:length(unique(workshop$outcome))){
@@ -145,7 +146,7 @@ table2 = table2 %>%
 #add overall
 workshop = table2 %>%
   group_by(scenario,outcome) %>%
-  summarise(num=sum(num)) %>%
+  summarise(num=sum(num),.groups = "keep") %>%
   mutate(macro_age_group = 'overall')
 table2 = rbind(table2,workshop)
 
@@ -160,6 +161,7 @@ table2 = table2 %>%
   mutate(abs_reduction = num - baseline_num,
          rel_reduction = 100*(num - baseline_num)/baseline_num)
 
+#reorder
 table2$outcome = factor(table2$outcome,levels=c('cases','severe_disease','hosp','death','YLL'))
 table2$macro_age_group = factor(table2$macro_age_group,levels=c('children <5','children 5-17','adults','overall'))
 table2$scenario = factor(table2$scenario, levels = 
@@ -168,9 +170,9 @@ table2$scenario = factor(table2$scenario, levels =
                              "expand to children now 70%","expand to children now 80%",
                              "current then expand to children 60%","current then expand to children 70%", 
                              "current then expand to children 80%")   )
-
 table2 = table2 %>% arrange(scenario,macro_age_group,outcome)
 
+#print
 options(scipen = 1000)
 print = table2 %>%
   filter(! scenario %in% c(baseline_to_compare))  %>%
@@ -191,19 +193,14 @@ print_abs = print %>% mutate(value = paste(rel_reduction,"%",sep=''),type = 'rel
     names_from = together_outcome,
     values_from = value)
 
-print = rbind(print_num,print_abs) %>%
-  arrange(scenario)
+print = rbind(print_num,print_abs) %>% arrange(scenario)
 
 time = Sys.time()
 time = gsub(':','-',time)
 write.csv(print,file=paste(rootpath,'x_results/table2',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,time,'.csv'))
-
-
-
-### SAVE
 results_warehouse_entry[[4]]= print
-
+results_warehouse[[receipt]] = results_warehouse_entry
 #____________________________________________________________________________________________________________________________________
 
-results_warehouse[[receipt]] = results_warehouse_entry
+
 
