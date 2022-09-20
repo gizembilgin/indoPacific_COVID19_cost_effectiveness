@@ -1,22 +1,20 @@
-### This program is intended runs the model in multiple ways to achieve the data required for the RMarkdown report
-### Currently four main sections:
-# (1) Impact of current program targets
-# (2) Varying levels of coverage - w and w/out children
-# (3) Varying speed of vaccine roll-out
-# (4) 'At risk' group consideration
-#________________________________________________________________________________________________________________
+### This program conducts sensitivity analysis for increased vaccine hesitancy in pregnant women
+### The program assumes lower inital vaccine coverage due to this vaccine hesitancy, hence must generate a new fit of the model!
+### A majority of this program follows FleetAdmiral
+
+
+### Setup ____________________________________________________________________________________________________________
+#start timing
 time.start.FleetAdmiral=proc.time()[[3]]
 
-
-### specific togggles
+# toggles
 risk_group_toggle = "on"
 risk_group_name = "pregnant_women"
 risk_group_prioritisation_to_date = NA
 default_prioritisation_proportion = 0.5
 
-#risk_group_lower_cov_ratio = 52/73.4
 risk_group_lower_cov_ratio = 70/88
-sensitivity_analysis_toggles = list(vax_hesistancy_risk_group = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov *risk_group_lower_cov_ratio )
+sensitivity_analysis_toggles = list(vax_hesistancy_risk_group = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov * risk_group_lower_cov_ratio )
 #______________________________________
 
 
@@ -42,30 +40,14 @@ source(paste(getwd(),"/CommandDeck.R",sep=""))
 SA_vaxHest_fitted_incidence_log_tidy = incidence_log_tidy 
 SA_vaxHest_fitted_incidence_log = incidence_log %>% select(date,daily_cases)
 SA_vaxHest_fitted_results = list(parameters,next_state,SA_vaxHest_fitted_incidence_log_tidy,SA_vaxHest_fitted_incidence_log,risk_group_name)
-
 grid.arrange(plot1,plot2,plot3,plot4,plot5, layout_matrix = lay)
 
 SA_vaxHest_fitted_max_date = date_now-1
 save(SA_vaxHest_fitted_max_date,file = '1_inputs/SA_vaxHest_last_fit_date.Rdata')
 save(SA_vaxHest_fitted_results, file = '1_inputs/SA_vaxHest_fitted_results.Rdata')
 
-### Check seroprevalence estimates
-workshop = next_state_FIT #November 2022
-workshop = SA_vaxHest_fitted_results[[2]]
-workshop = fitted_next_state
-workshop = next_state
-
-sum(workshop$pop[workshop$class == "R"])/sum(workshop$pop)
-workshop %>%
-  filter(class == 'R') %>%
-  group_by(age_group) %>%
-  summarise(pop = sum(pop)) %>%
-  rename(recovered = pop) %>%
-  left_join(pop_setting,by='age_group') %>%
-  mutate(seroprev= recovered/pop)
-
+#CHECK 
 coeff <- 1/2000
-
 ggplot() +
   geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
              aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
@@ -85,22 +67,23 @@ fitting = "off"
 #________________________________________
 
 
+
 #### generic toggles
+#load fit
 load(file = '1_inputs/SA_vaxHest_last_fit_date.Rdata')
 date_start = SA_vaxHest_fitted_max_date ##latest fit date
 
-strain_inital = strain_now = 'omicron'             #options:'WT','delta','omicron'
-model_weeks = 52          # how many weeks should the model run for?
+#initialise length of model run and circulating strain
+strain_inital = strain_now = 'omicron'
+model_weeks = 52        
 
-waning_toggle_acqusition = TRUE
+#turn on waning of all immunity
 waning_toggle_severe_outcome = TRUE
-waning_toggle_rho_acqusition = TRUE
 
-
+#set up setting
 setting = "SLE"
 if (setting == "SLE"){
   gov_target = 0.516
-  #gov_target = 0.7
   workshop_doses = gov_target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100
   workshop_doses = round(workshop_doses * sum(pop))
   
@@ -121,18 +104,18 @@ if (setting == "SLE"){
 
 
 ### run results::(Table 3) At risk group analysis
-
 receipt = 2
+risk_group_name = "pregnant_women"
 source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
-
-
 #________________________________________________________________________________________________________________
+
 
 
 ### reset
 risk_group_lower_cov_ratio = NA
 sensitivity_analysis_toggles = list()
 #________________________________________
+
 
 
 current_coverage = c(sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose ==1]),
@@ -143,5 +126,4 @@ save.image(file = paste(rootpath,"x_results/sensitivity_analysis_vax_hest_",Sys.
 
 time.end.FleetAdmiral=proc.time()[[3]]
 time.end.FleetAdmiral-time.start.FleetAdmiral 
-# 6798.61 = 1.9 hours #COMEBACK - time!
 
