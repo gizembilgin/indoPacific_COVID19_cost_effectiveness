@@ -1,3 +1,5 @@
+# This program runs the 'CommandDeck' multiple times with varying prioritisation strategies involving high-risk adults
+# It compiles results from these runs in Table 3 (in the main paper)
 
 
 ### (1) Overarching trackers #####################################################################################################
@@ -5,12 +7,12 @@ warehouse_table = data.frame()
 warehouse_plot = data.frame()
 
 #resets
+vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
 outbreak_timing = "off"
 vax_strategy_toggle = "on"
 vax_risk_strategy_toggle = "on"
 risk_group_toggle = "on" 
 risk_group_prioritisation_to_date = NA
-vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
 default_prioritisation_proportion = 0.5
 
 if (risk_group_name == "pregnant_women"){
@@ -42,7 +44,7 @@ queue[[1]] = list(vax_strategy_description = "no prioritisation",
                   apply_risk_strategy_toggles = this_run)
 
 
-#(A/C) Prioritisation of existing doses
+#(A/C) Prioritisation of primary doses
 this_run$vax_risk_strategy = 'Y'
 
 ### single dose
@@ -69,7 +71,7 @@ this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy
 #___________________________________
 
 
-#(B/C) Providing additional doses
+#(B/C) Providing (opportunistic) additional doses
 this_run$risk_group_accessibility = TRUE
 ### single dose
 this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy
@@ -84,21 +86,22 @@ queue[[7]] = list(vax_strategy_description = 'additional booster doses',
 #___________________________________
 
 
-#(C/C) Else
+#(C/C) Broaden to include high-risk children
 this_run$vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy
 this_run$risk_group_age_broaden = TRUE
 queue[[8]] = list(vax_strategy_description = 'broaden to <18 pregnant individuals',
                   apply_risk_strategy_toggles = this_run)  #roll out vaccine DURING outbreak
 #___________________________________
 
+
+
 ### (3) Run  ##################################################################################################
 for (ticket in 1:length(queue)){
-#for (ticket in 1:3){ 
   
   commands = queue[[ticket]]
   
   VE_loop = 0
-  vax_strategy_description = commands$vax_strategy_description
+  vax_strategy_description    = commands$vax_strategy_description
   apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
@@ -106,9 +109,9 @@ for (ticket in 1:length(queue)){
   severe_outcome_projections = severe_outcome_log %>% 
     mutate(label = vax_strategy_description, day = as.numeric(date - date_start ))
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
-  
-  row = row %>% mutate(scenario = vax_strategy_description,
-                       date_complete_at_risk_group = date_complete_at_risk_group) %>% 
+  row = row %>% 
+    mutate(scenario                    = vax_strategy_description,
+           date_complete_at_risk_group = date_complete_at_risk_group) %>% 
     relocate(scenario, .before = colnames(row)[[1]])
   warehouse_table = rbind(warehouse_table,row)
   
@@ -171,12 +174,14 @@ for (ticket in 1:length(queue)){
 }
 #____________________________________________________________________________________________________________________________________
 
-### (5) Save outputs  ##################################################################################################
+
+
+### (4) Save outputs  ##################################################################################################
 results_warehouse_entry = list()
 results_warehouse_entry[[1]] = warehouse_table
 results_warehouse_entry[[2]] = warehouse_plot
 
-### quick plot
+### (A/B) Quick plot for sense checking
 warehouse_plot = warehouse_plot %>% 
   mutate(time = day) %>%
   filter(time>=0)
@@ -201,7 +206,6 @@ for (section in 1:length(section_list)){
       theme_bw() + 
       xlab("") + 
       ylab("")}
-  # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
   
   cum_plot_list = list()
   for (i in 1:length(unique(workshop$outcome))){
@@ -215,7 +219,6 @@ for (section in 1:length(section_list)){
       ylab("")
   }
   
-  
   # 1 = death, 2 = hosp, 3 = severe_disease, 4 = YLL, 5 = cases
   ggarrange(abs_plot_list[[5]],cum_plot_list[[5]],
                    abs_plot_list[[2]],cum_plot_list[[2]],
@@ -227,7 +230,8 @@ for (section in 1:length(section_list)){
                    nrow = 4)
 }
 
-### Cumulative outcome table ############
+
+### (B/B) Create table
 baseline_to_compare = "no prioritisation"
 
 iteration_num = 1
@@ -269,7 +273,6 @@ for (i in 1:iteration_num){
     mutate(abs_reduction = num - baseline_num,
            rel_reduction = 100*(num - baseline_num)/baseline_num)
   
-  
   if (risk_group_name == "pregnant_women"){
     table3$outcome = factor(table3$outcome,levels=c('cases','severe_disease','hosp','death','YLL','neonatal_deaths'))
   } else{
@@ -297,9 +300,10 @@ for (i in 1:iteration_num){
       names_from = together_outcome,
       values_from = together_value)
   
+
+  #Save results!  
   time = Sys.time()
   time = gsub(':','-',time)
-  
   if ('RR_risk_group' %in% names(sensitivity_analysis_toggles)){
     this_RR = RR_to_test_list[[i]]
     
@@ -312,11 +316,9 @@ for (i in 1:iteration_num){
     
   } else{
     write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,gov_target,time,'.csv'))
-    ### SAVE
     results_warehouse_entry[[4]]= print
     results_warehouse[[receipt]] = results_warehouse_entry
   }
-  
 }
 
 
