@@ -1,17 +1,14 @@
-### To have a dynamic rho need:
+### This script contains the loading of data and function needed for dynamic infection-derived protection against reinfection
+### Dynamic infection-derived protection (rho) requires:
 # (1) shape of rho waning
 # (2) tracking of days since infection of people in Recovered class
 # (3) tracking of the introduction of new immune escape variants
+# LIMITATION: our model does not track multiple infections, and hence assumes no additional immunity from repeat infections
 
-#ASSUMPTION: assume that no additional immunity from repeat infections
-
-#Approach
-# use omega (e.g., 180 day) cut-off, and see density of days since in this period
-# at each time-step sum incidence 0-179 days
 
 
 ### (1) Shape of waning ###############################################################################
-#See rho.xlsx in parameter estimation
+#Exponential fit separately, see Supplementary Material for data source
 rho_dn = crossing(type = c('new_to_new','prev_to_new'),
                   outcome = c('symptomatic_disease','severe_outcome'),
                   days = seq(0,365*2)
@@ -43,7 +40,6 @@ rho_dn_wide = rho_dn %>%
 
 ### (2) Shape of introduction ###############################################################################
 intro_raw <- read.csv("1_inputs/GISAID_omicron_intro_Africa.csv", header=TRUE)
-
 intro_raw$date = as.Date(intro_raw$date, '%d/%m/%Y')
 
 intro_raw = intro_raw %>% 
@@ -52,20 +48,6 @@ intro_raw = intro_raw %>%
 
 ggplot(intro_raw) + geom_point(aes(x=days,y=percentage))
 
-#fit smoothed spline
-# plot_list = list()
-# for (i in 20:2){
-#   spl3 <- smooth.spline(x = intro_raw$days, y = intro_raw$percentage, df = i)
-#   lines(spl3, col = 2)
-#   fitted.results = predict(spl3,days_to_predict,deriv = 0)
-#   fit = data.frame(fitted.results)
-#   colnames(fit) = c('days','percentage')
-#   
-#   plot_list[[i]] = ggplot() + geom_point(data = intro_raw, aes(x=days,y=percentage)) +
-#     geom_line(data = fit, aes(x=days,y=percentage)) + 
-#     labs(title = paste(i))
-# }
-# plot_list
 days_to_predict = seq(0,365)
 smoothed_spline <- smooth.spline(x = intro_raw$days, y = intro_raw$percentage, df = 9)
 fitted.results = predict(smoothed_spline,days_to_predict,deriv = 0)
@@ -86,21 +68,21 @@ ggplot() + geom_point(data = intro_raw, aes(x=days,y=percentage)) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         axis.line = element_line(color = 'black'))
-
 #######################################################################################################
 
 
 
-### (2) Tracking of days since infection (proxy) for people in Recovered class ########################
+### (3) Tracking of days since infection (proxy) for people in Recovered class ########################
 rho_acq = rho_dn %>% filter(outcome == 'symptomatic_disease')
 
+# This function calculates the population-level infection-derived protection against reinfection at any given time by age_group
 rho_time_step <- function(date_now){
   
   #create data set of historical cases by day in recovery class
+  if (exists("incidence_log") == FALSE){ incidence_log = data.frame() }
   if (nrow(incidence_log)>0){
     workshop = incidence_log %>% select(date,daily_cases)
     workshop = rbind(workshop,hist_cases)
-    
   } else{
     workshop = hist_cases
   }
@@ -124,7 +106,6 @@ rho_time_step <- function(date_now){
   if (length(variant_change_date[variant_change_date<date_now])>0){ # do we have any new variants?
     
     num_variants_introduced = length(variant_change_date[variant_change_date<date_now])
-    
     
     #rho = how protected are people today from the circulating strains today?
     #    = %new circulating today * protection to new today + %old circulating today * protection to old today
@@ -163,7 +144,6 @@ rho_time_step <- function(date_now){
         percentage_new = this_variant_shift$percentage[this_variant_shift$date == max(this_variant_shift$date)]
       }
       
-      
       protection = percentage_new * protection_to_new + (1-percentage_new) * protection_to_old
     }
     
@@ -171,13 +151,11 @@ rho_time_step <- function(date_now){
     
   } else{
     workshop = workshop %>% 
-      left_join(rho_acq[rho_acq$type == 'new_to_new',], by = "days") %>% #COMEBACK and remove when rho dn by days fit
+      left_join(rho_acq[rho_acq$type == 'new_to_new',], by = "days") %>%
       mutate(interim = protection * prop_window)
     
-    function_result = sum(workshop$interim,na.rm=TRUE) #COMEBACK - remove na.rm
+    function_result = sum(workshop$interim,na.rm=TRUE) 
   }
   
   return(function_result)
 }
-
-#rho_time_step(date_now)
