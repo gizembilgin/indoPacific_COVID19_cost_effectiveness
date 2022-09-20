@@ -197,7 +197,7 @@ print = rbind(print_num,print_abs) %>% arrange(scenario)
 
 time = Sys.time()
 time = gsub(':','-',time)
-write.csv(print,file=paste(rootpath,'x_results/table2',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,time,'.csv'))
+write.csv(print,file=paste(rootpath,'x_results/table2',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,time,'.csv',sep=''))
 results_warehouse_entry[[4]]= print
 results_warehouse[[receipt]] = results_warehouse_entry
 #____________________________________________________________________________________________________________________________________
