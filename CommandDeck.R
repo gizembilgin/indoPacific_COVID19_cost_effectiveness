@@ -19,6 +19,7 @@ debug_type = "partial" #options: "full", "partial"
 
 
 ### set default values of toggles if debug is on
+if (exists("fitting") == FALSE){fitting = "off"}
 if (fitting == "on"){debug = "off"} # can not debug while fitting the model
 if ( debug == "on"){
   
@@ -159,6 +160,7 @@ if (exists("ticket") == FALSE){ ticket = 1 }
 if (exists("prev_setting") == FALSE){ prev_setting = "NONE"}
 if (exists("prev_risk_num") == FALSE){ prev_risk_num = "NONE"}
 if (exists("prev_risk_group") == FALSE){ prev_risk_group = "NONE"}
+if (exists("risk_group_name") == FALSE){ risk_group_name = "NO RISK GROUPS"}
 if (exists("prev_run_date") == FALSE){ prev_run_date = as.Date('1900-01-01')}
 if (exists("prev_discounting_rate") == FALSE){ prev_discounting_rate = discounting_rate}
 if (prev_discounting_rate != discounting_rate){stop('need to re-run "(mech shop) severe outcome setting-specific rates" to apply new discounting rate')}
