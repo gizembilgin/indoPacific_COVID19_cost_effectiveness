@@ -17,7 +17,7 @@ date_start = fitted_max_date
 #initialise length of model run and circulating strain
 strain_inital = strain_now = 'omicron' 
 outbreak_timing = "off" #roll-out during steady state
-model_weeks = 1
+model_weeks = 52
 
 #turn on waning of all immunity
 waning_toggle_acqusition = TRUE
