@@ -128,33 +128,39 @@ if (age_split_results == "N"){
     filter(date >= date_start) %>%
     group_by(outcome,macro_age_group) %>%
     mutate(proj_cum = cumsum(proj))
-  
-  plot_standard_ageSplit = plot_standard +
-    xlab("") +
-    labs(color="")+
-    scale_x_date(date_breaks="1 month", date_labels="%b") +
-    ylab("incidence")
     
   plot_children_0_4 <- 
     ggplot() + 
     geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'children <5',]
               ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     labs(title='children 0-4')+
-    plot_standard_ageSplit
+    plot_standard +
+    xlab("") +
+    ylab("incidence") +
+    labs(color="") +
+    scale_x_date(date_breaks="1 month", date_labels="%b")
   
   plot_children_5_17 <- 
     ggplot() + 
     geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'children 5-17',]
-              ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) 
+              ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     labs(title='children 5-17')+
-    plot_standard_ageSplit
+    plot_standard +
+      xlab("") +
+      ylab("incidence") +
+      labs(color="") +
+      scale_x_date(date_breaks="1 month", date_labels="%b")
   
   plot_adults <- 
     ggplot() + 
     geom_line(data=severe_outcome_log_plot[severe_outcome_log_plot$outcome != 'cases' & severe_outcome_log_plot$macro_age_group == 'adults',]
               ,aes(x=date,y=proj,color=as.factor(outcome)),na.rm=TRUE) +
     labs(title='adults')+
-    plot_standard_ageSplit
+    plot_standard +
+    xlab("") +
+    ylab("incidence") +
+    labs(color="") +
+    scale_x_date(date_breaks="1 month", date_labels="%b")
  
   grid.arrange(plot_children_0_4, plot_children_5_17, plot_adults)
   
