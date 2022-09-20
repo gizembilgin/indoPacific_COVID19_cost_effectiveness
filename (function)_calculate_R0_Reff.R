@@ -1,8 +1,9 @@
-#### This program calculates R0, and Reff
+### This program contains a function to fit beta to the basic reproduction number (R0), and
+### a function to calculate the effective reproduction number (Reff)
 
 #### R0 #########################################################################
 # R0 = p(NGM) - spectral radius, i.e., absolute maximum eigenvalue
-# NGM = contact_matrix_adjusted * diag{beta*suscept*(gamma+lota(1-gamme)*1/delta)}
+# NGM = Next Generation Matrix = contact_matrix_adjusted * diag{beta*suscept*(gamma+lota(1-gamme)*1/delta)}
 
 #(A) setup
 beta_fitted_values = data.frame()
@@ -12,10 +13,7 @@ NGM_R0_list = list()
 for (loop in 1:length(strain_list)){
   strain = strain_list[loop]
   if (strain == 'WT'){R0_to_fit = 2.79
-  } else if (strain == "delta"){R0_to_fit = 5.08
-  #} else if (strain == "omicron"){R0_to_fit = 5.08*1.64} #World Health Organization. (2022). COVID-19 weekly epidemiological update, edition 82, 8 March 2022. World Health Organization. https://apps.who.int/iris/handle/10665/352390. License: CC BY-NC-SA 3.0 IGO
-  #Transmission advantage is x 2.9 with just modifications to rho and VE!!!
-  } else if (strain == "omicron"){R0_to_fit = 5.08} 
+  } else if (strain %in% c("delta","omicron")){R0_to_fit = 5.08} #ASSUMPTION: transmission advantage of Omicron entirely immune-escape!
   
   contact_matrix_adjust = matrix(data = 0, nrow = num_age_groups, ncol = num_age_groups)
   for (i in 1:num_age_groups){
@@ -54,7 +52,7 @@ for (loop in 1:length(strain_list)){
   NGM_R0 <- contact_matrix_adjust %*% diag_matrix
   R0_beta <- abs(eigen(NGM_R0)$values[1])
   
-  if (! round(R0_beta,digits = 2) == round(R0_to_fit,digits=2)){stop('beta fitting is not working!')}
+  if (! round(R0_beta,digits = 2) == round(R0_to_fit,digits = 2)){stop('beta fitting is not working!')}
 
   row = data.frame(beta_optimised[1],strain)
   colnames(row) = c('beta_optimised','strain')
@@ -65,44 +63,38 @@ for (loop in 1:length(strain_list)){
 #_______________________________________________________________________________
 
 
-
-
 #### Reff ######################################################################
 Reff_time_step <- function(parameters,next_state){
-
-#NGM_modified = NGM_R0 * NPI * (1-pre-existing immunity)
-
-#(A) NPI  
-num = which(strain_list == strain_now)
-NGM_R0 = NGM_R0_list[[num]]
-
-NGM_modified = NGM_R0 * parameters$NPI  
   
-#(B) pre-existing immunity, i.e., vax and recovery
-if (round(sum(next_state$pop) - sum(pop),digits =0 ) == 0) {
-  next_state_immunity = next_state %>%
-    mutate(pop = 
-             case_when(
-               class == 'R' ~ pop * (1-parameters$rho), #immunity from infection
-               TRUE ~ pop
-               ))
+  #NGM_modified = NGM_R0 * NPI * (1-pre-existing immunity)
   
-  next_state_immunity = next_state_immunity %>% 
-    left_join(parameters$VE, by = c("age_group", "dose", "vaccine_type", "risk_group"))
-  next_state_immunity$VE[is.na(next_state_immunity$VE) == TRUE] = 0
-  next_state_immunity = next_state_immunity %>% mutate(pop = pop * (1-VE)) #immunity from vaccination
- 
-  next_state_immunity = sum(next_state_immunity$pop)/sum(pop)
+  num = which(strain_list == strain_now)
+  NGM_R0 = NGM_R0_list[[num]]
   
-  NGM_modified = NGM_modified * next_state_immunity
+  #(A) NPI  
+  NGM_modified = NGM_R0 * parameters$NPI  
+    
+  #(B) pre-existing immunity, i.e., vax and recovery
+  if (round(sum(next_state$pop) - sum(pop),digits =0 ) == 0) {
+    next_state_immunity = next_state %>%
+      mutate(pop = 
+               case_when(
+                 class == 'R' ~ pop * (1-parameters$rho), #immunity from infection
+                 TRUE ~ pop
+                 ))
+    
+    next_state_immunity = next_state_immunity %>% 
+      left_join(parameters$VE, by = c("age_group", "dose", "vaccine_type", "risk_group"))
+    next_state_immunity$VE[is.na(next_state_immunity$VE) == TRUE] = 0
+    next_state_immunity = next_state_immunity %>% mutate(pop = pop * (1-VE)) #immunity from vaccination
+    next_state_immunity = sum(next_state_immunity$pop)/sum(pop)
+    
+    NGM_modified = NGM_modified * next_state_immunity
+    
+  } else{
+    stop("issue with time_step population fluctating")
+  }
   
-} else{
-  stop("issue with time_step population fluctating")
+    Reff  <- abs(eigen(NGM_modified)$values[1]) 
+    return(Reff)
 }
-
-  Reff  <- abs(eigen(NGM_modified)$values[1]) 
-  return(Reff)
-}
-
-
-
