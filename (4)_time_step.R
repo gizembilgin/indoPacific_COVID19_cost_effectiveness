@@ -1,16 +1,15 @@
-### This program runs the model iteratively over weekly periods
-### Its purpose is to update the weekly vaccination rates in the population
+### This program runs the model iteratively, updating vaccination rates daily
+
+sol_log = data.frame()
+sol_log_unedited = data.frame()
+incidence_log = data.frame()
 
 time_step = 1
 num_time_steps = model_weeks *7
-
 if (outbreak_timing == "after"){
   num_time_steps = model_weeks *7 + as.numeric(seed_date-date_start) -7
 }
   
-sol_log = data.frame()
-sol_log_unedited = data.frame()
-incidence_log = data.frame()
 
 for (increments_number in 1:num_time_steps){
 
@@ -50,7 +49,7 @@ for (increments_number in 1:num_time_steps){
     
     date_now = date_start + increments_number*time_step
     
-    if (increments_number > 1){ #aim is to repeat last run of fitted, hoping for the same value
+    if (increments_number > 1){ 
     
       if (date_now <= max(NPI_estimates$date)){
         NPI_this_step <- NPI_estimates$NPI[NPI_estimates$date == date_now]/100
@@ -60,18 +59,17 @@ for (increments_number in 1:num_time_steps){
       if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
         parameters$VE = VE_time_step(strain_now,date_now,'any_infection')
       }
+      
       if (waning_toggle_rho_acqusition == TRUE ){
-        #parameters$rho = rho_time_step('symptomatic_disease',date_now,strain_now)
         parameters$rho = rho_time_step(date_now)
         rho = parameters$rho
       }
       
-        # selecting bottom row of solution which is time = 7 (one week)
         state_working=tail.matrix(sol,1)
         state_working=select(state_working,-time) #remove column with time
         state_working=as.vector(state_working)
         
-        # lets reconstruct our matrix (easier to work with)
+        # lets reconstruct our tidy matrix (easier to work with)
         A=RISK*J*(T*D+1) # +1 is unvax
         
         S = as.matrix(state_working[1:A])
@@ -80,16 +78,12 @@ for (increments_number in 1:num_time_steps){
         R = as.matrix(state_working[(3*A+1):(4*A)])
         Incid = as.matrix(state_working[(4*A+1):(5*A)]) 
         
-        
-        #back to tidy form!
         prev_state = data.frame()
         class_list = list(S,E,I,R)
         class_name_list = c('S','E','I','R')
-        #HERE!!!
+
         for (i in 1:num_disease_classes){
-          #workshop = data.frame(t(class_list[[i]]))
-          workshop = data.frame(class_list[[i]])
-          colnames(workshop) = c('pop')
+          workshop = data.frame(pop = class_list[[i]])
           row.names(workshop) = NULL
           workshop = workshop %>% mutate(class =  class_name_list[i])
           workshop$temp = rep(seq(1,(num_age_groups*num_vax_classes)),RISK)
@@ -109,12 +103,12 @@ for (increments_number in 1:num_time_steps){
           prev_state = rbind(prev_state,workshop)
         }
         prev_state$pop  = as.numeric(prev_state$pop)
-        if (round(sum(prev_state$pop))!= sum(pop)){stop('prev state not equal to pop size! (~line 100 in time step)')}
+        if (round(sum(prev_state$pop))!= sum(pop)){stop('prev state not equal to pop size! (~line 105 in time step)')}
         
         next_state=prev_state # initialise next state
         
         
-          ### VACCINATION
+      ### Include today's vaccinations
       for (r in 1:RISK){
         this_risk_group = risk_group_labels[r]   
          for (t in 1:num_vax_types){ #iterating over vaccine types
@@ -123,14 +117,11 @@ for (increments_number in 1:num_time_steps){
            this_vax_history = vaccination_history_FINAL[vaccination_history_FINAL$vaccine_type == this_vax & vaccination_history_FINAL$risk_group == this_risk_group,]
            
            # (1/3) recorded vax
-           #COMEBACK delay of J&J first does is 21 days, is this right?
-           
-           #FASTER
            VR_this_step = crossing(dose = seq(1:D),
                                    age_group = age_group_labels,
                                    doses = 0)
            for (d in 1:D){
-             for (i in 2:J){ #COMEBACK - could be faster with less for loop, assumption that don't vaccinate 0-4  
+             for (i in 2:J){ #ASSUMPTION that don't vaccinate 0-4  
                if (nrow(this_vax_history[this_vax_history$dose == d & this_vax_history$date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d],]) >0){
                  VR_this_step$doses[VR_this_step$dose == d & VR_this_step$age_group == age_group_labels[i]] =
                    this_vax_history$doses_delivered_this_date[this_vax_history$date ==  as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == d] & 
@@ -143,13 +134,12 @@ for (increments_number in 1:num_time_steps){
            
             for (i in 1:num_age_groups){ # across age groups
               
-              #FASTER
               increase = rep(0,num_vax_doses)
               for (d in 1:D){
                 increase[d] = VR_this_step$doses[VR_this_step$dose == d & VR_this_step$age_group == age_group_labels[i]] 
               }
               
-             for (j in 1:4){ #let's assume all SEIR vaccinated
+             for (j in 1:4){ #ASSUMPTION: all SEIR vaccinated
                class=class_name_list[j]
                
                prop = rep(0,num_vax_doses) #prop in S,E,I or R in vaccine groups
@@ -181,8 +171,8 @@ for (increments_number in 1:num_time_steps){
       }
         
        
-        #### BOOSTER TO PREVIOUS PRIMARY
-        #NB: using '8' as a flag for a booster to a previously primary delivered individaul
+      #### BOOSTER TO PREVIOUS PRIMARY
+      #NB: using '8' as a flag for a booster to a previously primary delivered individaul
       if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
         for (r in 1:RISK){
           this_risk_group = risk_group_labels[r]   
@@ -231,16 +221,15 @@ for (increments_number in 1:num_time_steps){
         }
       }
         
-        if (fitting == "on" & date_now == as.Date('2021-11-14')){next_state_FIT = next_state}
+        if (fitting == "on" & date_now == as.Date('2021-11-14')){next_state_FIT = next_state} #savings to compare against known point of seroprevalence
         if (! date_start %in% seed_date & date_now %in% seed_date){
           if (fitting == "on"){
             if (date_now == seed_date[1]){
               strain_now = 'delta'
             } else if (date_now == seed_date[2]){
               strain_now = 'omicron'
-              parameters$lambda = 1/2.22
+              parameters$lambda = 1/2.22 #COMEBACK - hard coded :(
               parameters$delta = 1/9.87
-              
             }
             parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)
           } 
@@ -248,7 +237,7 @@ for (increments_number in 1:num_time_steps){
           seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
           seed.Exposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
     
-          #assuming uniform across age groups
+          #ASSUMPTION: uniform across age groups
           seed.Infected = round(seed.Infected * pop/sum(pop))
           seed.Exposed = round(seed.Exposed * pop/sum(pop))
     
@@ -260,7 +249,6 @@ for (increments_number in 1:num_time_steps){
             expose = round(expose * next_state$pop[next_state$class == 'S'  & next_state$age_group == age_group_labels[i]] /sum(next_state$pop[next_state$class == 'S'  & next_state$age_group == age_group_labels[i]]))
             
             next_state$pop[next_state$class == 'S'  & next_state$age_group == age_group_labels[i]] = next_state$pop[next_state$class == 'S'  & next_state$age_group == age_group_labels[i]] - infect - expose
-            
             next_state$pop[next_state$class == 'I'  & next_state$age_group == age_group_labels[i]] = next_state$pop[next_state$class == 'I'  & next_state$age_group == age_group_labels[i]] + infect
             next_state$pop[next_state$class == 'E'  & next_state$age_group == age_group_labels[i]] = next_state$pop[next_state$class == 'E'  & next_state$age_group == age_group_labels[i]] + expose
             
@@ -273,13 +261,12 @@ for (increments_number in 1:num_time_steps){
           }
         }
     
-        
         if (round(sum(next_state$pop))!= round(sum(prev_state$pop))){stop('pop not retained between next_state and prev_state!')}
         if (round(sum(next_state$pop))!= sum(pop)) {stop('pop in next_state not equal to setting population')}
         if(nrow(next_state[round(next_state$pop)<0,])>0){ stop('(4)_time_step line 224')}
         
         
-        # convert back into silly vector form for ODE solver
+        # convert back into long vector form for ODE solver
         workshop = next_state
         workshop$class = factor(workshop$class, levels = disease_class_list)
         workshop$risk_group = factor(workshop$risk_group, levels = risk_group_labels)
@@ -297,15 +284,14 @@ for (increments_number in 1:num_time_steps){
                                       Incidence_inital,Exposed_incidence_inital)) #setting Incid to repeated 0s
     }     
     
-    # next week!
+    # next time_step!
     sol <- as.data.frame(ode(y=next_state_FINAL,times=(seq(0,time_step,by=1)),func=covidODE,parms=parameters))
     
     sol[,1]=sol[,1]+time_step*(increments_number-1) #make times correct
     
-    if (increments_number>1){ sol_log=head(sol_log,-1) }#remove last entry from sol_log (overlap of two weekly runs)
+    if (increments_number>1){ sol_log=head(sol_log,-1) }#remove last entry from sol_log (overlap of runs)
     sol_log <- rbind(sol_log,sol)
     sol_log_unedited <- rbind(sol_log_unedited,sol)
-
 
 
   ### INCIDENCE CALCULATIONS 
@@ -315,18 +301,12 @@ for (increments_number in 1:num_time_steps){
   RISK=num_risk_groups
   A=RISK*J*(T*D+1) # +1 is unvax
   
-  #WEEKLY
-  #Incid by age and vax class
   incidence_log_unedited <- sol_log_unedited[, c(1,(A*num_disease_classes+2):(A*(num_disease_classes+1)+1))]
-  
-  # select weekly end points 
   incidence_log_unedited <- incidence_log_unedited %>% filter (time %% time_step == 0, rowSums(incidence_log_unedited) != time)
   incidence_log_unedited <- distinct(round(incidence_log_unedited,digits=2))
   
-
   incidence_log_unedited$date <- date_start + incidence_log_unedited$time
   incidence_log_unedited$daily_cases  <- rowSums(incidence_log_unedited[,2:(A+1)])
-  
   
   incidence_log <- incidence_log_unedited %>% select(date,daily_cases) 
   if (! fitting == "on"){incidence_log = rbind(fitted_incidence_log,incidence_log)}
@@ -340,12 +320,10 @@ for (increments_number in 1:num_time_steps){
   
   if (debug == "on" | fitting == "on"){
     if (fitting == "off" & increments_number == 1){
-      
     } else{
       Reff <- Reff_time_step(parameters,next_state)
       Reff_tracker = rbind(Reff_tracker,Reff)
     }
-
     
     rho_tracker_dataframe = rbind(rho_tracker_dataframe,parameters$rho) 
     
@@ -357,7 +335,6 @@ for (increments_number in 1:num_time_steps){
       workshop$date = date_now
       VE_tracker_dataframe = rbind(VE_tracker_dataframe,workshop)
     }
-
   }
   }
 } ### END INCREMENT (#incidence log moved within loop to allow rho_time_step to access)
@@ -371,7 +348,7 @@ check$S = rowSums(sol_log_unedited[,2:(A+1)])
 
 check = check %>% select(S,E,I,R,Incid) %>%
   mutate(pop = S + E + I + R)
-if (round(check$pop[1]) !=sum(pop)){stop('ERROR: see line 384 of (4) timestep')}
+if (round(check$pop[1]) !=sum(pop)){stop('population does not stay constant!')}
 
 
 ### INCIDENCE LOG TIDY 
@@ -409,7 +386,6 @@ for (d in 1:num_vax_doses){
 }
 #View(workshop2) #CHECKED: yes aligns as expected
 
-
 incidence_log_tidy = workshop %>% 
   left_join(workshop2, by = "temp")
 incidence_log_tidy = subset(incidence_log_tidy,select=-c(temp))
@@ -443,12 +419,10 @@ workshop2$age_group = rep(age_group_labels,2) #smallest subdivision is age
 workshop2 = workshop2 %>% mutate(infection_type = case_when(
   temp <= num_age_groups ~ "new_infection",
   temp > num_age_groups ~ "reinfection"))
-#View(workshop2) #CHECKED: yes aligns as expected
 
-exposed_log = workshop %>% 
-  left_join(workshop2, by = "temp")
-exposed_log_tidy = subset(exposed_log,select=-c(temp))
-
+exposed_log_tidy = workshop %>% 
+  left_join(workshop2, by = "temp") %>%
+  select(-temp)
 
 exposed_log = exposed_log_tidy %>% ungroup() %>% pivot_wider(
   id_cols = c(date,age_group),
