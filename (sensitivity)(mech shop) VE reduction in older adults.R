@@ -1,12 +1,11 @@
-
 require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(tidyverse);
 
-
-#Lower VE against severe outcomes in older adults considers:
-# 1. speed of waning
-# 2. strength of initial protection
+# Lower VE against severe outcomes in older adults including:
+# 1. faster speed of waning
+# 2. lower strength of initial protection
 
 ### SETUP
+rm(list=ls())
 plotting_standard =  theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
@@ -14,11 +13,9 @@ plotting_standard =  theme_bw() +
 
 
 ### (1) SPEED OF WANING ##############################################################################################################################################
-rm(list=ls())
 raw <- read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)
 
 predicted_distribution = data.frame()
-
 subplot_list = list()
 for (i in 1:length(unique(raw$age_group))){
   for (d in 1: length(unique(raw$dose))){
@@ -46,7 +43,7 @@ for (i in 1:length(unique(raw$age_group))){
   }
 }
 
-plot2 = ggplot() + 
+plot_dose2 = ggplot() + 
   geom_line(data=predicted_distribution[predicted_distribution$dose == 2,],aes(x=days,y=VE,color=as.factor(age_group))) +
   geom_point(data = raw[raw$dose == 2,], aes(x=days,y=VE,color=as.factor(age_group))) +
   ylim(0,1)+
@@ -54,7 +51,7 @@ plot2 = ggplot() +
   xlab('days since vaccination') +
   ggtitle('primary schedule') +
   plotting_standard
-plot3 = ggplot() + 
+plot_dose3 = ggplot() + 
   geom_line(data=predicted_distribution[predicted_distribution$dose == 3,],aes(x=days,y=VE,color=as.factor(age_group))) +
   geom_point(data = raw[raw$dose == 3,], aes(x=days,y=VE,color=as.factor(age_group))) +
   ylim(0,1)+
@@ -62,7 +59,7 @@ plot3 = ggplot() +
   xlab('days since vaccination') +
   ggtitle('booster dose') +
   plotting_standard
-grid.arrange(plot2,plot3, nrow=2)
+grid.arrange(plot_dose2,plot_dose3, nrow=2)
 
 
 ### Internal VE
@@ -72,7 +69,7 @@ apply_distribution <- predicted_distribution %>%
   ungroup() %>%
   select(dose,age_group,days,VE_internal,VE)
 
-plot2 = ggplot() + 
+plot_dose2 = ggplot() + 
   geom_line(data = apply_distribution[apply_distribution$dose == 2,], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
   ylim(0,1)  +
   ylab('% of max protection') +
@@ -80,7 +77,7 @@ plot2 = ggplot() +
   labs(color='age group') +
   ggtitle('primary schedule') +
   plotting_standard
-plot3 = ggplot() + 
+plot_dose3 = ggplot() + 
   geom_line(data = apply_distribution[apply_distribution$dose == 3,], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
   ylim(0,1) +
   ylab('% of max protection') +
@@ -88,7 +85,7 @@ plot3 = ggplot() +
   labs(color='age group') +
   ggtitle('booster dose') +
   plotting_standard
-grid.arrange(plot2,plot3, nrow=2)
+grid.arrange(plot_dose2,plot_dose3, nrow=2)
 #_________________________________________________________________________________________________________________________________________
 
 
@@ -109,7 +106,7 @@ apply_ratio = workshop_age %>% filter(days == 22) %>% rename(VE_ratio = VE_overa
 
 
 ### COVERT TO MODEL AGE GROUP ##################################################################################################################################
-CS_age_groupings = c(0,59,79,110)
+CS_age_groupings = c(0,59,79,110) #age groupings in VE estimate data
 pop_RAW <- pop_setting_orig %>%
   mutate(agegroup_RAW = cut(age,breaks = CS_age_groupings, include.lowest = T, labels = unique(apply_ratio$agegroup_RAW)),
          agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
@@ -117,7 +114,7 @@ pop_RAW <- pop_setting_orig %>%
   group_by(agegroup_MODEL) %>%
   mutate(model_group_percent = population/sum(population))
 
-###Ratio
+#ratio
 workshop = pop_RAW %>% left_join(apply_ratio) %>% 
   mutate(interim = model_group_percent * VE_ratio)
 workshop = aggregate(workshop$interim, by=list(category = workshop$dose,workshop$agegroup_MODEL),FUN=sum)
@@ -130,8 +127,7 @@ apply_ratio_MODEL = workshop %>% arrange(dose) %>%
   ))  %>%  
   select(-dose)
 
-
-###Waning
+#waning
 workshop = apply_distribution %>% rename(agegroup_RAW = age_group)
 
 workshop = pop_RAW %>% left_join(workshop) %>% 
@@ -146,7 +142,7 @@ apply_distribution_MODEL = workshop %>% arrange(dose)  %>%
   )) %>%  
   select(-dose)
 
-plot2 = ggplot() + 
+plot_dose2 = ggplot() + 
   geom_line(data = apply_distribution_MODEL[apply_distribution_MODEL$schedule == 'primary',], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
   ylim(0,1)  +
   ylab('% of max protection') +
@@ -154,7 +150,7 @@ plot2 = ggplot() +
   labs(color='age group') +
   ggtitle('primary schedule') +
   plotting_standard
-plot3 = ggplot() + 
+plot_dose3 = ggplot() + 
   geom_line(data = apply_distribution_MODEL[apply_distribution_MODEL$schedule == 'booster',], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
   ylim(0,1) +
   ylab('% of max protection') +
@@ -162,7 +158,7 @@ plot3 = ggplot() +
   labs(color='age group') +
   ggtitle('booster dose') +
   plotting_standard
-grid.arrange(plot2,plot3, nrow=2)
+grid.arrange(plot_dose2,plot_dose3, nrow=2)
 #_________________________________________________________________________________________________________________________________________
 
 
@@ -223,9 +219,7 @@ no_waning = together %>% mutate(waning = FALSE) %>%
   group_by(strain,vaccine_type,primary_if_booster,dose,age_group,outcome) %>%
   mutate(VE_days = max(VE_days))
 
-
+### SAVE ##################################################################################################################################
 SA_VE_older_muted_SO = rbind(waning,no_waning) %>% select(strain, vaccine_type,primary_if_booster, dose, outcome,days,age_group,VE_days,waning)
 save(SA_VE_older_muted_SO, file = '1_inputs/SA_VE_older_muted_SO.Rdata')
-
-
-
+#_________________________________________________________________________________________________________________________________________
