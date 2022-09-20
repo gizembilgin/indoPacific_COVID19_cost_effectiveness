@@ -1,9 +1,9 @@
 ### This script sets the initial state of the model
 
 
-###### (1/4) Vaccination
+###### (1/5) Vaccination
 #(A/B) Coverage 
-#(i/iv) #Vaccine coverage at end of known history
+#(i/iv) Vaccine coverage at end of known history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% 
   filter(date == max(vaccination_history_TRUE$date)) %>%
   select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
@@ -106,7 +106,7 @@ date_now = date_start
 
 
 #(iii/iv) Delay & Interval ____________________________________
-vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
+vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0) #delay from vaccination to protection
 vaxCovDelay = vaxCovDelay %>%
   mutate(delay = case_when(
     dose == 1 ~ 21,#number of days till protection from first dose, COMEBACK - J&J full protection after 14 days?
@@ -182,15 +182,17 @@ vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 
 #(B/B) Vaccine Effectiveness (VE)
 load( file = '1_inputs/VE_waning_distribution.Rdata')
-VE_waning_distribution = VE_waning_distribution[VE_waning_distribution$waning == waning_toggle_acqusition,] %>%
+VE_waning_distribution = VE_waning_distribution %>%
+  filter(waning == waning_toggle_acqusition) %>%
   mutate(outcome = 'any_infection')
 
 #ASSUMPTION - averaging across heterogeneous combinations of VE dose 3
 workshop = VE_waning_distribution %>% 
   filter(dose == 3 & strain == strain_now) %>%
   group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-  summarise(VE_days = mean(VE_days),.groups = "keep") %>% 
-  filter(! dose == 3) %>% 
+  summarise(VE_days = mean(VE_days),.groups = "keep") 
+VE_waning_distribution = VE_waning_distribution %>% 
+  filter(! dose == 3) %>%
   select(-primary_if_booster)
 VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 
@@ -223,7 +225,7 @@ if (fitting == "off"){
 
 
 
-###### (2/4) Seroprevalence
+###### (2/5) Seroprevalence
 load(file = "1_inputs/seroprev.Rdata")
 seroprev = seroprev %>%
   filter(setting == setting & 
@@ -236,28 +238,27 @@ if (as.numeric(format(date_start, format="%Y")) > 2022){
 
 
 
-###### (3/4) NPI
-if(date_start <= max(NPI_estimates$date)){
+###### (3/5) NPI
+if(date_start <= max(NPI_estimates$date)){ #if date within known NPI range
   NPI_inital = NPI_estimates$NPI[NPI_estimates$date==date_start]
-} else {
-  #take average of last month on record
+} else {  #take average of last month on record
   NPI_inital = NPI_estimates %>% 
     filter(date>(max(NPI_estimates$date)-30))
   NPI_inital = mean(NPI_inital$NPI)
 }
-NPI = NPI_inital = 1 - as.numeric(NPI_inital)/100 #effective NPI is (1-NPI), calculate here so we don't have to keep calculating
+NPI = NPI_inital = 1 - as.numeric(NPI_inital)/100 #effective NPI is (1-NPI), calculate here so we don't have to repeatedly calculate
 #________________________________________________________________
 
 
 
-###### (4/4) Hence, initial state
-#(A/F): intialise classes
+###### (4/5) Hence, initial state
 J=num_age_groups
 T=num_vax_types
 D=num_vax_doses
 RISK=num_risk_groups
 count=J*(T*D+1)*RISK # +1 is unvax
 
+seed = 0.001*sum(pop) #seed of outbreak at seed_dates (introduction of delta and omicron)
 
 initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
@@ -272,13 +273,12 @@ workshop = as.data.frame(date)
 workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
 hist_cases = workshop
 
-
 if (fitting == "on"){
 
   S_inital=E_inital=I_inital=R_inital=(rep(0,count)) 
   
-  #(B/F): number of active infected/recovered cases
-
+  #number of active infected/recovered cases
+  if (risk_group_toggle == "on"){
     recovered_risk = initialRecovered %>% 
       left_join(risk_dn, by = "age_group") %>%
       mutate(risk_group = risk_group_name,
@@ -290,11 +290,13 @@ if (fitting == "on"){
              R = R*(1-prop)) %>% 
       select(risk_group,age_group,R)
     initialRecovered = rbind(recovered_general_public,recovered_risk)
-    
-  #}
+  } else{
+    initialRecovered = initialRecovered %>%
+      mutate(risk_group = 'general_public')
+  }
   
-  #(C/F): age distribution of cases
-  #COMEBACK: no data, so assuming uniform across age groups
+  #age distribution of cases
+  #LIMITATION: no data so assuming uniform across age groups
   initialClasses = pop_risk_group_dn %>% ungroup() %>% 
     mutate(I = initialInfected*pop/sum(pop),
            E = initialExposed*pop/sum(pop)) %>% 
@@ -306,12 +308,11 @@ if (fitting == "on"){
       names_to = 'class',
       values_to = 'state_inital'
     ) 
-  if (round(sum(initialClasses$state_inital)) != sum(pop)){stop('(2) inital state line 248')}  
+  if (round(sum(initialClasses$state_inital)) != sum(pop)){stop('size of inital state != size of population')}  
   
   
-    # Step Four B: distribute across vaccine classes 
-    # COMEBACK, assumption infections are spread equally across vax classes
-  
+  # distribute across vaccine classes 
+  # LIMITATION: no data so assuming infections are spread equally across vax classes
   empty_unvaccinated = crossing(class = disease_class_list,
                                 risk_group = risk_group_labels,
                                 dose = 0,
@@ -325,8 +326,6 @@ if (fitting == "on"){
                               age_group = age_group_labels,
                               state_inital = 0)
   state_tidy = rbind(empty_unvaccinated,empty_vaccinated)
-  
-  
   
   for (num in 1:num_disease_classes){
     
@@ -382,30 +381,27 @@ if (fitting == "on"){
     }
   }    
   
-  state_tidy$class = factor(state_tidy$class, levels = disease_class_list)
+  state_tidy$class      = factor(state_tidy$class, levels = disease_class_list)
   state_tidy$risk_group = factor(state_tidy$risk_group, levels = risk_group_labels)
-  state_tidy$age_group = factor(state_tidy$age_group, levels = age_group_labels)
-    
+  state_tidy$age_group  = factor(state_tidy$age_group, levels = age_group_labels)
+  
   state_tidy = state_tidy %>% arrange(class,risk_group,dose,vaccine_type,age_group)
   state_tidy$state_inital[is.na(state_tidy$state_inital)] = 0
-    
-  #CHECKED - unique(state_tidy$vaccine_type)[-c(1)] == vax_type_list
   
-  #Step Five: construct silly array that ODE solver requires
+  
+  #construct long array that ODE solver requires
   Incidence_inital=(rep(0,J*(T*D+1)*RISK)) 
   Exposed_incidence_inital = rep(0,J*2)
-  
   state=c(state_tidy$state_inital,Incidence_inital,Exposed_incidence_inital) 
   
   rm (empty_unvaccinated,empty_vaccinated,state_tidy)
-  if (round(sum(state)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
+  if (round(sum(state)) != sum(pop)){stop('inital state doesnt align with population size!')}
   
-} else if (! fitting == "on"){
+} else if (! fitting == "on"){ #load last fitted state of the model
   
   incidence_log = fitted_incidence_log #for rho_inital
   
-  
-  #include vaccine strategy vaccine type
+  #include additional vaccine types if don't exist
   if (! length(unique(fitted_next_state$vaccine_type)) == length(unique(vaccination_history_FINAL$vaccine_type))+1){ #+1 for unvaccinated
     this_vax = unique(vaccination_history_FINAL$vaccine_type)[!  unique(vaccination_history_FINAL$vaccine_type) %in% unique(fitted_next_state$vaccine_type)]
     copy_vax = unique(vaccination_history_FINAL$vaccine_type)[unique(vaccination_history_FINAL$vaccine_type) %in% unique(fitted_next_state$vaccine_type)][1]
@@ -437,9 +433,9 @@ if (fitting == "on"){
     
     fitted_next_state = rbind(fitted_next_state,filler)
     
-    fitted_next_state$class = factor(fitted_next_state$class, levels = disease_class_list)
-    fitted_next_state$risk_group = factor(fitted_next_state$risk_group, levels = risk_group_labels)
-    fitted_next_state$age_group = factor(fitted_next_state$age_group, levels = age_group_labels)
+    fitted_next_state$class        = factor(fitted_next_state$class, levels = disease_class_list)
+    fitted_next_state$risk_group   = factor(fitted_next_state$risk_group, levels = risk_group_labels)
+    fitted_next_state$age_group    = factor(fitted_next_state$age_group, levels = age_group_labels)
     fitted_next_state$vaccine_type = factor(fitted_next_state$vaccine_type, levels = vax_type_list)
     
     fitted_next_state = fitted_next_state %>% arrange(class,risk_group,dose,vaccine_type,age_group)
@@ -456,17 +452,14 @@ if (fitting == "on"){
   next_state_FINAL=as.numeric(c(S_next,E_next,I_next,R_next,
                                 Incidence_inital,Exposed_incidence_inital)) #setting Incid to repeated 0s
   
-  if (round(sum(next_state_FINAL)) != sum(pop)){stop('(2) inital state doesnt align with population size!')}
+  if (round(sum(next_state_FINAL)) != sum(pop)){stop('inital state doesnt align with population size!')}
 }
+#________________________________________________________________
 
 
 
-
-
-
-### Use historical cases to estimate rho and R0/Reff (->beta)
+###### (5/5) calculate inital infection-derived protection (rho) & beta
 if (waning_toggle_rho_acqusition == TRUE ){
-  #rho_inital = rho_time_step('symptomatic_disease',date_start,strain_inital)
   rho_inital = rho_time_step(date_start)
 } else{
   rho_inital = 0.95 #Chemaitelly et al. 2 week estimate
@@ -476,7 +469,5 @@ if (rho_inital > 1){stop('rho is > 1')}
 #LIMITATION WARNING: no age-specific susceptibility to infection is included (no delta data available)
 source(paste(getwd(),"/(function)_calculate_R0_Reff.R",sep=""))
 beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_inital],num_age_groups)
-
-
-
+#________________________________________________________________
 
