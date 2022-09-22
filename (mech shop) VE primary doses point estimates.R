@@ -1,10 +1,11 @@
-require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
-
 ###This (mech shop) creates point estimates of VE by dose, vaccine_type, outcome and strain
 # strains  = "delta"   "omicron"
 # outcomes = "any_infection"       "death"               "severe_disease"      "symptomatic_disease"
-# vaccine type = "AstraZeneca"       "Johnson & Johnson" "Moderna"           "Pfizer"            "Sinopharm"         "Sinovac"     
+# vaccine type = "AstraZeneca"       "Johnson & Johnson" "Moderna"           "Pfizer"            "Sinopharm"         "Sinovac"    
 
+### Creates: VE_estimates_imputed
+
+require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
 
 ##### (1/2) Inital estimates from IVAC living systematic review ##########4#########################################################################
 VE_estimates <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)

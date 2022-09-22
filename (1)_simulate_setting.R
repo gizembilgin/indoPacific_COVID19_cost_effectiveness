@@ -47,7 +47,7 @@ pop_risk_group_dn = pop_setting %>%
   mutate(risk_group = 'general_public')
 
 if (num_risk_groups>1){
-  risk_dn = read.csv('1_inputs/risk_group.csv')
+  risk_dn = read.csv('1_inputs/risk_group_distribution.csv')
   
   if(risk_group_name %in% c('adults_with_comorbidities')){
     risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name,]

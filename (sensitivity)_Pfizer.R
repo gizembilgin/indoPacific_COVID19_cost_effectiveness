@@ -1,5 +1,9 @@
 ### This program is an alternative version of 'FleetAdmiral' whereby vaccines donated to our study setting are
-### of the type Pfizer instead of Johnson & Johnson. This program re-runs the main results of our paper with Pfizer.
+### of the type Pfizer (double-dose) instead of Johnson & Johnson (single-dose). 
+### This program re-runs the main results of our paper with Pfizer.
+
+### DEPENDENCIES: nil!
+rm(list=ls())
 
 
 ### Setup ____________________________________________________________________________________________________________
@@ -29,6 +33,7 @@ risk_group_prioritisation_to_date = NA
 
 #set up setting
 setting = "SLE"
+source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))
 if (setting == "SLE"){
   gov_target = 0.516
   workshop_doses = gov_target - sum(vaccination_history_POP$coverage_this_date[vaccination_history_POP$date == max(vaccination_history_POP$date) & vaccination_history_POP$dose == 1])/100

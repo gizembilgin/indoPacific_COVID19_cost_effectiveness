@@ -1,5 +1,5 @@
 ### The 'CommandDeck' runs all sub-scripts of the COVID-19 transmission model to
-### complete one standard 'run'/scenario of the disease model.
+### complete one standard 'run' of the disease model.
 
 
 

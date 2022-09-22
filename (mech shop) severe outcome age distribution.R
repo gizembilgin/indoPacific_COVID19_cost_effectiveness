@@ -1,4 +1,5 @@
-### This (mech shop) applies age distribution to severe outcomes estimates
+### This (mech shop) applies age distribution to severe outcomes estimates.
+### Creates: age_dn_severe_outcomes
 
 age_dn_severe_outcomes = data.frame()
 for (setting in c('SLE')){

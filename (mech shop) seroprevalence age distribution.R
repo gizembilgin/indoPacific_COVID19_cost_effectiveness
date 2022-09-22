@@ -1,9 +1,10 @@
-### This (mech shop) takes existing seroprevalence studies and estimates the seroprevalence for our model age groups
-### This work needs to be re-run every time the age groups in the model change
-### Seroprevalence is used ONLY when fitting the model
+### This (mech shop) takes existing seroprevalence studies and estimates the seroprevalence for our model age groups.
+### This work needs to be re-run every time the age groups in the model change.
+### Seroprevalence is used ONLY when fitting the model.
+### Creates: seroprev.
 #_________________________________________________________________________________________________________________________________________________________________________
 
-seroprev_raw = read.csv("1_inputs/seroprev_raw.csv",header=TRUE)
+seroprev_raw = read.csv("1_inputs/seroprevalence_RAW.csv",header=TRUE)
 setting = "SLE"
 
 

@@ -1,4 +1,5 @@
-### This script sets the initial state of the model
+### This script sets the initial state of the model.
+### If the model is running from the fitted date this will be the last next_state.
 
 
 ###### (1/5) Vaccination

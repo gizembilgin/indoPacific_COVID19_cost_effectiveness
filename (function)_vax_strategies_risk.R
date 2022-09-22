@@ -1,4 +1,4 @@
-### This function allocates future doses by risk_group by repeated calls of the function vax_strategy
+### This function allocates future doses by risk_group using repeated calls of the vax_strategy() function
 
 apply_risk_strategy <- function(
     vax_risk_strategy,             # options: 'Y','N'

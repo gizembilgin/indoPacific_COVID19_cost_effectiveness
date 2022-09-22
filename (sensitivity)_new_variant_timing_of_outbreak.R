@@ -1,5 +1,6 @@
-# This program runs 'CommandDeck' multiple times to understand the impact of current program targets (1) during an outbreak, and (2) if rolled out prior to an outbreak
-# It compiles the results from these runs into panel A of Figure S4.2 (in the Supplementary Material)
+### This program runs 'CommandDeck' multiple times to understand the impact of current program targets:
+### (1) during an outbreak, and (2) if rolled out prior to an outbreak.
+### It compiles the results from these runs into panel A of Figure S4.2 in the Supplementary Material.
 
 
 ### (1) Overarching trackers #####################################################################################################

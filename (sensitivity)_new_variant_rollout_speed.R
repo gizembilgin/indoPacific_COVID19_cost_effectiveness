@@ -1,5 +1,5 @@
-# This program runs 'CommandDeck' multiple times to understand the impact of current program targets with varying speeds of rollout
-# It compiles the results from these runs into panel B of Figure S4.2 (in the Supplementary Material)
+# This program runs 'CommandDeck' multiple times to understand the impact of current program targets with varying speeds of rollout.
+# It compiles the results from these runs into panel B of Figure S4.2 in the Supplementary Material.
 
 
 ### (1) Overarching trackers #####################################################################################################

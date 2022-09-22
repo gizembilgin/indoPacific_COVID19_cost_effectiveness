@@ -1,5 +1,7 @@
 ### This program contains a function to fit beta to the basic reproduction number (R0), and
-### a function to calculate the effective reproduction number (Reff)
+### a function to calculate the effective reproduction number (Reff).
+### These two functions are used to adjust transmission to circulating variants, and estimate
+### the transmission advantage of immune-escape variants.
 
 #### R0 #########################################################################
 # R0 = p(NGM) - spectral radius, i.e., absolute maximum eigenvalue

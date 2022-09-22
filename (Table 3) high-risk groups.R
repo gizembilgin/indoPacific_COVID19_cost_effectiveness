@@ -1,5 +1,5 @@
-# This program runs the 'CommandDeck' multiple times with varying prioritisation strategies involving high-risk adults
-# It compiles results from these runs in Table 3 (in the main paper)
+# This program runs the 'CommandDeck' multiple times with varying prioritisation strategies involving high-risk adults.
+# It compiles results from these runs in Table 3 of the main paper.
 
 
 ### (1) Overarching trackers #####################################################################################################
@@ -167,6 +167,7 @@ for (ticket in 1:length(queue)){
       
       sensitivity_analysis_toggles = sensitivity_analysis_toggles[!names(sensitivity_analysis_toggles) %in% c('VE_adults_comorb')] #remove for second loop
     }
+    VE_loop = 0
     
     save(SA_VE_warehouse_table,file =  paste(rootpath,"x_results/sensitivity_analysis_VE_",Sys.Date(),".Rdata",sep=''))
     sensitivity_analysis_toggles = save_toggles
@@ -314,6 +315,9 @@ for (i in 1:iteration_num){
     
     write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,this_VE_mod,time,'.csv',sep=''))
     
+  } else if ('vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
+    write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,' vax_hest ',time,'.csv',sep=''))
+    results_warehouse_entry[[4]]= print
   } else{
     write.csv(print,file=paste(rootpath,'x_results/table3',vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,risk_group_name,gov_target,time,'.csv',sep=''))
     results_warehouse_entry[[4]]= print

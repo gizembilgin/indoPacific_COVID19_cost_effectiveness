@@ -1,4 +1,4 @@
-### This (mech shop) translates transmission parameter estimates to model age groups
+### This (mech shop) translates transmission parameter estimates to model age groups.
 
 raw = read.csv("1_inputs/model_param_raw.csv",header=TRUE)
 raw = raw %>% rename(agegroup_RAW = age_group)

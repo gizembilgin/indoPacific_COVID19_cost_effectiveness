@@ -1,7 +1,8 @@
+### This (mech shop) applies a waning distribution to the point estimates of VE against severe outcomes.
+### Creates: VE_waning_distribution_SO
+
 require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(tidyverse);
 #rm(list=ls())
-
-### This (mech shop) applies a waning distribution to the point estimates of VE against severe outcomes
 
 
 ###(1/3) Load distribution

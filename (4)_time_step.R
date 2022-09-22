@@ -1,4 +1,4 @@
-### This program runs the model iteratively, updating vaccination rates daily
+### This program runs the model over each time_step, updating vaccination rates daily
 
 sol_log = data.frame()
 sol_log_unedited = data.frame()

@@ -1,10 +1,12 @@
-require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
-
 ### This (mech shop) creates point estimates of d = 3 (booster) heterologous combinations with Pfizer
 # strains  = "omicron" (no booster doses till omicron in SLE)
 # outcomes = "any_infection"       "death"               "severe_disease"      "symptomatic_disease"
 # vaccine type =  "Pfizer"  (with previous primary doses in AZ, Sinovac or Pfizer)
 
+### Creates: VE_booster_estimates
+
+
+require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
 
 #####  Visualise estimates from IVAC living systematic review ##########4#########################################################################
 VE_raw <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)

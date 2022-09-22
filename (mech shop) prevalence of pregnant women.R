@@ -1,9 +1,12 @@
-### This (mech shop) calculates the % per age group of pregnant women
+### This (mech shop) calculates the % per age group of pregnant women.
+### Creates: prevalence_pregnancy
+
 #LIMITATION: the model takes a one year snapshot, if a longer snapshot is required women will have to cycle in and out of this group, then:
 # *3/4 to get women currently pregnant?  or *1/4 for third trimester? or * ~ 2 for all lactating women?
 
+
 ### read in data
-ASFR = read.csv("1_inputs/SLE_ASFR.csv",header=TRUE)
+ASFR = read.csv("1_inputs/DHS_ASFR.csv",header=TRUE)
 women_pop = read.csv(paste(rootpath,"inputs/pop_estimates_female.csv",sep=''),header=TRUE)
 
 

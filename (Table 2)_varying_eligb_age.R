@@ -1,5 +1,5 @@
-# This program runs the 'CommandDeck' multiple times with varying prioritisation strategies including children 5 to 17
-# It compiles the results from these runs in Table 2 (in the main paper)
+# This program runs the 'CommandDeck' multiple times with varying prioritisation strategies including children 5 to 17.
+# It compiles the results from these runs in Table 2 of the main paper.
 
 
 ### (1) Overarching trackers #####################################################################################################

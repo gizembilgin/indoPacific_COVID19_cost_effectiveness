@@ -1,10 +1,10 @@
+### This (mech shop) applies a waning distribution to the point estimates of VE against acquisition
+### (VE_estimates_imputed created in `(mech shop) VE primary doses point estimates.R`).
+### Creates: VE_waning_distribution
+
+
 require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(tidyverse);
 rm(list=ls())
-
-### This (mech shop) applies a waning distribution to the point estimates of VE (VE_estimates_imputed created in `(mech shop) VE primary doses point estimates.R`)
-# We include two distributions:
-# 1. acquisition - covering any_infection and symptomatic_disease
-# 2. severe_outcomes - covering severe_disease and death
 
 
 ###(1/3) Load distribution

@@ -1,5 +1,5 @@
-### This script runs the model from the first known point of seroprevalence until today's date.
-### Today's date is then saved as the latest fitted date of the model, and used as date_start in modelling scenarios.
+### This script runs the model from the first known point of seroprevalence until today's date {Sys.Date()}.
+### Today's date is then saved as the latest fitted date of the model and used as date_start in modelling scenarios.
 ###
 ### Dependencies: nil
 ### Creates: fitted_results, fitted_max_date

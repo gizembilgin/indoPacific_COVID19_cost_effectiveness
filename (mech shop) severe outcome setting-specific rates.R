@@ -1,7 +1,7 @@
 ### This (mech shop) creates setting-specific estimates of severe outcomes. 
-# COMEBACK - could include uncertainty in both country-specific estimate, variant multiplier, VE, age distribution
-# NOTE - this includes the incidence of hospital admission NOT occupancy, the WHO defines severe disease as 
-# "a patient with severe acute respiratory illness (fever and at least one sign or symptom of respiratory disease), AND requiring hospitalization
+# COMEBACK - could include uncertainty in both country-specific estimate and variant multiplier.
+# NOTE - this includes the incidence of hospital admission NOT occupancy, the WHO defines severe disease as - 
+# "a patient with severe acute respiratory illness (fever and at least one sign or symptom of respiratory disease), AND requiring hospitalization"
 # Hence, hosp - severe = unmet need!
 
 VOC = strain_inital

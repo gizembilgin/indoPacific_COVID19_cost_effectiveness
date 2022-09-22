@@ -1,6 +1,6 @@
-### This script contains the loading of data and function needed for dynamic infection-derived protection against reinfection
+### This script loads the data and function needed for dynamic infection-derived protection against reinfection.
 ### Dynamic infection-derived protection (rho) requires:
-# (1) shape of rho waning
+# (1) the shape of waning rho
 # (2) tracking of days since infection of people in Recovered class
 # (3) tracking of the introduction of new immune escape variants
 # LIMITATION: our model does not track multiple infections, and hence assumes no additional immunity from repeat infections

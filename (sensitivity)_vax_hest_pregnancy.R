@@ -1,6 +1,9 @@
-### This program conducts sensitivity analysis for increased vaccine hesitancy in pregnant women
-### The program assumes lower inital vaccine coverage due to this vaccine hesitancy, hence must generate a new fit of the model!
-### A majority of this program follows FleetAdmiral
+### This program conducts sensitivity analysis for increased vaccine hesitancy in pregnant women, i.e., lower vaccine acceptance.
+### The program assumes lower initial vaccine coverage due to this vaccine hesitancy, hence must generate a new fit of the model!
+### A majority of this program follows FleetAdmiral.
+
+### DEPENDENCIES: nil!
+rm(list=ls())
 
 
 ### Setup ____________________________________________________________________________________________________________
@@ -8,13 +11,19 @@
 time.start.FleetAdmiral=proc.time()[[3]]
 
 # toggles
+setting = "SLE"
 risk_group_toggle = "on"
 risk_group_name = "pregnant_women"
+RR_estimate = RR_default =  2.4
 risk_group_prioritisation_to_date = NA
+risk_group_lower_cov_ratio = NA
 default_prioritisation_proportion = 0.5
 
+
+#configure sensitivity analysis
+vax_strategy_max_expected_cov = 0.88
 risk_group_lower_cov_ratio = 70/88
-sensitivity_analysis_toggles = list(vax_hesistancy_risk_group = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov * risk_group_lower_cov_ratio )
+sensitivity_analysis_toggles = list(vax_hesistancy_risk_group = vax_strategy_max_expected_cov * risk_group_lower_cov_ratio )
 #______________________________________
 
 

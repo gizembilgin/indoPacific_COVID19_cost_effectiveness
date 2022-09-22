@@ -1,10 +1,7 @@
+### This (mech shop) applies a waning distribution to the point estimates of booster VE against infection
+### Creates: VE_waning_distribution (updated from `(mech shop) VE waning distribution (infection)` to include booster doses)
+
 require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(tidyverse);
-
-#This (mech shop) applies a waning distribution to the point estimates of VE (VE_estimates_imputed created in `(mech shop) VE booster dose point estimates.R`)
-
-# We include two distributions:
-# 1. acquisition - covering any_infection and symptomatic_disease
-# 2. severe_outcomes - covering severe_disease and death
 
 
 ### Showing that Pfizer booster to CoronaVac EQ to Pfizer dose 2 waning
