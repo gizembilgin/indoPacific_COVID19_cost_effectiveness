@@ -158,6 +158,11 @@ for (ticket in 1:length(queue)){
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
+  #EDIT
+  if (!unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2))) == 0.88){
+    warning('not all willing adults vaccinated')
+  }
+  
   ### CREATE DEPENDENCIES OF ANTIVIRAL FUNCTION (n=4)  #################################################################
   # Recall, dependencies of antiviral function from transmission model (n=5): incidence_log_tidy, severe_outcome_log_tidy, severe_outcome_this_run, reinfection_protection, param_age 
   # Let's collapse into:
