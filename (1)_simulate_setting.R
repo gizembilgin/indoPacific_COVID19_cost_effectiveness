@@ -195,11 +195,14 @@ workshop = workshop[workshop$'Country_Region' == setting_long,]
 
 #<intermission to correct where doses admin < people with at least one dose in June 2022 for a week >
 workshop_correct = workshop[workshop$Doses_admin<workshop$People_at_least_one_dose,]
-workshop_correct$People_at_least_one_dose = workshop$People_at_least_one_dose[workshop$Date == (min(workshop_correct$Date) -1)]
-workshop = workshop[! workshop$Doses_admin<workshop$People_at_least_one_dose,]
-workshop = rbind(workshop,workshop_correct)
-workshop = workshop %>% arrange(Date)
-if(nrow(workshop[workshop$Doses_admin<workshop$People_at_least_one_dose,])>0){stop('vaccination data is flawed')}
+while(nrow(workshop_correct)>0){
+  for (row in 1:nrow(workshop_correct)){
+    this_date = workshop_correct$Date[row]
+    #bring People_at_least_one_dose back to latest date that made sense
+    workshop$People_at_least_one_dose[workshop$Date == this_date] = workshop$People_at_least_one_dose[workshop$Date == (this_date -1)]
+  }
+  workshop_correct = workshop[workshop$Doses_admin<workshop$People_at_least_one_dose,]
+}
 #<fin>
 
 vaccination_history = workshop %>%
@@ -218,6 +221,28 @@ vaccination_history = workshop %>%
   )) %>%
   select(-dose_charac)
 
+#<intermission to correct where doses today < doses yesterday>
+workshop_correct = vaccination_history %>% 
+  group_by(dose) %>%
+  mutate(doses_delivered_this_date = num - lag(num)) %>%
+  filter(doses_delivered_this_date < 0)
+while(nrow(workshop_correct)>0){
+  for (row in 1:nrow(workshop_correct)){
+    this_dose = workshop_correct$dose[row]
+    this_date = workshop_correct$date[row]
+    
+    vaccination_history$num[vaccination_history$date == this_date & vaccination_history$dose == this_dose ] = 
+      vaccination_history$num[vaccination_history$date == (this_date-1) & vaccination_history$dose == this_dose ]
+  }
+  
+  workshop_correct = vaccination_history %>% 
+    group_by(dose) %>%
+    mutate(doses_delivered_this_date = num - lag(num)) %>%
+    filter(doses_delivered_this_date < 0)
+}
+#<fin>
+
+
 #LIMITATION: some manual processing here due to using:https://africacdc.org/covid-19-vaccination/
 setting_vaccine <- read.csv("1_inputs/vaccine_setting_history.csv",header=TRUE)
 setting_vaccine$last_update = as.Date(setting_vaccine$last_update,format = '%d/%m/%Y')
@@ -225,7 +250,7 @@ setting_vaccine <- setting_vaccine %>%
   filter(setting == setting &
            last_update == max(setting_vaccine$last_update))
 
-if ("Johnson & Johnson" %in% unique(setting_vaccine$vaccine_type)){
+if ("Johnson & Johnson" %in% unique(setting_vaccine$vaccine_type)){ #J&J the only single-dose vaccine
   setting_vaccine <- setting_vaccine %>%
     mutate(
       dose_one = case_when(
@@ -393,15 +418,15 @@ vaccination_history_TRUE = vaccination_history_TRUE %>%
 # vaccination_history <- vaccination_history %>%
 #   mutate(coverage_this_date = 100 * num / sum(pop))
 # 
-# ggplot() + 
-#   geom_point(data=vaccination_history,aes(x=date,y=coverage_this_date,color=dose_charac),na.rm=TRUE) + 
+# ggplot() +
+#   geom_point(data=vaccination_history,aes(x=date,y=coverage_this_date,color=as.factor(dose)),na.rm=TRUE) +
 #   labs(title=setting_long) +
-#   xlab("") + 
+#   xlab("") +
 #   scale_x_date(date_breaks="1 month", date_labels="%b") +
 #   ylab("vaccine coverage (%)") +
-#   theme_bw() + 
+#   theme_bw() +
 #   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(), 
+#         panel.grid.minor = element_blank(),
 #         panel.border = element_blank(),
 #         axis.line = element_line(color = 'black'))
 
