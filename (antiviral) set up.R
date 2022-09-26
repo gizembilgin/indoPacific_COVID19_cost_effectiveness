@@ -158,7 +158,14 @@ for (ticket in 1:length(queue)){
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
-  #EDIT
+  #CHECK
+  hypoth_doses = vaccination_history_FINAL %>% 
+    filter(! age_group %in% c('0 to 4','5 to 9','10 to 17')) %>%
+    group_by(risk_group,age_group,dose) %>%
+    summarise(doses = sum(doses_delivered_this_date),.groups = "keep") %>%
+    left_join(pop_risk_group_dn, by = c("risk_group", "age_group")) %>%
+    mutate(cov=doses/pop) %>%
+    arrange(dose,age_group)
   if (!unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2))) == 0.88){
     warning('not all willing adults vaccinated')
   }
