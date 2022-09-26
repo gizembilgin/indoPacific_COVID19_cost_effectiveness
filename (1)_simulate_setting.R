@@ -268,6 +268,26 @@ if ("Johnson & Johnson" %in% unique(setting_vaccine$vaccine_type)){ #J&J the onl
            dose_two=doses/sum(setting_vaccine$doses))
 }
 
+#<intermission to ensure coverage of dose 2 > dose 1 of double-dose vaccines>
+workshop_correct = vaccination_history %>% filter(date == max(vaccination_history$date))
+workshop_correct = workshop_correct$num[workshop_correct$dose == 2] / workshop_correct$num[workshop_correct$dose == 1]
+if ('Johnson & Johnson' %in% unique(setting_vaccine$vaccine_type)){
+  if (workshop_correct > (1-setting_vaccine$dose_one[setting_vaccine$vaccine_type == 'Johnson & Johnson'])){
+    supply_distributed = sum(vaccination_history$num[vaccination_history$date == max(vaccination_history$date)])/sum(setting_vaccine$doses)
+    
+    redistribute = (workshop_correct - (1-setting_vaccine$dose_one[setting_vaccine$vaccine_type == 'Johnson & Johnson']))
+    redistribute = redistribute * (1+supply_distributed)
+    
+    setting_vaccine = setting_vaccine %>%
+      mutate(dose_one = case_when(
+        vaccine_type == 'Johnson & Johnson' ~ dose_one - redistribute,
+        TRUE ~ dose_one + redistribute*dose_two
+      ))
+    if (round(sum(setting_vaccine$dose_one),digits = 2) != 1){stop('error in redistribution away from single dose vaccine')}
+  }
+}
+#<fin>
+
 setting_vaccine_2 <- setting_vaccine %>%
   select(vaccine_type,dose_two,dose_one) %>%
   pivot_longer(
