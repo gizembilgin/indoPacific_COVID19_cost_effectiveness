@@ -284,7 +284,7 @@ for (increments_number in 1:num_time_steps){
     
         if (round(sum(next_state$pop))!= round(sum(prev_state$pop))){stop('pop not retained between next_state and prev_state!')}
         if (round(sum(next_state$pop))!= sum(pop)) {stop('pop in next_state not equal to setting population')}
-        if(nrow(next_state[round(next_state$pop)<0,])>0){ stop('(4)_time_step line 224')}
+        if(nrow(next_state[round(next_state$pop)<0,])>0){ stop('(4)_time_step line ~290')}
         
         
         # convert back into long vector form for ODE solver
