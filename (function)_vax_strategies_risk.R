@@ -37,7 +37,23 @@ apply_risk_strategy <- function(
     if (length(unique(na.omit(round(real_doses$cov[real_doses$dose == 1],digits=2))))>1 | length(unique(na.omit(round(real_doses$cov[real_doses$dose == 2],digits=2))))>1){
       stop('real doses not equal across risk groups')
     }
-    if (vax_doses_general != vax_doses_risk){stop('vax_doses_general != vax_doses_risk, but risk group not prioritised?!')}
+    
+    if (vax_doses_risk>vax_doses_general){
+      if (toggle_equal_priority == "individuals"){
+        #vax_risk_proportion remains the same  
+      } else if (toggle_equal_priority == "doses"){
+        workshop =  pop_risk_group_dn %>%
+          mutate(adult_pop = case_when(
+            age_group %in% c('0 to 4','5 to 9','10 to 17') ~ 0,
+            TRUE ~ pop)) %>%
+          mutate(dose_inflated_pop = case_when(
+            risk_group == risk_group_name ~ adult_pop * vax_doses_risk,
+            TRUE ~ adult_pop * vax_doses_general)) %>%
+          mutate(split = dose_inflated_pop/sum(dose_inflated_pop))
+        risk_split = workshop %>% group_by(risk_group) %>% summarise(sum = sum(split),.groups='keep')
+        vax_risk_proportion = risk_split$sum[risk_split$risk_group == risk_group_name]
+      }
+    }
 
   }
   #___________________________________________________________
@@ -166,6 +182,7 @@ apply_risk_strategy <- function(
       df2 = generalPublic_leftover_outline  %>% group_by(date) %>% summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>% mutate(label = 'general public leftover')
       check_df_daily_comp = bind_rows(df1,df2,check_df_daily)
       ggplot(check_df_daily_comp) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(label)))
+      ggplot(check_df_daily_comp[check_df_daily_comp$label != 'total',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(label)))
       
       nrow_greater = nrow(check_df_daily[round(check_df_daily$doses_delivered_this_date)>vax_strategy_toggles$vax_strategy_roll_out_speed,])
       
@@ -182,26 +199,45 @@ apply_risk_strategy <- function(
     ggplot(check_df[check_df$risk_group == 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
     ggplot(check_df[check_df$risk_group != 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
   }
-  #CHECK 2: if non-prioritised, equal end dates
+  #CHECKS: for non-prioritised dose delivery with risk groups
   if (vax_risk_strategy == "N"){
     hypoth_doses = vaccination_history_MODF %>% 
       filter(! age_group %in% c('0 to 4','5 to 9','10 to 17')) %>%
+      mutate(dose = case_when(
+        dose == 8 ~ 3,
+        dose == 2 & vaccine_type == 'Johnson & Johnson' ~ 3,
+        TRUE ~dose
+      )) %>%
       group_by(risk_group,age_group,dose) %>%
       summarise(doses = sum(doses_delivered_this_date),.groups = "keep") %>%
       left_join(pop_risk_group_dn, by = c("risk_group", "age_group")) %>%
       mutate(cov=doses/pop) %>%
       arrange(dose,age_group)
+    
+    if (unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2))) != vax_strategy_toggles$vax_strategy_max_expected_cov){
+      warning('not all who are willing have recieved the first dose')
+    }
     if (length(unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2))))>1){
-      stop('hypoth doses not equal across risk groups')
+        stop('hypoth dose one not equal across risk groups')
+    } 
+    if (vax_doses_risk==vax_doses_general){
+      if (max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == 'general_public']) !=
+          max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == risk_group_name]) | 
+          max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == 'general_public']) !=
+          max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == risk_group_name])){
+        warning('max delivery dates dont align between risk groups')
+      }
     }
-    
-    if (max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == 'general_public']) !=
-        max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == risk_group_name]) | 
-        max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == 'general_public']) !=
-        max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == risk_group_name])){
-      warning('max delivery dates dont align between risk groups')
+    if (vax_doses_general == 2){
+      if (unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 3 & hypoth_doses$risk_group == 'general_public'],digits=2))) != vax_strategy_toggles$vax_strategy_max_expected_cov){
+        warning('not all who are willing in the general public have recieved the second dose')
+      }
     }
-    
+    if (vax_doses_risk == 2){
+      if (unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 3 & hypoth_doses$risk_group == risk_group_name],digits=2))) != vax_strategy_toggles$vax_strategy_max_expected_cov){
+        warning('not all who are willing in the risk group have recieved the second dose')
+      }
+    }
   }
   
   return(vaccination_history_MODF)
