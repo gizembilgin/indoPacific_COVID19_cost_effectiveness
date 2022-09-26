@@ -179,7 +179,7 @@ for (r in 1:num_risk_groups){ # risk group
 }
 vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 #CHECK
-check =  vaccine_coverage %>% group_by(dose,age_group,risk_group) %>% summarise(check = sum(cov)) %>% filter(check>1)
+check =  vaccine_coverage %>% group_by(dose,age_group,risk_group) %>% summarise(check = sum(cov),.groups = "keep") %>% filter(check>1)
 if(nrow(check)>1){stop('inital vaccine coverage > 100%')}
 
 
