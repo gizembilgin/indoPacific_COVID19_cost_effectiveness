@@ -23,19 +23,22 @@ apply_risk_strategy <- function(
   
   ### BRANCH ONE: Are we prioritising the at risk group at all?
   if (vax_risk_strategy == "N"){
-    #if not, let's use a simple function call
-    vaccination_history_FINAL = 
-      vax_strategy(vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date,
-                   vax_strategy_num_doses         = vax_strategy_toggles$vax_strategy_num_doses,
-                   vax_strategy_roll_out_speed    = vax_strategy_toggles$vax_strategy_roll_out_speed,
-                   vax_age_strategy               = vax_strategy_toggles$vax_age_strategy,     
-                   vax_delivery_group             = 'universal',
-                   vax_dose_strategy              = vax_strategy_toggles$vax_dose_strategy,            
-                   vax_strategy_vaccine_type      = vax_strategy_toggles$vax_strategy_vaccine_type,            
-                   vax_strategy_vaccine_interval  = vax_strategy_toggles$vax_strategy_vaccine_interval,            
-                   vax_strategy_max_expected_cov  = vax_strategy_toggles$vax_strategy_max_expected_cov
-      )
-    return(vaccination_history_FINAL)  #ends the function here!
+    #if not prioritised, set vax_risk_proportion to population proportion of risk group
+    risk_split = age_risk_split %>% group_by(risk_group) %>% summarise(sum = sum(split),.groups='keep')
+    vax_risk_proportion = risk_split$sum[risk_split$risk_group == risk_group_name]
+    
+    real_doses = vaccination_history_TRUE %>% 
+      filter(! age_group %in% c('0 to 4','5 to 9','10 to 17')) %>%
+      group_by(risk_group,age_group,dose) %>%
+      summarise(doses = sum(doses_delivered_this_date),.groups='keep') %>%
+      left_join(pop_risk_group_dn, by = c('risk_group','age_group')) %>%
+      mutate(cov=doses/pop) %>%
+      arrange(dose,age_group)
+    if (length(unique(na.omit(round(real_doses$cov[real_doses$dose == 1],digits=2))))>1 | length(unique(na.omit(round(real_doses$cov[real_doses$dose == 2],digits=2))))>1){
+      stop('real doses not equal across risk groups')
+    }
+    if (vax_doses_general != vax_doses_risk){stop('vax_doses_general != vax_doses_risk, but risk group not prioritised?!')}
+
   }
   #___________________________________________________________
   
@@ -80,16 +83,21 @@ apply_risk_strategy <- function(
   #<interim update vaccine_coverage_end_history so eligible pop is correct>
   vaccination_history_MODF = rbind(vaccination_history_TRUE,at_risk_delivery_outline)
   
-  vaccination_history_MODF = vaccination_history_MODF %>% left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
+  vaccination_history_MODF = vaccination_history_MODF %>% 
+    left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
     group_by(risk_group,age_group,vaccine_type,dose) %>%
     mutate(coverage_this_date = cumsum(doses_delivered_this_date)/pop) 
   
   vaccine_coverage_end_history_UPDATED = data.frame()
-  for (t in 1:length(unique(vaccination_history_MODF$vaccine_type))){
-    this_vax = vaccination_history_MODF[vaccination_history_MODF$vaccine_type == unique(vaccination_history_MODF$vaccine_type)[t],] 
-    this_vax = this_vax %>% filter(date == max(this_vax$date)) %>%
-      select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
-    vaccine_coverage_end_history_UPDATED = rbind(vaccine_coverage_end_history_UPDATED,this_vax)
+  for (risk in 1:RISK){
+    for (t in 1:length(unique(vaccination_history_MODF$vaccine_type))){
+      this_vax = vaccination_history_MODF %>%
+        filter(vaccine_type == unique(vaccination_history_MODF$vaccine_type)[t] &
+                 risk_group == risk_group_labels[risk])
+      this_vax = this_vax %>% filter(date == max(this_vax$date)) %>%
+        select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
+      vaccine_coverage_end_history_UPDATED = rbind(vaccine_coverage_end_history_UPDATED,this_vax)
+    }
   }
   vaccine_coverage_end_history_UPDATED$coverage_this_date[is.na(vaccine_coverage_end_history_UPDATED$coverage_this_date)] = 0
   #<fin>
@@ -173,6 +181,27 @@ apply_risk_strategy <- function(
     }
     ggplot(check_df[check_df$risk_group == 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
     ggplot(check_df[check_df$risk_group != 'general_public',]) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
+  }
+  #CHECK 2: if non-prioritised, equal end dates
+  if (vax_risk_strategy == "N"){
+    hypoth_doses = vaccination_history_MODF %>% 
+      filter(! age_group %in% c('0 to 4','5 to 9','10 to 17')) %>%
+      group_by(risk_group,age_group,dose) %>%
+      summarise(doses = sum(doses_delivered_this_date),.groups = "keep") %>%
+      left_join(pop_risk_group_dn, by = c("risk_group", "age_group")) %>%
+      mutate(cov=doses/pop) %>%
+      arrange(dose,age_group)
+    if (length(unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2))))>1){
+      stop('hypoth doses not equal across risk groups')
+    }
+    
+    if (max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == 'general_public']) !=
+        max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == risk_group_name]) | 
+        max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == 'general_public']) !=
+        max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == risk_group_name])){
+      warning('max delivery dates dont align between risk groups')
+    }
+    
   }
   
   return(vaccination_history_MODF)
