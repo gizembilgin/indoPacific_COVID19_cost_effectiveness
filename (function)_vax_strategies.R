@@ -8,7 +8,7 @@
 vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical vaccination program
                          vax_strategy_num_doses,        # num of doses avaliable
                          vax_strategy_roll_out_speed,   # doses delivered per day
-                         vax_delivery_group = 'universal', #options = 'universal','at_risk','general_public'
+                         vax_delivery_group = 'universal', #options = 'universal','at_risk','general_public'. NOTE: 'universal' assumes no risk groups and sets to 'general_public'
                          vax_age_strategy,              # options: "oldest", "youngest","50_down","uniform"
                          vax_dose_strategy,             # number of doses delivered per person
                          vax_strategy_vaccine_type,     # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
@@ -384,6 +384,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   }
   
   ggplot(vax_delivery_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(dose)))
+  #Don't forget the booster doses to completely unvaccinated individuals appear here
   ######################################################################################################################################################
   
   
@@ -471,7 +472,22 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
       mutate(eligible_individuals = eligible_individuals *cov_to_date) %>%
       select(age_group,dose,vaccine_type,eligible_individuals)
     
-    eligible_pop$eligible_individuals[eligible_pop$dose == 1] = eligible_pop$eligible_individuals[eligible_pop$dose == 1] - eligible_pop$eligible_individuals[eligible_pop$dose == 2]
+    #remove double counted tidy
+    for (d in 2:num_vax_doses){
+      remove = eligible_pop %>% 
+        filter(dose == d) %>%
+        rename(complete_vax = eligible_individuals) %>%
+        select(-dose)
+      
+      eligible_pop = eligible_pop %>% 
+        left_join(remove, by = c('age_group','vaccine_type')) %>%
+        mutate(eligible_individuals = case_when(
+          dose == (d-1) & complete_vax > eligible_individuals ~ 0, #this shouldn't be triggered
+          dose == (d-1) ~ eligible_individuals - complete_vax,
+          TRUE ~ eligible_individuals,
+        )) %>%
+        select(-complete_vax)
+    }
     #_______________________________________________________________________________
     
     
@@ -544,7 +560,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     daily_per_dose = booster_rollout_speed
     
     #modify if available doses restricted
-    if (nrow(vax_roll_out_speed_modifier)>0){
+    if (nrow(booster_speed_modifier)>0){
       exception_list = unique(booster_speed_modifier$day)
       workshop = booster_speed_modifier %>% filter(cumsum<ceiling)
       workshop = nrow(workshop) + 1
@@ -599,7 +615,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
           if(0 %in% VA$doses_left[VA$priority == priority_num & VA$dose == 1]){
             age_complete = VA$age_group[VA$doses_left == 0 & VA$priority == priority_num & VA$dose == 1]
             VA$priority[VA$age_group %in% age_complete] = VA$priority[VA$age_group %in% age_complete] + 100
-            
+
             priority_group = as.character(unique(VA$age_group[VA$priority == priority_num]))
           } #FIX - when one age group in the priority group runs out first
           
