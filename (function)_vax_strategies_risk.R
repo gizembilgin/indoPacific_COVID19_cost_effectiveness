@@ -38,6 +38,7 @@ apply_risk_strategy <- function(
       stop('real doses not equal across risk groups')
     }
     
+    toggle_equal_priority = "individuals" # STATIC TOGGLE: "individuals", "doses"
     if (vax_doses_risk>vax_doses_general){
       if (toggle_equal_priority == "individuals"){
         #vax_risk_proportion remains the same  
@@ -222,10 +223,16 @@ apply_risk_strategy <- function(
     } 
     if (vax_doses_risk==vax_doses_general){
       if (max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == 'general_public']) !=
-          max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == risk_group_name]) | 
-          max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == 'general_public']) !=
-          max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == risk_group_name])){
-        warning('max delivery dates dont align between risk groups')
+          max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == risk_group_name])){
+        stop('Existing rollout doesnt align between risk groups')
+      }
+      if (max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == 'general_public']) !=
+            max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == risk_group_name])){
+        if (vax_doses_risk==1){stop('max delivery dates dont align between risk groups (d=1)')
+        } else if (abs(max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == 'general_public']) -
+                        max(vaccination_history_MODF$date[vaccination_history_MODF$risk_group == risk_group_name])) > 60){
+          warning('max delivery dates dont align between risk groups (d>1)')
+        }
       }
     }
     if (vax_doses_general == 2){
