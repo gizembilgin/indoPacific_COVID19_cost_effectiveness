@@ -61,7 +61,7 @@ primary_only_toggles = list(
   vax_risk_proportion = 0,         
   vax_doses_general = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy,               
   vax_doses_risk = vax_strategy_toggles_CURRENT_TARGET$vax_dose_strategy,
-  risk_group_acceptability = vax_strategy_toggles$vax_strategy_max_expected_cov,
+  risk_group_acceptability = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_max_expected_cov,
   risk_group_accessibility = FALSE,
   risk_group_age_broaden = FALSE
 )
@@ -243,4 +243,6 @@ sensitivity_analysis_toggles = list()
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",Sys.Date(),".Rdata",sep=''))
 save(antiviral_model_dependencies, file = paste(rootpath,"x_results/antiviralSetUp_",Sys.Date(),".Rdata",sep=''))
 
+time.end.AntiviralSetUp=proc.time()[[3]]
 
+time.start.AntiviralSetUp-time.end.AntiviralSetUp
