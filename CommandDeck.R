@@ -103,7 +103,7 @@ if (fitting == "on"){
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
     
     if (risk_group_toggle == "on"){
-      if ((is.na(risk_group_prioritisation_to_date) == FALSE) | (! default_prioritisation_proportion == 0.5) ){
+      if ((is.na(risk_group_prioritisation_to_date) == FALSE) ){
         stop('no fitted result avaliable for this risk group characteristic')
       }
     }
