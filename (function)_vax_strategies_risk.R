@@ -106,7 +106,7 @@ apply_risk_strategy <- function(
     mutate(coverage_this_date = cumsum(doses_delivered_this_date)/pop) 
   
   vaccine_coverage_end_history_UPDATED = data.frame()
-  for (risk in 1:RISK){
+  for (risk in 1:num_risk_groups){
     for (t in 1:length(unique(vaccination_history_MODF$vaccine_type))){
       this_vax = vaccination_history_MODF %>%
         filter(vaccine_type == unique(vaccination_history_MODF$vaccine_type)[t] &
