@@ -48,7 +48,9 @@ vax_strategy_toggles_CURRENT_TARGET =
   )
 
 #initialise data frames
-antiviral_setup_results = list()
+RECORD_outcomes_without_antivirals = data.frame()
+RECORD_likelihood_severe_outcome = data.frame()
+RECORD_incidence_log_tidy = data.frame()
 queue = list()
 #______________________________________________________________________________________________________________
 
@@ -97,7 +99,7 @@ booster_highRisk_toggles = primary_only_toggles
 booster_highRisk_toggles$vax_doses_risk = booster_highRisk_toggles$vax_doses_risk + 1
 
 #(A/B) Adults with comorbidities
-queue[[4]] = list(vax_strategy_description = 'at risk group recieve a booster',
+queue[[4]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
                   risk_group_name = 'adults_with_comorbidities',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
@@ -105,7 +107,7 @@ queue[[4]] = list(vax_strategy_description = 'at risk group recieve a booster',
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET) 
 
 #(B/B) Pregnant women
-queue[[5]] = list(vax_strategy_description = 'at risk group recieve a booster',
+queue[[5]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
                   risk_group_name = 'pregnant_women',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
@@ -120,7 +122,7 @@ booster_all_toggles = booster_highRisk_toggles
 booster_all_toggles$vax_doses_general = booster_highRisk_toggles$vax_doses_risk
 
 #(A/C) Adults with comorbidities
-queue[[6]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
+queue[[6]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
                   risk_group_name = 'adults_with_comorbidities',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
@@ -128,7 +130,7 @@ queue[[6]] = list(vax_strategy_description = 'all willing adults vaccinated with
                   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)
 
 #(B/C) Pregnant women
-queue[[7]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
+queue[[7]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
                   risk_group_name = 'pregnant_women',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
@@ -139,7 +141,7 @@ queue[[7]] = list(vax_strategy_description = 'all willing adults vaccinated with
 this_vax_strategy = vax_strategy_toggles_CURRENT_TARGET
 this_vax_strategy$vax_dose_strategy = this_vax_strategy$vax_dose_strategy + 1
 
-queue[[8]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
+queue[[8]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
                   risk_group_name = 'none',
                   risk_group_toggle = "off",
                   vax_risk_strategy_toggle = "off",
@@ -150,7 +152,7 @@ queue[[8]] = list(vax_strategy_description = 'all willing adults vaccinated with
 
 ### SENSITIVITY ANALYSIS - reduced VE in older adults and adults with comorbidities
 #(A/B) Primary schedule only
-queue[[9]] = list(vax_strategy_description = 'sensitivity_analysis_reduced_VE:all willing adults vaccinated with a primary schedule',
+queue[[9]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
                   risk_group_name = 'adults_with_comorbidities',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
@@ -159,7 +161,7 @@ queue[[9]] = list(vax_strategy_description = 'sensitivity_analysis_reduced_VE:al
                   sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9))
 
 #(B/B) Primary + booster schedule
-queue[[10]] = list(vax_strategy_description = 'sensitivity_analysis_reduced_VE:at risk group recieve a booster',
+queue[[10]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
                   risk_group_name = 'adults_with_comorbidities',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
@@ -223,26 +225,40 @@ for (ticket in 1:length(queue)){
     select(-value)
   
   ###need to include variables which inform vaccination scenario and target group
+  if (length(sensitivity_analysis_toggles) >0){VE_sensitivity_analysis = "on"
+  } else{VE_sensitivity_analysis = "off"} 
+  outcomes_without_antivirals = outcomes_without_antivirals %>%
+    mutate(toggle_vax_scenario = vax_strategy_description,
+           toggle_vax_scenario_risk_group = risk_group_name,
+           toggle_VE_sensitivity_analysis = VE_sensitivity_analysis)
+  likelihood_severe_outcome = likelihood_severe_outcome %>%
+    mutate(toggle_vax_scenario = vax_strategy_description,
+           toggle_vax_scenario_risk_group = risk_group_name,
+           toggle_VE_sensitivity_analysis = VE_sensitivity_analysis)
+  incidence_log_tidy = incidence_log_tidy %>%
+    mutate(toggle_vax_scenario = vax_strategy_description,
+           toggle_vax_scenario_risk_group = risk_group_name,
+           toggle_VE_sensitivity_analysis = VE_sensitivity_analysis)
   
   #COMEBACK: choice, can embed vax_strategy_description and risk_group_name into four dependencies, or store outside - depends on what is easier in 'antiviral (simulations)'
-  antiviral_model_dependencies = list(vax_strategy_description = vax_strategy_description,
-                                      risk_group_name = risk_group_name,
-                                    
-                                      outcomes_without_antivirals = outcomes_without_antivirals,
-                                      prop_sympt = prop_sympt,
-                                      likelihood_severe_outcome = likelihood_severe_outcome,
-                                      incidence_log_tidy = incidence_log_tidy
-                                      )
-  antiviral_setup_results[[ticket]] = antiviral_model_dependencies
+  RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
+  RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
+  RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
   #____________________________________________________________________________________________________________________
   
 }
 sensitivity_analysis_toggles = list()
 #____________________________________________________________________________
 
+
+RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_without_antivirals,
+                              prop_sympt = prop_sympt, #only static dependency
+                              likelihood_severe_outcome = RECORD_likelihood_severe_outcome,
+                              incidence_log_tidy = RECORD_incidence_log_tidy)
+
+
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",Sys.Date(),".Rdata",sep=''))
-save(antiviral_model_dependencies, file = paste(rootpath,"x_results/antiviralSetUp_",Sys.Date(),".Rdata",sep=''))
+save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
-
 time.start.AntiviralSetUp-time.end.AntiviralSetUp
