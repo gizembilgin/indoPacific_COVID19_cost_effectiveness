@@ -4,13 +4,13 @@
 
 ###### (1/5) Vaccination
 #(A/B) Coverage 
-#(i/iv) Vaccine coverage at end of known history
+#(i/iii) Vaccine coverage at end of known history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% 
   filter(date == max(vaccination_history_TRUE$date)) %>%
   select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
 #_________________________________________________
 
-#(ii/iv) Add hypothetical campaign (if 'on') ____
+#(ii/iii) Add hypothetical campaign (if 'on') ____
 if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vaccination_history_FINAL = 
     vax_strategy(vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date,
@@ -77,6 +77,15 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
+#UPDATE: Delay & Interval 
+vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
+vaxCovDelay = vaxCovDelay %>%
+  mutate(delay = case_when(
+    dose == 1 ~ 21,
+    TRUE ~ 14 #all other doses
+  ))
+#_________________________________________________
+
 
 #extract other attributes
 if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
@@ -106,17 +115,8 @@ date_now = date_start
 #_________________________________________________
 
 
-#(iii/iv) Delay & Interval ____________________________________
-vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0) #delay from vaccination to protection
-vaxCovDelay = vaxCovDelay %>%
-  mutate(delay = case_when(
-    dose == 1 ~ 21,#number of days till protection from first dose, COMEBACK - J&J full protection after 14 days?
-    TRUE ~ 14 #all other doses
-  ))
-#_________________________________________________
 
-
-#(iv/iv)  Initial coverage _______________________
+#(iii/iii)  Initial coverage _______________________
 #Including coverage_this_date for projected doses
 vaccination_history_FINAL = vaccination_history_FINAL %>% 
   left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
