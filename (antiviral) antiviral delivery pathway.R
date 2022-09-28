@@ -4,18 +4,26 @@ time.start.AntiviralModel=proc.time()[[3]]
 #DEPENDENCIES FROM '(antiviral) set up.R' (n=4): incidence_log_tidy,outcomes_without_antivirals,likelihood_severe_outcome,prop_sympt
 
 ### TOGGLES ################################################################
-toggle_antiviral_target = 'adults_with_comorbidities' #options: adults_with_comorbidities (baseline), unvaccinated_adults, pregnant_women, or all_adults
-toggle_antiviral_start_date = as.Date('2022-09-01')
-toggle_antiviral_delivery_capacity = 250 #daily capacity for antiviral delivery
-toggle_antiviral_effectiveness = 0.88 #could make stochastic
-toggle_number_of_runs = 100
+#SET IN '(antiviral) simulations.R'
+#toggle_antiviral_target = 'adults_with_comorbidities' #options: adults_with_comorbidities (baseline), unvaccinated_adults, pregnant_women, or all_adults
+#toggle_antiviral_start_date = as.Date('2022-09-01')
+#toggle_antiviral_delivery_capacity = 250 #daily capacity for antiviral delivery
+#toggle_antiviral_effectiveness = 0.88 #could make stochastic
+#toggle_number_of_runs = 100
+
+#COMEBACK could make stochastic
+if (toggle_antiviral_type == 'paxlovid'){
+  toggle_antiviral_effectiveness = 0.88
+} else if(toggle_antiviral_type = 'molunipiravir'){
+  toggle_antiviral_effectiveness = 0.33
+}
+
 #____________________________________________________________________________
+
 
 
 ### INITALISE DATA FRAMES #################################################################
 this_scenario_tracker = data.frame()
-
-
 #____________________________________________________________________________
 
 
@@ -173,16 +181,27 @@ summary_over_runs <-
          LCI_percentage = LCI/overall *100) %>%
   select(outcome,average,UCI,LCI,percentage,UCI_percentage,LCI_percentage)
 
+summary_over_runs_tidy = summary_over_runs %>%
+  pivot_longer(
+    cols = 2:ncol(summary_over_runs) ,
+    names_to = 'result',
+    values_to = 'value'
+  )
+
 #monitor if daily capacity being used or not enough seeking/accessing care
 antiviral_rollout_capacity_utilised = round(100*nrow(antiviral_delivery_tracker)/(toggle_antiviral_delivery_capacity*antiviral_delivery_length),digits = 1)
 antiviral_eligible_pop_coverage = round(100*nrow(antiviral_delivery_tracker)/total_target,digits = 1) 
+row1 = c(outcome='program_measure',result='antiviral_rollout_capacity_utilised',value=antiviral_rollout_capacity_utilised)
+row2 = c(outcome='program_measure',result='antiviral_eligible_pop_coverage',value=antiviral_eligible_pop_coverage)
+
+summary_over_runs_tidy = rbind(summary_over_runs_tidy,row1,row2)
 #____________________________________________________________________________
 
 
 ### PRINT SUMMARY OVER RUNS #################################################
-summary_over_runs
-paste("Antiviral rollout capacity utilised: ",antiviral_rollout_capacity_utilised,'%',sep='')
-paste("Antiviral eligible population covered: ",antiviral_eligible_pop_coverage,'%',sep='')
+# summary_over_runs
+# paste("Antiviral rollout capacity utilised: ",antiviral_rollout_capacity_utilised,'%',sep='')
+# paste("Antiviral eligible population covered: ",antiviral_eligible_pop_coverage,'%',sep='')
 #____________________________________________________________________________
 
 
