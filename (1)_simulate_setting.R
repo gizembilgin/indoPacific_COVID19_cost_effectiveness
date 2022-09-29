@@ -363,8 +363,20 @@ setting_vaccine_part_three_pt2 = setting_vaccine_2 %>% filter(prop == 0 & dose =
 setting_vaccine_part_three = rbind(setting_vaccine_part_three_pt1,setting_vaccine_part_three_pt2)
 if(round(sum(setting_vaccine_part_three$prop),digits=4) != 1){stop('setting_vaccine_part_three total > 100%')}
 
+
 part_three = timing_check %>%
-  mutate(num = cum_doses - dose2_required) %>%
+  mutate(num = cum_doses - dose2_required,
+         num_inital = num) 
+#CORRECT - no negative doses!
+while(nrow(na.omit(part_three[part_three$num > lead(part_three$num),]))>0){
+  part_three = part_three %>%
+    mutate(num = case_when(
+      num > lead(num,na.rm=TRUE) ~ lead(num),
+      TRUE ~ num
+    ))
+}
+
+part_three = part_three  %>%
   select(-cum_doses,-dose2_required) %>% 
   left_join(setting_vaccine_part_three, by = 'dose')  %>%
   select(date, vaccine_type, dose, num, prop)
@@ -372,7 +384,7 @@ part_three = timing_check %>%
 #BRING PART 1-3 TOGETHER  
 vaccination_history_2 = rbind(part_one,part_two,part_three)
 vaccination_history_2 = vaccination_history_2 %>%
-  mutate(coverage_this_date_num = round(num*prop)) %>% 
+  mutate(coverage_this_date_num = num*prop) %>% 
   group_by(date,vaccine_type,dose) %>%
   summarise(coverage_this_date_num = sum(coverage_this_date_num), .groups='keep') %>%
   mutate(coverage_this_date = 100 * coverage_this_date_num / sum(pop)) %>%
@@ -383,7 +395,6 @@ vaccination_history_2 = vaccination_history_2 %>%
 if(sum(vaccination_history_2$doses_delivered_this_date,na.rm=TRUE) != sum(vaccination_history$num[vaccination_history$date == max(vaccination_history$date)])){
   stop('doses dont align between vaccination_history and vaccination_history_2')
 }
-
 
 vaccination_history_3 <- vaccination_history_2 %>%
   mutate(vaccine_mode = case_when(
@@ -399,6 +410,7 @@ vaccination_history_3 <- na.omit(vaccination_history_3) # nrows = 1365-5 = 1360
 vaccination_history_POP <- vaccination_history_3 %>%
   select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date) %>%
   arrange(date,vaccine_type,dose)
+if (nrow(vaccination_history_POP[vaccination_history_POP$doses_delivered_this_date<0,])>0){stop('negative doses delivered!')}
 
 ### CHECK PARITAL/FULL SCHEDULE COVERAGE ALIGNS
 # vaccination_history_POP %>%
