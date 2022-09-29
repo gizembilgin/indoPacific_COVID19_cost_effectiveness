@@ -74,6 +74,12 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
              doses_delivered_this_date > 0)
   date_complete_at_risk_group = max(date_complete_at_risk_group$date)
   
+  if (is.na(risk_group_lower_cov_ratio) & 
+      max(vaccination_history_FINAL$date[vaccination_history_FINAL$dose == 1 & vaccination_history_FINAL$risk_group == risk_group_name & vaccination_history_FINAL$doses_delivered_this_date>0]) >
+      max(vaccination_history_FINAL$date[vaccination_history_FINAL$dose == 1 & vaccination_history_FINAL$risk_group != risk_group_name & vaccination_history_FINAL$doses_delivered_this_date>0])){
+    stop('high risk group finish dose 1 after lower risk group')
+  }
+  
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
