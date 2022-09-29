@@ -43,19 +43,25 @@ apply_risk_strategy <- function(
       if (toggle_equal_priority == "individuals"){
         #vax_risk_proportion remains the same  
       } else if (toggle_equal_priority == "doses"){
+        #calculate unvaccinated proportion by 1-coverage first dose
+        workshop = vaccine_coverage_end_history %>% 
+          filter(dose == 1) %>%
+          group_by(age_group,risk_group) %>%
+          summarise(unvax = sum(coverage_this_date),.groups='keep') %>%
+          mutate(unvax = 1 - unvax)
+        
+        #(see proof '2022_09_29 vax_risk_proportion (vax_doses_gen != vax_doses_risk).pdf')
         workshop =  pop_risk_group_dn %>%
+          left_join(workshop) %>%
           mutate(adult_pop = case_when(
             age_group %in% c('0 to 4','5 to 9','10 to 17') ~ 0,
             TRUE ~ pop)) %>%
           mutate(dose_inflated_pop = case_when(
-            risk_group == risk_group_name ~ adult_pop * vax_doses_risk,
-            TRUE ~ adult_pop * vax_doses_general)) %>%
-          mutate(split = dose_inflated_pop/sum(dose_inflated_pop))
-        risk_split = workshop %>% group_by(risk_group) %>% summarise(sum = sum(split),.groups='keep')
-        vax_risk_proportion = risk_split$sum[risk_split$risk_group == risk_group_name]
+            risk_group == risk_group_name ~ adult_pop * (1+unvax*vax_doses_general),
+            TRUE ~ adult_pop * unvax * vax_doses_general))
+        vax_risk_proportion = sum(workshop$dose_inflated_pop[workshop$risk_group == risk_group_name])/sum(workshop$dose_inflated_pop)
       }
     }
-
   }
   #___________________________________________________________
   
