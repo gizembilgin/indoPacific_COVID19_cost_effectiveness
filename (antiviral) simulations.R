@@ -52,7 +52,7 @@ for (a in 1:length(LIST_toggle_antiviral_type)){
         } else {
           for (e in 1:length(LIST_toggle_VE_sensitivity_analysis)){
             toggle_VE_sensitivity_analysis = LIST_toggle_VE_sensitivity_analysis[[e]]
-            if (toggle_VE_sensitivity_analysis = "on" & toggle_vax_scenario_risk_group != 'adults_with_comorbidities'){
+            if (toggle_VE_sensitivity_analysis == "on" & toggle_vax_scenario_risk_group != 'adults_with_comorbidities'){
               # do not run as sensitivity analysis only for reduced VE in adults with comorbidities and older adults
             } else{
               ###LOAD DEPENDENCIES
