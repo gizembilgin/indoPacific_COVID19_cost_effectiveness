@@ -131,7 +131,7 @@ for (increments_number in 1:num_time_steps){
                }
              }
            }
-           
+
             for (i in 1:num_age_groups){ # across age groups
               
               increase = rep(0,num_vax_doses)
@@ -153,7 +153,7 @@ for (increments_number in 1:num_time_steps){
                  }
                  if (is.nan(prop[d+1]) == TRUE){prop[d+1]=0}
                }
-      
+
                next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] =
                  next_state$pop[next_state$class == class & next_state$risk_group == this_risk_group & next_state$vaccine_type == "unvaccinated" & next_state$age_group == age_group_labels[i]] - increase[1]* prop[1]
                
@@ -169,9 +169,9 @@ for (increments_number in 1:num_time_steps){
            }
          }
       }
+      
         
-          
-       
+        
       #### BOOSTER TO PREVIOUS PRIMARY
       #NB: using '8' as a flag for a booster to a previously primary delivered individaul
       if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
