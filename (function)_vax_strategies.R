@@ -88,10 +88,9 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
              pop_untouched = pop - pop*unreachable - pop*cov)
     
     # calculate proportion to booster / (booster + primary)
-    vax_proportion_booster = (sum(workshop_pop_dn$pop_touched))/(sum(workshop_pop_dn$pop_untouched)*vax_dose_strategy+ sum(workshop_pop_dn$pop_touched))   
-    #NOTE: this is standard assumption of basis of population size
-    #NOTE: we are prioritising individuals, NOT doses - if we were prioritising doses we would have to inflate pop_untouched for double-dose vaccines
-    #NOTE: we are now prioritising doses, NOT individuals - this is to ensure the risk group finishes their primary schedule >= general public
+    vax_proportion_booster = (sum(workshop_pop_dn$pop_touched))/(sum(workshop_pop_dn$pop_untouched)*vax_dose_strategy+ sum(workshop_pop_dn$pop_touched))  
+    #NOTE: we are prioritising doses NOT individuals to ensure that the risk group finish their primary schedule before or at the same time as the general public
+    #The code has also been crafted to inflate pop_untouched for a double-dose vaccine
     
     #CHECK
     check = workshop_pop_dn %>% filter(round(pop*0.88) != round(pop_touched + pop_untouched))
