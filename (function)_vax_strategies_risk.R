@@ -38,7 +38,7 @@ apply_risk_strategy <- function(
       stop('real doses not equal across risk groups')
     }
     
-    toggle_equal_priority = "individuals" # STATIC TOGGLE: "individuals", "doses"
+    toggle_equal_priority = "doses" # STATIC TOGGLE: "individuals", "doses"
     if (vax_doses_risk>vax_doses_general){
       if (toggle_equal_priority == "individuals"){
         #vax_risk_proportion remains the same  
@@ -63,9 +63,9 @@ apply_risk_strategy <- function(
   
   ### BRANCH TWO: What % priority are the at risk group receiving? 
   if (risk_group_accessibility == FALSE){
-    speed_risk_group_rollout =  vax_strategy_toggles$vax_strategy_roll_out_speed* vax_risk_proportion
+    speed_risk_group_rollout =  vax_strategy_toggles$vax_strategy_roll_out_speed*vax_risk_proportion
   } else if (risk_group_accessibility == TRUE){
-    speed_risk_group_rollout = round(sum(pop_high_risk$pop)/(365/12*4.2)) #median first antenatal care visit
+    speed_risk_group_rollout = round(sum(pop_high_risk$pop)/(365/12*4.2))*vax_doses_risk #median first antenatal care visit
   }
   if (risk_group_age_broaden == TRUE){
     save_age_strategy = vax_strategy_toggles$vax_age_strategy 
