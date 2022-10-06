@@ -93,7 +93,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     #The code has also been crafted to inflate pop_untouched for a double-dose vaccine
     
     #CHECK
-    check = workshop_pop_dn %>% filter(round(pop*0.88) != round(pop_touched + pop_untouched))
+    check = workshop_pop_dn %>% filter(round(pop*vax_strategy_max_expected_cov) != round(pop_touched + pop_untouched))
     if (nrow(check)>0){
       stop('full population not considered')
     }

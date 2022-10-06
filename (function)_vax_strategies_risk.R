@@ -35,7 +35,9 @@ apply_risk_strategy <- function(
       mutate(cov=doses/pop) %>%
       arrange(dose,age_group)
     if (length(unique(na.omit(round(real_doses$cov[real_doses$dose == 1],digits=2))))>1 | length(unique(na.omit(round(real_doses$cov[real_doses$dose == 2],digits=2))))>1){
-      stop('real doses not equal across risk groups')
+      if (!'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
+        stop('real doses not equal across risk groups')
+      }
     }
     
     toggle_equal_priority = "doses" # STATIC TOGGLE: "individuals", "doses"
@@ -221,13 +223,17 @@ apply_risk_strategy <- function(
       mutate(cov=doses/pop) %>%
       arrange(dose,age_group)
     
-    if (unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2))) != vax_strategy_toggles$vax_strategy_max_expected_cov){
+    expected_cov = unique(c(vax_strategy_toggles$vax_strategy_max_expected_cov,risk_group_acceptability))
+    if (length(unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2)))) != length(expected_cov) |
+        unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2)))[1] != expected_cov[1]){
       warning('not all who are willing have recieved the first dose')
     }
     if (length(unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 1],digits=2))))>1){
+      if (!'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
         stop('hypoth dose one not equal across risk groups')
+      }
     } 
-    if (vax_doses_risk==vax_doses_general){
+    if (vax_doses_risk==vax_doses_general & !'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
       if (max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == 'general_public']) !=
           max(vaccination_history_TRUE$date[vaccination_history_TRUE$risk_group == risk_group_name])){
         stop('Existing rollout doesnt align between risk groups')

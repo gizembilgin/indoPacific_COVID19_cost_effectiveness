@@ -80,9 +80,22 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
     stop('high risk group finish dose 1 after lower risk group')
   }
   
+  #sum across day in case date fitted < date_now
+  if ('FROM_vaccine_type' %in% names(vaccination_history_FINAL)){
+    vaccination_history_FINAL = vaccination_history_FINAL %>%
+      group_by(date,vaccine_type,vaccine_mode,dose,age_group,risk_group,FROM_dose,FROM_vaccine_type) %>%
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = 'keep')
+  } else{
+    vaccination_history_FINAL = vaccination_history_FINAL %>%
+      group_by(date,vaccine_type,vaccine_mode,dose,age_group,risk_group) %>%
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = 'keep')
+  }
+
+  
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
+
 #UPDATE: Delay & Interval 
 vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
 vaxCovDelay = vaxCovDelay %>%
