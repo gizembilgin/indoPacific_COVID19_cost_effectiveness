@@ -485,7 +485,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     
     eligible_pop <- eligible_pop %>% 
       left_join(existing_coverage, by = "age_group") %>%
-      mutate(eligible_individuals = eligible_individuals *cov_to_date) %>%
+      mutate(eligible_individuals = eligible_individuals * cov_to_date) %>%
       select(age_group,dose,vaccine_type,eligible_individuals)
     
     #remove double counted tidy
@@ -495,14 +495,16 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
         rename(complete_vax = eligible_individuals) %>%
         select(-dose)
       
-      eligible_pop = eligible_pop %>% 
-        left_join(remove, by = c('age_group','vaccine_type')) %>%
-        mutate(eligible_individuals = case_when(
-          dose == (d-1) & complete_vax > eligible_individuals ~ 0, #this shouldn't be triggered
-          dose == (d-1) ~ eligible_individuals - complete_vax,
-          TRUE ~ eligible_individuals,
-        )) %>%
-        select(-complete_vax)
+      if (nrow(remove)>0){
+        eligible_pop = eligible_pop %>% 
+          left_join(remove, by = c('age_group','vaccine_type')) %>%
+          mutate(eligible_individuals = case_when(
+            dose == (d-1) & complete_vax > eligible_individuals ~ 0, #this shouldn't be triggered
+            dose == (d-1) ~ eligible_individuals - complete_vax,
+            TRUE ~ eligible_individuals,
+          )) %>%
+          select(-complete_vax)
+      }
     }
     #_______________________________________________________________________________
     
