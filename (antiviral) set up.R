@@ -174,7 +174,7 @@ queue[[10]] = list(vax_strategy_description = 'all willing adults vaccinated wit
 
 
 
-### RUN MODEL ###############################################################################################
+### RUN MODEL #################################################################################################
 for (ticket in 1:length(queue)){
   
   commands = queue[[ticket]]
@@ -214,6 +214,7 @@ for (ticket in 1:length(queue)){
   
   #ASSUMPTION: only symptomatic cases lead to severe outcomes
   prop_sympt = param_age %>% 
+    ungroup() %>%
     filter(param == 'prop_sympt') %>%
     select(-param)
   likelihood_severe_outcome = severe_outcome_this_run %>%
@@ -262,3 +263,11 @@ save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",S
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.start.AntiviralSetUp-time.end.AntiviralSetUp
+###############################################################################################################
+
+
+
+
+### SENSE CHECK MODEL RUNS ####################################################################################
+# RECORD_outcomes_without_antivirals = RECORD_outcomes_without_antivirals %>% arrange(outcome)
+# View(RECORD_outcomes_without_antivirals)

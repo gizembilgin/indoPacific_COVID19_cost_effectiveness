@@ -14,7 +14,7 @@ time.start.AntiviralModel=proc.time()[[3]]
 #COMEBACK could make stochastic
 if (toggle_antiviral_type == 'paxlovid'){
   toggle_antiviral_effectiveness = 0.88
-} else if(toggle_antiviral_type = 'molunipiravir'){
+} else if(toggle_antiviral_type == 'molunipiravir'){
   toggle_antiviral_effectiveness = 0.33
 }
 
@@ -51,6 +51,8 @@ if (toggle_antiviral_target %in% c('adults_with_comorbidities','pregnant_women')
 }
 antiviral_target = antiviral_target %>% filter(incidence>0,
                                                date >= toggle_antiviral_start_date)
+
+rm(incidence_log_tidy)
 #____________________________________________________________________________
 
 
@@ -65,6 +67,8 @@ antiviral_target_individuals = antiviral_target %>%
   mutate(symptomatic = round(symptomatic)) %>%
   select(-temp_risk) %>%
   filter(symptomatic>0)
+
+rm(antiviral_target)
 #____________________________________________________________________________
 
 
@@ -98,6 +102,8 @@ for (run_number in 1:toggle_number_of_runs){
   antiviral_target_individuals_run = workshop %>%
     filter(healthcare_seeking == 1) %>% #retain those who seek care
     select(-healthcare_seeking)
+  
+  rm(workshop)
   #____________________________________________________________________________
   
   
@@ -123,6 +129,8 @@ for (run_number in 1:toggle_number_of_runs){
     mutate(min_date_access = date + healthcare_access,
            max_date_access = date + 5) %>% 
     select(-healthcare_access) 
+  
+  rm(workshop)
   #____________________________________________________________________________
   
   
@@ -149,6 +157,8 @@ for (run_number in 1:toggle_number_of_runs){
   antiviral_target_individuals_run = antiviral_delivery_tracker %>% 
     select(-date) %>%
     left_join(antiviral_target_individuals_run, by = 'ID') #remove all not selected for antivirals 
+  
+  rm(antiviral_delivery_tracker)
   #____________________________________________________________________________
   
   
@@ -162,8 +172,12 @@ for (run_number in 1:toggle_number_of_runs){
     summarise(n = sum(percentage)) 
   
   this_scenario_tracker = rbind(this_scenario_tracker,prevented_by_antivirals)
+  
+  rm(antiviral_target_individuals_run,workshop,prevented_by_antivirals,likelihood_severe_outcome)
   #____________________________________________________________________________
 }
+
+rm(antiviral_target_individuals)
 #____________________________________________________________________________
 
 
@@ -175,7 +189,7 @@ summary_over_runs <-
                    sd = sd(n),
                    UCI = average - qnorm(0.975)*sd,
                    LCI = average - qnorm(0.023)*sd) %>%
-  left_join(outcomes_without_antivirals) %>%
+  left_join(outcomes_without_antivirals, by = "outcome") %>%
   mutate(percentage = average/overall *100,
          UCI_percentage = UCI/overall *100,
          LCI_percentage = LCI/overall *100) %>%
@@ -187,6 +201,8 @@ summary_over_runs_tidy = summary_over_runs %>%
     names_to = 'result',
     values_to = 'value'
   )
+
+rm(this_scenario_tracker,summary_over_runs,outcomes_without_antivirals)
 
 #monitor if daily capacity being used or not enough seeking/accessing care
 antiviral_rollout_capacity_utilised = round(100*nrow(antiviral_delivery_tracker)/(toggle_antiviral_delivery_capacity*antiviral_delivery_length),digits = 1)
