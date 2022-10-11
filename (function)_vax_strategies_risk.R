@@ -247,14 +247,14 @@ apply_risk_strategy <- function(
         }
       }
     }
-    if (vax_doses_general == 2){
+    if (vax_doses_general >= 2){
       if (unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 3 & hypoth_doses$risk_group == 'general_public'],digits=2))) != vax_strategy_toggles$vax_strategy_max_expected_cov){
-        warning('not all who are willing in the general public have recieved the second dose')
+        warning('not all who are willing in the general public have recieved the booster dose')
       }
     }
-    if (vax_doses_risk == 2){
+    if (vax_doses_risk >= 2){
       if (unique(na.omit(round(hypoth_doses$cov[hypoth_doses$dose == 3 & hypoth_doses$risk_group == risk_group_name],digits=2))) != vax_strategy_toggles$vax_strategy_max_expected_cov){
-        warning('not all who are willing in the risk group have recieved the second dose')
+        warning('not all who are willing in the risk group have recieved the booster dose')
       }
     }
   }
