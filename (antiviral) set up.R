@@ -13,6 +13,7 @@ time.start.AntiviralSetUp=proc.time()[[3]]
 fitting = "off";plotting = "off"
 load(file = '1_inputs/last_fit_date.Rdata')
 date_start = fitted_max_date 
+if (abs(fitted_max_date - Sys.Date())>7){stop('please refit!')}
 
 #initialise length of model run and circulating strain
 strain_inital = strain_now = 'omicron' 
@@ -150,30 +151,6 @@ queue[[8]] = list(vax_strategy_description = 'all willing adults vaccinated with
 
 
 
-### SENSITIVITY ANALYSIS - reduced VE in older adults and adults with comorbidities
-#(A/B) Primary schedule only
-queue[[9]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
-                  risk_group_name = 'adults_with_comorbidities',
-                  risk_group_toggle = "on",
-                  vax_risk_strategy_toggle = "on",
-                  apply_risk_strategy_toggles = primary_only_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
-                  sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9))
-
-#(B/B) Primary + booster schedule
-queue[[10]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-                  risk_group_name = 'adults_with_comorbidities',
-                  risk_group_toggle = "on",
-                  vax_risk_strategy_toggle = "on",
-                  apply_risk_strategy_toggles = booster_highRisk_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
-                  sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)) 
-#______________________________________________________________________________________________________________
-###############################################################################################################
-
-
-
-
 ### RUN MODEL #################################################################################################
 for (ticket in 1:length(queue)){
   
@@ -189,7 +166,8 @@ for (ticket in 1:length(queue)){
   vax_risk_strategy_toggle = commands$vax_risk_strategy_toggle
   
   if ('apply_risk_strategy_toggles' %in% names(commands)){apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles}
-  if ('sensitivity_analysis_toggles' %in% names(commands)){sensitivity_analysis_toggles = commands$sensitivity_analysis_toggles}
+  if ('sensitivity_analysis_toggles' %in% names(commands)){sensitivity_analysis_toggles = commands$sensitivity_analysis_toggles
+  } else{ sensitivity_analysis_toggles = list()}
   
   if (risk_group_name == "pregnant_women"){
     RR_estimate  = RR_default =  2.4
@@ -229,23 +207,72 @@ for (ticket in 1:length(queue)){
   if (length(sensitivity_analysis_toggles) >0){VE_sensitivity_analysis = "on"
   } else{VE_sensitivity_analysis = "off"} 
   outcomes_without_antivirals = outcomes_without_antivirals %>%
-    mutate(toggle_vax_scenario = vax_strategy_description,
-           toggle_vax_scenario_risk_group = risk_group_name,
-           toggle_VE_sensitivity_analysis = VE_sensitivity_analysis)
+    mutate(vax_scenario = vax_strategy_description,
+           vax_scenario_risk_group = risk_group_name,
+           VE_sensitivity_analysis = VE_sensitivity_analysis)
   likelihood_severe_outcome = likelihood_severe_outcome %>%
-    mutate(toggle_vax_scenario = vax_strategy_description,
-           toggle_vax_scenario_risk_group = risk_group_name,
-           toggle_VE_sensitivity_analysis = VE_sensitivity_analysis)
+    mutate(vax_scenario = vax_strategy_description,
+           vax_scenario_risk_group = risk_group_name,
+           VE_sensitivity_analysis = VE_sensitivity_analysis)
   incidence_log_tidy = incidence_log_tidy %>%
-    mutate(toggle_vax_scenario = vax_strategy_description,
-           toggle_vax_scenario_risk_group = risk_group_name,
-           toggle_VE_sensitivity_analysis = VE_sensitivity_analysis)
+    mutate(vax_scenario = vax_strategy_description,
+           vax_scenario_risk_group = risk_group_name,
+           VE_sensitivity_analysis = VE_sensitivity_analysis)
   
   #COMEBACK: choice, can embed vax_strategy_description and risk_group_name into four dependencies, or store outside - depends on what is easier in 'antiviral (simulations)'
   RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
   RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
   RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
   #____________________________________________________________________________________________________________________
+  
+  ### SENSITIVITY ANALYSIS - reduced VE in older adults and adults with comorbidities  
+  if (risk_group_name == 'adults_with_comorbidities'){
+    VE_loop = 1
+    sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)
+    
+    source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) 
+    source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
+    
+    outcomes_without_antivirals = severe_outcome_log_tidy  %>%
+      group_by(outcome) %>%
+      summarise(overall = sum(proj))
+    
+    #ASSUMPTION: only symptomatic cases lead to severe outcomes
+    prop_sympt = param_age %>% 
+      ungroup() %>%
+      filter(param == 'prop_sympt') %>%
+      select(-param)
+    likelihood_severe_outcome = severe_outcome_this_run %>%
+      left_join(reinfection_protection, by = c("date", "age_group")) %>%
+      mutate(percentage = percentage*(1-protection)) %>%
+      select(-outcome_long,-protection) %>%
+      left_join(prop_sympt,by= c('age_group' = 'agegroup')) %>%
+      mutate(percentage = percentage * (1/value)) %>%
+      select(-value)
+    
+    ###need to include variables which inform vaccination scenario and target group
+    if (length(sensitivity_analysis_toggles) >0){VE_sensitivity_analysis = "on"
+    } else{VE_sensitivity_analysis = "off"} 
+    outcomes_without_antivirals = outcomes_without_antivirals %>%
+      mutate(vax_scenario = vax_strategy_description,
+             vax_scenario_risk_group = risk_group_name,
+            VE_sensitivity_analysis = VE_sensitivity_analysis)
+    likelihood_severe_outcome = likelihood_severe_outcome %>%
+      mutate(vax_scenario = vax_strategy_description,
+             vax_scenario_risk_group = risk_group_name,
+             VE_sensitivity_analysis = VE_sensitivity_analysis)
+    incidence_log_tidy = incidence_log_tidy %>%
+      mutate(vax_scenario = vax_strategy_description,
+             vax_scenario_risk_group = risk_group_name,
+             VE_sensitivity_analysis = VE_sensitivity_analysis)
+    
+    #COMEBACK: choice, can embed vax_strategy_description and risk_group_name into four dependencies, or store outside - depends on what is easier in 'antiviral (simulations)'
+    RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
+    RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
+    RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
+  }
+  ###############################################################################################################
+  
   
 }
 sensitivity_analysis_toggles = list()
@@ -262,7 +289,7 @@ save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",Sys.Date(
 save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
-time.start.AntiviralSetUp-time.end.AntiviralSetUp
+time.end.AntiviralSetUp - time.start.AntiviralSetUp
 ###############################################################################################################
 
 
