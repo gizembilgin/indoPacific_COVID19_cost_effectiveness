@@ -38,7 +38,7 @@ if (VE_loop == 0){
   VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
   VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 }  
-
+rm(VE_waning_distribution_SO)
 
 
 #(A/C) calculate VE against severe outcomes by day
@@ -120,6 +120,8 @@ if (risk_group_toggle == "on"){
   
   severe_outcome_FINAL_wRisk$percentage[is.na(severe_outcome_FINAL_wRisk$percentage)]=0
   severe_outcome_FINAL = severe_outcome_FINAL_wRisk
+  
+  rm(IR_gen, IR_risk, row_gen, row_risk, severe_outcomes_list, severe_outcome_FINAL_wRisk, row, this_age, P, P_general, P_risk)
 }
 
 
@@ -141,6 +143,8 @@ if (risk_group_toggle == "on"){
                               outcome_VE = 'severe_disease',
                               risk_group = 'pregnant_women') 
     severe_outcome_FINAL = rbind(severe_outcome_FINAL,row)
+    
+    rm(row, stillbirth_prev, stillbirth_risk, preterm_prev, preterm_risk)
   }
   
   severe_outcome_this_run = severe_outcome_FINAL %>% 
@@ -154,4 +158,6 @@ if (risk_group_toggle == "on"){
     mutate(percentage = percentage*(1-VE)) %>%
     select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
 }
+
+rm(VE_tracker, VE_time_step, severe_outcome_FINAL,workshop)
 #_______________________________________________________________________________

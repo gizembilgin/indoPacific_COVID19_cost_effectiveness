@@ -95,6 +95,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
+rm(vax_strategy,apply_risk_strategy)
 
 #UPDATE: Delay & Interval 
 vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
@@ -422,7 +423,7 @@ if (fitting == "on"){
 } else if (! fitting == "on"){ #load last fitted state of the model
   
   incidence_log = fitted_incidence_log #for rho_inital
-  
+
   #include additional vaccine types if don't exist
   if (! length(unique(fitted_next_state$vaccine_type)) == length(unique(vaccination_history_FINAL$vaccine_type))+1){ #+1 for unvaccinated
     this_vax = unique(vaccination_history_FINAL$vaccine_type)[!  unique(vaccination_history_FINAL$vaccine_type) %in% unique(fitted_next_state$vaccine_type)]
@@ -473,6 +474,7 @@ if (fitting == "on"){
   
   next_state_FINAL=as.numeric(c(S_next,E_next,I_next,R_next,
                                 Incidence_inital,Exposed_incidence_inital)) #setting Incid to repeated 0s
+  rm(S_next,E_next,I_next,R_next)
   
   if (round(sum(next_state_FINAL)) != sum(pop)){stop('inital state doesnt align with population size!')}
 }

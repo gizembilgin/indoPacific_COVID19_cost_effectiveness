@@ -103,7 +103,7 @@ for (ticket in 1:length(queue)){
   VE_loop = 0
   vax_strategy_description    = commands$vax_strategy_description
   apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
-  
+
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   severe_outcome_projections = severe_outcome_log %>% 
@@ -172,6 +172,8 @@ for (ticket in 1:length(queue)){
     save(SA_VE_warehouse_table,file =  paste(rootpath,"x_results/sensitivity_analysis_VE_",Sys.Date(),".Rdata",sep=''))
     sensitivity_analysis_toggles = save_toggles
   }
+  
+  rm(severe_outcome_this_run, severe_outcome_log, severe_outcome_log_tidy)
 }
 #____________________________________________________________________________________________________________________________________
 

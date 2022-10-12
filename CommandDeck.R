@@ -32,7 +32,7 @@ if ( debug == "on"){
   strain_inital = strain_now = 'omicron'             
   load(file = '1_inputs/last_fit_date.Rdata')
   date_start = fitted_max_date
-  model_weeks = 4          
+  model_weeks = 5          
   
   
   ##options for run from start
@@ -50,6 +50,8 @@ if ( debug == "on"){
   risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
   risk_group_prioritisation_to_date = NA
   default_prioritisation_proportion = 0.5
+  risk_group_lower_cov_ratio = NA
+  sensitivity_analysis_toggles = list()
   
   vax_strategy_toggles =
     list(vax_strategy_start_date        = date_start+30,
@@ -92,12 +94,14 @@ if (fitting == "on"){
     } else if (risk_group_name == 'adults_with_comorbidities'){
       loaded_fit = fitted_results[[3]]
     }
+    rm(fitted_results)
     if (risk_group_toggle == "on"){if(!loaded_fit[[5]] == risk_group_name){stop('risk group name != fitted risk group name')}}
     
     parameters = loaded_fit[[1]]
     fitted_next_state = loaded_fit[[2]]
     fitted_incidence_log_tidy = loaded_fit[[3]]
     fitted_incidence_log = loaded_fit[[4]]
+    rm(loaded_fit)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) 
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
@@ -120,6 +124,7 @@ if (fitting == "on"){
     fitted_next_state = loaded_fit[[2]]
     fitted_incidence_log_tidy = loaded_fit[[3]]
     fitted_incidence_log = loaded_fit[[4]]
+    rm(loaded_fit)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) # CHECKED last of fitted log = first of new log
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
@@ -244,6 +249,7 @@ plot2 <- ggplot() +
   plot_standard
 
 grid.arrange(plot1, plot2, nrow=2)
+rm(plot1,plot2)
 }
 
 if (debug == "on" | fitting == "on"){
@@ -279,6 +285,7 @@ if (debug == "on" | fitting == "on"){
   lay <- rbind(c(1,2),c(3,3),c(4,5))
   
   grid.arrange(plot1,plot2,plot3,plot4,plot5, layout_matrix = lay)
+  rm(plot1,plot2,plot3,plot4,plot5,incidence_log_plot,rho_tracker_dataframe,VE_tracker_dataframe)
 } 
 #__________________________________________________________________ 
 
