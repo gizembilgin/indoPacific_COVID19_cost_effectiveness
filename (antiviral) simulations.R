@@ -421,4 +421,4 @@ save.image(file = paste(rootpath,"x_results/antiviralSimulation_fullImage_",Sys.
 save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/antiviralSimulations_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSimulations=proc.time()[[3]]
-(time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # 3 minutes for single simulation of each ~5 hours
+(time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # 3 minutes for single simulation of each, 11 minutes for 5 simulations of each (non-linear scaling!) -> ~3 hours for 100 sim each?
