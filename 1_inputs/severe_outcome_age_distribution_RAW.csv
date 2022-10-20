@@ -1,51 +1,51 @@
-agegroup,outcome_long,outcome,rate,source
-0 to 9,infection fatality ratio per 10000,death,0,Seedat et al. 2021
-10 to 19,infection fatality ratio per 10000,death,0,Seedat et al. 2021
-20 to 29,infection fatality ratio per 10000,death,0.12,Seedat et al. 2021
-30 to 39,infection fatality ratio per 10000,death,0.09,Seedat et al. 2021
-40 to 49,infection fatality ratio per 10000,death,0.75,Seedat et al. 2021
-50 to 59,infection fatality ratio per 10000,death,5.31,Seedat et al. 2021
-60 to 69,infection fatality ratio per 10000,death,27.68,Seedat et al. 2021
-70 to 79,infection fatality ratio per 10000,death,116.44,Seedat et al. 2021
-80+,infection fatality ratio per 10000,death,175.76,Seedat et al. 2021
-overall,infection fatality ratio per 10000,death,1.85,Seedat et al. 2021
-0 to 9,infection severity rate per 1000,severe_disease,0.07,Seedat et al. 2021
-10 to 19,infection severity rate per 1000,severe_disease,0.13,Seedat et al. 2021
-20 to 29,infection severity rate per 1000,severe_disease,0.47,Seedat et al. 2021
-30 to 39,infection severity rate per 1000,severe_disease,1.86,Seedat et al. 2021
-40 to 49,infection severity rate per 1000,severe_disease,4.05,Seedat et al. 2021
-50 to 59,infection severity rate per 1000,severe_disease,8.35,Seedat et al. 2021
-60 to 69,infection severity rate per 1000,severe_disease,25.08,Seedat et al. 2021
-70 to 79,infection severity rate per 1000,severe_disease,50.16,Seedat et al. 2021
-80+,infection severity rate per 1000,severe_disease,31.26,Seedat et al. 2021
-overall,infection severity rate per 1000,severe_disease,3.06,Seedat et al. 2021
-0 to 9,infection criticallity rate per 1000,critical_disease,0,Seedat et al. 2021
-10 to 19,infection criticallity rate per 1000,critical_disease,0.04,Seedat et al. 2021
-20 to 29,infection criticallity rate per 1000,critical_disease,0.08,Seedat et al. 2021
-30 to 39,infection criticallity rate per 1000,critical_disease,0.21,Seedat et al. 2021
-40 to 49,infection criticallity rate per 1000,critical_disease,0.73,Seedat et al. 2021
-50 to 59,infection criticallity rate per 1000,critical_disease,2.1,Seedat et al. 2021
-60 to 69,infection criticallity rate per 1000,critical_disease,7.43,Seedat et al. 2021
-70 to 79,infection criticallity rate per 1000,critical_disease,22.45,Seedat et al. 2021
-80+,infection criticallity rate per 1000,critical_disease,23.02,Seedat et al. 2021
-overall,infection criticallity rate per 1000,critical_disease,0.68,Seedat et al. 2021
-0 to 9,infection ICU bed per 1000,ICU,0.44,Seedat et al. 2021
-10 to 19,infection ICU bed per 1000,ICU,0.39,Seedat et al. 2021
-20 to 29,infection ICU bed per 1000,ICU,0.4,Seedat et al. 2021
-30 to 39,infection ICU bed per 1000,ICU,0.71,Seedat et al. 2021
-40 to 49,infection ICU bed per 1000,ICU,1.92,Seedat et al. 2021
-50 to 59,infection ICU bed per 1000,ICU,4.67,Seedat et al. 2021
-60 to 69,infection ICU bed per 1000,ICU,12.65,Seedat et al. 2021
-70 to 79,infection ICU bed per 1000,ICU,38.03,Seedat et al. 2021
-80+,infection ICU bed per 1000,ICU,32.94,Seedat et al. 2021
-overall,infection ICU bed per 1000,ICU,1.6,Seedat et al. 2021
-0 to 9,infection acute-care bed per 1000,hosp,8.06,Seedat et al. 2021
-10 to 19,infection acute-care bed per 1000,hosp,7.15,Seedat et al. 2021
-20 to 29,infection acute-care bed per 1000,hosp,7.19,Seedat et al. 2021
-30 to 39,infection acute-care bed per 1000,hosp,10.07,Seedat et al. 2021
-40 to 49,infection acute-care bed per 1000,hosp,16,Seedat et al. 2021
-50 to 59,infection acute-care bed per 1000,hosp,26.35,Seedat et al. 2021
-60 to 69,infection acute-care bed per 1000,hosp,60.46,Seedat et al. 2021
-70 to 79,infection acute-care bed per 1000,hosp,99.84,Seedat et al. 2021
-80+,infection acute-care bed per 1000,hosp,36.73,Seedat et al. 2021
-overall,infection acute-care bed per 1000,hosp,13.1,Seedat et al. 2021
+agegroup,outcome_long,outcome,rate,LB,UB,source
+0 to 9,infection fatality ratio per 10000,death,0,0,0,Seedat et al. 2021
+10 to 19,infection fatality ratio per 10000,death,0,0,0,Seedat et al. 2021
+20 to 29,infection fatality ratio per 10000,death,0.12,0.11,0.13,Seedat et al. 2021
+30 to 39,infection fatality ratio per 10000,death,0.09,0.09,0.1,Seedat et al. 2021
+40 to 49,infection fatality ratio per 10000,death,0.75,0.7,0.8,Seedat et al. 2021
+50 to 59,infection fatality ratio per 10000,death,5.31,4.99,5.65,Seedat et al. 2021
+60 to 69,infection fatality ratio per 10000,death,27.68,26.15,29.26,Seedat et al. 2021
+70 to 79,infection fatality ratio per 10000,death,116.44,110.43,122.83,Seedat et al. 2021
+80+,infection fatality ratio per 10000,death,175.76,168.92,183.17,Seedat et al. 2021
+overall,infection fatality ratio per 10000,death,1.85,1.74,1.95,Seedat et al. 2021
+0 to 9,infection severity rate per 1000,severe_disease,0.07,0.07,0.08,Seedat et al. 2021
+10 to 19,infection severity rate per 1000,severe_disease,0.13,0.13,0.13,Seedat et al. 2021
+20 to 29,infection severity rate per 1000,severe_disease,0.47,0.46,0.48,Seedat et al. 2021
+30 to 39,infection severity rate per 1000,severe_disease,1.86,1.83,1.89,Seedat et al. 2021
+40 to 49,infection severity rate per 1000,severe_disease,4.05,3.99,4.11,Seedat et al. 2021
+50 to 59,infection severity rate per 1000,severe_disease,8.35,8.22,8.48,Seedat et al. 2021
+60 to 69,infection severity rate per 1000,severe_disease,25.08,24.7,25.48,Seedat et al. 2021
+70 to 79,infection severity rate per 1000,severe_disease,50.16,49.39,50.95,Seedat et al. 2021
+80+,infection severity rate per 1000,severe_disease,31.26,30.78,31.76,Seedat et al. 2021
+overall,infection severity rate per 1000,severe_disease,3.06,3.01,3.1,Seedat et al. 2021
+0 to 9,infection criticallity rate per 1000,critical_disease,0,0,0,Seedat et al. 2021
+10 to 19,infection criticallity rate per 1000,critical_disease,0.04,0.04,0.04,Seedat et al. 2021
+20 to 29,infection criticallity rate per 1000,critical_disease,0.08,0.08,0.08,Seedat et al. 2021
+30 to 39,infection criticallity rate per 1000,critical_disease,0.21,0.21,0.21,Seedat et al. 2021
+40 to 49,infection criticallity rate per 1000,critical_disease,0.73,0.72,0.73,Seedat et al. 2021
+50 to 59,infection criticallity rate per 1000,critical_disease,2.1,2.08,2.12,Seedat et al. 2021
+60 to 69,infection criticallity rate per 1000,critical_disease,7.43,7.37,7.49,Seedat et al. 2021
+70 to 79,infection criticallity rate per 1000,critical_disease,22.45,22.25,22.62,Seedat et al. 2021
+80+,infection criticallity rate per 1000,critical_disease,23.02,22.82,23.19,Seedat et al. 2021
+overall,infection criticallity rate per 1000,critical_disease,0.68,0.67,0.68,Seedat et al. 2021
+0 to 9,infection ICU bed per 1000,ICU,0.44,0.43,0.46,Seedat et al. 2021
+10 to 19,infection ICU bed per 1000,ICU,0.39,0.38,0.41,Seedat et al. 2021
+20 to 29,infection ICU bed per 1000,ICU,0.4,0.39,0.41,Seedat et al. 2021
+30 to 39,infection ICU bed per 1000,ICU,0.71,0.69,0.72,Seedat et al. 2021
+40 to 49,infection ICU bed per 1000,ICU,1.92,1.9,1.94,Seedat et al. 2021
+50 to 59,infection ICU bed per 1000,ICU,4.67,4.63,4.7,Seedat et al. 2021
+60 to 69,infection ICU bed per 1000,ICU,12.65,12.54,12.75,Seedat et al. 2021
+70 to 79,infection ICU bed per 1000,ICU,38.03,37.7,38.32,Seedat et al. 2021
+80+,infection ICU bed per 1000,ICU,32.94,32.6,33.26,Seedat et al. 2021
+overall,infection ICU bed per 1000,ICU,1.6,1.58,1.61,Seedat et al. 2021
+0 to 9,infection acute-care bed per 1000,hosp,8.06,7.85,8.2,Seedat et al. 2021
+10 to 19,infection acute-care bed per 1000,hosp,7.15,6.96,7.27,Seedat et al. 2021
+20 to 29,infection acute-care bed per 1000,hosp,7.19,7.02,7.28,Seedat et al. 2021
+30 to 39,infection acute-care bed per 1000,hosp,10.07,9.88,10.18,Seedat et al. 2021
+40 to 49,infection acute-care bed per 1000,hosp,16,15.65,16.17,Seedat et al. 2021
+50 to 59,infection acute-care bed per 1000,hosp,26.35,25.69,26.68,Seedat et al. 2021
+60 to 69,infection acute-care bed per 1000,hosp,60.46,58.82,61.53,Seedat et al. 2021
+70 to 79,infection acute-care bed per 1000,hosp,99.84,97.23,101.65,Seedat et al. 2021
+80+,infection acute-care bed per 1000,hosp,36.73,35.76,37.37,Seedat et al. 2021
+overall,infection acute-care bed per 1000,hosp,13.1,12.82,13.24,Seedat et al. 2021
