@@ -144,7 +144,6 @@ if ( debug == "on" | fitting == "on"){
 ####################################################################
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") #Note: x_results not stored within GitHub repository
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
-discounting_rate = 0      #discounting on YLL
 #__________________________________________________________________
 
 
@@ -165,8 +164,6 @@ if (exists("prev_risk_num") == FALSE){ prev_risk_num = "NONE"}
 if (exists("prev_risk_group") == FALSE){ prev_risk_group = "NONE"}
 if (exists("risk_group_name") == FALSE){ risk_group_name = "NO RISK GROUPS"}
 if (exists("prev_run_date") == FALSE){ prev_run_date = as.Date('1900-01-01')}
-if (exists("prev_discounting_rate") == FALSE){ prev_discounting_rate = discounting_rate}
-if (prev_discounting_rate != discounting_rate){stop('need to re-run "(mech shop) severe outcome setting-specific rates" to apply new discounting rate')}
 
 if (setting != prev_setting | num_risk_groups != prev_risk_num | risk_group_name != prev_risk_group | prev_run_date != Sys.Date()){
   source(paste(getwd(),"/(1)_simulate_setting.R",sep="")) #load setting stats if new setting
