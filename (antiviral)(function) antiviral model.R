@@ -1,10 +1,16 @@
+load(file = '1_inputs/antiviral_effectiveness.Rdata' )
+
 antiviral_model <- function(toggle_antiviral_type,
                             toggle_antiviral_target,
                             toggle_vax_scenario,
                             toggle_vax_scenario_risk_group,
                             toggle_VE_sensitivity_analysis,
                             
-                            RECORD_antiviral_setup ){
+                            RECORD_antiviral_setup,
+                            
+                            toggle_antiviral_delivery_capacity = NA,
+                            toggle_fixed_antiviral_coverage = NA
+                            ){
 
   ###SKIP IF NONSENSE
   skip = 0
@@ -13,9 +19,8 @@ antiviral_model <- function(toggle_antiviral_type,
     #require risk group to exist to be able to deliver additional booster doses
     skip = 1
   } 
-  if((toggle_vax_scenario_risk_group %in% c('pregnant_women','adults_with_comorbidities') |
-      toggle_antiviral_target %in% c('pregnant_women','adults_with_comorbidities')) &
-     toggle_vax_scenario_risk_group != toggle_antiviral_target){
+  if (toggle_antiviral_target %in% c('pregnant_women','adults_with_comorbidities') &
+      toggle_vax_scenario_risk_group != toggle_antiviral_target){
     #require risk group name to exist to be able to deliver antivirals
     skip = 1
   }
@@ -43,7 +48,8 @@ antiviral_model <- function(toggle_antiviral_type,
         vax_scenario            == toggle_vax_scenario,
         vax_scenario_risk_group == toggle_vax_scenario_risk_group,
         VE_sensitivity_analysis == toggle_VE_sensitivity_analysis
-      )
+      ) %>%
+      filter(date >= toggle_antiviral_start_date)
     incidence_log_tidy = RECORD_antiviral_setup$incidence_log_tidy %>%
       filter(
         vax_scenario            == toggle_vax_scenario,
@@ -59,12 +65,15 @@ antiviral_model <- function(toggle_antiviral_type,
       }
     }
     
-    #COMEBACK could make stochastic
-    if (toggle_antiviral_type == 'paxlovid') {
-      toggle_antiviral_effectiveness = 0.88
-    } else if (toggle_antiviral_type == 'molunipiravir') {
-      toggle_antiviral_effectiveness = 0.33
-    }
+    toggle_antiviral_effectiveness = antiviral_effectiveness %>%
+      filter(antiviral_type == toggle_antiviral_type)
+    sampled_value = mapply(rbeta,1,toggle_antiviral_effectiveness$beta_a, toggle_antiviral_effectiveness$beta_b)
+    toggle_antiviral_effectiveness = cbind(toggle_antiviral_effectiveness,sampled_value) 
+    toggle_antiviral_effectiveness = toggle_antiviral_effectiveness %>% 
+      select(antiviral_type,outcome,sampled_value) %>%
+      rename(AE = sampled_value)
+    YLL_addition = toggle_antiviral_effectiveness %>% filter(outcome == 'death') %>% mutate(outcome = 'YLL')
+    toggle_antiviral_effectiveness = rbind(toggle_antiviral_effectiveness,YLL_addition)
     #____________________________________________________________________________
     
     
@@ -75,20 +84,24 @@ antiviral_model <- function(toggle_antiviral_type,
     
     
     ### SELECT TARGET GROUP ######################################################
+    antiviral_target = incidence_log_tidy %>%
+      filter(!age_group %in% c("0 to 4", "5 to 9", "10 to 17")) #ASSUME ADULTS ONLY
+    
     if (toggle_antiviral_target %in% c('adults_with_comorbidities', 'pregnant_women')) {
-      antiviral_target = incidence_log_tidy %>%
+      antiviral_target = antiviral_target %>%
         filter(risk_group == toggle_antiviral_target)
     } else if (toggle_antiviral_target == 'unvaccinated_adults') {
-      antiviral_target = incidence_log_tidy %>%
+      antiviral_target = antiviral_target %>%
         filter(dose == 0)
     } else if (toggle_antiviral_target == 'all_adults') {
-      antiviral_target = incidence_log_tidy %>%
-        filter(!age_group %in% c("0 to 4", "5 to 9", "10 to 17"))
+
+    } else if (toggle_antiviral_target == 'unvaccinated_adults_AND_adults_with_comorbidities') {
+      antiviral_target = antiviral_target %>%
+        filter(dose == 0 | risk_group == 'adults_with_comorbidities')
     } else {
       stop('pick a valid toggle_antiviral_target!')
     }
-    antiviral_target = antiviral_target %>% filter(incidence >
-                                                     0,
+    antiviral_target = antiviral_target %>% filter(incidence > 0,
                                                    date >= toggle_antiviral_start_date) #COMEBACK - plus or minus 5?
     
     antiviral_delivery_length = as.numeric(max(incidence_log_tidy$date) - toggle_antiviral_start_date)
@@ -247,7 +260,8 @@ antiviral_model <- function(toggle_antiviral_type,
           likelihood_severe_outcome,
           by = c("date", "risk_group", "age_group", "dose", "vaccine_type")
         ) %>%
-        mutate(percentage = percentage * toggle_antiviral_effectiveness)
+        left_join(toggle_antiviral_effectiveness, by = 'outcome') %>%
+        mutate(percentage = percentage * AE)
       workshop = na.omit(workshop)
       
       prevented_by_antivirals = workshop %>%
@@ -307,22 +321,28 @@ antiviral_model <- function(toggle_antiviral_type,
        outcomes_without_antivirals)
     
     #monitor if daily capacity being used or not enough seeking/accessing care
-    antiviral_rollout_capacity_utilised = round(
-      100 * length_antiviral_delivery_tracker / (
-        toggle_antiviral_delivery_capacity * antiviral_delivery_length
-      ),
-      digits = 1
-    )
-    antiviral_eligible_pop_coverage = round(100 *
-                                              length_antiviral_delivery_tracker / total_target, digits = 1)
-    row1 = c(outcome = 'program_measure',
-             result = 'antiviral_rollout_capacity_utilised',
-             value = antiviral_rollout_capacity_utilised)
-    row2 = c(outcome = 'program_measure',
-             result = 'antiviral_eligible_pop_coverage',
-             value = antiviral_eligible_pop_coverage)
-    
-    summary_over_runs_tidy = rbind(summary_over_runs_tidy, row1, row2)
+    if (pathway_to_care == 'realistic'){
+      antiviral_rollout_capacity_utilised = round(
+        100 * length_antiviral_delivery_tracker / (
+          toggle_antiviral_delivery_capacity * antiviral_delivery_length
+        ),
+        digits = 1
+      )
+      antiviral_eligible_pop_coverage = round(100 *
+                                                length_antiviral_delivery_tracker / total_target, digits = 1)
+      row1 = c(outcome = 'program_measure',
+               result = 'antiviral_rollout_capacity_utilised',
+               value = antiviral_rollout_capacity_utilised)
+      row2 = c(outcome = 'program_measure',
+               result = 'antiviral_eligible_pop_coverage',
+               value = antiviral_eligible_pop_coverage)
+      
+      summary_over_runs_tidy = rbind(summary_over_runs_tidy, row1, row2)
+    } else if (pathway_to_care == 'fixed'){
+      summary_over_runs_tidy = summary_over_runs_tidy %>% 
+        mutate(antiviral_cov = toggle_fixed_antiviral_coverage,
+               antiviral_delivered = length_antiviral_delivery_tracker)
+    }
     #____________________________________________________________________________
     
     
@@ -342,6 +362,9 @@ antiviral_model <- function(toggle_antiviral_type,
         vax_scenario_risk_group = toggle_vax_scenario_risk_group,
         VE_sensitivity_analysis = toggle_VE_sensitivity_analysis
       )
+    
+
+    
     return(result)
   }
 }
