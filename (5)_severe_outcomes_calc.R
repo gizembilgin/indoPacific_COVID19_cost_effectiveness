@@ -140,6 +140,7 @@ if (risk_group_toggle == "on"){
                               outcome_long = 'adverse pregnancy outcome resulting in neonatal death',
                               age_group  = age_group_labels,
                               percentage = ((stillbirth_risk-1)*stillbirth_prev + (preterm_risk-1)*preterm_prev),
+                              variant = strain_now,
                               outcome_VE = 'severe_disease',
                               risk_group = 'pregnant_women') 
     severe_outcome_FINAL = rbind(severe_outcome_FINAL,row)
