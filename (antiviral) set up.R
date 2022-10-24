@@ -51,7 +51,10 @@ vax_strategy_toggles_CURRENT_TARGET =
 #initialise data frames
 RECORD_outcomes_without_antivirals = data.frame()
 RECORD_likelihood_severe_outcome = data.frame()
+RECORD_vaccination_history_FINAL = data.frame()
 RECORD_incidence_log_tidy = data.frame()
+RECORD_incidence_log = data.frame()
+RECORD_exposed_log = data.frame()
 queue = list()
 #______________________________________________________________________________________________________________
 
@@ -204,73 +207,34 @@ for (ticket in 1:length(queue)){
     select(-value)
   
   ###need to include variables which inform vaccination scenario and target group
-  if (length(sensitivity_analysis_toggles) >0){VE_sensitivity_analysis = "on"
-  } else{VE_sensitivity_analysis = "off"} 
   outcomes_without_antivirals = outcomes_without_antivirals %>%
     mutate(vax_scenario = vax_strategy_description,
-           vax_scenario_risk_group = risk_group_name,
-           VE_sensitivity_analysis = VE_sensitivity_analysis)
+           vax_scenario_risk_group = risk_group_name)
   likelihood_severe_outcome = likelihood_severe_outcome %>%
     mutate(vax_scenario = vax_strategy_description,
-           vax_scenario_risk_group = risk_group_name,
-           VE_sensitivity_analysis = VE_sensitivity_analysis)
+           vax_scenario_risk_group = risk_group_name)
   incidence_log_tidy = incidence_log_tidy %>%
     mutate(vax_scenario = vax_strategy_description,
-           vax_scenario_risk_group = risk_group_name,
-           VE_sensitivity_analysis = VE_sensitivity_analysis)
+           vax_scenario_risk_group = risk_group_name)
+  exposed_log = exposed_log %>%
+    mutate(vax_scenario = vax_strategy_description,
+           vax_scenario_risk_group = risk_group_name)
+  incidence_log = incidence_log %>%
+    mutate(vax_scenario = vax_strategy_description,
+           vax_scenario_risk_group = risk_group_name)
+  vaccination_history_FINAL = vaccination_history_FINAL %>%
+    mutate(vax_scenario = vax_strategy_description,
+           vax_scenario_risk_group = risk_group_name)
   
   #COMEBACK: choice, can embed vax_strategy_description and risk_group_name into four dependencies, or store outside - depends on what is easier in 'antiviral (simulations)'
   RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
   RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
   RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
+  RECORD_vaccination_history_FINAL   = rbind(RECORD_vaccination_history_FINAL,vaccination_history_FINAL)
+  RECORD_exposed_log                 = rbind(RECORD_exposed_log,exposed_log)
+  RECORD_incidence_log               = rbind(RECORD_incidence_log,incidence_log)
   #____________________________________________________________________________________________________________________
-  
-  ### SENSITIVITY ANALYSIS - reduced VE in older adults and adults with comorbidities  
-  if (risk_group_name == 'adults_with_comorbidities'){
-    VE_loop = 1
-    sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)
-    
-    source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) 
-    source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
-    
-    outcomes_without_antivirals = severe_outcome_log_tidy  %>%
-      group_by(outcome) %>%
-      summarise(overall = sum(proj))
-    
-    #ASSUMPTION: only symptomatic cases lead to severe outcomes
-    prop_sympt = param_age %>% 
-      ungroup() %>%
-      filter(param == 'prop_sympt') %>%
-      select(-param)
-    likelihood_severe_outcome = severe_outcome_this_run %>%
-      left_join(reinfection_protection, by = c("date", "age_group")) %>%
-      mutate(percentage = percentage*(1-protection)) %>%
-      select(-outcome_long,-protection) %>%
-      left_join(prop_sympt,by= c('age_group' = 'agegroup')) %>%
-      mutate(percentage = percentage * (1/value)) %>%
-      select(-value)
-    
-    ###need to include variables which inform vaccination scenario and target group
-    if (length(sensitivity_analysis_toggles) >0){VE_sensitivity_analysis = "on"
-    } else{VE_sensitivity_analysis = "off"} 
-    outcomes_without_antivirals = outcomes_without_antivirals %>%
-      mutate(vax_scenario = vax_strategy_description,
-             vax_scenario_risk_group = risk_group_name,
-            VE_sensitivity_analysis = VE_sensitivity_analysis)
-    likelihood_severe_outcome = likelihood_severe_outcome %>%
-      mutate(vax_scenario = vax_strategy_description,
-             vax_scenario_risk_group = risk_group_name,
-             VE_sensitivity_analysis = VE_sensitivity_analysis)
-    incidence_log_tidy = incidence_log_tidy %>%
-      mutate(vax_scenario = vax_strategy_description,
-             vax_scenario_risk_group = risk_group_name,
-             VE_sensitivity_analysis = VE_sensitivity_analysis)
-    
-    #COMEBACK: choice, can embed vax_strategy_description and risk_group_name into four dependencies, or store outside - depends on what is easier in 'antiviral (simulations)'
-    RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
-    RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
-    RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
-  }
+
   ###############################################################################################################
   
   
@@ -282,7 +246,9 @@ sensitivity_analysis_toggles = list()
 RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_without_antivirals,
                               prop_sympt = prop_sympt, #only static dependency
                               likelihood_severe_outcome = RECORD_likelihood_severe_outcome,
-                              incidence_log_tidy = RECORD_incidence_log_tidy)
+                              incidence_log_tidy = RECORD_incidence_log_tidy,
+                              exposed_log = RECORD_exposed_log,
+                              incidence_log = RECORD_incidence_log)
 
 
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",Sys.Date(),".Rdata",sep=''))
