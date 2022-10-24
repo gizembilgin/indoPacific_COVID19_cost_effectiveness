@@ -85,21 +85,12 @@ system.time({
       ),
       .combine = rbind,
       .inorder = FALSE
-    ) %:%
-    foreach(
-      toggle_VE_sensitivity_analysis = c(
-        'on',
-        'off'
-      ),
-      .combine = rbind,
-      .inorder = FALSE
     ) %dopar% {
       
       antiviral_model(toggle_antiviral_type = toggle_antiviral_type,
                       toggle_antiviral_target = toggle_antiviral_target,
                       toggle_vax_scenario = toggle_vax_scenario,
                       toggle_vax_scenario_risk_group = toggle_vax_scenario_risk_group,
-                      toggle_VE_sensitivity_analysis = toggle_VE_sensitivity_analysis,
                       
                       RECORD_antiviral_setup = RECORD_antiviral_setup
       )
