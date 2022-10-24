@@ -36,7 +36,6 @@ toggle_antiviral_start_date = fitted_max_date
 toggle_number_of_runs = 20
 
 pathway_to_care = 'fixed'
-toggle_VE_sensitivity_analysis = 'on'
 toggle_fixed_antiviral_coverage = 0.2
 #toggle_vax_scenario = 'all willing adults vaccinated with a primary schedule and high risk group receive a booster'
 #____________________________________________________________________________
@@ -48,7 +47,7 @@ source(paste(getwd(),"/(antiviral)(function) antiviral model.R",sep=""))
 
 #detectCores() = 8
 
-CLUSTER <- parallel::makeCluster(5) # create cluster
+CLUSTER <- parallel::makeCluster(4) # create cluster
 doParallel::registerDoParallel(CLUSTER) # activate cluster
 
 #nesting foreach loops as per https://cran.r-project.org/web/packages/foreach/vignettes/nested.html
@@ -94,7 +93,6 @@ system.time({
                       toggle_antiviral_target        = toggle_antiviral_target,
                       toggle_vax_scenario            = toggle_vax_scenario,
                       toggle_vax_scenario_risk_group = toggle_vax_scenario_risk_group,
-                      toggle_VE_sensitivity_analysis = toggle_VE_sensitivity_analysis,
                       
                       RECORD_antiviral_setup          = RECORD_antiviral_setup,
                       
@@ -254,7 +252,6 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
 #                 toggle_antiviral_target        =  'unvaccinated_adults',
 #                 toggle_vax_scenario            = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
 #                 toggle_vax_scenario_risk_group = 'adults_with_comorbidities',
-#                 toggle_VE_sensitivity_analysis = toggle_VE_sensitivity_analysis,
 # 
 #                 RECORD_antiviral_setup          = RECORD_antiviral_setup,
 # 
