@@ -344,7 +344,9 @@ for (increments_number in 1:num_time_steps){
   }
   }
 } ### END INCREMENT (#incidence log moved within loop to allow rho_time_step to access)
-rm(fitted_incidence_log, sol_log, covidODE, rho_time_step, Reff_time_step, NPI, NGM_R0)
+if (fitting == "off"){
+  rm(fitted_incidence_log, sol_log, covidODE, rho_time_step, Reff_time_step, NPI, NGM_R0)
+}
 
 check <- sol_log_unedited
 check$Incid = rowSums(sol_log_unedited[,(A*4+2):(A*5+1)])
