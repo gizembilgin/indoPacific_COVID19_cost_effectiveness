@@ -12,7 +12,7 @@ rm(list=ls())
 
 #fitting toggles
 new_variant_check = "off"
-sensitivity_analysis_2022 = "on"
+sensitivity_analysis_2022 = "off"
 
 #general toggles
 setting = "SLE"
