@@ -1,5 +1,5 @@
 antiviral_type,outcome,mean,LB,UB,source
-paxlovid,severe_disease,0.57,0.36,0.72,Najjar-Debbiny et al. 2022
+paxlovid,severe_disease,0.57,0.36,0.72,Najjar-Debbiny et al. 2022 (by correspondance)
 paxlovid,death,0.88,0.64,0.96,Zheng et al. 2022
 paxlovid,hosp,0.68,0.25,0.87,Zheng et al. 2022
 molunipiravir,severe_disease,0.02,-0.06,0.11,Wong et al. 2022
