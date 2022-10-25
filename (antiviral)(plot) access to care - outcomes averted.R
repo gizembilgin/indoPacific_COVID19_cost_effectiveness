@@ -33,8 +33,6 @@ time.start.AntiviralSimulations=proc.time()[[3]]
 load(file = '1_inputs/last_fit_date.Rdata')
 toggle_antiviral_start_date = fitted_max_date
 
-toggle_number_of_runs = 20
-
 pathway_to_care = 'fixed'
 toggle_fixed_antiviral_coverage = 0.2
 #toggle_vax_scenario = 'all willing adults vaccinated with a primary schedule and high risk group receive a booster'
@@ -96,7 +94,9 @@ system.time({
                       
                       RECORD_antiviral_setup          = RECORD_antiviral_setup,
                       
-                      toggle_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage
+                      toggle_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
+                      
+                      toggle_number_of_runs = 5
       )
       
     }
