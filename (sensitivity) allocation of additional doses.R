@@ -62,6 +62,8 @@ source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
 #### Expand to booster dose to everyone in 2023###################################################################
 rm(list=ls())
 
+sensitivity_analysis_toggles = list(additional_doses = 'booster_doses_2023')  #to skip queue 5 onwards in Table 3 call
+
 load(file = '1_inputs/last_fit_date.Rdata')
 date_start = fitted_max_date 
 
