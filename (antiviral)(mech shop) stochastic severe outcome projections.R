@@ -24,16 +24,11 @@ fit_lognormal <- function(mean,LB,UB){
   sd_est = sd_est$minimum
   
   mean_sq = mean^2
-  sd_sq = sd^2
+  sd_sq = sd_est^2
   
   a = log(mean_sq/sqrt(mean_sq+sd_sq))
   b = log(1+sd_sq/mean_sq)
-  
-  # Z= rlnorm(10000000, meanlog = a,sdlog = b)
-  # plot(density(Z))
-  # mean(Z)
-  # quantile(Z)
-  
+
   result = data.frame(lognorm_a=a,lognorm_b=b)
   return(result)
 }
@@ -45,8 +40,8 @@ minimise_this_beta <- function(X) {
   
   Z= rbeta(10000000, a, b)
   
-  LB_estimate <- as.numeric(quantile(Z,.025))
-  UB_estimate <- as.numeric(quantile(Z,.975))
+  LB_estimate <- as.numeric(quantile(Z,.025,na.rm=TRUE))
+  UB_estimate <- as.numeric(quantile(Z,.975,na.rm=TRUE))
   
   (LB - LB_estimate)^2 + (UB - UB_estimate)^2 #squared residuals
 
@@ -58,13 +53,26 @@ fit_beta <- function(mean,LB,UB){
   
   a = mean * X
   b = (1-mean) * X
-  
-  # Z= rbeta(10000000, a,b)
-  # plot(density(Z))
-  # mean(Z)
-  # quantile(Z); quantile(Z,c(.025,.975))
-  
+
   result = data.frame(beta_a=a,beta_b=b)
+  return(result)
+}
+
+minimise_this_gamma <- function(param) {
+  shape=param[1]
+  scale=param[2]
+  
+  Z= rgamma(10000000, shape, scale=scale)
+  
+  (LB - quantile(Z,.025,na.rm=TRUE))^2 + (mean(Z))^2 + (UB - as.numeric(quantile(Z,.975,na.rm=TRUE))^2)
+}
+fit_gamma <- function(mean,LB,UB){
+  
+  X_estimate = optim(c(1,1),minimise_this_gamma)
+  shape_estimate = X_estimate$par[1]
+  scale_estimate = X_estimate$par[1]
+  
+  result = data.frame(gamma_shape=shape_estimate,gamma_scale=scale_estimate)
   return(result)
 }
 #______________________________________________________________________________________________________________________________________
@@ -111,6 +119,55 @@ rm(row_replacement,workshop,lognorm_param)
 # severe_outcome_country_level %>% mutate(diff = (UB-LB)/mean) 
 # Let's  use a uniform distribution because CI tight
 #____________________________________________________________________________________________________________________________________
+
+
+
+### PART THREE: variant-specific multipliers ________________________________________________________________________________________
+#WT to Delta multiplier
+workshop <- read.csv('1_inputs/severe_outcome_variant_multiplier.csv')
+workshop = workshop %>% filter(variant == 'delta')
+lognorm_param = mapply(fit_lognormal, workshop$multiplier, workshop$lower_est, workshop$upper_est)
+delta_multiplier = cbind(workshop,t(lognorm_param)) 
+
+# sampled_value = mapply(rlnorm,10000000,delta_multiplier$lognorm_a, delta_multiplier$lognorm_b)
+# plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
+# plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
+# plot(density(sampled_value[,3])); mean(sampled_value[,3]); min(sampled_value[,3])
+# 
+
+#Delta to Omicron multiplier
+omicron_multiplier <- read.csv('1_inputs/severe_outcome_variant_multiplier_complex.csv') #omicron vs delta
+omicron_multiplier = omicron_multiplier %>% rename(LB=lower_est, UB=upper_est)
+# Let's  use a uniform distribution because CI tight
+
+save(delta_multiplier, file = '1_inputs/delta_multiplier.Rdata' )
+save(omicron_multiplier, file = '1_inputs/omicron_multiplier.Rdata' )
+#____________________________________________________________________________________________________________________________________
+
+
+
+### PART FOUR: YLL ________________________________________________________________________________________
+#"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
+# who would be subject during the remaining of their lives to the mortality rates of a given period."
+# https://population.un.org/wpp/Download/Standard/Mortality/
+lifeExpect <- read.csv('1_inputs/UN_life_expectancy_est_v2.csv') #updated 20/10/2022
+YLL_FINAL = lifeExpect %>%
+  filter(setting == setting,
+         year == '2022') %>%
+  rename(life_expectancy = medium_variant) %>%
+  left_join(pop_estimates, by = 'age') %>%
+  select(age,life_expectancy,population) %>%
+  mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
+  group_by(age_group) %>%
+  mutate(group_percent = population/sum(population),
+         interim = life_expectancy * group_percent) %>%
+  summarise(YLL = sum(interim)) 
+save(YLL_FINAL, file = '1_inputs/YLL_FINAL.Rdata' )
+#____________________________________________________________________________________________________________________________________
+
+
+
+
 
 
 ### PART X: Antiviral effectiveness _________________________________________________________________________________________________
