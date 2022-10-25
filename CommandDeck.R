@@ -87,6 +87,13 @@ if (fitting == "on"){
     source(paste(getwd(),"/(0)_fitting_model.R",sep=""))
   } else{
     load(file = '1_inputs/fitted_results.Rdata')
+    
+    if('additional_doses' %in% names(sensitivity_analysis_toggles)){
+      if (sensitivity_analysis_toggles$additional_doses == 'start_2022'){
+        load(file = '1_inputs/fitted_results_SA_2022.Rdata')
+      }
+    }
+    
     if (risk_group_toggle == "off"){
       loaded_fit = fitted_results[[1]]
     } else if (risk_group_name == 'pregnant_women'){
@@ -112,8 +119,7 @@ if (fitting == "on"){
       }
     }
   }
-} else{
-  if ('vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
+} else if('vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
     
     if (! risk_group_name == 'pregnant_women'){stop('havent configured vax hesistance sensitivity analysis for another risk group')}
     
@@ -128,8 +134,8 @@ if (fitting == "on"){
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) # CHECKED last of fitted log = first of new log
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
-  }
-}
+} 
+
 
 if ( debug == "on" | fitting == "on"){
   Reff_tracker = data.frame()
@@ -246,7 +252,6 @@ plot2 <- ggplot() +
   plot_standard
 
 grid.arrange(plot1, plot2, nrow=2)
-rm(plot1,plot2)
 }
 
 if (debug == "on" | fitting == "on"){
@@ -282,7 +287,6 @@ if (debug == "on" | fitting == "on"){
   lay <- rbind(c(1,2),c(3,3),c(4,5))
   
   grid.arrange(plot1,plot2,plot3,plot4,plot5, layout_matrix = lay)
-  rm(plot1,plot2,plot3,plot4,plot5,incidence_log_plot,rho_tracker_dataframe,VE_tracker_dataframe)
 } 
 #__________________________________________________________________ 
 
