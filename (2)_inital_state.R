@@ -95,7 +95,46 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
-rm(vax_strategy,apply_risk_strategy)
+
+
+### sensitivity analysis - booster doses in 2023
+if (exists("booster_toggles") == FALSE){booster_toggles = "no"}
+if (length(booster_toggles)>1){
+  
+  vaccination_history_FINAL = 
+    booster_strategy( booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
+                      booster_dose_allocation     = booster_toggles$dose_allocation,  # num of doses avaliable
+                      booster_rollout_speed       = booster_toggles$rollout_speed,    # doses delivered per day
+                      booster_delivery_risk_group = booster_toggles$delivery_risk_group,
+                      booster_delivery_includes_previously_boosted = booster_toggles$delivery_includes_previously_boosted,
+                      booster_age_strategy        = booster_toggles$age_strategy,     # options: "oldest", "youngest","50_down","uniform"
+                      booster_strategy_vaccine_type = booster_toggles$vaccine_type,   # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
+                      booster_strategy_vaccine_interval = booster_toggles$vaccine_interval
+    )
+  
+  #update attributes!
+  list_doses = unique(vaccination_history_FINAL$dose)
+  list_doses = list_doses[! list_doses %in% c(8)]
+  num_vax_doses = D = length(list_doses)
+  vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
+  num_vax_types = T = length(vax_type_list)
+  num_vax_classes = num_vax_doses*num_vax_types + 1                 # + 1 for unvaccinated
+  parameters$num_vax_types = num_vax_types
+  parameters$num_vax_doses = num_vax_doses
+
+  #sum across day in case date fitted < date_now
+  if ('FROM_vaccine_type' %in% names(vaccination_history_FINAL)){
+    vaccination_history_FINAL = vaccination_history_FINAL %>%
+      group_by(date,vaccine_type,vaccine_mode,dose,age_group,risk_group,FROM_dose,FROM_vaccine_type) %>%
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = 'keep')
+  } else{
+    vaccination_history_FINAL = vaccination_history_FINAL %>%
+      group_by(date,vaccine_type,vaccine_mode,dose,age_group,risk_group) %>%
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = 'keep')
+  }
+}
+
+
 
 #UPDATE: Delay & Interval 
 vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
