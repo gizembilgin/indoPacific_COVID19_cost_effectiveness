@@ -129,7 +129,7 @@ apply_risk_strategy <- function(
   
   #<interim calculate doses available per day>
   limiter = data.frame()
-  leftover_doses = vax_strategy_toggles$vax_strategy_num_doses
+  leftover_doses = vax_strategy_toggles$vax_strategy_num_doses - sum(at_risk_delivery_outline$doses_delivered_this_date)
   if (risk_group_accessibility == FALSE){
     limiter = at_risk_delivery_outline %>% group_by(date) %>% 
       summarise(doses_delivered_this_date = sum(doses_delivered_this_date),.groups = "keep") 
@@ -152,7 +152,6 @@ apply_risk_strategy <- function(
           mutate( cumsum = cumsum(doses_avaliable))
       }
     }
-    leftover_doses = vax_strategy_toggles$vax_strategy_num_doses - sum(at_risk_delivery_outline$doses_delivered_this_date)
   } 
   #<fin>
   
