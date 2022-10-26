@@ -10,25 +10,25 @@ lota    = 0.5                                                     # (iii) modifi
 
 
 ### (B/D) Latent period 
-if (run_type == "point"){  
+#if (run_type == "point"){  
   if (strain_inital == 'delta' | strain_inital == 'WT'){
     AverageLatentPeriod = 3.71
   } else if (strain_inital == 'omicron'){
     AverageLatentPeriod = 2.22
   }
-}else if (run_type == "rand"){AverageLatentPeriod = rlnorm(1,meanlog = 1.3, sd=0.2)} 
+#}else if (run_type == "rand"){AverageLatentPeriod = rlnorm(1,meanlog = 1.3, sd=0.2)} 
 
 lambda = 1/AverageLatentPeriod
 
 
 ### (C/D) Symptomatic period
-if (run_type == "point"){
+#if (run_type == "point"){
   if (strain_inital == 'delta' | strain_inital == 'WT'){
     AverageSymptomaticPeriod = 10.9
   } else if (strain_inital == 'omicron'){
     AverageSymptomaticPeriod = 9.87
   }
-}else if (run_type == "rand"){AverageSymptomaticPeriod = runif(1,min=7,max=14)} #taken from Zachreson et al., 2021, COMEBACK use ACT bounds
+#}else if (run_type == "rand"){AverageSymptomaticPeriod = runif(1,min=7,max=14)} #taken from Zachreson et al., 2021, COMEBACK use ACT bounds
 
 delta = 1/AverageSymptomaticPeriod
 
