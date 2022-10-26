@@ -8,7 +8,6 @@
 ##### SETUP
 age_groups_num = c(0,4,9,17,29,44,59,69,110)
 age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
-risk_group_labels = unique(incidence_log_tidy$risk_group)
 
 load(file = '1_inputs/severe_outcome_age_distribution_RAW_v2.Rdata' )
 load(file = '1_inputs/delta_multiplier.Rdata' )
@@ -35,7 +34,9 @@ stochastic_severe_outcomes <- function(
    risk_group_name = toggle_vax_scenario_risk_group,
    date_start = toggle_antiviral_start_date
 ){
-    
+  
+  risk_group_labels = unique(incidence_log_tidy$risk_group)  
+  
    ### PART ONE: sampling raw age distributions -> RR by age  #############################################
     sampled_value = mapply(rlnorm,1,severe_outcome_age_distribution_RAW_v2$lognorm_a, severe_outcome_age_distribution_RAW_v2$lognorm_b)
     workshop = cbind(severe_outcome_age_distribution_RAW_v2,sampled_value)
