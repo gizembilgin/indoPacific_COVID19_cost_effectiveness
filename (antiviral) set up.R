@@ -248,7 +248,8 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               likelihood_severe_outcome = RECORD_likelihood_severe_outcome,
                               incidence_log_tidy = RECORD_incidence_log_tidy,
                               exposed_log = RECORD_exposed_log,
-                              incidence_log = RECORD_incidence_log)
+                              incidence_log = RECORD_incidence_log,
+                              vaccination_history_FINAL = RECORD_vaccination_history_FINAL)
 
 
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",Sys.Date(),".Rdata",sep=''))
