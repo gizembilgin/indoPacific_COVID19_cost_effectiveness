@@ -324,7 +324,7 @@ for (increments_number in 1:num_time_steps){
            cumulative_incidence = cumsum(daily_cases),
            cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
   
-  if (debug == "on" | fitting == "on"){
+  if (fitting == "on"){
     if (fitting == "off" & increments_number == 1){
     } else{
       Reff <- Reff_time_step(parameters,next_state)
@@ -444,10 +444,9 @@ exposed_log = exposed_log_tidy %>% ungroup() %>% pivot_wider(
 #ggplot(exposed_log) + geom_line(aes(x=date,y=reinfection_ratio,color=as.factor(age_group)))
 
 
-if (debug == "on" | fitting == "on"){
+if ( fitting == "on"){
   colnames(rho_tracker_dataframe) = c('rho')
   rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe),by="days"))
-  if (debug == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+2,date_start+nrow(rho_tracker_dataframe),by="days"))}
   if (fitting == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe)+1,by="days"))}
   colnames(Reff_tracker) = c('Reff','date')
 }
