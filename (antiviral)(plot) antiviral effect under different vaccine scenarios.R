@@ -208,7 +208,7 @@ LIST_outcomes = list('severe_disease',
 ### Calculate # of antivirals per outcome averted
 workshop = RECORD_antiviral_model_simulations %>%
   mutate(doses_to_avert_outcome = antiviral_delivered/value) %>%
-  group_by(outcome,result,antiviral_type,antiviral_target,vax_scenario,vax_scenario_risk_group,VE_sensitivity_analysis) %>%
+  group_by(outcome,result,antiviral_type,antiviral_target,vax_scenario,vax_scenario_risk_group) %>%
   summarise(doses_to_avert_outcome = mean(doses_to_avert_outcome)) %>% 
   pivot_wider(
     id_cols = c(outcome,antiviral_target,vax_scenario,antiviral_type),
