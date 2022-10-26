@@ -1,4 +1,7 @@
-### This function allocates future doses by age_group and dose strategy
+### This function allocates booster doses by age group, risk group and dose
+### It has been designed for:
+### (1) sensitivity analysis S4.3 in the vaccine allocation paper - allocation of additional doses
+### (2) antiviral model - allocation of booster doses in sequential years regardless of how many doses they have previously had (all doses after the 3rd assumed roughly equal to VE(3rd dose))
 
 
 ###### Coding vaccine prioritisation strategies
@@ -14,7 +17,8 @@ booster_strategy <- function(
                          booster_delivery_includes_previously_boosted = 'Y',
                          booster_age_strategy,              # options: "oldest", "youngest","50_down","uniform"
                          booster_strategy_vaccine_type,     # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
-                         booster_strategy_vaccine_interval # (days) since primary schedule
+                         booster_strategy_vaccine_interval, # (days) since primary schedule
+                         booster_prioritised = 'N'
                 
 ){
   
@@ -435,9 +439,12 @@ booster_strategy <- function(
     #################################################
     ggplot(booster_delivery_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(FROM_vaccine_type)))
 
+  if (booster_prioritised == 'Y'){
+    return(booster_delivery_outline)
+  } else{
+    vaccination_history_MODF = bind_rows(vaccination_history_FINAL,booster_delivery_outline)
+    return(vaccination_history_MODF)
+  }
 
-  
-  vaccination_history_MODF = bind_rows(vaccination_history_FINAL,booster_delivery_outline)
-  return(vaccination_history_MODF)
 }
 #_______________________________________________________________________________
