@@ -1,13 +1,15 @@
 load(file = '1_inputs/antiviral_effectiveness.Rdata' )
+source(paste(getwd(),"/(antiviral)(function) stochastic severe outcome projections.R",sep=""))
 
 antiviral_model <- function(toggle_antiviral_type,
                             toggle_antiviral_target,
                             toggle_vax_scenario,
                             toggle_vax_scenario_risk_group,
-                            toggle_VE_sensitivity_analysis,
                             
                             RECORD_antiviral_setup,
                             
+                            toggle_number_of_runs = 100,
+                            toggle_stochastic_SO = "off",
                             toggle_antiviral_delivery_capacity = NA,
                             toggle_fixed_antiviral_coverage = NA
                             ){
@@ -24,12 +26,7 @@ antiviral_model <- function(toggle_antiviral_type,
     #require risk group name to exist to be able to deliver antivirals
     skip = 1
   }
-  if (toggle_VE_sensitivity_analysis == "on" & 
-      toggle_vax_scenario_risk_group != 'adults_with_comorbidities'){
-    # do not run as sensitivity analysis only for reduced VE in adults with comorbidities and older adults
-    skip = 1
-  }
-  
+
   if (skip == 1){
     return(NULL)
   } else{
@@ -40,40 +37,42 @@ antiviral_model <- function(toggle_antiviral_type,
     outcomes_without_antivirals = RECORD_antiviral_setup$outcomes_without_antivirals %>%
       filter(
         vax_scenario            == toggle_vax_scenario,
-        vax_scenario_risk_group == toggle_vax_scenario_risk_group,
-        VE_sensitivity_analysis == toggle_VE_sensitivity_analysis
+        vax_scenario_risk_group == toggle_vax_scenario_risk_group
       )
     likelihood_severe_outcome = RECORD_antiviral_setup$likelihood_severe_outcome %>%
       filter(
         vax_scenario            == toggle_vax_scenario,
-        vax_scenario_risk_group == toggle_vax_scenario_risk_group,
-        VE_sensitivity_analysis == toggle_VE_sensitivity_analysis
+        vax_scenario_risk_group == toggle_vax_scenario_risk_group
       ) %>%
       filter(date >= toggle_antiviral_start_date)
-    incidence_log_tidy = RECORD_antiviral_setup$incidence_log_tidy %>%
+    this_incidence_log_tidy = RECORD_antiviral_setup$incidence_log_tidy %>%
       filter(
         vax_scenario            == toggle_vax_scenario,
-        vax_scenario_risk_group == toggle_vax_scenario_risk_group,
-        VE_sensitivity_analysis == toggle_VE_sensitivity_analysis
+        vax_scenario_risk_group == toggle_vax_scenario_risk_group
+      )
+    this_incidence_log = RECORD_antiviral_setup$incidence_log %>%
+      filter(
+        vax_scenario            == toggle_vax_scenario,
+        vax_scenario_risk_group == toggle_vax_scenario_risk_group
+      )
+    this_exposed_log= RECORD_antiviral_setup$exposed_log %>%
+      filter(
+        vax_scenario            == toggle_vax_scenario,
+        vax_scenario_risk_group == toggle_vax_scenario_risk_group
+      )
+    vaccination_history_FINAL = RECORD_antiviral_setup$vaccination_history_FINAL %>%
+      filter(
+        vax_scenario            == toggle_vax_scenario,
+        vax_scenario_risk_group == toggle_vax_scenario_risk_group
       )
     prop_sympt = RECORD_antiviral_setup$prop_sympt
     
     #CHECK
     if (toggle_antiviral_target %in% c('adults_with_comorbidities', 'pregnant_women')) {
-      if (!toggle_antiviral_target %in% unique(incidence_log_tidy$risk_group)) {
+      if (!toggle_antiviral_target %in% unique(this_incidence_log_tidy$risk_group)) {
         stop('target for antivirals not included as a risk group in model run!')
       }
     }
-    
-    toggle_antiviral_effectiveness = antiviral_effectiveness %>%
-      filter(antiviral_type == toggle_antiviral_type)
-    sampled_value = mapply(rbeta,1,toggle_antiviral_effectiveness$beta_a, toggle_antiviral_effectiveness$beta_b)
-    toggle_antiviral_effectiveness = cbind(toggle_antiviral_effectiveness,sampled_value) 
-    toggle_antiviral_effectiveness = toggle_antiviral_effectiveness %>% 
-      select(antiviral_type,outcome,sampled_value) %>%
-      rename(AE = sampled_value)
-    YLL_addition = toggle_antiviral_effectiveness %>% filter(outcome == 'death') %>% mutate(outcome = 'YLL')
-    toggle_antiviral_effectiveness = rbind(toggle_antiviral_effectiveness,YLL_addition)
     #____________________________________________________________________________
     
     
@@ -84,7 +83,7 @@ antiviral_model <- function(toggle_antiviral_type,
     
     
     ### SELECT TARGET GROUP ######################################################
-    antiviral_target = incidence_log_tidy %>%
+    antiviral_target = this_incidence_log_tidy %>%
       filter(!age_group %in% c("0 to 4", "5 to 9", "10 to 17")) #ASSUME ADULTS ONLY
     
     if (toggle_antiviral_target %in% c('adults_with_comorbidities', 'pregnant_women')) {
@@ -104,8 +103,7 @@ antiviral_model <- function(toggle_antiviral_type,
     antiviral_target = antiviral_target %>% filter(incidence > 0,
                                                    date >= toggle_antiviral_start_date) #COMEBACK - plus or minus 5?
     
-    antiviral_delivery_length = as.numeric(max(incidence_log_tidy$date) - toggle_antiviral_start_date)
-    rm(incidence_log_tidy)
+    antiviral_delivery_length = as.numeric(max(this_incidence_log_tidy$date) - toggle_antiviral_start_date)
     #____________________________________________________________________________
     
     
@@ -147,6 +145,36 @@ antiviral_model <- function(toggle_antiviral_type,
     
     ###### BEGIN STOCHASTIC
     for (run_number in 1:toggle_number_of_runs) {
+      
+      if (toggle_stochastic_SO == "on"){
+        # Sample severe outcome likelihood
+        load_stochastic_SO = stochastic_severe_outcomes(
+          incidence_log = this_incidence_log,
+          incidence_log_tidy = this_incidence_log_tidy,
+          vaccination_history_FINAL = vaccination_history_FINAL,
+          exposed_log = this_exposed_log,
+          
+          setting = 'SLE',
+          num_time_steps = 365,
+          strain_now = 'omicron',
+          risk_group_name = toggle_vax_scenario_risk_group,
+          date_start = toggle_antiviral_start_date
+        )
+        outcomes_without_antivirals = load_stochastic_SO$outcomes_without_antivirals
+        likelihood_severe_outcome   = load_stochastic_SO$likelihood_severe_outcome
+      }
+      
+      # Sample antiviral effectiveness by type
+      toggle_antiviral_effectiveness = antiviral_effectiveness %>%
+        filter(antiviral_type == toggle_antiviral_type)
+      sampled_value = mapply(rbeta,1,toggle_antiviral_effectiveness$beta_a, toggle_antiviral_effectiveness$beta_b)
+      toggle_antiviral_effectiveness = cbind(toggle_antiviral_effectiveness,sampled_value) 
+      toggle_antiviral_effectiveness = toggle_antiviral_effectiveness %>% 
+        select(antiviral_type,outcome,sampled_value) %>%
+        rename(AE = sampled_value)
+      YLL_addition = toggle_antiviral_effectiveness %>% filter(outcome == 'death') %>% mutate(outcome = 'YLL')
+      toggle_antiviral_effectiveness = rbind(toggle_antiviral_effectiveness,YLL_addition)
+      
       
       if (pathway_to_care == 'realistic'){
         
@@ -359,8 +387,7 @@ antiviral_model <- function(toggle_antiviral_type,
         antiviral_type = toggle_antiviral_type,
         antiviral_target = toggle_antiviral_target,
         vax_scenario = toggle_vax_scenario,
-        vax_scenario_risk_group = toggle_vax_scenario_risk_group,
-        VE_sensitivity_analysis = toggle_VE_sensitivity_analysis
+        vax_scenario_risk_group = toggle_vax_scenario_risk_group
       )
     
 
