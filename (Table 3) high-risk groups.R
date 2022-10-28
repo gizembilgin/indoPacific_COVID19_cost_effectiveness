@@ -109,6 +109,16 @@ for (ticket in 1:length(queue)){
   vax_strategy_description    = commands$vax_strategy_description
   apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles
   vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET
+  
+  #make additional booster doses equal priority as previous schedule
+  if (length(booster_prioritised_strategies)>1){
+    booster_prioritised_strategies$risk_proportion = apply_risk_strategy_toggles$vax_risk_proportion
+  }
+  if('additional_doses' %in% names(sensitivity_analysis_toggles)){
+    if (sensitivity_analysis_toggles$additional_doses == 'booster_doses_2023'){
+      apply_risk_strategy_toggles$vax_risk_strategy = "N"
+    }
+  }
 
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
