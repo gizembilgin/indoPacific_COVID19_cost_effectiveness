@@ -13,7 +13,7 @@ apply_risk_strategy <- function(
   ### WARNINGS 
   if (!vax_risk_strategy %in% c('Y','N')){stop('Is the vax strategy on or off? Y/N')}
   if (vax_risk_proportion<0 | vax_risk_proportion>1){stop('vax_risk_proportion must be between 0-1 (0%-100%)')}
-  if (vax_risk_proportion == 0 & vax_risk_strategy == 'Y'){
+  if (vax_risk_proportion == 0 & vax_risk_strategy == 'Y' & !('additional_doses' %in% names(sensitivity_analysis_toggles))){
     warning("Giving 0% priority is not priority! I have overwritten vax_risk_strategy to EQ 'N'")
     vax_risk_strategy = "N"
   }
