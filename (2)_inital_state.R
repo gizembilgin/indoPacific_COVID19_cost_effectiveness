@@ -98,20 +98,34 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 
 
 ### sensitivity analysis - booster doses in 2023
-if (exists("booster_toggles") == FALSE){booster_toggles = "no"}
 if (length(booster_toggles)>1){
-  
-  vaccination_history_FINAL = 
-    booster_strategy( booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
-                      booster_dose_allocation     = booster_toggles$dose_allocation,  # num of doses avaliable
-                      booster_rollout_speed       = booster_toggles$rollout_speed,    # doses delivered per day
-                      booster_delivery_risk_group = booster_toggles$delivery_risk_group,
-                      booster_delivery_includes_previously_boosted = booster_toggles$delivery_includes_previously_boosted,
-                      booster_age_strategy        = booster_toggles$age_strategy,     # options: "oldest", "youngest","50_down","uniform"
-                      booster_strategy_vaccine_type = booster_toggles$vaccine_type,   # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
-                      booster_strategy_vaccine_interval = booster_toggles$vaccine_interval
-    )
-  
+  source(paste(getwd(),"/(function)_booster_dose_delivery.R",sep=""))
+
+  if (length(booster_prioritised_strategies)>1){
+    source(paste(getwd(),"/(function)_prioritised_booster_dose_delivery.R",sep=""))
+    
+    vaccination_history_FINAL =
+      booster_strategy_prioritised(
+        booster_risk_strategy = booster_prioritised_strategies$strategy,
+        booster_risk_proportion = booster_prioritised_strategies$risk_proportion
+      )
+    rm(booster_strategy_prioritised)
+    
+  } else{
+    vaccination_history_FINAL =
+      booster_strategy( booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
+                        booster_dose_allocation     = booster_toggles$dose_allocation,  # num of doses avaliable
+                        booster_rollout_speed       = booster_toggles$rollout_speed,    # doses delivered per day
+                        booster_delivery_risk_group = booster_toggles$delivery_risk_group,
+                        booster_delivery_includes_previously_boosted = booster_toggles$delivery_includes_previously_boosted,
+                        booster_age_strategy        = booster_toggles$age_strategy,     # options: "oldest", "youngest","50_down","uniform"
+                        booster_strategy_vaccine_type = booster_toggles$vaccine_type,   # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
+                        booster_strategy_vaccine_interval = booster_toggles$vaccine_interval
+      )
+    rm(booster_strategy)
+  }
+
+
   #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
   list_doses = list_doses[! list_doses %in% c(8)]

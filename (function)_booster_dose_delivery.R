@@ -18,7 +18,8 @@ booster_strategy <- function(
                          booster_age_strategy,              # options: "oldest", "youngest","50_down","uniform"
                          booster_strategy_vaccine_type,     # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
                          booster_strategy_vaccine_interval, # (days) since primary schedule
-                         booster_prioritised = 'N'
+                         booster_prioritised = 'N',
+                         vaccination_history_FINAL_local = vaccination_history_FINAL
                 
 ){
   
@@ -31,14 +32,15 @@ booster_strategy <- function(
     stop('pick a valid vaccine type, or check your spelling!')
   }
 
+
   
   ### IMPORTS
   booster_strategy_vaccine_interval = round(booster_strategy_vaccine_interval)
   if (booster_strategy_vaccine_interval < 60){warning('Are you sure that there is less than 2 months between primary and booster doses?')}
   prioritisation_csv <- read.csv("1_inputs/prioritisation_strategies.csv",header=TRUE)
   
-  booster_dose_number = 3
-  if (booster_strategy_vaccine_type == "Johnson & Johnson" ){booster_dose_number = 2}
+  if (booster_strategy_vaccine_type == "Johnson & Johnson" ){booster_dose_number = 2
+  } else{  booster_dose_number = 3}
   #_______________________________________________________________________________
   
   
@@ -47,8 +49,8 @@ booster_strategy <- function(
   ### create booster_speed_modifier
   
   booster_speed_modifier = data.frame()
-  if (booster_strategy_start_date <= max(vaccination_history_FINAL$date)){
-    booster_speed_modifier = vaccination_history_FINAL %>% 
+  if (booster_strategy_start_date <= max(vaccination_history_FINAL_local$date)){
+    booster_speed_modifier = vaccination_history_FINAL_local %>% 
       filter(date >= max(vaccination_history_TRUE$date) &
                date >= booster_strategy_start_date) %>%
       group_by(date) %>% 
@@ -58,10 +60,10 @@ booster_strategy <- function(
       select(date,doses_avaliable)
   }
   #additional dates to make up to two years
-  additional_dates = seq(booster_strategy_start_date, booster_strategy_start_date + 52*2, by = 'days')
+  additional_dates = seq(booster_strategy_start_date, booster_strategy_start_date + 52*7*2, by = 'days')
   additional_dates = additional_dates[! additional_dates %in% booster_speed_modifier$date]
   if (length(additional_dates) > 0 ){
-    additional_dates = as.data.frame(date = additional_dates)
+    additional_dates = data.frame(date = additional_dates)
     additional_dates = additional_dates %>% mutate(doses_avaliable = booster_rollout_speed)
     booster_speed_modifier = rbind(booster_speed_modifier,additional_dates)
   }
@@ -69,48 +71,100 @@ booster_strategy <- function(
     mutate(day = as.numeric(date - booster_strategy_start_date + 1),
            cumsum = cumsum(doses_avaliable))
   
-  check_elig = vaccination_history_FINAL %>%
-    mutate(primary_schedule_complete = case_when(
-      vaccine_type == "Johnson & Johnson" ~  'Y',
-      dose %in% c(2,3) ~ 'Y',
-      TRUE ~ 'N'),
-      boosted = case_when(
-        vaccine_type == "Johnson & Johnson" & dose == 2 ~ 'Y',
-        dose == 3 ~ 'Y',
-        TRUE ~ 'N'))  %>%
-    filter(risk_group %in% booster_delivery_risk_group &
-             # primary_schedule_complete == "Y" & #CAN CHANGE THIS TOGGLE #ASSUMPTION / COMEBACK - including those with only 1 primary dose
-             boosted == booster_delivery_includes_previously_boosted &
-             coverage_this_date > 0) %>%
-    mutate(date = date + booster_strategy_vaccine_interval) %>% 
-    ungroup() %>% group_by(date) %>% summarise(total_doses = sum(doses_delivered_this_date),.groups = "keep") %>%
-    ungroup() %>% mutate(individuals_eligible = cumsum(total_doses)) %>%
+  
+  ###<intermission check_elig>###
+  check_elig = vaccination_history_FINAL_local  %>%
+    filter(risk_group %in% booster_delivery_risk_group)  %>%
+    mutate(date = date + booster_strategy_vaccine_interval) 
+  if (booster_delivery_includes_previously_boosted == "N"){
+    check_elig = check_elig %>%
+      mutate(primary_schedule_complete = case_when( #ASSUMPTION - this flag isn't used, so assuming boosted whether or not completed primary schedule
+        vaccine_type == "Johnson & Johnson" ~  'Y',
+        dose %in% c(2,3) ~ 'Y',
+        TRUE ~ 'N'), 
+        boosted = case_when(
+          vaccine_type == "Johnson & Johnson" & dose == 2 ~ 'Y',
+          dose == 3 ~ 'Y',
+          TRUE ~ 'N')) %>% 
+      filter(boosted == booster_delivery_includes_previously_boosted)
+  }
+  check_elig = check_elig %>% 
+    ungroup() %>% group_by(date,dose) %>% summarise(total_doses = sum(doses_delivered_this_date),.groups = "keep") %>%
+    ungroup() %>% mutate(eligible_individuals = cumsum(total_doses)) %>%
     select(-total_doses)
   
+  #remove double counted tidy
+  for (d in 2:num_vax_doses){
+    remove = check_elig %>% 
+      ungroup() %>%
+      filter(dose == d) %>%
+      rename(complete_vax = eligible_individuals) %>%
+      select(date,complete_vax)
+    
+    if (nrow(remove)>0){
+      check_elig = check_elig %>% 
+        left_join(remove, by = c('date')) %>%
+        mutate(eligible_individuals = case_when(
+          dose == (d-1) & complete_vax > eligible_individuals ~ 0, #this shouldn't be triggered
+          dose == (d-1) ~ eligible_individuals - complete_vax,
+          TRUE ~ eligible_individuals,
+        )) %>%
+        select(-complete_vax)
+    }
+  }
+  if (nrow(check_elig[check_elig$dose == 8,])>0){
+    remove = check_elig  %>%
+      ungroup() %>%
+      filter(dose == 8) %>%
+      select(-vaccine_type,-dose) %>%
+      rename(boosted_vax = eligible_individuals,
+             dose = FROM_dose, 
+             vaccine_type = FROM_vaccine_type)
+    
+    if (nrow(remove)>0){
+      check_elig = check_elig %>% 
+        left_join(remove, by = c('age_group','vaccine_type','risk_group','dose')) %>%
+        mutate(eligible_individuals = case_when(
+          is.na(boosted_vax) ~ eligible_individuals, #this shouldn't be triggered
+          TRUE ~ eligible_individuals - boosted_vax,
+        )) %>%
+        select(-boosted_vax)
+    }
+  }
+  check_elig = check_elig %>% 
+    ungroup() %>% group_by(date) %>% summarise(eligible_individuals = sum(eligible_individuals))
+
   booster_speed_modifier = booster_speed_modifier %>%
     left_join(check_elig, by = "date")
   
   #make sure that individuals are eligible when boosted
   check_less_than = booster_speed_modifier  %>%
-    filter(cumsum > individuals_eligible) 
+    filter(cumsum > eligible_individuals) 
     
   while (nrow(check_less_than) > 0) {
     booster_speed_modifier = booster_speed_modifier %>%
-      mutate(difference = cumsum - individuals_eligible)
+      mutate(difference = cumsum - eligible_individuals)
     this_date = check_less_than$date[1]
     booster_speed_modifier$doses_avaliable[booster_speed_modifier$date == this_date] =
       booster_speed_modifier$doses_avaliable[booster_speed_modifier$date == this_date] - booster_speed_modifier$difference[booster_speed_modifier$date == this_date]
     booster_speed_modifier = booster_speed_modifier %>%
       mutate(cumsum = cumsum(doses_avaliable))
-    check_less_than = booster_speed_modifier %>% filter(cumsum > individuals_eligible)
+    check_less_than = booster_speed_modifier %>% filter(cumsum > eligible_individuals)
   }
   ###
   
   
   #####(1/4) Calculate the eligible population ###################################
-  eligible_pop =  vaccination_history_FINAL %>% 
-    group_by(dose,vaccine_type,risk_group,age_group,FROM_vaccine_type,FROM_dose) %>%
-    summarise(eligible_individuals = sum(doses_delivered_this_date))
+  if (8 %in% unique(vaccination_history_FINAL_local$dose)){
+    eligible_pop =  vaccination_history_FINAL_local %>% 
+      group_by(dose,vaccine_type,risk_group,age_group,FROM_vaccine_type,FROM_dose) %>%
+      summarise(eligible_individuals = sum(doses_delivered_this_date) , .groups = 'keep')
+  } else{
+    eligible_pop =  vaccination_history_FINAL_local %>% 
+      group_by(dose,vaccine_type,risk_group,age_group) %>%
+      summarise(eligible_individuals = sum(doses_delivered_this_date), .groups = 'keep')
+  }
+
  
   
   #remove double counted tidy
@@ -171,7 +225,7 @@ booster_strategy <- function(
   #collapse dose == 8
   eligible_pop = eligible_pop %>%
     group_by(dose,vaccine_type,risk_group,age_group) %>%
-    summarise(eligible_individuals = sum(eligible_individuals))
+    summarise(eligible_individuals = sum(eligible_individuals), .groups = 'keep')
   
   if (nrow(eligible_pop) == 0){
     warning('no one is eligible for this additional booster')
@@ -254,7 +308,7 @@ booster_strategy <- function(
     daily_per_dose = booster_rollout_speed
     
     #modify if available doses restricted
-    if (nrow(booster_speed_modifier)>0){
+    if (nrow(booster_speed_modifier[booster_speed_modifier$doses_avaliable != booster_rollout_speed,])>0){
       booster_speed_modifier$day = booster_speed_modifier$date - booster_strategy_start_date + 1
       
       exception_list = unique(booster_speed_modifier$day)
@@ -277,7 +331,7 @@ booster_strategy <- function(
                                          dose = unique(eligible_pop$dose), 
                                          vaccine_type = unique(eligible_pop$vaccine_type),
                                          age_group = age_group_labels,
-                                         risk_group = risk_group_labels,
+                                         risk_group = booster_delivery_risk_group,
                                          doses_delivered = c(0))
     
     for (day in 1:timeframe){
@@ -330,24 +384,26 @@ booster_strategy <- function(
                   workshop_type = unique(VA$vaccine_type)[t]
                   workshop_risk_group = unique(VA$risk_group)[r]
                   
-                  workshop_prop = VA_pt$doses_left[VA_pt$age_group == workshop_age & VA_pt$dose == d & VA_pt$vaccine_type == workshop_type & VA_pt$risk_group == workshop_risk_group]/
-                    sum(VA_pt$doses_left[VA_pt$priority == priority_num])
-                  workshop_calc = workshop_doses * workshop_prop + leftover
-                  
-                  if (workshop_calc > VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group]){
-                    leftover = abs(workshop_calc - VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group])
-                    workshop_calc = VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group]
+                  if (nrow(VA_pt[VA_pt$age_group == workshop_age & VA_pt$dose == d & VA_pt$vaccine_type == workshop_type & VA_pt$risk_group == workshop_risk_group,])>0){
+                    workshop_prop = VA_pt$doses_left[VA_pt$age_group == workshop_age & VA_pt$dose == d & VA_pt$vaccine_type == workshop_type & VA_pt$risk_group == workshop_risk_group]/
+                      sum(VA_pt$doses_left[VA_pt$priority == priority_num])
+                    workshop_calc = workshop_doses * workshop_prop + leftover
                     
-                  } else{
-                    leftover = 0
+                    if (workshop_calc > VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group]){
+                      leftover = abs(workshop_calc - VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group])
+                      workshop_calc = VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group]
+                      
+                    } else{
+                      leftover = 0
+                    }
+                    booster_delivery_outline$doses_delivered[booster_delivery_outline$day == day &
+                                                               booster_delivery_outline$dose == d &
+                                                               booster_delivery_outline$vaccine_type == workshop_type &
+                                                               booster_delivery_outline$age_group == workshop_age &
+                                                               booster_delivery_outline$risk_group == workshop_risk_group] = workshop_calc
+                    VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group] = 
+                      VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group] - workshop_calc
                   }
-                  booster_delivery_outline$doses_delivered[booster_delivery_outline$day == day &
-                                                             booster_delivery_outline$dose == d &
-                                                             booster_delivery_outline$vaccine_type == workshop_type &
-                                                             booster_delivery_outline$age_group == workshop_age &
-                                                             booster_delivery_outline$risk_group == workshop_risk_group] = workshop_calc
-                  VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group] = 
-                    VA$doses_left[VA$age_group == workshop_age & VA$dose == d & VA$vaccine_type == workshop_type & VA$risk_group == workshop_risk_group] - workshop_calc
                 }
               }
             }
@@ -396,53 +452,13 @@ booster_strategy <- function(
       } 
     }
     
-    #Checking poached doses are not before eligibility
-    check_elig = vaccination_history_FINAL %>%
-      mutate(primary_schedule_complete = case_when(
-        vaccine_type == "Johnson & Johnson" ~  'Y',
-        dose %in% c(2,3) ~ 'Y',
-        TRUE ~ 'N'),
-        boosted = case_when(
-          vaccine_type == "Johnson & Johnson" & dose == 2 ~ 'Y',
-          dose == 3 ~ 'Y',
-          TRUE ~ 'N'))  %>%
-      filter(risk_group %in% booster_delivery_risk_group &
-               # primary_schedule_complete == "Y" & #CAN CHANGE THIS TOGGLE
-               boosted == "N" &
-               coverage_this_date > 0) %>%
-      mutate(date = date + booster_strategy_vaccine_interval) %>% 
-      ungroup() %>% group_by(date) %>% summarise(total_doses = sum(doses_delivered_this_date),.groups = "keep") %>%
-      ungroup() %>% mutate(individuals_eligible = cumsum(total_doses)) %>%
-      select(-total_doses)
-    
-    hypoth_delivery = booster_delivery_outline %>%
-      ungroup() %>% group_by(date) %>% summarise(total_doses = sum(doses_delivered_this_date),.groups = "keep") %>%
-      ungroup() %>% mutate(cum_doses_delivered = cumsum(total_doses)) %>%
-      select(-total_doses)
-    
-    check_less_than = check_elig %>% 
-      left_join(hypoth_delivery, by = "date") %>%
-      filter(round(cum_doses_delivered) > round(individuals_eligible))
-    
-    if (nrow(check_less_than) > 0 ){
-      ggplot() +
-        geom_line(data = check_elig, aes(x=date,y=individuals_eligible)) +
-        geom_point(data = hypoth_delivery, aes(x=date,y=cum_doses_delivered)) +
-        xlab('') + ylab('number of individuals eligible for a booster dose') +
-        theme_bw() +
-        theme(panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(), 
-              panel.border = element_blank(),
-              axis.line = element_line(color = 'black'))
-      stop('more booster doses delivered than individuals eligible!')
-    }
     #################################################
     ggplot(booster_delivery_outline) + geom_point(aes(x=date,y=doses_delivered_this_date,color=as.factor(age_group),shape=as.factor(FROM_vaccine_type)))
 
   if (booster_prioritised == 'Y'){
     return(booster_delivery_outline)
   } else{
-    vaccination_history_MODF = bind_rows(vaccination_history_FINAL,booster_delivery_outline)
+    vaccination_history_MODF = bind_rows(vaccination_history_FINAL_local,booster_delivery_outline)
     return(vaccination_history_MODF)
   }
 

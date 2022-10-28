@@ -102,7 +102,6 @@ if (setting == "SLE"){
 } else { stop ('pick a valid setting!')}
 
 
-
 #________________________________________________________________________________________________________________
 
 
@@ -118,6 +117,8 @@ booster_toggles = list(start_date = as.Date('2023-01-01'),
                        age_strategy = vax_strategy_toggles_CURRENT_TARGET$vax_age_strategy,
                        vaccine_type = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,
                        vaccine_interval = 90)
+booster_prioritised_strategies = list(strategy = 'Y',
+                                      risk_proportion = 99)
 
 source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
 #________________________________________________________________________________________________________________
