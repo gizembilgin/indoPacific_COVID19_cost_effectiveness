@@ -35,7 +35,7 @@ booster_strategy_prioritised <- function(
   if (risk_group_accessibility == FALSE){
     speed_risk_group_rollout =  booster_toggles_import$rollout_speed*booster_risk_proportion
   } else if (risk_group_accessibility == TRUE){
-    speed_risk_group_rollout = round(sum(pop_high_risk$pop)/(365/12*4.2))*vax_doses_risk #median first antenatal care visit
+    speed_risk_group_rollout = round(sum(pop_high_risk$pop)/(365/12*4.2)) #median first antenatal care visit
   }
 
   at_risk_delivery_outline = booster_strategy(booster_strategy_start_date = booster_toggles_import$start_date,       # start of hypothetical vaccination program

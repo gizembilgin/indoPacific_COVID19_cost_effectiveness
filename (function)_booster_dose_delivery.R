@@ -56,7 +56,7 @@ booster_strategy <- function(
       group_by(date) %>% 
       summarise(doses_delivered_this_date = sum(doses_delivered_this_date),.groups = "keep")  %>% 
       ungroup() %>% 
-      mutate(doses_avaliable = round(booster_rollout_speed - doses_delivered_this_date,digits = 4)) %>%
+      mutate(doses_avaliable = booster_rollout_speed - doses_delivered_this_date) %>%
       select(date,doses_avaliable)
   }
   #additional dates to make up to two years
@@ -205,7 +205,7 @@ booster_strategy <- function(
         select(-boosted_vax)
     }
   }
-  eligible_pop$eligible_individuals = round(eligible_pop$eligible_individuals,digits=5)
+  
   eligible_pop = eligible_pop %>%
     mutate(primary_schedule_complete = case_when(
       vaccine_type == "Johnson & Johnson" ~  'Y',
