@@ -45,18 +45,18 @@ source(paste(getwd(),"/(antiviral)(function) antiviral model.R",sep=""))
 
 #detectCores() = 8
 
-CLUSTER <- parallel::makeCluster(4) # create cluster
+CLUSTER <- parallel::makeCluster(2) # create cluster
 doParallel::registerDoParallel(CLUSTER) # activate cluster
 
 #nesting foreach loops as per https://cran.r-project.org/web/packages/foreach/vignettes/nested.html
 system.time({
   RECORD_antiviral_model_simulations <- foreach::foreach(
-    toggle_antiviral_type = c('paxlovid', #baseline
-                              'molunipiravir'),
+    toggle_antiviral_type = c('paxlovid'), #baseline
+                              #'molunipiravir'),
     .packages = c('tidyverse'),
     .combine = rbind,
     .inorder = FALSE
-  ) %:% 
+  )  %:%
     foreach(
       toggle_antiviral_target = c(
         'adults_with_comorbidities', #baseline
@@ -76,10 +76,10 @@ system.time({
       ),
       .combine = rbind,
       .inorder = FALSE
-    #linear!
-    # ) %:%
+    #  )  %:%
+    # #linear!
     # foreach(
-    #   toggle_fixed_antiviral_coverage = seq(0.05,1,by=0.05),
+    #   toggle_fixed_antiviral_coverage = seq(0.1,1,by=0.1),
     #   .combine = rbind,
     #   .inorder = FALSE
     ) %dopar% {
@@ -87,7 +87,8 @@ system.time({
       if (toggle_antiviral_target == 'pregnant_women'){toggle_vax_scenario_risk_group = 'pregnant_women'
       } else {                                         toggle_vax_scenario_risk_group = 'adults_with_comorbidities'}
       
-      antiviral_model(toggle_antiviral_type          = toggle_antiviral_type,
+      antiviral_model(toggle_antiviral_start_date = as.Date('2023-01-01'),
+                      toggle_antiviral_type          = toggle_antiviral_type,
                       toggle_antiviral_target        = toggle_antiviral_target,
                       toggle_vax_scenario            = toggle_vax_scenario,
                       toggle_vax_scenario_risk_group = toggle_vax_scenario_risk_group,
@@ -96,7 +97,8 @@ system.time({
                       
                       toggle_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
                       
-                      toggle_number_of_runs = 5
+                      toggle_number_of_runs = 100,
+                      toggle_stochastic_SO = "off"
       )
       
     }
@@ -108,11 +110,9 @@ parallel::stopCluster(CLUSTER)
 
 
 ### SAVE ####################################################################
-save.image(file = paste(rootpath,"x_results/antiviralAccessToCare_fullImage_",Sys.Date(),".Rdata",sep=''))
+#save.image(file = paste(rootpath,"x_results/antiviralAccessToCare_fullImage_",Sys.Date(),".Rdata",sep=''))
 save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/antiviralAccessToCare_",Sys.Date(),".Rdata",sep=''))
 
-time.end.AntiviralSimulations=proc.time()[[3]]
-(time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # 20 minutes for 5 runs each
 #____________________________________________________________________________
 
 
@@ -210,33 +210,25 @@ LIST_outcomes = list('severe_disease',
 
 
 ### Calculate # of antivirals per outcome averted
-workshop = RECORD_antiviral_model_simulations %>%
-  mutate(doses_to_avert_outcome = antiviral_delivered/value) %>%
-  group_by(outcome,result,antiviral_type,antiviral_target,vax_scenario,vax_scenario_risk_group,VE_sensitivity_analysis) %>%
-  summarise(doses_to_avert_outcome = mean(doses_to_avert_outcome)) %>% 
+workshop = RECORD_antiviral_model_simulations %>% 
+  filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+  filter(vax_scenario_risk_group == 'adults_with_comorbidities') %>%
+  filter(antiviral_target != 'unvaccinated_adults_AND_adults_with_comorbidities') %>% #include this group when considering possible impact on pop-level
   pivot_wider(
     id_cols = c(outcome,antiviral_target,vax_scenario,antiviral_type),
     names_from = result,
-    values_from = doses_to_avert_outcome)
+    values_from = value)
 
-workshop = workshop %>% 
-  filter(antiviral_type == 'paxlovid' & antiviral_target != 'pregnant_women') %>%
-  ungroup() %>%
-  select(outcome,vax_scenario,antiviral_target,average, LCI, UCI)
-
-ggplot(data = workshop) +
-  geom_pointrange(aes(x=average,y=outcome,color=as.factor(antiviral_target),xmin=LCI,xmax=UCI))  + 
-  labs(color = 'antiviral eligible group') +
-  xlab('antiviral doses per outcome averted')
-
+options(warn = -1)
 plot_list = list()
 for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=average,y=vax_scenario,color=as.factor(antiviral_target),xmin=LCI,xmax=UCI))  + 
+    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(antiviral_target),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
     labs(title = paste(this_outcome), color = 'antiviral eligible group') +
-    ylab('')+
+    ylab('') +
+    xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
     xlab('antiviral doses per outcome averted')
   
 }
@@ -245,7 +237,7 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           legend="bottom",
           ncol = 1,
           nrow = 4) 
-
+options(warn = 0)
 
 ### DEBUG
 # antiviral_model(toggle_antiviral_type          = 'paxlovid',
@@ -255,8 +247,12 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
 # 
 #                 RECORD_antiviral_setup          = RECORD_antiviral_setup,
 # 
-#                 toggle_fixed_antiviral_coverage = 0.05
+#                 toggle_fixed_antiviral_coverage = 0.05,
+#                 toggle_number_of_runs = 1,
+#                 toggle_stochastic_SO = "on"
 # )
+
+
 # 
 # likelihood_severe_outcome %>% group_by(outcome,dose) %>% summarise(percentage = mean(percentage,na.rm=TRUE))
 # # 1 death              0   0.00202 
@@ -274,3 +270,7 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
 # 
 # workshop = likelihood_severe_outcome %>% filter(is.na(percentage) == TRUE)
 # unique(workshop$date) # "2022-10-06"
+
+
+time.end.AntiviralSimulations=proc.time()[[3]]
+(time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # 2.4 minutes
