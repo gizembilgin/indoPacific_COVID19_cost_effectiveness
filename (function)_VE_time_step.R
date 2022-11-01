@@ -87,11 +87,16 @@ VE_time_step <- function(strain_now,date_now,outcome){
   if(nrow(workshop[round(workshop$VE,digits=2)>1,])){stop('VE > 1!')}
   
   #<interim> add none covered vaccines
-  for (i in 1:length(unique(vaccination_history_FINAL$age_group))){
-    for (t in 1:length(unique(vaccination_history_FINAL$vaccine_type))){
-      for (d in 1:length(unique(vaccination_history_FINAL$dose))){
-        for (r in 1:length(unique(vaccination_history_FINAL$risk_group))){
-          this_vax = unique(vaccination_history_FINAL$vaccine_type)[t]
+  if (exists("vax_type_list") == FALSE){ vax_type_list =unique(vaccination_history_FINAL$vaccine_type)}
+  if (exists("age_group_labels") == FALSE){ age_group_labels =unique(vaccination_history_FINAL$age_group)}
+  if (exists("D") == FALSE){ D = length(unique(vaccination_history_FINAL$dose[vaccination_history_FINAL$dose != 8]))}
+  if (exists("risk_group_labels") == FALSE){ risk_group_labels =unique(vaccination_history_FINAL$risk_group)}
+  
+  for (t in 1:length(vax_type_list)){
+    for (i in 1:length(age_group_labels)){
+      for (d in 1:D){
+        for (r in 1:length(risk_group_labels)){
+          this_vax = vax_type_list[t]
           if (!( this_vax %in% unique(workshop$vaccine_type[workshop$risk_group == risk_group_labels[r] & workshop$dose == d & workshop$age_group == age_group_labels[i]]))){
             workshop2 = crossing(risk_group = risk_group_labels[r],
                                  dose = d,
@@ -104,7 +109,8 @@ VE_time_step <- function(strain_now,date_now,outcome){
       }
     }
   }
-
+  
+  
   workshop[is.na(workshop)] <-0 
   
   VE_tidy = workshop
