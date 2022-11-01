@@ -3,7 +3,8 @@
 
 # VE_loop set to 0 when no sensitivity analysis of reduced VE in older adults or adults with comorbidities is conducted
 if (exists("VE_loop") == FALSE){ VE_loop = 0} 
-if (VE_loop == 0 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles)){VE_loop = 1}
+if (exists("antiviral_setup") == FALSE){ antiviral_setup = "off"} 
+if (VE_loop == 0 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles) & antiviral_setup == "off"){VE_loop = 1}
 if (VE_loop == 0){
   if (length(unique(VE_waning_distribution$outcome)) == 1){ #'any_infection'
     save_VE_waning_distribution = VE_waning_distribution

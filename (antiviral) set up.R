@@ -18,7 +18,7 @@ if (abs(fitted_max_date - Sys.Date())>7){stop('please refit!')}
 #initialise length of model run and circulating strain
 strain_inital = strain_now = 'omicron' 
 outbreak_timing = "off" #roll-out during steady state
-model_weeks = 52
+model_weeks = as.numeric(ceiling((as.Date('2024-01-01') - fitted_max_date)/7)) #ensure model runs for entire 2023
 
 #turn on waning of all immunity
 waning_toggle_acqusition = TRUE
@@ -26,11 +26,12 @@ waning_toggle_severe_outcome = TRUE
 waning_toggle_rho_acqusition = TRUE
 
 #turn off risk groups to start with
+antiviral_setup = "on"
 risk_group_toggle = "off"
 vax_risk_strategy_toggle = "off"
 risk_group_lower_cov_ratio = NA
 risk_group_prioritisation_to_date = NA
-sensitivity_analysis_toggles = list()
+sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)
 
 #set up setting
 vax_strategy_toggle = "on"
@@ -47,6 +48,14 @@ vax_strategy_toggles_CURRENT_TARGET =
        vax_strategy_vaccine_interval  = c(90) ,                           #  (days) interval between doses, you must specify multiple intervals if multiple doses e.g. c(21,90)
        vax_strategy_max_expected_cov  = 0.88                              # value between 0-1 of age group willing to be vaccinated
   )
+generic_booster_toggles = list(start_date = as.Date('2023-01-01'),
+                       dose_allocation = 9999999999,
+                       rollout_speed = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_roll_out_speed,
+                       delivery_risk_group = c('general_public'),
+                       delivery_includes_previously_boosted = 'N',
+                       age_strategy = vax_strategy_toggles_CURRENT_TARGET$vax_age_strategy,
+                       vaccine_type = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_vaccine_type,
+                       vaccine_interval = 90)
 
 #initialise data frames
 RECORD_outcomes_without_antivirals = data.frame()
@@ -78,7 +87,8 @@ queue[[1]] = list(vax_strategy_description = 'all willing adults vaccinated with
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
                   apply_risk_strategy_toggles = primary_only_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = "no")
 
 #(B/C) Pregnant women
 queue[[2]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
@@ -86,70 +96,83 @@ queue[[2]] = list(vax_strategy_description = 'all willing adults vaccinated with
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
                   apply_risk_strategy_toggles = primary_only_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET) 
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = "no") 
 
 #(C/C) No risk groups
 queue[[3]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
                   risk_group_name = 'none',
                   risk_group_toggle = "off",
                   vax_risk_strategy_toggle = "off",
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET) 
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = "no") 
 #______________________________________________________________________________________________________________
 
 
 
 ### VACCINATION SCENARIO = PRIMARY + BOOSTER HIGH-RISK
-booster_highRisk_toggles = primary_only_toggles
-booster_highRisk_toggles$vax_doses_risk = booster_highRisk_toggles$vax_doses_risk + 1
+#booster_highRisk_toggles = primary_only_toggles
+#booster_highRisk_toggles$vax_doses_risk = booster_highRisk_toggles$vax_doses_risk + 1
 
 #(A/B) Adults with comorbidities
+generic_booster_toggles$delivery_risk_group = c('adults_with_comorbidities')
 queue[[4]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
                   risk_group_name = 'adults_with_comorbidities',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
-                  apply_risk_strategy_toggles = booster_highRisk_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET) 
+                  apply_risk_strategy_toggles = primary_only_toggles,
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = generic_booster_toggles) 
 
 #(B/B) Pregnant women
+generic_booster_toggles$delivery_risk_group = c('pregnant_women')
 queue[[5]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
                   risk_group_name = 'pregnant_women',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
-                  apply_risk_strategy_toggles = booster_highRisk_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET) 
+                  apply_risk_strategy_toggles = primary_only_toggles,
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = generic_booster_toggles) 
 #______________________________________________________________________________________________________________
 
 
 
 ### VACCINATION SCENARIO = PRIMARY + BOOSTER ALL
-booster_all_toggles = booster_highRisk_toggles
-booster_all_toggles$vax_doses_general = booster_highRisk_toggles$vax_doses_risk
+# booster_all_toggles = booster_highRisk_toggles
+# booster_all_toggles$vax_doses_general = booster_highRisk_toggles$vax_doses_risk
 
 #(A/C) Adults with comorbidities
+generic_booster_toggles$delivery_risk_group = c('general_public','adults_with_comorbidities')
 queue[[6]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
                   risk_group_name = 'adults_with_comorbidities',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
-                  apply_risk_strategy_toggles = booster_all_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET)
+                  apply_risk_strategy_toggles = primary_only_toggles,
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = generic_booster_toggles)
 
 #(B/C) Pregnant women
+generic_booster_toggles$delivery_risk_group = c('general_public','pregnant_women')
 queue[[7]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
                   risk_group_name = 'pregnant_women',
                   risk_group_toggle = "on",
                   vax_risk_strategy_toggle = "on",
-                  apply_risk_strategy_toggles = booster_all_toggles,
-                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET) 
+                  apply_risk_strategy_toggles = primary_only_toggles,
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = generic_booster_toggles) 
 
 #(C/C) No risk groups
-this_vax_strategy = vax_strategy_toggles_CURRENT_TARGET
-this_vax_strategy$vax_dose_strategy = this_vax_strategy$vax_dose_strategy + 1
+#this_vax_strategy = vax_strategy_toggles_CURRENT_TARGET
+#this_vax_strategy$vax_dose_strategy = this_vax_strategy$vax_dose_strategy + 1
+
+generic_booster_toggles$delivery_risk_group = c('general_public')
 
 queue[[8]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
                   risk_group_name = 'none',
                   risk_group_toggle = "off",
                   vax_risk_strategy_toggle = "off",
-                  vax_strategy_toggles = this_vax_strategy) 
+                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
+                  booster_toggles = generic_booster_toggles) 
 #______________________________________________________________________________________________________________
 
 
@@ -163,15 +186,12 @@ for (ticket in 1:length(queue)){
   
   vax_strategy_description = commands$vax_strategy_description
   vax_strategy_toggles = commands$vax_strategy_toggles
-  
   risk_group_name = commands$risk_group_name
   risk_group_toggle = commands$risk_group_toggle
   vax_risk_strategy_toggle = commands$vax_risk_strategy_toggle
-  
+  booster_toggles = commands$booster_toggles
   if ('apply_risk_strategy_toggles' %in% names(commands)){apply_risk_strategy_toggles = commands$apply_risk_strategy_toggles}
-  if ('sensitivity_analysis_toggles' %in% names(commands)){sensitivity_analysis_toggles = commands$sensitivity_analysis_toggles
-  } else{ sensitivity_analysis_toggles = list()}
-  
+
   if (risk_group_name == "pregnant_women"){
     RR_estimate  = RR_default =  2.4
   } else if (risk_group_name == "adults_with_comorbidities"){
@@ -190,8 +210,31 @@ for (ticket in 1:length(queue)){
   #COMEBACK - could make probab symptomatic or probab severe outcomes stochastic
   
   outcomes_without_antivirals = severe_outcome_log_tidy  %>%
+    filter(format(date,format = "%Y") == 2023) %>%
     group_by(outcome) %>%
     summarise(overall = sum(proj))
+  
+  #adding some extra detail
+  append_high_risk = severe_outcome_log_tidy  %>%
+    filter(format(date,format = "%Y") == 2023) %>%
+    filter(risk_group == risk_group_name) %>%
+    group_by(outcome) %>%
+    summarise(high_risk = sum(proj))
+  append_booster_doses = vaccination_history_FINAL %>%
+    ungroup() %>%
+    filter(dose == 8) %>%
+    summarise(overall = sum(doses_delivered_this_date)) %>%
+    mutate(outcome = 'booster_doses_delivered')
+  append_booster_doses_risk = vaccination_history_FINAL %>%
+    ungroup() %>%
+    filter(risk_group == risk_group_name & dose == 8) %>%
+    summarise(high_risk = sum(doses_delivered_this_date)) %>%
+    mutate(outcome = 'booster_doses_delivered')
+  
+  outcomes_without_antivirals = rbind(outcomes_without_antivirals,append_booster_doses)
+  append_risk = rbind(append_high_risk,append_booster_doses_risk)
+  outcomes_without_antivirals = outcomes_without_antivirals %>% left_join(append_risk, by = 'outcome')
+  
   
   #ASSUMPTION: only symptomatic cases lead to severe outcomes
   prop_sympt = param_age %>% 
@@ -199,6 +242,7 @@ for (ticket in 1:length(queue)){
     filter(param == 'prop_sympt') %>%
     select(-param)
   likelihood_severe_outcome = severe_outcome_this_run %>%
+    filter(date >= fitted_max_date) %>%
     left_join(reinfection_protection, by = c("date", "age_group")) %>%
     mutate(percentage = percentage*(1-protection)) %>%
     select(-outcome_long,-protection) %>%
@@ -214,6 +258,7 @@ for (ticket in 1:length(queue)){
     mutate(vax_scenario = vax_strategy_description,
            vax_scenario_risk_group = risk_group_name)
   incidence_log_tidy = incidence_log_tidy %>%
+    filter(date >= fitted_max_date) %>%
     mutate(vax_scenario = vax_strategy_description,
            vax_scenario_risk_group = risk_group_name)
   exposed_log = exposed_log %>%
