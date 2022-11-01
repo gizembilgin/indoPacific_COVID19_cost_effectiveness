@@ -99,7 +99,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 
 ### sensitivity analysis - booster doses in 2023
 if (exists("booster_toggles") == FALSE){booster_toggles = "no"}
-if (exists("booster_prioritised_strategies") == FALSE){booster_toggles = "no"}
+if (exists("booster_prioritised_strategies") == FALSE){booster_prioritised_strategies = "no"}
 if (length(booster_toggles)>1){
   source(paste(getwd(),"/(function)_booster_dose_delivery.R",sep=""))
 
