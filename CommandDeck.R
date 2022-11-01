@@ -206,7 +206,7 @@ for (run_number in 1:complete_model_runs){
   source(paste(getwd(),"/(4)_time_step.R",sep=""))
   source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) # COMEBACK - should this just save its results somewhere?
   incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
-  source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
+  source(paste(getwd(),"/(6)_severe_outcome_proj.R",sep=""))
 }
 
 if (complete_model_runs>1){
