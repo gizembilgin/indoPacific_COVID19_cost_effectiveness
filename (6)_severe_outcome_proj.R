@@ -21,7 +21,7 @@ if (as.Date('1900-01-01') %in% seed_date){
 
 ##### infection-derived immunity against severe outcomes
 rho_SO_est = unique(rho_dn$protection[rho_dn$outcome == 'severe_outcome'])
-if (length(rho_SO_est)>1){stop('rho against severe outcome not constant as currently assumed, see (function)_severe_outcome_proj')}
+if (length(rho_SO_est)>1){stop('rho against severe outcome not constant as currently assumed, see (6)_severe_outcome_proj')}
 
 reinfection_protection = exposed_log %>%
   mutate(protection = reinfection_ratio * rho_SO_est) %>%
