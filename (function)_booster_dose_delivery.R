@@ -436,7 +436,7 @@ booster_strategy <- function(
                vaccine_type %in% c("AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac") ~ 'viral'),
              coverage_this_date = NA #shouldn't be used anyway
       ) %>% 
-      select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,FROM_dose,FROM_vaccine_type)
+      select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,risk_group,age_group,FROM_dose,FROM_vaccine_type)
     
     #CHECK #########################################
     #Checking all doses delivered
