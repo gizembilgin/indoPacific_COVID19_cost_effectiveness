@@ -87,7 +87,8 @@ system.time({
       .inorder = FALSE
     ) %dopar% {
       
-      antiviral_model(toggle_antiviral_type = toggle_antiviral_type,
+      antiviral_model(toggle_antiviral_start_date = as.Date('2023-01-01'),
+                      toggle_antiviral_type = toggle_antiviral_type,
                       toggle_antiviral_target = toggle_antiviral_target,
                       toggle_vax_scenario = toggle_vax_scenario,
                       toggle_vax_scenario_risk_group = toggle_vax_scenario_risk_group,
