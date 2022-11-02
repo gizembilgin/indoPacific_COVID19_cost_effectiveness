@@ -3,8 +3,10 @@
 raw_VE_point_est <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
 raw_VE_severe_outcomes <- read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)
 
+#system.time({stochastic_VE()}) #1.28 sec
+
 stochastic_VE <- function(
-  
+  strain_now = 'omicron'
 ){
 
   ##### PART ONE: point estimates of primary schedule ####################################################################################
@@ -39,7 +41,7 @@ stochastic_VE <- function(
     mutate(ratio = any_infection/symptomatic_disease) %>% group_by(strain) %>%
     summarise(count = sum(is.na(ratio)),
               mean = mean(ratio,na.rm=TRUE),
-              sd = sd(ratio,na.rm=TRUE))
+              sd = sd(ratio,na.rm=TRUE),.groups = "keep")
   #_________________________
   
   #(C/D) compare VE against omicron (where avaliable) to delta
@@ -55,7 +57,7 @@ stochastic_VE <- function(
     group_by(outcome) %>%
     summarise(count = sum(is.na(ratio)),
               mean = mean(ratio,na.rm=TRUE),
-              sd = sd(ratio,na.rm=TRUE))
+              sd = sd(ratio,na.rm=TRUE),.groups = "keep")
   delta_omicron_ratio$mean[delta_omicron_ratio$outcome == 'death'] = delta_omicron_ratio$mean[delta_omicron_ratio$outcome == 'severe_disease'] #since death is missing
   #_________________________
   
@@ -72,7 +74,7 @@ stochastic_VE <- function(
     group_by(outcome) %>%
     summarise(count = sum(is.na(ratio)),
               mean = mean(ratio,na.rm=TRUE),
-              sd = sd(ratio,na.rm=TRUE))
+              sd = sd(ratio,na.rm=TRUE),.groups = "keep")
   #___________________________________________________
   
   
@@ -220,7 +222,7 @@ stochastic_VE <- function(
   
   ##### PART TWO: point estimates for booster doses ##############################################################################################################
   ### (1/2) Inital estimates from IVAC living systematic review 
-  raw_VE_point_est = raw_VE_point_est %>% #loaded in PART ONE
+  booster_VE_point_est = raw_VE_point_est %>% #loaded in PART ONE
     filter(dose == 3 & vaccine_type == 'Pfizer') %>% 
     select(strain, vaccine_type, primary_if_booster, outcome,VE,lower_est,upper_est) %>%
     mutate(primary_if_booster_long = case_when(
@@ -234,10 +236,10 @@ stochastic_VE <- function(
   
   ######SAMPLE HERE
   options(warn = -1 )   
-  sampled_value = mapply(runif,1,raw_VE_point_est$lower_est, raw_VE_point_est$upper_est)
+  sampled_value = mapply(runif,1,booster_VE_point_est$lower_est, booster_VE_point_est$upper_est)
   options(warn = 0)   
   sampled_value[is.nan(sampled_value)] = NA
-  VE_estimates = cbind(raw_VE_point_est,sampled_value)
+  VE_estimates = cbind(booster_VE_point_est,sampled_value)
   VE_estimates$VE = VE_estimates$sampled_value
   #######
   
@@ -245,7 +247,7 @@ stochastic_VE <- function(
   VE_estimates = VE_estimates %>% 
     select(strain, vaccine_type, primary_if_booster, outcome,VE) %>% 
     group_by(strain, vaccine_type, primary_if_booster, outcome) %>%
-    summarise(VE = sum(VE)/n())
+    summarise(VE = sum(VE)/n(),.groups = "keep")
   
   #Impute missing values based on previous analysis (NB:only 'any_infection' needs imputing)
   imputed_rows = VE_estimates %>% 
@@ -306,10 +308,10 @@ stochastic_VE <- function(
                             raw$age_group == unique(raw$age_group)[j],]
       attach(workshop_real)
       model = lm(VE~days)
-      
       #summary(model)
       model_rsquared = summary(model)$adj.r.squared
       detach(workshop_real)
+      rm(workshop_real)
       
       time <- seq(0, 365)
       workshop_predicted <- predict(model,list(days=time))
@@ -324,6 +326,7 @@ stochastic_VE <- function(
     }
   }
   predicted_distribution = predicted_distribution %>% mutate(plot_label = paste(age_group,"(R squared",round(rsquared,digits=3)))
+
   
   # ggplot(data = raw[raw$age_group == 'overall',]) +
   #   geom_point(aes(x=days,y=VE,color=as.factor(dose))) +
@@ -382,24 +385,27 @@ stochastic_VE <- function(
     group_by(agegroup_MODEL) %>%
     mutate(model_group_percent = population/sum(population))
   
-  apply_ratio_MODEL = pop_RAW %>% left_join(apply_ratio) %>% 
+  apply_ratio_MODEL = pop_RAW %>% 
+    left_join(apply_ratio, by = "agegroup_RAW") %>% 
     mutate(interim = model_group_percent * VE_ratio) %>%
     group_by(dose,agegroup_MODEL) %>%
-    summarise(VE_ratio = sum(interim)) %>%
+    summarise(VE_ratio = sum(interim),.groups = "keep") %>%
     rename(age_group = agegroup_MODEL) %>% 
     arrange(dose) %>%
     mutate(schedule = case_when(
       dose > 2 ~ 'booster',
       TRUE ~ 'primary'
     ))  %>%  
+    ungroup() %>%
     select(-dose)
   
   workshop = apply_distribution %>% 
     rename(agegroup_RAW = age_group)
-  workshop = pop_RAW %>% left_join(workshop) %>% 
+  workshop = pop_RAW %>% 
+    left_join(workshop, by = "agegroup_RAW") %>% 
     mutate(interim = model_group_percent * VE_internal) %>%
     group_by(dose,agegroup_MODEL,days) %>%
-    summarise(VE_internal = sum(interim)) %>%
+    summarise(VE_internal = sum(interim),.groups = "keep") %>%
     rename(age_group = agegroup_MODEL)
   
   apply_distribution_MODEL = workshop %>% arrange(dose)  %>%
@@ -407,6 +413,7 @@ stochastic_VE <- function(
       dose > 2 ~ 'booster',
       TRUE ~ 'primary' #copy dose 2 for dose 1
     )) %>%  
+    ungroup() %>%
     select(-dose)
   
   
@@ -455,11 +462,11 @@ stochastic_VE <- function(
     theme_bw() +
     theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
   
-  VE_waning_distribution_SO = together %>% select(strain, vaccine_type,primary_if_booster, dose, outcome,days,VE_days)
+  VE_waning_distribution_SO = together %>% select(strain, vaccine_type,primary_if_booster, dose, outcome, age_group,days,VE_days)
   
   workshop = VE_waning_distribution_SO %>% 
     filter(dose == 3 & strain == strain_now) %>%
-    group_by(strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
+    group_by(strain,outcome,vaccine_type,dose,age_group,days,.add = TRUE) %>%
     summarise(VE_days = mean(VE_days),.groups = "keep")
   VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(! dose == 3) %>% select(-primary_if_booster)
   VE_waning_distribution_SO = rbind(VE_waning_distribution_SO,workshop)
