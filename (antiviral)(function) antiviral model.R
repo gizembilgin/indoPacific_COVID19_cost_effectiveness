@@ -1,7 +1,8 @@
 load(file = '1_inputs/antiviral_effectiveness.Rdata' )
 source(paste(getwd(),"/(antiviral)(function) stochastic severe outcome projections.R",sep=""))
 
-antiviral_model <- function(toggle_antiviral_type,
+antiviral_model <- function(toggle_antiviral_start_date, 
+                            toggle_antiviral_type,
                             toggle_antiviral_target,
                             toggle_vax_scenario,
                             toggle_vax_scenario_risk_group,
@@ -10,10 +11,14 @@ antiviral_model <- function(toggle_antiviral_type,
                             
                             toggle_number_of_runs = 100,
                             toggle_stochastic_SO = "off",
+                            toggle_compare_to_vaccine_effect = "off",
                             toggle_antiviral_delivery_capacity = NA,
                             toggle_fixed_antiviral_coverage = NA
                             ){
-
+  #CAUTION - if toggle_antiviral_start_date > 01/01/2023 doses per outcome averted okay, but percentage of pop averted not accurate (needs to be restricted to this timeframe), potential
+  # for quick fix if stochatic_SO
+  
+  
   ###SKIP IF NONSENSE
   skip = 0
   if (toggle_vax_scenario_risk_group == 'none' & 
@@ -78,6 +83,9 @@ antiviral_model <- function(toggle_antiviral_type,
     
     ### INITALISE DATA FRAMES #################################################################
     this_scenario_tracker = data.frame()
+    if (toggle_compare_to_vaccine_effect == "on"){
+      vax_effect_tracker = data.frame()
+    }
     #____________________________________________________________________________
     
     
@@ -160,7 +168,8 @@ antiviral_model <- function(toggle_antiviral_type,
           risk_group_name = toggle_vax_scenario_risk_group,
           date_start = toggle_antiviral_start_date
         )
-        outcomes_without_antivirals = load_stochastic_SO$outcomes_without_antivirals
+        save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
+        outcomes_without_antivirals = rbind(load_stochastic_SO$outcomes_without_antivirals,save_booster_dose_info)
         likelihood_severe_outcome   = load_stochastic_SO$likelihood_severe_outcome
       }
       
@@ -297,10 +306,87 @@ antiviral_model <- function(toggle_antiviral_type,
         summarise(n = sum(percentage))
       
       this_scenario_tracker = rbind(this_scenario_tracker, prevented_by_antivirals)
-      
-      
       #____________________________________________________________________________
-    }
+      
+      
+      ### ESTIMATE ISOLATED EFFECT OF VACCINE #####################################
+      if (toggle_compare_to_vaccine_effect == "on" & toggle_vax_scenario != 'all willing adults vaccinated with a primary schedule'){
+        #Step One: load outcomes_without_antivirals (OWA) of no booster dose scenario
+        if (toggle_stochastic_SO == "off"){
+          if (run_number == 1){
+            vax_effect_OWA = RECORD_antiviral_setup$outcomes_without_antivirals %>%
+              filter(
+                vax_scenario            == 'all willing adults vaccinated with a primary schedule',
+                vax_scenario_risk_group == toggle_vax_scenario_risk_group
+              )
+
+            vax_effect_OWA = vax_effect_OWA %>% 
+              rename(no_booster_overall = overall,
+                     no_booster_high_risk = high_risk)
+          }
+        } else if (toggle_stochastic_SO == "on"){
+          vax_effect_ILT = RECORD_antiviral_setup$incidence_log_tidy %>%
+            filter(
+              vax_scenario            == 'all willing adults vaccinated with a primary schedule',
+              vax_scenario_risk_group == toggle_vax_scenario_risk_group
+            )
+          vax_effect_IL = RECORD_antiviral_setup$incidence_log %>%
+            filter(
+              vax_scenario            == 'all willing adults vaccinated with a primary schedule',
+              vax_scenario_risk_group == toggle_vax_scenario_risk_group
+            )
+          vax_effect_EL= RECORD_antiviral_setup$exposed_log %>%
+            filter(
+              vax_scenario            == 'all willing adults vaccinated with a primary schedule',
+              vax_scenario_risk_group == toggle_vax_scenario_risk_group
+            )
+          vax_effect_VHF = RECORD_antiviral_setup$vaccination_history_FINAL %>%
+            filter(
+              vax_scenario            == 'all willing adults vaccinated with a primary schedule',
+              vax_scenario_risk_group == toggle_vax_scenario_risk_group
+            )
+          
+          vax_effect_load_stochastic_SO = stochastic_severe_outcomes(
+            incidence_log = vax_effect_IL,
+            incidence_log_tidy = vax_effect_ILT,
+            vaccination_history_FINAL = vax_effect_VHF,
+            exposed_log = vax_effect_EL,
+            
+            setting = 'SLE',
+            num_time_steps = 365,
+            strain_now = 'omicron',
+            risk_group_name = toggle_vax_scenario_risk_group,
+            date_start = toggle_antiviral_start_date
+          )
+          vax_effect_OWA = vax_effect_load_stochastic_SO$outcomes_without_antivirals
+          
+          vax_effect_OWA = vax_effect_OWA %>% 
+            rename(no_booster_overall = overall,
+                   no_booster_high_risk = high_risk)
+          
+          rm(vax_effect_ILT,vax_effect_IL,vax_effect_EL,vax_effect_VHF,vax_effect_load_stochastic_SO)
+        }
+        
+        #Step Two: compare OWA between booster and no-booster scenario
+
+        vax_effect_comparison = outcomes_without_antivirals %>% 
+          select(-vax_scenario) %>%
+          left_join(vax_effect_OWA, by = c('vax_scenario_risk_group','outcome')) %>%
+          mutate(overall = no_booster_overall - overall,
+                 high_risk = no_booster_high_risk - high_risk) %>%
+          select(-no_booster_high_risk, -no_booster_overall,-vax_scenario_risk_group,-vax_scenario) %>%
+          pivot_longer(
+            cols = c('overall','high_risk') ,
+            names_to = 'evaluation_group',
+            values_to = 'n'
+          ) 
+        
+        vax_effect_tracker = rbind(vax_effect_tracker,vax_effect_comparison)
+      }
+      #____________________________________________________________________________
+      
+      
+    } #END RUN NUMBER AND STOCHASTIC SAMPLING
     rm(
       antiviral_target_individuals_run,
       workshop,
@@ -312,37 +398,75 @@ antiviral_model <- function(toggle_antiviral_type,
     
     
     ### CREATE SUMMARY OVER RUNS #################################################
+    this_scenario_tracker = this_scenario_tracker %>% mutate(intervention = 'antiviral', evaluation_group = 'overall')
+    intervention_doses_delivered = data.frame(intervention = 'antiviral', evaluation_group = 'overall', doses = length_antiviral_delivery_tracker )
+    
+    if (toggle_compare_to_vaccine_effect == "on" & toggle_vax_scenario != 'all willing adults vaccinated with a primary schedule'){
+      vax_effect_tracker = vax_effect_tracker %>% mutate(intervention = 'vaccine')
+      
+      workshop = vax_effect_tracker %>% filter(outcome == 'booster_doses_delivered') %>% group_by(intervention,evaluation_group) %>% summarise(doses = abs(mean(n)))
+      intervention_doses_delivered = rbind(intervention_doses_delivered,workshop)
+      
+      vax_effect_tracker = vax_effect_tracker %>% filter(outcome != 'booster_doses_delivered')
+      this_scenario_tracker = bind_rows(this_scenario_tracker,vax_effect_tracker)
+      
+      #NOTE: if comparing vax and antiviral, then baseline is no booster and no antiviral; otherwise, baseline is only no antiviral
+      outcomes_without_antivirals = RECORD_antiviral_setup$outcomes_without_antivirals %>%
+        filter(
+          vax_scenario            == 'all willing adults vaccinated with a primary schedule',
+          vax_scenario_risk_group == toggle_vax_scenario_risk_group
+        ) %>%
+        pivot_longer(
+          cols = c('overall','high_risk') ,
+          names_to = 'evaluation_group',
+          values_to = 'overall'
+        ) %>%
+        select(outcome,evaluation_group,overall)
+
+    } else{
+      outcomes_without_antivirals = outcomes_without_antivirals %>% mutate(evaluation_group = 'overall')
+    }
+    
     summary_over_runs <-
       this_scenario_tracker %>%
-      group_by(outcome) %>%
+      group_by(outcome,intervention, evaluation_group) %>%
       dplyr::summarise(
         average = mean(n),
         sd = sd(n),
-        UCI = average - qnorm(0.975) *
-          sd,
-        LCI = average - qnorm(0.023) *
-          sd
+        UCI = average - qnorm(0.975) * sd,
+        LCI = average - qnorm(0.023) * sd, .groups = 'keep'
       ) %>%
-      left_join(outcomes_without_antivirals, by = "outcome") %>%
+      left_join(outcomes_without_antivirals, by = c("outcome",'evaluation_group')) %>%
       mutate(
         percentage = average / overall * 100,
         UCI_percentage = UCI / overall * 100,
         LCI_percentage = LCI / overall * 100
       ) %>%
-      select(outcome,
-             average,
-             UCI,
-             LCI,
-             percentage,
-             UCI_percentage,
-             LCI_percentage)
+      select(outcome, intervention,evaluation_group, average, UCI, LCI,
+             percentage, UCI_percentage, LCI_percentage)
     
     summary_over_runs_tidy = summary_over_runs %>%
       pivot_longer(
-        cols = 2:ncol(summary_over_runs) ,
+        cols = 4:ncol(summary_over_runs) ,
         names_to = 'result',
         values_to = 'value'
-      )
+      ) 
+    
+    workshop = summary_over_runs_tidy %>%
+      filter(result %in% c('average','UCI','LCI')) %>%
+      left_join(intervention_doses_delivered, by = c('intervention','evaluation_group')) %>%
+      mutate(result = paste(result,'_doses_per_outcome_averted',sep=''),
+             value = doses/value) %>%
+      select(-doses)
+    
+    summary_over_runs_tidy = rbind(summary_over_runs_tidy,workshop) %>%
+      mutate(evaluation_group = case_when(evaluation_group == 'overall' ~ 'pop_level', TRUE ~ evaluation_group))
+    
+
+        # mutate(doses_per_outcome_averted = outcomes_without_antivirals$overall[outcomes_without_antivirals$outcome == 'booster_doses_delivered']/overall,
+        #        doses_per_outcome_averted_risk = outcomes_without_antivirals$high_risk[outcomes_without_antivirals$outcome == 'booster_doses_delivered']/high_risk)
+        # 
+
     
     rm(this_scenario_tracker,
        summary_over_runs,
@@ -369,9 +493,13 @@ antiviral_model <- function(toggle_antiviral_type,
     } else if (pathway_to_care == 'fixed'){
       summary_over_runs_tidy = summary_over_runs_tidy %>% 
         mutate(antiviral_cov = toggle_fixed_antiviral_coverage,
-               antiviral_delivered = length_antiviral_delivery_tracker)
+               antiviral_delivered = length_antiviral_delivery_tracker,
+               antiviral_start_date = toggle_antiviral_start_date)
     }
     #____________________________________________________________________________
+    
+    
+
     
     
     #time.end.AntiviralModel=proc.time()[[3]]
