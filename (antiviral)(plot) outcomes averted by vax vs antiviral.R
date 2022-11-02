@@ -37,8 +37,8 @@ toggle_fixed_antiviral_coverage = 0.2
 toggle_antiviral_type = "paxlovid"
 toggle_antiviral_target = toggle_vax_scenario_risk_group = "adults_with_comorbidities"
 
-toggle_stochastic_SO = "off"
-toggle_number_of_runs = 100
+toggle_stochastic_SO = "on"
+toggle_number_of_runs = 5
 #____________________________________________________________________________
 
 
@@ -144,6 +144,9 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           nrow = 4) 
 options(warn = 0)
 
+time = Sys.time()
+time = gsub(':','-',time)
+save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/VaxAntiviral_Comparison_",time,".Rdata",sep=''))
 
 
 time.end.AntiviralSimulations=proc.time()[[3]]
