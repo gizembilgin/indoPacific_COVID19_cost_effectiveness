@@ -3,7 +3,7 @@
 ### (1) (mech shop) severe outcome age distribution
 ### (2) (mech shop) severe outcome setting-specific rates
 ### (3) (5)_severe_outcomes_calc
-### (4) (function)_severe_outcome_proj
+### (4) (6)_severe_outcome_proj
 
 ##### SETUP
 age_groups_num = c(0,4,9,17,29,44,59,69,110)
@@ -86,7 +86,7 @@ stochastic_severe_outcomes <- function(
       filter(country == setting) %>%
       mutate(agegroup = cut(age,breaks = age_groups_RAW, include.lowest = T,labels = age_group_labels_RAW)) %>%
       group_by(agegroup) %>%
-      summarise(pop = sum(population))
+      summarise(pop = sum(population),.groups = "keep")
     pop_bands_RAW = pop_bands_RAW %>%  
       mutate(pop_percentage = pop/sum(pop_bands_RAW$pop))  
     
@@ -96,7 +96,7 @@ stochastic_severe_outcomes <- function(
     
     workshop_sum = workshop %>%
       group_by(outcome) %>%
-      summarise(interim_est = sum(interim)) %>% 
+      summarise(interim_est = sum(interim),.groups = "keep") %>% 
       left_join(severe_outcome_country_level, by = c("outcome")) %>%
       mutate(correction = pop_est/interim_est) %>%
       select(outcome,correction)
@@ -109,7 +109,7 @@ stochastic_severe_outcomes <- function(
     
     check = workshop %>%
       group_by(outcome) %>%
-      summarise(interim_est = sum(interim2)) %>% 
+      summarise(interim_est = sum(interim2),.groups = "keep") %>% 
       left_join(severe_outcome_country_level, by = "outcome") %>%
       mutate(correction = pop_est/interim_est)
     if (nrow(check[round(check$correction,digits=2)>1,])>0){stop('issue with correction')}
@@ -130,7 +130,7 @@ stochastic_severe_outcomes <- function(
       mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
       ungroup() %>%
       group_by(age_group) %>%
-      summarise(pop = sum(population)) %>%
+      summarise(pop = sum(population),.groups = "keep") %>%
       ungroup() %>% 
       mutate(pop_percent = pop/sum(pop))
     pop_w <- pop_estimates %>%
@@ -147,7 +147,7 @@ stochastic_severe_outcomes <- function(
       mutate(interim = RR*group_percent)
     workshop_sum =  workshop %>% 
       group_by(outcome,agegroup_model) %>%
-      summarise(RR = sum(interim)) %>%
+      summarise(RR = sum(interim),.groups = "keep") %>%
       rename(age_group = agegroup_model)
     
     #check
@@ -160,7 +160,7 @@ stochastic_severe_outcomes <- function(
     age_distribution_RR =  workshop_sum %>%
       select(outcome,age_group,RR)
     
-    rm(workshop_sum,workshop,pop_w,pop_setting)
+    rm(workshop_sum,workshop,pop_w)
     ########################################################################################################   
     
     
@@ -240,7 +240,7 @@ stochastic_severe_outcomes <- function(
     VE_tracker = rbind(VE_tracker,workshop)
     
     if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){
-      if (risk_group_toggle == "on" & risk_group_name == 'adults_with_comorbidities'){
+      if (risk_group_name == 'adults_with_comorbidities'){
         VE_tracker =  VE_tracker %>%
           mutate(VE = case_when(
             risk_group == risk_group_name & age_group %in% c("30 to 44","45 to 59") ~ VE * sensitivity_analysis_toggles$VE_adults_comorb,
@@ -252,19 +252,52 @@ stochastic_severe_outcomes <- function(
     
     
     ### PART SIX: Apply VE ########################################################################
-    if (risk_group_toggle == "on"){
+    if (length(risk_group_labels)>1){
       #if risk-group included, then adjust general population incidence rate so pop-level estimates stay the same
       
       severe_outcomes_list = unique(severe_outcome_country_level$outcome)
       severe_outcome_country_level_wRisk = data.frame()
       
+      risk_dn = read.csv('1_inputs/risk_group_distribution.csv')
+    
+      if(risk_group_name %in% c('adults_with_comorbidities')){
+        risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name,]
+      } else if (risk_group_name %in% c('pregnant_women')){
+        load(file = "1_inputs/prevalence_pregnancy.Rdata")
+        risk_dn = prevalence_pregnancy
+      } else {
+        stop('risk_group_name not a valid value')
+      }
+      
+      risk_dn = risk_dn %>%
+        select(age_group,prop)
+      
+      pop_high_risk = pop_setting %>% 
+        left_join(risk_dn, by = "age_group") %>%
+        mutate(risk_group = risk_group_name,
+               pop = round(pop*prop)) %>% 
+        select(risk_group,age_group,pop)
+      
+      pop_general_public   = pop_setting %>% 
+        left_join(risk_dn, by = "age_group") %>%
+        mutate(risk_group = 'general_public',
+               pop = round(pop*(1-prop))) %>% 
+        select(risk_group,age_group,pop)
+      
+      pop_risk_group_dn = rbind(pop_general_public,pop_high_risk)
+      
+      ###COMEBACK - tidy pop_risk_group_dn and RR_estimate stochastic
+      RR_estimate = 2
+      
+      
+      
       for (o in 1:length(severe_outcomes_list)){
         this_outcome = severe_outcomes_list[o]
-        for (i in 1:num_age_groups){
+        for (i in 1:length(unique(vaccination_history_FINAL$age_group))){
           this_age = age_group_labels[i]
           row = severe_outcome_country_level %>% filter(outcome == this_outcome & age_group == this_age)
           
-          IR = row$percentage
+          IR = row$pop_est
           P = pop_setting$pop[pop_setting$age_group == this_age]
           P_general = pop_risk_group_dn$pop[pop_risk_group_dn$risk_group == 'general_public' & pop_risk_group_dn$age_group == this_age]
           P_risk = pop_risk_group_dn$pop[pop_risk_group_dn$risk_group == risk_group_name & pop_risk_group_dn$age_group == this_age]
@@ -273,32 +306,32 @@ stochastic_severe_outcomes <- function(
           IR_gen = ((IR*P)/((RR_estimate*P_risk)/P_general +1))/P_general
           IR_risk = ((IR*P)/(P_general/(RR_estimate*P_risk) +1))/P_risk
           
-          row_gen = row %>% mutate(percentage = IR_gen,risk_group = 'general_public')
-          row_risk = row %>% mutate(percentage = IR_risk,risk_group = risk_group_name)
+          row_gen = row %>% mutate(pop_est = IR_gen,risk_group = 'general_public')
+          row_risk = row %>% mutate(pop_est = IR_risk,risk_group = risk_group_name)
           severe_outcome_country_level_wRisk = rbind(severe_outcome_country_level_wRisk,row_gen,row_risk)
         }
       }
       
-      severe_outcome_country_level$percentage[is.na(severe_outcome_country_level_wRisk$percentage)]=0
+      severe_outcome_country_level_wRisk$pop_est[is.na(severe_outcome_country_level_wRisk$pop_est)]=0
       severe_outcome_country_level = severe_outcome_country_level_wRisk
       
       
     }
     
-    if (risk_group_toggle == "on"){
+    if (length(risk_group_labels)>1){
       severe_outcome_this_run = severe_outcome_country_level %>% 
         left_join(VE_tracker, by = c("age_group", "outcome_VE", "risk_group")) %>%
-        mutate(percentage = percentage*(1-VE)) %>%
-        select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
+        mutate(pop_est = pop_est*(1-VE)) %>%
+        select(date,outcome,age_group,risk_group,vaccine_type,dose,pop_est)
       
     } else{
       severe_outcome_this_run = severe_outcome_country_level %>% 
         left_join(VE_tracker, by = c("age_group", "outcome_VE")) %>%
-        mutate(percentage = percentage*(1-VE)) %>%
-        select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
+        mutate(pop_est = pop_est*(1-VE)) %>%
+        select(date,outcome,age_group,risk_group,vaccine_type,dose,pop_est)
     }
     
-    rm(IR_gen, IR_risk, row_gen, row_risk, severe_outcomes_list, severe_outcome_country_level_wRisk, row, this_age, P, P_general, P_risk, VE_tracker, VE_time_step, severe_outcome_country_level,workshop)
+    rm(IR_gen, IR_risk, row_gen, row_risk, severe_outcomes_list, severe_outcome_country_level_wRisk, row, this_age, P, P_general, P_risk, VE_tracker, severe_outcome_country_level,workshop)
     ########################################################################################################   
     
     
@@ -306,10 +339,22 @@ stochastic_severe_outcomes <- function(
     use_date = date_start +1
 
     #(A) infection-derived immunity against severe outcomes
+    #COMEBACK
+    rho_dn = crossing(type = c('new_to_new','prev_to_new'),
+                      outcome = c('symptomatic_disease','severe_outcome'),
+                      days = seq(0,365*2)
+    )
+    rho_dn = rho_dn %>% mutate(
+      protection = case_when(
+        outcome == 'symptomatic_disease' & type == 'prev_to_new' ~ 0.9932*exp(-0.004*days),
+        outcome == 'symptomatic_disease' & type == 'new_to_new' ~ 0.9654*exp(-0.0002*days),
+        outcome == 'severe_outcome' ~ 0.88 
+      )
+    )
     rho_SO_est = unique(rho_dn$protection[rho_dn$outcome == 'severe_outcome'])
     
     ###NEED TO SAMPLE
-    if (length(rho_SO_est)>1){stop('rho against severe outcome not constant as currently assumed, see (function)_severe_outcome_proj')}
+    if (length(rho_SO_est)>1){stop('rho against severe outcome not constant as currently assumed, see (6)_severe_outcome_proj')}
     
     reinfection_protection = exposed_log %>%
       mutate(protection = reinfection_ratio * rho_SO_est) %>%
@@ -318,7 +363,7 @@ stochastic_severe_outcomes <- function(
     #Join incidence_log_tidy with severe outcome incidence by vax status
     workshop = severe_outcome_this_run %>%
       left_join(incidence_log_tidy, by = c("date", "age_group", "risk_group", "vaccine_type", "dose")) %>%
-      mutate(proj = incidence*percentage) %>%
+      mutate(proj = incidence*pop_est) %>%
       left_join(reinfection_protection, by = c("date", "age_group")) %>%
       mutate(proj = proj*(1-protection))
     if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('have lost rows in severe outcome proj')} 
@@ -332,13 +377,21 @@ stochastic_severe_outcomes <- function(
     ### PART EIGHT: Translate to antiviral model dependencies ##############################################
     outcomes_without_antivirals = severe_outcome_log_tidy  %>%
       group_by(outcome) %>%
-      summarise(overall = sum(proj))
+      summarise(overall = sum(proj),.groups = "keep")
+    #adding some extra detail
+    append_high_risk = severe_outcome_log_tidy  %>%
+      filter(risk_group == risk_group_name) %>%
+      group_by(outcome) %>%
+      summarise(high_risk = sum(proj),.groups = "keep")
+    outcomes_without_antivirals = outcomes_without_antivirals %>% left_join(append_high_risk, by = 'outcome')
+
+    
     likelihood_severe_outcome = severe_outcome_this_run %>%
       left_join(reinfection_protection, by = c("date", "age_group")) %>%
-      mutate(percentage = percentage*(1-protection)) %>%
-      select(-outcome_long,-protection) %>%
+      mutate(pop_est = pop_est*(1-protection)) %>%
+      select(-protection) %>%
       left_join(prop_sympt,by= c('age_group' = 'agegroup')) %>%
-      mutate(percentage = percentage * (1/value)) %>%
+      mutate(pop_est = pop_est * (1/value)) %>%
       select(-value)
 
     result = list(outcomes_without_antivirals = outcomes_without_antivirals,
