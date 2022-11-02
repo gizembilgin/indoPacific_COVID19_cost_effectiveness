@@ -89,12 +89,12 @@ VE_time_step <- function(strain_now,date_now,outcome){
   #<interim> add none covered vaccines
   if (exists("vax_type_list") == FALSE){ vax_type_list =unique(vaccination_history_FINAL$vaccine_type)}
   if (exists("age_group_labels") == FALSE){ age_group_labels =unique(vaccination_history_FINAL$age_group)}
-  if (exists("D") == FALSE){ D = length(unique(vaccination_history_FINAL$dose[vaccination_history_FINAL$dose != 8]))}
+  if (exists("num_vax_doses") == FALSE){ num_vax_doses = length(unique(vaccination_history_FINAL$dose[vaccination_history_FINAL$dose != 8]))}
   if (exists("risk_group_labels") == FALSE){ risk_group_labels =unique(vaccination_history_FINAL$risk_group)}
   
   for (t in 1:length(vax_type_list)){
     for (i in 1:length(age_group_labels)){
-      for (d in 1:D){
+      for (d in 1:num_vax_doses){
         for (r in 1:length(risk_group_labels)){
           this_vax = vax_type_list[t]
           if (!( this_vax %in% unique(workshop$vaccine_type[workshop$risk_group == risk_group_labels[r] & workshop$dose == d & workshop$age_group == age_group_labels[i]]))){
