@@ -67,6 +67,7 @@ predicted_distribution = data.frame()
   
   ### Apply distribution
   load(file = "1_inputs/VE_booster_estimates.Rdata")
+  load(file = "1_inputs/VE_estimates_imputed.Rdata")
   
   imputed = data.frame()
     for (t in 1:length(unique(VE_booster_estimates$primary_if_booster))){
@@ -76,12 +77,12 @@ predicted_distribution = data.frame()
             mutate(primary_if_booster = this_vax)
           
           ratio_top = VE_booster_estimates %>% filter(primary_if_booster == this_vax & outcome == 'any_infection')
-          ratio_bottom = raw %>% filter(label == 'Pfizer second dose' & days == min(days))
+          ratio_bottom = VE_estimates_imputed %>% filter(dose == 2 & vaccine_type == 'Pfizer'& outcome == 'any_infection' & strain == 'omicron')
           
-          ratio = (ratio_top$VE/100)/ratio_bottom$VE
+          ratio = ratio_top$VE/ratio_bottom$VE
           
           workshop$VE = workshop$VE * ratio
-          workshop$VE[workshop$VE>100] = 100
+          workshop$VE[workshop$VE>1] = 1
           
           imputed = rbind(imputed,workshop)
     }
@@ -102,28 +103,28 @@ predicted_distribution = data.frame()
           axis.line = element_line(color = 'black'))
  
   ###load booster from severe outcome `(mech shop) VE waning distribution (severe outcomes).R`
-  check = waning_to_plot %>% filter(is.na(primary_if_booster) == FALSE)
-  plot_2 = ggplot() +
-    geom_line(data=check[check$strain == 'omicron' & check$outcome  == 'death',],
-              aes(x=days,y=VE_days,color=as.factor(primary_if_booster)),na.rm=TRUE) +
-    labs(title=(paste("VE against death")),color='primary schedule') +
-    xlab("") +
-    ylim(0,1) +
-    ylab("") +
-    theme_bw() +
-    theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
-  
-  plot_3 = ggplot() +
-    geom_line(data=check[check$strain == 'omicron' & check$outcome  == 'severe_disease',],
-              aes(x=days,y=VE_days,color=as.factor(primary_if_booster)),na.rm=TRUE) +
-    labs(title=(paste("VE against severe_disease")),color='primary schedule') +
-    xlab("days since vaccination") +
-    ylim(0,1) +
-    ylab("") +
-    theme_bw() +
-    theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
-  
-  grid.arrange(plot_1,plot_2,plot_3, nrow =3 )
+  # check = waning_to_plot %>% filter(is.na(primary_if_booster) == FALSE)
+  # plot_2 = ggplot() +
+  #   geom_line(data=check[check$strain == 'omicron' & check$outcome  == 'death',],
+  #             aes(x=days,y=VE_days,color=as.factor(primary_if_booster)),na.rm=TRUE) +
+  #   labs(title=(paste("VE against death")),color='primary schedule') +
+  #   xlab("") +
+  #   ylim(0,1) +
+  #   ylab("") +
+  #   theme_bw() +
+  #   theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+  # 
+  # plot_3 = ggplot() +
+  #   geom_line(data=check[check$strain == 'omicron' & check$outcome  == 'severe_disease',],
+  #             aes(x=days,y=VE_days,color=as.factor(primary_if_booster)),na.rm=TRUE) +
+  #   labs(title=(paste("VE against severe_disease")),color='primary schedule') +
+  #   xlab("days since vaccination") +
+  #   ylim(0,1) +
+  #   ylab("") +
+  #   theme_bw() +
+  #   theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+  # 
+  # grid.arrange(plot_1,plot_2,plot_3, nrow =3 )
   #_________________________________________________________________________________________________________________________________________
   
 

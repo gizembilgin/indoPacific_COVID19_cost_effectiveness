@@ -29,6 +29,7 @@ for (i in 1:length(unique(raw$age_group))){
     attach(workshop_real)
     #model = lm(log(VE)~days)
     model = lm(VE~days)
+    model_rsquared = summary(model)$adj.r.squared
     detach(workshop_real)
     
     time <- seq(0, 365)
@@ -108,6 +109,22 @@ apply_ratio = workshop_age %>% filter(days == 22) %>% rename(VE_ratio = VE_overa
 
 
 ### COVERT TO MODEL AGE GROUP ##################################################################################################################################
+setting = "SLE"
+age_groups_num = c(0,4,9,17,29,44,59,69,110)
+age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
+
+num_age_groups = J = length(age_group_labels)          
+age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
+
+rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") 
+pop_orig <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
+pop_setting_orig <- pop_orig %>%
+  filter(country == setting)
+pop_setting <- pop_setting_orig %>%
+  mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
+  group_by(age_group) %>%
+  summarise(pop = as.numeric(sum(population)))
+
 CS_age_groupings = c(0,59,79,110) #age groupings in VE estimate data
 pop_RAW <- pop_setting_orig %>%
   mutate(agegroup_RAW = cut(age,breaks = CS_age_groupings, include.lowest = T, labels = unique(apply_ratio$agegroup_RAW)),
@@ -189,7 +206,9 @@ together = point_estimates %>%
   left_join(apply_ratio_MODEL,by='schedule') %>%
   left_join(apply_distribution_MODEL, by = c('schedule','age_group')) %>%
   rename(VE_days = VE) %>%
-  mutate(VE_days = VE_days*VE_internal*VE_ratio/100)
+  mutate(VE_days = VE_days*VE_internal*VE_ratio/100)  %>%
+  mutate(VE_days = case_when(VE_days>1 ~ 1, TRUE ~ VE_days))
+
 #_________________________________________________________________________________________________________________________________________
 
 
