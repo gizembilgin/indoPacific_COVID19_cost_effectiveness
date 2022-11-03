@@ -48,7 +48,7 @@ source(paste(getwd(),"/(antiviral)(function) antiviral model.R",sep=""))
 RunTime = data.frame()
 
 for (num_clusters in c(2,4,6)){
-  for (num_runs in c(1,5,10)){
+  for (num_runs in c(50,100)){
     
     time.start.AntiviralSimulations=proc.time()[[3]]
 
