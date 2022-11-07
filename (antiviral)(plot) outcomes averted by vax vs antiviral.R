@@ -37,8 +37,8 @@ toggle_fixed_antiviral_coverage = 0.2
 toggle_antiviral_type = "paxlovid"
 toggle_antiviral_target = toggle_vax_scenario_risk_group = "adults_with_comorbidities"
 
-toggle_stochastic_SO = "on"
-toggle_number_of_runs = 5
+toggle_stochastic_SO = "off"
+toggle_number_of_runs = 10
 #____________________________________________________________________________
 
 
@@ -95,8 +95,7 @@ additional_scenario = antiviral_model(toggle_antiviral_start_date = as.Date('202
                                       toggle_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
                                       
                                       toggle_number_of_runs = toggle_number_of_runs,
-                                      toggle_stochastic_SO = toggle_stochastic_SO,
-                                      toggle_compare_to_vaccine_effect = "on"
+                                      toggle_stochastic_SO = toggle_stochastic_SO
 )
 
 RECORD_antiviral_model_simulations = rbind(RECORD_antiviral_model_simulations,additional_scenario)
