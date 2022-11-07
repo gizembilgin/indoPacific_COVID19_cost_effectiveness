@@ -1,4 +1,5 @@
 load(file = '1_inputs/antiviral_effectiveness.Rdata' )
+
 source(paste(getwd(),"/(antiviral)(function) stochastic severe outcome projections.R",sep=""))
 
 antiviral_model <- function(toggle_antiviral_start_date, 
@@ -166,7 +167,8 @@ antiviral_model <- function(toggle_antiviral_start_date,
           num_time_steps = 365,
           strain_now = 'omicron',
           risk_group_name = toggle_vax_scenario_risk_group,
-          date_start = toggle_antiviral_start_date
+          date_start = toggle_antiviral_start_date,
+          prop_sympt_LOCAL = prop_sympt
         )
         save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
         outcomes_without_antivirals = rbind(load_stochastic_SO$outcomes_without_antivirals,save_booster_dose_info)
@@ -298,12 +300,12 @@ antiviral_model <- function(toggle_antiviral_start_date,
           by = c("date", "risk_group", "age_group", "dose", "vaccine_type")
         ) %>%
         left_join(toggle_antiviral_effectiveness, by = 'outcome') %>%
-        mutate(percentage = percentage * AE)
+        mutate(pop_est = pop_est * AE)
       workshop = na.omit(workshop)
       
       prevented_by_antivirals = workshop %>%
         group_by(outcome) %>%
-        summarise(n = sum(percentage))
+        summarise(n = sum(pop_est))
       
       this_scenario_tracker = rbind(this_scenario_tracker, prevented_by_antivirals)
       #____________________________________________________________________________
@@ -356,25 +358,30 @@ antiviral_model <- function(toggle_antiviral_start_date,
             num_time_steps = 365,
             strain_now = 'omicron',
             risk_group_name = toggle_vax_scenario_risk_group,
-            date_start = toggle_antiviral_start_date
+            date_start = toggle_antiviral_start_date,
+            prop_sympt_LOCAL = prop_sympt,
+            
+            toggle_intervention = 'booster'
           )
           vax_effect_OWA = vax_effect_load_stochastic_SO$outcomes_without_antivirals
           
           vax_effect_OWA = vax_effect_OWA %>% 
             rename(no_booster_overall = overall,
                    no_booster_high_risk = high_risk)
+          row = data.frame(outcome = 'booster_doses_delivered',no_booster_overall = 0, no_booster_high_risk = 0)
+          vax_effect_OWA = rbind(vax_effect_OWA,row)
           
           rm(vax_effect_ILT,vax_effect_IL,vax_effect_EL,vax_effect_VHF,vax_effect_load_stochastic_SO)
         }
         
         #Step Two: compare OWA between booster and no-booster scenario
 
-        vax_effect_comparison = outcomes_without_antivirals %>% 
+          vax_effect_comparison = outcomes_without_antivirals %>% 
           select(-vax_scenario) %>%
-          left_join(vax_effect_OWA, by = c('vax_scenario_risk_group','outcome')) %>%
+          left_join(vax_effect_OWA, by = c('outcome')) %>%
           mutate(overall = no_booster_overall - overall,
                  high_risk = no_booster_high_risk - high_risk) %>%
-          select(-no_booster_high_risk, -no_booster_overall,-vax_scenario_risk_group,-vax_scenario) %>%
+          select(-no_booster_high_risk, -no_booster_overall) %>%
           pivot_longer(
             cols = c('overall','high_risk') ,
             names_to = 'evaluation_group',
@@ -434,7 +441,7 @@ antiviral_model <- function(toggle_antiviral_start_date,
         average = mean(n),
         sd = sd(n),
         UCI = average - qnorm(0.975) * sd,
-        LCI = average - qnorm(0.023) * sd, .groups = 'keep'
+        LCI = average - qnorm(0.025) * sd, .groups = 'keep'
       ) %>%
       left_join(outcomes_without_antivirals, by = c("outcome",'evaluation_group')) %>%
       mutate(
