@@ -436,7 +436,8 @@ stochastic_VE <- function(
     left_join(apply_ratio_MODEL,by='schedule') %>%
     left_join(apply_distribution_MODEL, by = c('schedule','age_group')) %>%
     rename(VE_days = VE) %>%
-    mutate(VE_days = VE_days*VE_internal*VE_ratio/100)
+    mutate(VE_days = VE_days*VE_internal*VE_ratio/100)  %>%
+    mutate(VE_days = case_when(VE_days>1 ~ 1, TRUE ~ VE_days))
   
   
   ###(3/3) Plot distributions and save VE_waning_distribution
