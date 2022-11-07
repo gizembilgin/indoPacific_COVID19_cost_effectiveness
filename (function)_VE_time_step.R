@@ -6,7 +6,7 @@ VE_time_step <- function(strain_now,date_now,outcome,
   
   #(1) load VE_distribution
   VE_distribution <- VE_waning_LOCAL[VE_waning_LOCAL$outcome == outcome &
-                                              VE_waning_LOCAL$strain == strain_now,] 
+                                              VE_waning_LOCAL$strain == strain_now,]
   if (strain_now == 'WT'){
     VE_distribution <- VE_waning_LOCAL[VE_waning_LOCAL$outcome == outcome &
                                                 VE_waning_LOCAL$strain == 'delta',] 
