@@ -1,6 +1,7 @@
 load(file = '1_inputs/antiviral_effectiveness.Rdata' )
 
 source(paste(getwd(),"/(antiviral)(function) stochastic severe outcome projections.R",sep=""))
+source(paste(getwd(),"/(antiviral)(sensitivity)(function) severe outcome projections.R",sep=""))
 
 antiviral_model <- function(toggle_antiviral_start_date, 
                             toggle_antiviral_type,
@@ -12,6 +13,7 @@ antiviral_model <- function(toggle_antiviral_start_date,
                             
                             toggle_number_of_runs = 100,
                             toggle_stochastic_SO = "off",
+                            toggle_sensitivity_analysis = list(),
                             toggle_compare_to_vaccine_effect = "off",
                             toggle_antiviral_delivery_capacity = NA,
                             toggle_fixed_antiviral_coverage = NA
@@ -157,7 +159,7 @@ antiviral_model <- function(toggle_antiviral_start_date,
       
       if (toggle_stochastic_SO == "on"){
         # Sample severe outcome likelihood
-        load_stochastic_SO = stochastic_severe_outcomes(
+        load_SO = stochastic_severe_outcomes(
           incidence_log = this_incidence_log,
           incidence_log_tidy = this_incidence_log_tidy,
           vaccination_history_FINAL = vaccination_history_FINAL,
@@ -171,8 +173,31 @@ antiviral_model <- function(toggle_antiviral_start_date,
           prop_sympt_LOCAL = prop_sympt
         )
         save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
-        outcomes_without_antivirals = rbind(load_stochastic_SO$outcomes_without_antivirals,save_booster_dose_info)
-        likelihood_severe_outcome   = load_stochastic_SO$likelihood_severe_outcome
+        outcomes_without_antivirals = rbind(load_SO$outcomes_without_antivirals,save_booster_dose_info)
+        likelihood_severe_outcome   = load_SO$likelihood_severe_outcome
+      } else if (length(toggle_sensitivity_analysis)>0){
+        severe_outcome_proj_multiplier = 1
+        if ('toggle_severe_outcome_proj_multiplier' %in% names(toggle_sensitivity_analysis)){severe_outcome_proj_multiplier = toggle_sensitivity_analysis$toggle_severe_outcome_proj_multiplier}
+        
+        
+        load_SO = sensitivity_severe_outcomes(
+          incidence_log = this_incidence_log,
+          incidence_log_tidy = this_incidence_log_tidy,
+          vaccination_history_FINAL = vaccination_history_FINAL,
+          exposed_log = this_exposed_log,
+          
+          setting = 'SLE',
+          num_time_steps = 365,
+          strain_now = 'omicron',
+          risk_group_name = toggle_vax_scenario_risk_group,
+          date_start = toggle_antiviral_start_date,
+          prop_sympt_LOCAL = prop_sympt,
+          
+          toggle_severe_outcome_proj_multiplier = severe_outcome_proj_multiplier
+        )
+        save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
+        outcomes_without_antivirals = rbind(load_SO$outcomes_without_antivirals,save_booster_dose_info)
+        likelihood_severe_outcome   = load_SO$likelihood_severe_outcome
       }
       
       # Sample antiviral effectiveness by type
@@ -300,12 +325,12 @@ antiviral_model <- function(toggle_antiviral_start_date,
           by = c("date", "risk_group", "age_group", "dose", "vaccine_type")
         ) %>%
         left_join(toggle_antiviral_effectiveness, by = 'outcome') %>%
-        mutate(pop_est = pop_est * AE)
+        mutate(percentage = percentage * AE)
       workshop = na.omit(workshop)
       
       prevented_by_antivirals = workshop %>%
         group_by(outcome) %>%
-        summarise(n = sum(pop_est))
+        summarise(n = sum(percentage))
       
       this_scenario_tracker = rbind(this_scenario_tracker, prevented_by_antivirals)
       #____________________________________________________________________________
@@ -348,6 +373,11 @@ antiviral_model <- function(toggle_antiviral_start_date,
               vax_scenario_risk_group == toggle_vax_scenario_risk_group
             )
           
+          LOADED_severe_outcome_country_level = load_SO$SAVE_severe_outcome_country_level
+          LOADED_VE_waning_distribution       = load_SO$SAVE_VE_waning_distribution
+          LOADED_rho_SO_est                   = load_SO$SAVE_rho_SO_est
+          rm(load_SO)
+          
           vax_effect_load_stochastic_SO = stochastic_severe_outcomes(
             incidence_log = vax_effect_IL,
             incidence_log_tidy = vax_effect_ILT,
@@ -361,7 +391,11 @@ antiviral_model <- function(toggle_antiviral_start_date,
             date_start = toggle_antiviral_start_date,
             prop_sympt_LOCAL = prop_sympt,
             
-            toggle_intervention = 'booster'
+            toggle_intervention = 'booster',
+            save_point = "on",
+            SAVE_severe_outcome_country_level = LOADED_severe_outcome_country_level,
+            SAVE_VE_waning_distribution = LOADED_severe_outcome_country_level,
+            SAVE_rho_SO_est = LOADED_rho_SO_est
           )
           vax_effect_OWA = vax_effect_load_stochastic_SO$outcomes_without_antivirals
           
@@ -524,6 +558,10 @@ antiviral_model <- function(toggle_antiviral_start_date,
         vax_scenario = toggle_vax_scenario,
         vax_scenario_risk_group = toggle_vax_scenario_risk_group
       )
+    
+    if (length(toggle_sensitivity_analysis)>0){
+      result = result %>% mutate(toggle_sensitivity_analysis = paste(names(toggle_sensitivity_analysis),toggle_sensitivity_analysis))
+    }
     
 
     
