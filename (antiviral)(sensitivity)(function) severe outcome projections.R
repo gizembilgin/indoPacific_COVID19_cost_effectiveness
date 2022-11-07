@@ -1,4 +1,4 @@
-### This program trickles through the uncertainty of severe outcome projections in the transmission model
+### This program allows for alterations in severe outcome projections in the transmission model
 ### It combines the four scripts from the original transmission model:
 ### (1) (mech shop) severe outcome age distribution
 ### (2) (mech shop) severe outcome setting-specific rates
@@ -24,7 +24,7 @@ source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
 
 sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)
 
-stochastic_severe_outcomes <- function(
+sensitivity_severe_outcomes <- function(
     incidence_log = this_incidence_log,
     incidence_log_tidy = this_incidence_log_tidy,
     vaccination_history_FINAL = this_vaccination_history_FINAL,
@@ -38,52 +38,45 @@ stochastic_severe_outcomes <- function(
     toggle_intervention = 'antiviral',
     
     #non-local variables
-    prop_sympt_LOCAL = prop_sympt
+    prop_sympt_LOCAL = prop_sympt,
+    
+    toggle_severe_outcome_proj_multiplier = 1,
+    toggle_reinfection_ratio_multiplier = 1,
+    toggle_VE_multiplier = 1
     
 ){
   
   risk_group_labels = unique(incidence_log_tidy$risk_group)  
   
-  ### PART ONE: sampling raw age distributions -> RR by age  #############################################
-  sampled_value = mapply(rlnorm,1,severe_outcome_age_distribution_RAW_v2$lognorm_a, severe_outcome_age_distribution_RAW_v2$lognorm_b)
-  workshop = cbind(severe_outcome_age_distribution_RAW_v2,sampled_value)
-  workshop = workshop %>%
-    filter(outcome %in% c('death','severe_disease','hosp')) %>%
-    mutate(sampled_value = case_when(
-      mean == LB & mean == UB ~ mean,
-      TRUE ~ sampled_value
-    )) %>%
-    select(agegroup,outcome,sampled_value)
+  ### PART ONE: import raw age distributions (not setting dependent) -> RR by age  #############################################
+  workshop = severe_outcome_age_distribution_RAW_v2 %>%
+    select(agegroup,outcome,mean)
   
   #Join overall value back on to age-specific values to calculate RR
   overall = workshop %>%
     filter(agegroup == 'overall') %>% 
-    rename(overall=sampled_value) %>% 
+    rename(overall=mean) %>% 
     select(outcome,overall)
   workshop = workshop %>%
     filter(agegroup != 'overall')  %>%
     left_join(overall, by = "outcome") %>%
-    mutate(RR = sampled_value/overall) %>%
+    mutate(RR = mean/overall) %>%
     select(agegroup,outcome,RR)
   
-  rm(sampled_value,overall)
+  rm(overall)
   ########################################################################################################   
   
   
   ### PART TWO: Adjust age-distributions to setting ######################################################
   severe_outcome_country_level = severe_outcome_country_level_input %>%
     filter(country == setting & outcome %in% c('death','severe_disease','hosp')) %>%
-    mutate(percentage = percentage/100) #make percentage between 0-1
-  
-  sampled_value = mapply(runif,1,severe_outcome_country_level$LB, severe_outcome_country_level$UB) 
-  severe_outcome_country_level = cbind(severe_outcome_country_level,sampled_value)
-  severe_outcome_country_level = severe_outcome_country_level %>% 
-    rename(pop_est = sampled_value) %>%
+    mutate(percentage = toggle_severe_outcome_proj_multiplier* percentage/100) %>%  #make percentage between 0-1 #APPLY SENSITIVITY TOGGLE
+    rename(pop_est = percentage) %>%
     select(outcome,pop_est)
-  workshop = workshop %>% 
+  workshop = workshop %>%
+    filter( outcome %in% c('death','severe_disease','hosp')) %>% 
     left_join(severe_outcome_country_level, by = "outcome") %>%
     mutate(age_est = pop_est * RR)
-  
   
   #<intermission: ensure pop-level estimate aligns with age_est * %pop >
   age_groups_RAW = c(0,9,19,29,39,49,59,69,100)
@@ -173,13 +166,8 @@ stochastic_severe_outcomes <- function(
   
   ### PART FOUR: RR * pop-level setting-specific estimates of severe outcomes ###########################
   #NB: use severe_outcome_country_level (as sampled in part three)
-  sampled_value = mapply(rlnorm,1,delta_multiplier$lognorm_a, delta_multiplier$lognorm_b)
-  workshop_d = cbind(delta_multiplier,sampled_value)
-  workshop_d = workshop_d %>% select(outcome,multiplier = sampled_value)
-  
-  sampled_value = mapply(runif,1,omicron_multiplier$LB, omicron_multiplier$UB) 
-  workshop_o = cbind(omicron_multiplier,sampled_value)
-  workshop_o = workshop_o %>% select(outcome,multiplier = sampled_value)
+  workshop_d = delta_multiplier %>% select(outcome,multiplier)
+  workshop_o = omicron_multiplier %>% select(outcome,multiplier)
   
   variant_multiplier = workshop_d %>%
     mutate(multiplier = case_when(
@@ -223,13 +211,15 @@ stochastic_severe_outcomes <- function(
   
   #(2) Load stochastic VE distirbution
   #VE_waning_distribution_SO - sample UNIFORM from all point estimates, waning distribution, ratios between age groups etc. 
-  VE_waning_distribution = stochastic_VE()
+  VE_waning_distribution = SA_VE_older_muted_SO %>% filter(waning == TRUE)
   
   #(3) Calculate VE against severe outcome by day
   VE_tracker = data.frame()
   for (outcome in c('death','severe_disease')){
     for (day in 0:num_time_steps){
-      workshop = VE_time_step(strain_now,date_start+day,outcome,
+      workshop = VE_time_step(strain_now,
+                              date_now = date_start+day,
+                              outcome,
                               VE_waning_LOCAL=VE_waning_distribution, 
                               vaccination_history_LOCAL = vaccination_history_FINAL)
       workshop = workshop %>% mutate(date=day,
@@ -257,6 +247,8 @@ stochastic_severe_outcomes <- function(
         ))
     }
   }
+  
+  VE_tracker$VE = min(VE_tracker$VE * toggle_VE_multiplier,1)
   ########################################################################################################   
   
   
@@ -294,7 +286,7 @@ stochastic_severe_outcomes <- function(
     pop_risk_group_dn = rbind(pop_general_public,pop_high_risk)
     
     #sample RR from distribution
-    RR_estimate = rnorm(1,RR_sample$RR[RR_sample$risk == risk_group_name], RR_sample$sd[RR_sample$risk == risk_group_name])
+    RR_estimate = RR_sample$RR[RR_sample$risk == risk_group_name]
     
     #adjust incidence ratio general public and incidence ratio risk group
     for (o in 1:length(severe_outcomes_list)){
@@ -342,7 +334,7 @@ stochastic_severe_outcomes <- function(
   rho_SO_est = rbeta(1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
   
   reinfection_protection = exposed_log %>%
-    mutate(protection = reinfection_ratio * rho_SO_est) %>%
+    mutate(protection = reinfection_ratio * toggle_reinfection_ratio_multiplier * rho_SO_est) %>%
     select(date,age_group,protection)
   
   #(B)Join incidence_log_tidy with severe outcome incidence by vax status
@@ -380,7 +372,8 @@ stochastic_severe_outcomes <- function(
     select(-protection) %>%
     left_join(prop_sympt_LOCAL,by= c('age_group' = 'agegroup')) %>%
     mutate(pop_est = pop_est * (1/value)) %>%
-    select(-value)
+    select(-value) %>%
+    rename(percentage = pop_est)
   
   result = list(outcomes_without_antivirals = outcomes_without_antivirals,
                 likelihood_severe_outcome = likelihood_severe_outcome) 
