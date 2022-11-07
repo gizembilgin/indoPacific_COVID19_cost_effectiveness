@@ -1,13 +1,15 @@
 ### This function calculates the population-level vaccine effectiveness at any given time by vaccine_type, dose and age_group
 
-VE_time_step <- function(strain_now,date_now,outcome){
+VE_time_step <- function(strain_now,date_now,outcome,
+                         VE_waning_LOCAL = VE_waning_distribution,#in case not copied into local environment of the function
+                         vaccination_history_LOCAL = vaccination_history_FINAL){ 
   
   #(1) load VE_distribution
-  VE_distribution <- VE_waning_distribution[VE_waning_distribution$outcome == outcome &
-                                              VE_waning_distribution$strain == strain_now,] 
+  VE_distribution <- VE_waning_LOCAL[VE_waning_LOCAL$outcome == outcome &
+                                              VE_waning_LOCAL$strain == strain_now,] 
   if (strain_now == 'WT'){
-    VE_distribution <- VE_waning_distribution[VE_waning_distribution$outcome == outcome &
-                                                VE_waning_distribution$strain == 'delta',] 
+    VE_distribution <- VE_waning_LOCAL[VE_waning_LOCAL$outcome == outcome &
+                                                VE_waning_LOCAL$strain == 'delta',] 
   }
   if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
     if ('age_group' %in% colnames(VE_distribution)){
@@ -19,11 +21,11 @@ VE_time_step <- function(strain_now,date_now,outcome){
   
   
   #(2) doses delivered to this date
-  vax_to_this_date <- vaccination_history_FINAL[vaccination_history_FINAL$date <= date_now,] 
-  if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
+  vax_to_this_date <- vaccination_history_LOCAL[vaccination_history_LOCAL$date <= date_now,] 
+  if (nrow(vaccination_history_LOCAL[vaccination_history_LOCAL$dose == 8,])>0){
     
-    booster_type = unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$dose == 8])
-    vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,]
+    booster_type = unique(vaccination_history_LOCAL$vaccine_type[vaccination_history_LOCAL$dose == 8])
+    vaccination_history_LOCAL[vaccination_history_LOCAL$dose == 8,]
     if (booster_type == 'Johnson & Johnson'){
       booster_dose_number = 2
     } else{
@@ -87,10 +89,10 @@ VE_time_step <- function(strain_now,date_now,outcome){
   if(nrow(workshop[round(workshop$VE,digits=2)>1,])){stop('VE > 1!')}
   
   #<interim> add none covered vaccines
-  if (exists("vax_type_list") == FALSE){ vax_type_list =unique(vaccination_history_FINAL$vaccine_type)}
-  if (exists("age_group_labels") == FALSE){ age_group_labels =unique(vaccination_history_FINAL$age_group)}
-  if (exists("num_vax_doses") == FALSE){ num_vax_doses = length(unique(vaccination_history_FINAL$dose[vaccination_history_FINAL$dose != 8]))}
-  if (exists("risk_group_labels") == FALSE){ risk_group_labels =unique(vaccination_history_FINAL$risk_group)}
+  if (exists("vax_type_list") == FALSE){ vax_type_list =unique(vaccination_history_LOCAL$vaccine_type)}
+  if (exists("age_group_labels") == FALSE){ age_group_labels =unique(vaccination_history_LOCAL$age_group)}
+  if (exists("num_vax_doses") == FALSE){ num_vax_doses = length(unique(vaccination_history_LOCAL$dose[vaccination_history_LOCAL$dose != 8]))}
+  if (exists("risk_group_labels") == FALSE){ risk_group_labels =unique(vaccination_history_LOCAL$risk_group)}
   
   for (t in 1:length(vax_type_list)){
     for (i in 1:length(age_group_labels)){
