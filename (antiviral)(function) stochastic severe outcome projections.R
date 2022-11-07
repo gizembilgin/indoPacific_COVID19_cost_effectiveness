@@ -38,21 +38,29 @@ stochastic_severe_outcomes <- function(
    toggle_intervention = 'antiviral',
    
    #non-local variables
-   prop_sympt_LOCAL = prop_sympt
+   prop_sympt_LOCAL = prop_sympt,
+   
+   
+   #saved sampled variables
+   save_point = "off",
+   SAVE_severe_outcome_country_level = data.frame(),
+   SAVE_VE_waning_distribution = data.frame(),
+   SAVE_rho_SO_est = data.frame()
    
 ){
   
   risk_group_labels = unique(incidence_log_tidy$risk_group)  
   
-   ### PART ONE: sampling raw age distributions -> RR by age  #############################################
+  if (save_point == "off"){
+    ### PART ONE: sampling raw age distributions -> RR by age  #############################################
     sampled_value = mapply(rlnorm,1,severe_outcome_age_distribution_RAW_v2$lognorm_a, severe_outcome_age_distribution_RAW_v2$lognorm_b)
     workshop = cbind(severe_outcome_age_distribution_RAW_v2,sampled_value)
     workshop = workshop %>%
       filter(outcome %in% c('death','severe_disease','hosp')) %>%
       mutate(sampled_value = case_when(
-      mean == LB & mean == UB ~ mean,
-      TRUE ~ sampled_value
-    )) %>%
+        mean == LB & mean == UB ~ mean,
+        TRUE ~ sampled_value
+      )) %>%
       select(agegroup,outcome,sampled_value)
     
     #Join overall value back on to age-specific values to calculate RR
@@ -83,7 +91,7 @@ stochastic_severe_outcomes <- function(
     workshop = workshop %>% 
       left_join(severe_outcome_country_level, by = "outcome") %>%
       mutate(age_est = pop_est * RR)
-   
+    
     
     #<intermission: ensure pop-level estimate aligns with age_est * %pop >
     age_groups_RAW = c(0,9,19,29,39,49,59,69,100)
@@ -185,7 +193,7 @@ stochastic_severe_outcomes <- function(
       mutate(multiplier = case_when(
         outcome == 'hosp' ~ multiplier*workshop_o$multiplier[workshop_o$outcome == 'hosp'],
         outcome %in% c('ICU','death') ~ multiplier*workshop_o$multiplier[workshop_o$outcome == 'hosp_long'])) #ASSUMPTION: hosp_long proportional to ICU and death
-
+    
     severe_outcome_country_level = severe_outcome_country_level %>%
       mutate(pop_est = case_when(
         outcome == 'death' ~ pop_est * variant_multiplier$multiplier[variant_multiplier$outcome == 'death'],
@@ -193,76 +201,26 @@ stochastic_severe_outcomes <- function(
         outcome == 'hosp' ~ pop_est * variant_multiplier$multiplier[variant_multiplier$outcome == 'hosp']
       )) %>%
       left_join(age_distribution_RR, by = c('outcome')) %>%
-      mutate(pop_est = pop_est * RR)
+      mutate(pop_est = (pop_est * RR)/100) %>%
+      rename(percentage = pop_est)
     
     # discounting_rate = 0
     # #apply discounting using continuous approach, as per larson et al.
     # if (discounting_rate >0){YLL_FINAL$life_expectancy = (1/discounting_rate)*(1-exp(-discounting_rate*YLL_FINAL$life_expectancy ))}
-  
+    
     YLL_row = severe_outcome_country_level %>%
       filter(outcome == 'death') %>%
       mutate(outcome = 'YLL') %>%
       left_join(YLL_FINAL, by = "age_group") %>%
-      mutate(pop_est = pop_est*YLL) %>%
+      mutate(percentage = percentage*YLL) %>%
       select(-YLL)
     
     severe_outcome_country_level = rbind(severe_outcome_country_level,YLL_row)
-  
+
     rm(workshop_d, workshop_o, sampled_value, variant_multiplier,YLL_row)
-    ########################################################################################################   
     
-    
-    ### PART FIVE: Initalise of VE ########################################################################
-    ##NB: ALWAYS, assume lower VE in older adults and adults with comorbidities
-    #(1) Adjust so outcome_VE
-    severe_outcome_country_level = severe_outcome_country_level %>%
-      mutate(outcome_VE = case_when(
-        outcome %in% c('death','YLL') ~ 'death',
-        outcome %in% c('hosp','severe_disease') ~ 'severe_disease'
-      ))
-    
-    #(2) Load stochastic VE distirbution
-    #VE_waning_distribution_SO - sample UNIFORM from all point estimates, waning distribution, ratios between age groups etc. 
-    VE_waning_distribution = stochastic_VE()
-    
-    #(3) Calculate VE against severe outcome by day
-    VE_tracker = data.frame()
-    for (outcome in c('death','severe_disease')){
-      for (day in 0:num_time_steps){
-        workshop = VE_time_step(strain_now,date_start+day,outcome,
-                                VE_waning_LOCAL=VE_waning_distribution, 
-                                vaccination_history_LOCAL = vaccination_history_FINAL)
-        workshop = workshop %>% mutate(date=day,
-                                       outcome_VE=outcome)
-        VE_tracker = rbind(VE_tracker,workshop)
-      }
-    }
-    VE_tracker$date = date_start + VE_tracker$date
-    
-    workshop = crossing(risk_group = risk_group_labels,
-                        dose = 0,
-                        vaccine_type = "unvaccinated",
-                        age_group = age_group_labels,
-                        date = unique(incidence_log_tidy$date),
-                        outcome_VE = c('death','severe_disease'),
-                        VE = 0)
-    VE_tracker = rbind(VE_tracker,workshop)
-    
-    if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){
-      if (risk_group_name == 'adults_with_comorbidities'){
-        VE_tracker =  VE_tracker %>%
-          mutate(VE = case_when(
-            risk_group == risk_group_name & age_group %in% c("30 to 44","45 to 59") ~ VE * sensitivity_analysis_toggles$VE_adults_comorb,
-            TRUE ~ VE
-          ))
-      }
-    }
-    ########################################################################################################   
-    
-    
-    ### PART SIX: Apply VE ########################################################################
+    #if risk-group included, then adjust general population incidence rate so pop-level estimates stay the same
     if (length(risk_group_labels)>1){
-      #if risk-group included, then adjust general population incidence rate so pop-level estimates stay the same
       
       severe_outcomes_list = unique(severe_outcome_country_level$outcome)
       severe_outcome_country_level_wRisk = data.frame()
@@ -303,7 +261,7 @@ stochastic_severe_outcomes <- function(
           this_age = age_group_labels[i]
           row = severe_outcome_country_level %>% filter(outcome == this_outcome & age_group == this_age)
           
-          IR = row$pop_est
+          IR = row$percentage
           P = pop_setting$pop[pop_setting$age_group == this_age]
           P_general = pop_risk_group_dn$pop[pop_risk_group_dn$risk_group == 'general_public' & pop_risk_group_dn$age_group == this_age]
           P_risk = pop_risk_group_dn$pop[pop_risk_group_dn$risk_group == risk_group_name & pop_risk_group_dn$age_group == this_age]
@@ -312,26 +270,90 @@ stochastic_severe_outcomes <- function(
           IR_gen = ((IR*P)/((RR_estimate*P_risk)/P_general +1))/P_general
           IR_risk = ((IR*P)/(P_general/(RR_estimate*P_risk) +1))/P_risk
           
-          row_gen = row %>% mutate(pop_est = IR_gen,risk_group = 'general_public')
-          row_risk = row %>% mutate(pop_est = IR_risk,risk_group = risk_group_name)
+          row_gen = row %>% mutate(percentage = IR_gen,risk_group = 'general_public')
+          row_risk = row %>% mutate(percentage = IR_risk,risk_group = risk_group_name)
           severe_outcome_country_level_wRisk = rbind(severe_outcome_country_level_wRisk,row_gen,row_risk)
         }
       }
-      severe_outcome_country_level_wRisk$pop_est[is.na(severe_outcome_country_level_wRisk$pop_est)]=0
+      severe_outcome_country_level_wRisk$percentage[is.na(severe_outcome_country_level_wRisk$percentage)]=0
       severe_outcome_country_level = severe_outcome_country_level_wRisk
     }
+    ########################################################################################################   
     
+    
+    ### PART FIVE: Initalise of VE ########################################################################
+    ##NB: ALWAYS, assume lower VE in older adults and adults with comorbidities
+    #(1) Adjust so outcome_VE
+    severe_outcome_country_level = severe_outcome_country_level %>%
+      mutate(outcome_VE = case_when(
+        outcome %in% c('death','YLL') ~ 'death',
+        outcome %in% c('hosp','severe_disease') ~ 'severe_disease'
+      ))
+    
+    #(2) Load stochastic VE distirbution
+    #VE_waning_distribution_SO - sample UNIFORM from all point estimates, waning distribution, ratios between age groups etc. 
+    VE_waning_distribution = stochastic_VE()
+    
+    rho_SO_est = rbeta(1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
+    
+    SAVE_severe_outcome_country_level = severe_outcome_country_level
+    SAVE_VE_waning_distribution       = VE_waning_distribution
+    SAVE_rho_SO_est                   = rho_SO_est
+    
+  } else{
+    severe_outcome_country_level = SAVE_severe_outcome_country_level
+    VE_waning_distribution       = SAVE_VE_waning_distribution
+    rho_SO_est                   = SAVE_rho_SO_est
+  }
+  
+    
+    #(3) Calculate VE against severe outcome by day
+    VE_tracker = data.frame()
+    for (outcome in c('death','severe_disease')){
+      for (day in 0:num_time_steps){
+        workshop = VE_time_step(strain_now,date_start+day,outcome,
+                                VE_waning_LOCAL=VE_waning_distribution, 
+                                vaccination_history_LOCAL = vaccination_history_FINAL)
+        workshop = workshop %>% mutate(date=day,
+                                       outcome_VE=outcome)
+        VE_tracker = rbind(VE_tracker,workshop)
+      }
+    }
+    VE_tracker$date = date_start + VE_tracker$date
+    
+    workshop = crossing(risk_group = risk_group_labels,
+                        dose = 0,
+                        vaccine_type = "unvaccinated",
+                        age_group = age_group_labels,
+                        date = unique(incidence_log_tidy$date),
+                        outcome_VE = c('death','severe_disease'),
+                        VE = 0)
+    VE_tracker = rbind(VE_tracker,workshop)
+    
+    if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){
+      if (risk_group_name == 'adults_with_comorbidities'){
+        VE_tracker =  VE_tracker %>%
+          mutate(VE = case_when(
+            risk_group == risk_group_name & age_group %in% c("30 to 44","45 to 59") ~ VE * sensitivity_analysis_toggles$VE_adults_comorb,
+            TRUE ~ VE
+          ))
+      }
+    }
+    ########################################################################################################   
+    
+    
+    ### PART SIX: Apply VE ########################################################################
     #join VE over time with severe outcome projections
     if (length(risk_group_labels)>1){
       severe_outcome_this_run = severe_outcome_country_level %>% 
         left_join(VE_tracker, by = c("age_group", "outcome_VE", "risk_group")) %>%
-        mutate(pop_est = pop_est*(1-VE)) %>%
-        select(date,outcome,age_group,risk_group,vaccine_type,dose,pop_est)
+        mutate(percentage = percentage*(1-VE)) %>%
+        select(date,outcome,age_group,risk_group,vaccine_type,dose,percentage)
     } else{
       severe_outcome_this_run = severe_outcome_country_level %>% 
         left_join(VE_tracker, by = c("age_group", "outcome_VE")) %>%
-        mutate(pop_est = pop_est*(1-VE)) %>%
-        select(date,outcome,age_group,risk_group,vaccine_type,dose,pop_est)
+        mutate(percentage = percentage*(1-VE)) %>%
+        select(date,outcome,age_group,risk_group,vaccine_type,dose,percentage)
     }
     rm(IR_gen, IR_risk, row_gen, row_risk, severe_outcomes_list, severe_outcome_country_level_wRisk, row, this_age, P, P_general, P_risk, VE_tracker, severe_outcome_country_level,workshop)
     ########################################################################################################   
@@ -339,8 +361,6 @@ stochastic_severe_outcomes <- function(
     
     ### PART SEVEN: Final calc ########################################################################   
     #(A) infection-derived immunity against severe outcomes
-    rho_SO_est = rbeta(1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
- 
     reinfection_protection = exposed_log %>%
       mutate(protection = reinfection_ratio * rho_SO_est) %>%
       select(date,age_group,protection)
@@ -348,7 +368,7 @@ stochastic_severe_outcomes <- function(
     #(B)Join incidence_log_tidy with severe outcome incidence by vax status
     workshop = severe_outcome_this_run %>%
       left_join(incidence_log_tidy, by = c("date", "age_group", "risk_group", "vaccine_type", "dose")) %>%
-      mutate(proj = incidence*pop_est/100) %>%
+      mutate(proj = incidence*percentage) %>%
       left_join(reinfection_protection, by = c("date", "age_group")) %>%
       mutate(proj = proj*(1-protection))
     
@@ -376,14 +396,17 @@ stochastic_severe_outcomes <- function(
 
     likelihood_severe_outcome = severe_outcome_this_run %>%
       left_join(reinfection_protection, by = c("date", "age_group")) %>%
-      mutate(pop_est = pop_est/100*(1-protection)) %>%
+      mutate(percentage = percentage*(1-protection)) %>%
       select(-protection) %>%
       left_join(prop_sympt_LOCAL,by= c('age_group' = 'agegroup')) %>%
-      mutate(pop_est = pop_est * (1/value)) %>%
+      mutate(percentage = percentage * (1/value)) %>%
       select(-value)
 
     result = list(outcomes_without_antivirals = outcomes_without_antivirals,
-                  likelihood_severe_outcome = likelihood_severe_outcome) 
+                  likelihood_severe_outcome = likelihood_severe_outcome,
+                  SAVE_severe_outcome_country_level = SAVE_severe_outcome_country_level,
+                  SAVE_VE_waning_distribution = SAVE_VE_waning_distribution,
+                  SAVE_rho_SO_est = SAVE_rho_SO_est) 
     ########################################################################################################
     
   return(result)
