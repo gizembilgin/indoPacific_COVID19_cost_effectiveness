@@ -3,6 +3,19 @@
 
 
 ### MINIMISE FUNCTIONS
+minimise_this_normal <- function(sd) {
+ 
+  LB_estimate = mean - qnorm(0.975) * sd
+  UB_estimate = mean - qnorm(0.025) * sd
+  
+  (LB - LB_estimate)^2 + (UB - UB_estimate)^2 #squared residuals
+}
+fit_normal <- function(mean,LB,UB){
+  
+  sd_est = optimize(minimise_this_normal, interval=c(0,mean*2))
+
+  return(sd_est$minimum)
+}
 minimise_this_lognormal <- function(sd) {
   
   mean_sq = mean^2
@@ -146,7 +159,7 @@ save(omicron_multiplier, file = '1_inputs/omicron_multiplier.Rdata' )
 
 
 
-### PART FOUR: YLL ________________________________________________________________________________________
+### PART FOUR: YLL __________________________________________________________________________________________________________________
 #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
 # who would be subject during the remaining of their lives to the mortality rates of a given period."
 # https://population.un.org/wpp/Download/Standard/Mortality/
@@ -167,6 +180,32 @@ save(YLL_FINAL, file = '1_inputs/YLL_FINAL.Rdata' )
 
 
 
+### PART FIVE: RR __________________________________________________________________________________________________________________
+RR_sample = data.frame(risk_group = c('pregnant_women','adults_with_comorbidities'),
+                       RR = c(2.40,1.95),
+                       LB = c(2.25,0.99),
+                       UB = c(2.57,3.82))
+param_est = mapply(fit_normal, RR_sample$RR, RR_sample$LB, RR_sample$UB)
+RR_sample = cbind(RR_sample,sd = param_est) 
+
+# sampled_value = mapply(rnorm,10000000,RR_sample$RR, RR_sample$sd)
+# plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
+# plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
+#save(RR_sample,file = '1_inputs/RR_sample.Rdata') #VERIFIED 04/11/2022
+#____________________________________________________________________________________________________________________________________
+
+
+
+### PART SIX: infection-derived protection against severe outcomes +_________________________________________________________________
+mean = 0.878
+LB = 0.475
+UB = 0.971
+
+rho_SO_sample = fit_beta(mean,LB,UB)
+# sampled_value = rbeta(10000000,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
+# plot(density(sampled_value)); mean(sampled_value); min(sampled_value);max(sampled_value)
+# save(rho_SO_sample,file = '1_inputs/rho_SO_sample.Rdata') #VERIFIED 04/11/2022
+#____________________________________________________________________________________________________________________________________
 
 
 
