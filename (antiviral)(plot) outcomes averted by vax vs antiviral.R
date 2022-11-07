@@ -47,7 +47,7 @@ toggle_number_of_runs = 5
 source(paste(getwd(),"/(antiviral)(function) antiviral model.R",sep=""))
 
 #detectCores() = 8
-CLUSTER <- parallel::makeCluster(6) # create cluster
+CLUSTER <- parallel::makeCluster(4) # create cluster
 doParallel::registerDoParallel(CLUSTER) # activate cluster
 
 #nesting foreach loops as per https://cran.r-project.org/web/packages/foreach/vignettes/nested.html
