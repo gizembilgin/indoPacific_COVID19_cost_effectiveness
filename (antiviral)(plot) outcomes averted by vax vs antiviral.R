@@ -37,8 +37,8 @@ toggle_fixed_antiviral_coverage = 0.2
 toggle_antiviral_type = "paxlovid"
 toggle_antiviral_target = toggle_vax_scenario_risk_group = "adults_with_comorbidities"
 
-toggle_stochastic_SO = "off"
-toggle_number_of_runs = 10
+toggle_stochastic_SO = "on"
+toggle_number_of_runs = 50
 #____________________________________________________________________________
 
 
