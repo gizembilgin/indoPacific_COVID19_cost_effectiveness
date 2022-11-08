@@ -155,6 +155,37 @@ antiviral_model <- function(toggle_antiviral_start_date,
     
     
     ###### BEGIN STOCHASTIC
+    if (length(toggle_sensitivity_analysis)>0){
+      severe_outcome_proj_multiplier = 1
+      if ('toggle_severe_outcome_proj_multiplier' %in% names(toggle_sensitivity_analysis)){severe_outcome_proj_multiplier = toggle_sensitivity_analysis$toggle_severe_outcome_proj_multiplier}
+      reinfection_ratio_multiplier = 1
+      if ('toggle_reinfection_ratio_multiplier' %in% names(toggle_sensitivity_analysis))  {reinfection_ratio_multiplier   = toggle_sensitivity_analysis$toggle_reinfection_ratio_multiplier}
+      VE_multiplier = 1
+      if ('toggle_VE_multiplier' %in% names(toggle_sensitivity_analysis))                 {VE_multiplier                  = toggle_sensitivity_analysis$toggle_VE_multiplier}
+      
+      
+      load_SO = sensitivity_severe_outcomes(
+        incidence_log = this_incidence_log,
+        incidence_log_tidy = this_incidence_log_tidy,
+        vaccination_history_FINAL = vaccination_history_FINAL,
+        exposed_log = this_exposed_log,
+        
+        setting = 'SLE',
+        num_time_steps = 365,
+        strain_now = 'omicron',
+        risk_group_name = toggle_vax_scenario_risk_group,
+        date_start = toggle_antiviral_start_date,
+        prop_sympt_LOCAL = prop_sympt,
+        
+        toggle_severe_outcome_proj_multiplier = severe_outcome_proj_multiplier,
+        toggle_reinfection_ratio_multiplier = reinfection_ratio_multiplier,
+        toggle_VE_multiplier = VE_multiplier
+      )
+      save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
+      outcomes_without_antivirals = rbind(load_SO$outcomes_without_antivirals,save_booster_dose_info)
+      likelihood_severe_outcome   = load_SO$likelihood_severe_outcome
+    }
+    
     for (run_number in 1:toggle_number_of_runs) {
       
       if (toggle_stochastic_SO == "on"){
@@ -171,29 +202,6 @@ antiviral_model <- function(toggle_antiviral_start_date,
           risk_group_name = toggle_vax_scenario_risk_group,
           date_start = toggle_antiviral_start_date,
           prop_sympt_LOCAL = prop_sympt
-        )
-        save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
-        outcomes_without_antivirals = rbind(load_SO$outcomes_without_antivirals,save_booster_dose_info)
-        likelihood_severe_outcome   = load_SO$likelihood_severe_outcome
-      } else if (length(toggle_sensitivity_analysis)>0){
-        severe_outcome_proj_multiplier = 1
-        if ('toggle_severe_outcome_proj_multiplier' %in% names(toggle_sensitivity_analysis)){severe_outcome_proj_multiplier = toggle_sensitivity_analysis$toggle_severe_outcome_proj_multiplier}
-        
-        
-        load_SO = sensitivity_severe_outcomes(
-          incidence_log = this_incidence_log,
-          incidence_log_tidy = this_incidence_log_tidy,
-          vaccination_history_FINAL = vaccination_history_FINAL,
-          exposed_log = this_exposed_log,
-          
-          setting = 'SLE',
-          num_time_steps = 365,
-          strain_now = 'omicron',
-          risk_group_name = toggle_vax_scenario_risk_group,
-          date_start = toggle_antiviral_start_date,
-          prop_sympt_LOCAL = prop_sympt,
-          
-          toggle_severe_outcome_proj_multiplier = severe_outcome_proj_multiplier
         )
         save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
         outcomes_without_antivirals = rbind(load_SO$outcomes_without_antivirals,save_booster_dose_info)
@@ -394,7 +402,7 @@ antiviral_model <- function(toggle_antiviral_start_date,
             toggle_intervention = 'booster',
             save_point = "on",
             SAVE_severe_outcome_country_level = LOADED_severe_outcome_country_level,
-            SAVE_VE_waning_distribution = LOADED_severe_outcome_country_level,
+            SAVE_VE_waning_distribution = LOADED_VE_waning_distribution,
             SAVE_rho_SO_est = LOADED_rho_SO_est
           )
           vax_effect_OWA = vax_effect_load_stochastic_SO$outcomes_without_antivirals
