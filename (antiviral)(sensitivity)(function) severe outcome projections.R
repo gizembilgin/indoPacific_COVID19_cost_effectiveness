@@ -248,7 +248,8 @@ sensitivity_severe_outcomes <- function(
     }
   }
   
-  VE_tracker$VE = min(VE_tracker$VE * toggle_VE_multiplier,1)
+  VE_tracker = VE_tracker %>% ungroup() %>% mutate(VE = VE*toggle_VE_multiplier)
+  VE_tracker$VE[VE_tracker$VE>1] = 1
   ########################################################################################################   
   
   

@@ -38,7 +38,7 @@ toggle_antiviral_type = "paxlovid"
 toggle_antiviral_target = toggle_vax_scenario_risk_group = "adults_with_comorbidities"
 
 toggle_stochastic_SO = "off"
-toggle_number_of_runs = 10
+toggle_number_of_runs = 100
 
 #____________________________________________________________________________
 
@@ -89,7 +89,7 @@ system.time({
                     toggle_number_of_runs = toggle_number_of_runs,
                     toggle_stochastic_SO = toggle_stochastic_SO,
                     toggle_sensitivity_analysis = toggle_sensitivity_analysis,
-                    toggle_compare_to_vaccine_effect = "on"
+                    toggle_compare_to_vaccine_effect = "off"
     )
     
   }
@@ -101,7 +101,6 @@ LIST_outcomes = list('severe_disease','hosp','death','YLL')
 
 ### Calculate # of antivirals per outcome averted
 workshop = RECORD_antiviral_model_simulations %>% 
-  filter(intervention == 'antiviral' | (intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
   filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted"))  %>%
   pivot_wider(
     id_cols = c(outcome,intervention,vax_scenario,antiviral_start_date,toggle_sensitivity_analysis),
@@ -115,8 +114,8 @@ for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(toggle_sensitivity_analysis),shape = as.factor(intervention),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
-    labs(title = paste(this_outcome), color = 'toggle_sensitivity_analysis',shape = 'intervention') +
+    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(toggle_sensitivity_analysis),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+    labs(title = paste(this_outcome), color = 'toggle_sensitivity_analysis') +
     ylab('')+
     xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
     xlab('doses to avert an outcome')
@@ -128,6 +127,9 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           ncol = 1,
           nrow = 4) 
 options(warn = 0)
+
+time= Sys.time()
+time = gsub(':','-',time)
 save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/SO_proj_multiplier_",time,".Rdata",sep=''))
 #____________________________________________________________________________
 
@@ -173,7 +175,7 @@ system.time({
                       toggle_number_of_runs = toggle_number_of_runs,
                       toggle_stochastic_SO = toggle_stochastic_SO,
                       toggle_sensitivity_analysis = toggle_sensitivity_analysis,
-                      toggle_compare_to_vaccine_effect = "on"
+                      toggle_compare_to_vaccine_effect = "off"
       )
       
     }
@@ -184,8 +186,7 @@ parallel::stopCluster(CLUSTER)
 LIST_outcomes = list('severe_disease','hosp','death','YLL')
 
 ### Calculate # of antivirals per outcome averted
-workshop = RECORD_antiviral_model_simulations %>% 
-  filter(intervention == 'antiviral' | (intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
+workshop = RECORD_antiviral_model_simulations %>%
   filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted"))  %>%
   pivot_wider(
     id_cols = c(outcome,intervention,vax_scenario,antiviral_start_date,toggle_sensitivity_analysis),
@@ -199,8 +200,8 @@ for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(toggle_sensitivity_analysis),shape = as.factor(intervention),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
-    labs(title = paste(this_outcome), color = 'toggle_sensitivity_analysis',shape = 'intervention') +
+    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(toggle_sensitivity_analysis),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+    labs(title = paste(this_outcome), color = 'toggle_sensitivity_analysis') +
     ylab('')+
     xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
     xlab('doses to avert an outcome')
@@ -212,11 +213,14 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           ncol = 1,
           nrow = 4) 
 options(warn = 0)
+
+time= Sys.time()
+time = gsub(':','-',time)
 save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/InfectionDerived_Immunity_",time,".Rdata",sep=''))
 #____________________________________________________________________________
 
 
-### (B) Infection-derived immunity in the population ################################################
+### (C) Vax-derived immunity in the population ################################################
 CLUSTER <- parallel::makeCluster(4) # create cluster
 doParallel::registerDoParallel(CLUSTER) # activate cluster
 
@@ -242,7 +246,7 @@ system.time({
       .inorder = FALSE
     )  %dopar% {
       
-      toggle_sensitivity_analysis = list(toggle_toggle_VE_multiplier = VE_multiplier)
+      toggle_sensitivity_analysis = list(toggle_VE_multiplier = VE_multiplier)
       
       antiviral_model(toggle_antiviral_start_date = as.Date('2023-01-01'),
                       toggle_antiviral_type          = toggle_antiviral_type,
@@ -257,7 +261,7 @@ system.time({
                       toggle_number_of_runs = toggle_number_of_runs,
                       toggle_stochastic_SO = toggle_stochastic_SO,
                       toggle_sensitivity_analysis = toggle_sensitivity_analysis,
-                      toggle_compare_to_vaccine_effect = "on"
+                      toggle_compare_to_vaccine_effect = "off"
       )
       
     }
@@ -268,8 +272,7 @@ parallel::stopCluster(CLUSTER)
 LIST_outcomes = list('severe_disease','hosp','death','YLL')
 
 ### Calculate # of antivirals per outcome averted
-workshop = RECORD_antiviral_model_simulations %>% 
-  filter(intervention == 'antiviral' | (intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
+workshop = RECORD_antiviral_model_simulations %>%
   filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted"))  %>%
   pivot_wider(
     id_cols = c(outcome,intervention,vax_scenario,antiviral_start_date,toggle_sensitivity_analysis),
@@ -283,8 +286,8 @@ for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(toggle_sensitivity_analysis),shape = as.factor(intervention),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
-    labs(title = paste(this_outcome), color = 'toggle_sensitivity_analysis',shape = 'intervention') +
+    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(toggle_sensitivity_analysis),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+    labs(title = paste(this_outcome), color = 'toggle_sensitivity_analysis') +
     ylab('')+
     xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
     xlab('doses to avert an outcome')
@@ -296,15 +299,11 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           ncol = 1,
           nrow = 4) 
 options(warn = 0)
-save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/InfectionDerived_Immunity_",time,".Rdata",sep=''))
-#____________________________________________________________________________
 
-
-
-
-
-time = Sys.time()
+time= Sys.time()
 time = gsub(':','-',time)
+save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/VaxDerived_Immunity_",time,".Rdata",sep=''))
+#____________________________________________________________________________
 
 
 
