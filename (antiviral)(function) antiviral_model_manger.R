@@ -13,7 +13,7 @@ antiviral_model_manger <- function(
     
     toggle_stochastic_SO = "off",
     toggle_compare_to_vaccine_effect = "off",
-    toggle_antiviral_type = 'paxlovid',
+    toggle_antiviral_type = 'nirmatrelvir_ritonavir',
     toggle_sensitivity_analysis = list(),
     pathway_to_care = "fixed", #options: "fixed","realistic"
     toggle_antiviral_delivery_capacity = NA,
@@ -31,8 +31,8 @@ antiviral_model_manger <- function(
                                 )
   
   load(file = '1_inputs/antiviral_effectiveness.Rdata' )
-  source(paste(getwd(),"/workshop - new sampling severe outcome projections variables.R",sep=""))
-  source(paste(getwd(),"/workshop - new apply severe outcome projections to scenario.R",sep=""))
+  source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
+  source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
   
   copy_sampling_fx_into_cluster = stochastic_severe_outcomes_sampling
   copy_application_fx_into_cluster = stochastic_severe_outcomes_application

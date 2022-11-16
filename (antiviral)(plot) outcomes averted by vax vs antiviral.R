@@ -37,10 +37,10 @@ load(file = '1_inputs/last_fit_date.Rdata')
 
 
 ### ANTIVIRAL SIMULATIONS ##################################################
-source(paste(getwd(),"/workshop - new antiviral_model_manager.R",sep=""))
-source(paste(getwd(),"/workshop - new antiviral_model_worker.R",sep=""))
-source(paste(getwd(),"/workshop - new sampling severe outcome projections variables.R",sep=""))
-source(paste(getwd(),"/workshop - new apply severe outcome projections to scenario.R",sep=""))
+source(paste(getwd(),"/(antiviral)(function) antiviral_model_manger.R",sep=""))
+source(paste(getwd(),"/(antiviral)(function) antiviral_model_worker.R",sep=""))
+source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
+source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
 
 copy_function_into_cluster = antiviral_model_worker
 
@@ -58,9 +58,9 @@ RECORD_antiviral_model_simulations <- antiviral_model_manger(
   toggle_number_of_runs = 8,
   toggle_cluster_number = 4,
   
-  toggle_stochastic_SO = "on",
+  toggle_stochastic_SO = "off",
   toggle_compare_to_vaccine_effect = "on",
-  toggle_antiviral_type = 'paxlovid',
+  toggle_antiviral_type = 'nirmatrelvir_ritonavir ', #options:nirmatrelvir_ritonavir,molunipiravir           
   toggle_sensitivity_analysis = list(),
   pathway_to_care = "fixed",
   toggle_fixed_antiviral_coverage = 0.2
