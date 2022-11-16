@@ -1,7 +1,7 @@
 antiviral_type,outcome,mean,LB,UB,source
-paxlovid,severe_disease,0.57,0.36,0.72,Najjar-Debbiny et al. 2022 (by correspondance)
-paxlovid,death,0.88,0.64,0.96,Zheng et al. 2022
-paxlovid,hosp,0.68,0.25,0.87,Zheng et al. 2022
+nirmatrelvir_ritonavir,severe_disease,0.57,0.36,0.72,Najjar-Debbiny et al. 2022 (by correspondance)
+nirmatrelvir_ritonavir,death,0.88,0.64,0.96,Zheng et al. 2022
+nirmatrelvir_ritonavir,hosp,0.68,0.25,0.87,Zheng et al. 2022
 molunipiravir,severe_disease,0.3,0.01,0.51,https://www.merck.com/news/merck-and-ridgeback-biotherapeutics-provide-update-on-results-from-move-out-study-of-molnupiravir-an-investigational-oral-antiviral-medicine-in-at-risk-adults-with-mild-to-moderate-covid-19/
 molunipiravir,death,0.24,0.05,0.39,Wong et al. 2022
 molunipiravir,hosp,0,0,0,Wong et al. 2022
