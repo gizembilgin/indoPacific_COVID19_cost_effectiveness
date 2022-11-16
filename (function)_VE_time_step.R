@@ -2,7 +2,8 @@
 
 VE_time_step <- function(strain_now,date_now,outcome,
                          VE_waning_LOCAL = VE_waning_distribution,#in case not copied into local environment of the function
-                         vaccination_history_LOCAL = vaccination_history_FINAL){ 
+                         vaccination_history_LOCAL = vaccination_history_FINAL,
+                         SA_toggles_local = sensitivity_analysis_toggles){ 
   
   #(1) load VE_distribution
   VE_distribution <- VE_waning_LOCAL[VE_waning_LOCAL$outcome == outcome &
@@ -11,7 +12,7 @@ VE_time_step <- function(strain_now,date_now,outcome,
     VE_distribution <- VE_waning_LOCAL[VE_waning_LOCAL$outcome == outcome &
                                                 VE_waning_LOCAL$strain == 'delta',] 
   }
-  if ('VE_older_adults' %in% names(sensitivity_analysis_toggles)){
+  if ('VE_older_adults' %in% names(SA_toggles_local)){
     if ('age_group' %in% colnames(VE_distribution)){
       if (length(unique(VE_distribution$age_group)) == 1){
         VE_distribution = VE_distribution %>% ungroup() %>% select(-age_group)
@@ -68,7 +69,7 @@ VE_time_step <- function(strain_now,date_now,outcome,
   }
 
   #(3) Bring VE d'n and AIR history together
-  if ('age_group' %in% colnames(VE_distribution) ){
+  if ('age_group' %in% colnames(VE_distribution)){
     workshop <- vax_to_this_date %>%
       left_join(VE_distribution, by = c("vaccine_type", "dose", "days",'age_group')) %>%
       select(risk_group,vaccine_type,dose,days,age_group,VE_days,prop) %>%

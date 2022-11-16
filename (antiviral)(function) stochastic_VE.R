@@ -2,11 +2,14 @@
 
 raw_VE_point_est <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
 raw_VE_severe_outcomes <- read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)
+load(file = '1_inputs/pop_estimates.Rdata')
 
 #system.time({stochastic_VE()}) #1.28 sec
 
 stochastic_VE <- function(
-  strain_now = 'omicron'
+    age_groups_num = c(0,4,9,17,29,44,59,69,110),
+    age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100'),
+    strain_now = 'omicron'
 ){
 
   ##### PART ONE: point estimates of primary schedule ####################################################################################
