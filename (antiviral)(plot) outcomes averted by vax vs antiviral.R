@@ -32,73 +32,41 @@ time.start.AntiviralSimulations=proc.time()[[3]]
 ### TOGGLES ################################################################
 load(file = '1_inputs/last_fit_date.Rdata')
 
-pathway_to_care = 'fixed'
-toggle_fixed_antiviral_coverage = 0.2
-toggle_antiviral_type = "paxlovid"
-toggle_antiviral_target = toggle_vax_scenario_risk_group = "adults_with_comorbidities"
-
-toggle_stochastic_SO = "on"
-toggle_number_of_runs = 50
 #____________________________________________________________________________
 
 
 
 ### ANTIVIRAL SIMULATIONS ##################################################
-source(paste(getwd(),"/(antiviral)(function) antiviral model.R",sep=""))
+source(paste(getwd(),"/workshop - new antiviral_model_manager.R",sep=""))
+source(paste(getwd(),"/workshop - new antiviral_model_worker.R",sep=""))
+source(paste(getwd(),"/workshop - new sampling severe outcome projections variables.R",sep=""))
+source(paste(getwd(),"/workshop - new apply severe outcome projections to scenario.R",sep=""))
 
-#detectCores() = 8
-CLUSTER <- parallel::makeCluster(4) # create cluster
-doParallel::registerDoParallel(CLUSTER) # activate cluster
+copy_function_into_cluster = antiviral_model_worker
 
-#nesting foreach loops as per https://cran.r-project.org/web/packages/foreach/vignettes/nested.html
-system.time({
-  RECORD_antiviral_model_simulations <- foreach::foreach(
-    toggle_vax_scenario = c(
-      'all willing adults vaccinated with a primary schedule',
-      'all willing adults vaccinated with a primary schedule and high risk group recieve a booster', #(baseline)
-      'all willing adults vaccinated with a primary schedule plus booster dose'
-    ),
-    .packages = c('tidyverse'),
-    .combine = rbind,
-    .inorder = FALSE
-  )  %dopar% {
-      
-      antiviral_model(toggle_antiviral_start_date = as.Date('2023-01-01'),
-                      toggle_antiviral_type          = toggle_antiviral_type,
-                      toggle_antiviral_target        = toggle_antiviral_target,
-                      toggle_vax_scenario            = toggle_vax_scenario,
-                      toggle_vax_scenario_risk_group = toggle_vax_scenario_risk_group,
-                      
-                      RECORD_antiviral_setup          = RECORD_antiviral_setup,
-                      
-                      toggle_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
-                      
-                      toggle_number_of_runs = toggle_number_of_runs,
-                      toggle_stochastic_SO = toggle_stochastic_SO,
-                      toggle_compare_to_vaccine_effect = "on"
-      )
-      
-    }
-})
-
-parallel::stopCluster(CLUSTER)
-
-#booster rollout for adults with comorb ends around March/April, check with booster starting on 01/01
-additional_scenario = antiviral_model(toggle_antiviral_start_date = as.Date('2023-06-01'),
-                                      toggle_antiviral_type          = toggle_antiviral_type,
-                                      toggle_antiviral_target        = toggle_antiviral_target,
-                                      toggle_vax_scenario            = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
-                                      toggle_vax_scenario_risk_group = toggle_vax_scenario_risk_group,
-                                      
-                                      RECORD_antiviral_setup          = RECORD_antiviral_setup,
-                                      
-                                      toggle_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
-                                      
-                                      toggle_number_of_runs = toggle_number_of_runs,
-                                      toggle_stochastic_SO = toggle_stochastic_SO
+RECORD_antiviral_model_simulations <- antiviral_model_manger(
+ 
+  LIST_antiviral_start_date = c(as.Date('2023-01-01'),as.Date('2023-07-01')), 
+  LIST_vax_scenario = c('all willing adults vaccinated with a primary schedule',
+                          'all willing adults vaccinated with a primary schedule and high risk group recieve a booster', 
+                          'all willing adults vaccinated with a primary schedule plus booster dose'),
+  LIST_antiviral_target_group = "adults_with_comorbidities",
+  toggle_high_risk_group = "adults_with_comorbidities",
+  
+  RECORD_antiviral_setup = RECORD_antiviral_setup,
+  
+  toggle_number_of_runs = 8,
+  toggle_cluster_number = 4,
+  
+  toggle_stochastic_SO = "on",
+  toggle_compare_to_vaccine_effect = "on",
+  toggle_antiviral_type = 'paxlovid',
+  toggle_sensitivity_analysis = list(),
+  pathway_to_care = "fixed",
+  toggle_fixed_antiviral_coverage = 0.2
 )
-
-RECORD_antiviral_model_simulations = rbind(RECORD_antiviral_model_simulations,additional_scenario)
+time.end.AntiviralSimulations=proc.time()[[3]]
+(time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # roughly 8 hours stochastically
 #____________________________________________________________________________
 
 
@@ -111,14 +79,16 @@ LIST_outcomes = list('severe_disease',
 
 ### Calculate # of antivirals per outcome averted
 workshop = RECORD_antiviral_model_simulations %>% 
-  filter(intervention == 'antiviral' | (intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
+  filter( !(intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
+  #filter(!(intervention == 'vaccine' & vax_scenario == 'all willing adults vaccinated with a primary schedule plus booster dose')) %>%
   filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
-    intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
-    intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01')
+   # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
+    intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
+    TRUE ~ intervention
   )) %>%
   pivot_wider(
-    id_cols = c(outcome,intervention,vax_scenario,antiviral_start_date),
+    id_cols = c(vax_scenario,vax_scenario_risk_group,antiviral_target_group,outcome,intervention),
     names_from = result,
     values_from = value)
 
@@ -148,5 +118,4 @@ time = gsub(':','-',time)
 save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/VaxAntiviral_Comparison_",time,".Rdata",sep=''))
 
 
-time.end.AntiviralSimulations=proc.time()[[3]]
-(time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # 2.4 minutes
+
