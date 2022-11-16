@@ -5,9 +5,6 @@
 ### (3) (5)_severe_outcomes_calc
 ### (4) (6)_severe_outcome_proj
 
-# pop_estimates <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
-# save(pop_estimates,file = '1_inputs/pop_estimates.Rdata')
-
 stochastic_severe_outcomes_sampling <- function(
   
     setting = 'SLE',
@@ -30,7 +27,6 @@ stochastic_severe_outcomes_sampling <- function(
   load(file = '1_inputs/RR_sample.Rdata')
   load(file = '1_inputs/rho_SO_sample.Rdata') 
   load(file = '1_inputs/pop_estimates.Rdata')
-  
   severe_outcome_country_level_input <- read.csv('1_inputs/severe_outcome_country_level.csv')
 
   source(paste(getwd(),"/(antiviral)(function) stochastic_VE.R",sep=""))
@@ -39,8 +35,7 @@ stochastic_severe_outcomes_sampling <- function(
   risk_group_labels = c('general_public',risk_group_name)
   
   
-  
-    ### PART ONE: sampling raw age distributions -> RR by age  #############################################
+  ### PART ONE: sampling raw age distributions -> RR by age  #############################################
     sampled_value = mapply(rlnorm,1,severe_outcome_age_distribution_RAW_v2$lognorm_a, severe_outcome_age_distribution_RAW_v2$lognorm_b)
     workshop = cbind(severe_outcome_age_distribution_RAW_v2,sampled_value)
     workshop = workshop %>%
@@ -63,7 +58,7 @@ stochastic_severe_outcomes_sampling <- function(
       select(agegroup,outcome,RR)
     
     rm(sampled_value,overall)
-    ########################################################################################################   
+ ########################################################################################################   
     
     
     ### PART TWO: Adjust age-distributions to setting ######################################################
@@ -286,9 +281,11 @@ stochastic_severe_outcomes_sampling <- function(
     rho_SO_est = rbeta(1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
     
 
-  result = list(SAVE_severe_outcome_country_level = severe_outcome_country_level,
-                SAVE_VE_waning_distribution = VE_waning_distribution,
-                SAVE_rho_SO_est = rho_SO_est) 
+    result = list(
+      SAVE_severe_outcome_country_level = severe_outcome_country_level,
+      SAVE_VE_waning_distribution = VE_waning_distribution,
+      SAVE_rho_SO_est = rho_SO_est
+    ) 
   ########################################################################################################
   
   return(result)

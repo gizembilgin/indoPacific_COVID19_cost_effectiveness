@@ -271,7 +271,6 @@ for (ticket in 1:length(queue)){
     mutate(vax_scenario = vax_strategy_description,
            vax_scenario_risk_group = risk_group_name)
   
-  #COMEBACK: choice, can embed vax_strategy_description and risk_group_name into four dependencies, or store outside - depends on what is easier in 'antiviral (simulations)'
   RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
   RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
   RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
@@ -279,10 +278,7 @@ for (ticket in 1:length(queue)){
   RECORD_exposed_log                 = rbind(RECORD_exposed_log,exposed_log)
   RECORD_incidence_log               = rbind(RECORD_incidence_log,incidence_log)
   #____________________________________________________________________________________________________________________
-
   ###############################################################################################################
-  
-  
 }
 sensitivity_analysis_toggles = list()
 #____________________________________________________________________________
@@ -300,6 +296,9 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",Sys.Date(),".Rdata",sep=''))
 save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",Sys.Date(),".Rdata",sep=''))
 
+pop_estimates <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
+save(pop_estimates,file = '1_inputs/pop_estimates.Rdata')
+
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
 ###############################################################################################################
@@ -307,6 +306,6 @@ time.end.AntiviralSetUp - time.start.AntiviralSetUp
 
 
 
-### SENSE CHECK MODEL RUNS ####################################################################################
+### VISUALLY SENSE CHECK MODEL RUNS ############################################################################
 # RECORD_outcomes_without_antivirals = RECORD_outcomes_without_antivirals %>% arrange(outcome)
 # View(RECORD_outcomes_without_antivirals)

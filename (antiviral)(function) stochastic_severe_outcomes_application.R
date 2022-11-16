@@ -5,21 +5,19 @@
 
 
 stochastic_severe_outcomes_application <- function(
-    incidence_log_tidy = this_incidence_log_tidy,
-    vaccination_history_FINAL = this_vaccination_history_FINAL,
-    exposed_log = this_exposed_log,
-
-    #non-local variables
-    risk_group_name = toggle_vax_scenario_risk_group,
-    prop_sympt_LOCAL = prop_sympt,
-    VE_waning_distribution = sampled_VE_waning_distribution,
+    incidence_log_tidy           = this_incidence_log_tidy,
+    vaccination_history_FINAL    = this_vaccination_history_FINAL,
+    exposed_log                  = this_exposed_log,
+    risk_group_name              = toggle_vax_scenario_risk_group,
+    prop_sympt_LOCAL             = prop_sympt,
+    VE_waning_distribution       = sampled_VE_waning_distribution,
     severe_outcome_country_level = sampled_severe_outcome_country_level,
-    rho_SO_est = sampled_rho_SO_est,
+    rho_SO_est                   = sampled_rho_SO_est,
     
-    num_time_steps = 365,
-    strain_now = 'omicron',
-    date_start = as.Date('2023-01-01'),
-    age_groups_num = c(0,4,9,17,29,44,59,69,110),
+    num_time_steps   = 365,
+    strain_now       = 'omicron',
+    date_start       = as.Date('2023-01-01'),
+    age_groups_num   = c(0,4,9,17,29,44,59,69,110),
     age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
 
 ){

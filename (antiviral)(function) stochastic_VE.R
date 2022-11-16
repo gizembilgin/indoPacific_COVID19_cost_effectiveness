@@ -1,4 +1,4 @@
-
+### This program includes uncertainty in our estimates of VE by sampling from each VE estimate confidence interval using a uniform distribution
 
 raw_VE_point_est <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
 raw_VE_severe_outcomes <- read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)

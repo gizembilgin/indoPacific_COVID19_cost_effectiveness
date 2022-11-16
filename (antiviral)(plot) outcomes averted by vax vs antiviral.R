@@ -23,15 +23,7 @@ for (i in 1:length(list_poss_Rdata)){
 }
 latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
 load(file = paste(rootpath,"x_results/",latest_file,sep=''))
-
-time.start.AntiviralSimulations=proc.time()[[3]]
-#____________________________________________________________________________
-
-
-
-### TOGGLES ################################################################
 load(file = '1_inputs/last_fit_date.Rdata')
-
 #____________________________________________________________________________
 
 
@@ -41,8 +33,9 @@ source(paste(getwd(),"/(antiviral)(function) antiviral_model_manger.R",sep=""))
 source(paste(getwd(),"/(antiviral)(function) antiviral_model_worker.R",sep=""))
 source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
 source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
-
 copy_function_into_cluster = antiviral_model_worker
+
+time.start.AntiviralSimulations=proc.time()[[3]]
 
 RECORD_antiviral_model_simulations <- antiviral_model_manger(
  
@@ -60,11 +53,12 @@ RECORD_antiviral_model_simulations <- antiviral_model_manger(
   
   toggle_stochastic_SO = "off",
   toggle_compare_to_vaccine_effect = "on",
-  toggle_antiviral_type = 'nirmatrelvir_ritonavir ', #options:nirmatrelvir_ritonavir,molunipiravir           
+  toggle_antiviral_type = 'molunipiravir', #options:nirmatrelvir_ritonavir,molunipiravir           
   toggle_sensitivity_analysis = list(),
   pathway_to_care = "fixed",
   toggle_fixed_antiviral_coverage = 0.2
 )
+
 time.end.AntiviralSimulations=proc.time()[[3]]
 (time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # roughly 8 hours stochastically
 #____________________________________________________________________________
@@ -112,7 +106,11 @@ ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           ncol = 1,
           nrow = 4) 
 options(warn = 0)
+#____________________________________________________________________________
 
+
+
+### SAVE ####################################################################
 time = Sys.time()
 time = gsub(':','-',time)
 save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/VaxAntiviral_Comparison_",time,".Rdata",sep=''))

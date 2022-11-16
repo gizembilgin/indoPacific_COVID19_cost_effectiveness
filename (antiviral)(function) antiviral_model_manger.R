@@ -1,46 +1,50 @@
+### This function queues all of the model runs you have requested
 
 antiviral_model_manger <- function(
   
-    LIST_antiviral_start_date, 
-    LIST_vax_scenario,
-    LIST_antiviral_target_group,
-    toggle_high_risk_group = "adults_with_comorbidities",
+    LIST_antiviral_start_date,   # options: any date >= 01/01/2023 (due to '(antiviral) set up.R' configuration)
+    LIST_vax_scenario,           # options: 
+                                 # "all willing adults vaccinated with a primary schedule"
+                                 # "all willing adults vaccinated with a primary schedule and high risk group recieve a booster"
+                                 # "all willing adults vaccinated with a primary schedule plus booster dose"
+    LIST_antiviral_target_group, # options:'adults_with_comorbidities', 'pregnant_women','unvaccinated_adults','all_adults','unvaccinated_adults_AND_adults_with_comorbidities'
+    toggle_high_risk_group = "adults_with_comorbidities",  #options:'adults_with_comorbidities', 'pregnant_women'
     
-    RECORD_antiviral_setup,
+    RECORD_antiviral_setup,                           # results file of '(antiviral) set up.R'
                             
     toggle_number_of_runs = 100,
-    toggle_cluster_number = 4,
-    
-    toggle_stochastic_SO = "off",
+    toggle_cluster_number = 4,                        # number of computer cores to engage
+    toggle_stochastic_SO = "off",                     # run severe outcomes stochastically
     toggle_compare_to_vaccine_effect = "off",
-    toggle_antiviral_type = 'nirmatrelvir_ritonavir',
+    toggle_antiviral_type = 'nirmatrelvir_ritonavir', # options:"nirmatrelvir_ritonavir","molunipiravir"     
     toggle_sensitivity_analysis = list(),
-    pathway_to_care = "fixed", #options: "fixed","realistic"
-    toggle_antiviral_delivery_capacity = NA,
-    toggle_fixed_antiviral_coverage = 0.2,
+    pathway_to_care = "fixed",                        # options: "fixed","realistic"
+    toggle_antiviral_delivery_capacity = NA,          # this toggle is used in combination with pathway_to_care == "realistic"
+    toggle_fixed_antiviral_coverage = 0.2,            # this toggle is used in combination with pathway_to_care == "fixed"
     
     antiviral_model_worker = copy_function_into_cluster
     
 ){
  
-  ### Step one: create list of scenarios
+  ### Step One: create list of scenarios
   manager_scenario_dataframe = crossing(
                                 vax_scenario = LIST_vax_scenario,
                                 antiviral_target_group = LIST_antiviral_target_group,
                                 vax_scenario_risk_group = toggle_high_risk_group
                                 )
+  booster_start_date = min(RECORD_antiviral_setup$vaccination_history_FINAL$date[RECORD_antiviral_setup$vaccination_history_FINAL$dose == 8])
   
+  #load functions to be copied into clusters
   load(file = '1_inputs/antiviral_effectiveness.Rdata' )
   source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
   source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
-  
   copy_sampling_fx_into_cluster = stochastic_severe_outcomes_sampling
   copy_application_fx_into_cluster = stochastic_severe_outcomes_application
   #____________________________________
   
   
   
-  ### Step two: set parallel runs
+  ### Step Two: set parallel runs
   CLUSTER <- parallel::makeCluster(toggle_cluster_number) # create cluster
   doParallel::registerDoParallel(CLUSTER) # activate cluster
   
@@ -66,6 +70,7 @@ antiviral_model_manger <- function(
         local_antiviral_delivery_capacity = toggle_antiviral_delivery_capacity,
         local_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
         local_antiviral_effectiveness = antiviral_effectiveness,
+        local_booster_start_date = booster_start_date,
         
         stochastic_severe_outcomes_sampling = copy_sampling_fx_into_cluster,
         stochastic_severe_outcomes_application = copy_application_fx_into_cluster
@@ -79,9 +84,9 @@ antiviral_model_manger <- function(
   
   
   
-  ### Step three: summary over runs
- summary_over_runs <-
-    RECORD_antiviral_model_simulations %>%
+  ### Step Three: summary over runs
+  summary_over_runs <-
+    RECORD_antiviral_model_simulations %>% 
     group_by(vax_scenario, vax_scenario_risk_group, antiviral_target_group, outcome,intervention, evaluation_group) %>%
     dplyr::summarise(
       intervention_doses_delivered = mean(intervention_doses_delivered),
@@ -117,7 +122,7 @@ antiviral_model_manger <- function(
   
 
   #monitor if daily capacity being used or not enough seeking/accessing care
-  if (pathway_to_care == 'realistic'){
+  if (pathway_to_care == 'realistic') {
     antiviral_rollout_capacity_utilised = round(
       100 * length_antiviral_delivery_tracker / (
         local_antiviral_delivery_capacity * antiviral_delivery_length
@@ -125,7 +130,8 @@ antiviral_model_manger <- function(
       digits = 1
     )
     antiviral_eligible_pop_coverage = round(100 *
-                                              length_antiviral_delivery_tracker / total_target, digits = 1)
+                                              length_antiviral_delivery_tracker / total_target,
+                                            digits = 1)
     row1 = c(outcome = 'program_measure',
              result = 'antiviral_rollout_capacity_utilised',
              value = antiviral_rollout_capacity_utilised)

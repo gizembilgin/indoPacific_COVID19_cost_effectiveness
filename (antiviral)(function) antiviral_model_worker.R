@@ -1,7 +1,12 @@
+### This function runs the model as per the request of antiviral_model_manager.
+### The function is structured so that severe outcome estimates are sampled once, and are consistent across vaccine scenarios.
+### Antiviral start dates are nestled within vaccine scenarios to save computational energy. 
+
 antiviral_model_worker <- function(
     manager_scenario_dataframe,
     RECORD_antiviral_setup,
   
+    #copy all variables into the local memory of the function
     local_LIST_antiviral_start_date = LIST_antiviral_start_date,
     local_antiviral_type = toggle_antiviral_type,
     local_stochastic_SO = toggle_stochastic_SO,
@@ -11,25 +16,23 @@ antiviral_model_worker <- function(
     local_antiviral_delivery_capacity = toggle_antiviral_delivery_capacity,
     local_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
     local_antiviral_effectiveness = antiviral_effectiveness,
-    local_booster_start_date = as.Date('2023-01-01'), #COMEBACK - hard coded
-    
+    local_booster_start_date = as.Date('2023-01-01'),
+  
     stochastic_severe_outcomes_sampling = copy_sampling_fx_into_cluster,
     stochastic_severe_outcomes_application = copy_application_fx_into_cluster
 ){
   
-  ### Initalise tracker
+  ### INITALISE
   this_worker_result = data.frame()
-  
-  ### Check order
   if (local_compare_to_vaccine_effect == "on"){
     manager_scenario_dataframe$vax_scenario = factor(manager_scenario_dataframe$vax_scenario, levels = c('all willing adults vaccinated with a primary schedule',
                                                                                                          'all willing adults vaccinated with a primary schedule and high risk group recieve a booster', 
                                                                                                          'all willing adults vaccinated with a primary schedule plus booster dose'))
-    manager_scenario_dataframe = manager_scenario_dataframe %>% arrange(vax_scenario)
+    manager_scenario_dataframe = manager_scenario_dataframe %>% arrange(vax_scenario) # order
   }
   
   
-  ### Step One: sampling
+  ### SAMPLE
   # Sample antiviral effectiveness by type
   toggle_antiviral_effectiveness = local_antiviral_effectiveness %>%
     filter(antiviral_type == local_antiviral_type)
@@ -41,7 +44,7 @@ antiviral_model_worker <- function(
   YLL_addition = toggle_antiviral_effectiveness %>% filter(outcome == 'death') %>% mutate(outcome = 'YLL')
   toggle_antiviral_effectiveness = rbind(toggle_antiviral_effectiveness,YLL_addition)
   
-  #Sample parameters related to severe outcome projections
+  # Sample parameters related to severe outcome projections
   if (local_stochastic_SO == "on"){
     input_vaccine_type_list = unique(RECORD_antiviral_setup$vaccination_history_FINAL$vaccine_type)
     
@@ -55,7 +58,7 @@ antiviral_model_worker <- function(
   
   
   
-  ### Step Two: run over simulations
+  ### RUN OVER SIMULATIONS
   for (run_number in 1:nrow(manager_scenario_dataframe)){
     
     ### LOAD VAX SCENARIO ########################################################
@@ -184,7 +187,6 @@ antiviral_model_worker <- function(
             vax_scenario_risk_group == toggle_vax_scenario_risk_group
           )
       } 
-      
       #carry baseline of outcomes with no booster or antiviral to calculate vax effect
 
       
@@ -280,9 +282,7 @@ antiviral_model_worker <- function(
           
           
         ### PATHWAY TO CARE STEP TWO: How many days after symptom onset can the individual access care?#######
-        #ASSUMPTION: incidence is day 0 of symptom onset
-        
-        healthcare_access = function(age_group) {
+        healthcare_access = function(age_group) { #ASSUMPTION: incidence is day 0 of symptom onset
           #COMEBACK: need real data to estimate
           if (age_group %in% c("0 to 4",    "5 to 9",    "10 to 17")) {
             sample = round(runif(1, min = 0, max = 7))
@@ -311,10 +311,9 @@ antiviral_model_worker <- function(
           
           
         ### PATHWAY TO CARE STEP THREE: Is the individual allocated antivirals?#######
-        #ASSUMPTION: allocated at random
         antiviral_delivery_tracker = data.frame()
         
-        for (day in 0:antiviral_delivery_length) {
+        for (day in 0:antiviral_delivery_length) { #ASSUMPTION: allocated at random
           this_date =  toggle_antiviral_start_date + day
           
           #include all presenting within
@@ -338,6 +337,7 @@ antiviral_model_worker <- function(
           left_join(antiviral_target_individuals_run, by = 'ID') #remove all not selected for antivirals
         rm(antiviral_delivery_tracker)
         #____________________________________________________________________________
+        
       } else if (local_pathway_to_care == 'fixed') {
         #randomly sample the fixed proportion from the target population
         num_to_sample = total_target * local_fixed_antiviral_coverage
@@ -353,7 +353,6 @@ antiviral_model_worker <- function(
       length_antiviral_delivery_tracker = nrow(antiviral_target_individuals_run)
         
         
-      
       ### PATHWAY TO CARE STEP FOUR: How many cases of severe disease are prevented?#######
       workshop = antiviral_target_individuals_run %>%
         left_join(
@@ -413,7 +412,7 @@ antiviral_model_worker <- function(
     
 
   
-    ### create row output #################################################
+    ### CREATE OUTPUT #################################################
     #select dataset to be used as comparison to calculate percentage
     #if comparing vaccine effect to antiviral effect than compare to no vax no antiviral
     if (local_compare_to_vaccine_effect == "on" ){
@@ -435,7 +434,6 @@ antiviral_model_worker <- function(
           values_to = 'overall'
         ) %>%
         select(outcome,evaluation_group,overall)
-      
     }
     
     one_complete_run <-
@@ -452,7 +450,7 @@ antiviral_model_worker <- function(
     
     this_worker_result = rbind(one_complete_run, this_worker_result)
     
-  }
+  } #end vaccination scenario loop
   
    return(this_worker_result)
 }
