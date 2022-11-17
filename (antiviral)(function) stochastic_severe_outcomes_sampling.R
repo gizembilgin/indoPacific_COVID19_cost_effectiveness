@@ -164,11 +164,11 @@ stochastic_severe_outcomes_sampling <- function(
     
     ### PART FOUR: RR * pop-level setting-specific estimates of severe outcomes ###########################
     #NB: use severe_outcome_country_level (as sampled in part three)
-    sampled_value = mapply(rlnorm,1,delta_multiplier$lognorm_a, delta_multiplier$lognorm_b)
+    sampled_value = mapply(rnorm,1,delta_multiplier$multiplier, delta_multiplier$sd)
     workshop_d = cbind(delta_multiplier,sampled_value)
     workshop_d = workshop_d %>% select(outcome,multiplier = sampled_value)
     
-    sampled_value = mapply(runif,1,omicron_multiplier$LB, omicron_multiplier$UB) 
+    sampled_value = mapply(rnorm,1,omicron_multiplier$multiplier, omicron_multiplier$sd)
     workshop_o = cbind(omicron_multiplier,sampled_value)
     workshop_o = workshop_o %>% select(outcome,multiplier = sampled_value)
     
