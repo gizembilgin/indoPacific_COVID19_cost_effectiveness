@@ -118,7 +118,7 @@ rm(row_replacement,workshop,lognorm_param)
 ### PART TWO: severe outcome setting-specific value (severe_outcome_country_level)
 # severe_outcome_country_level <- read.csv('1_inputs/severe_outcome_country_level.csv')
 # severe_outcome_country_level %>% mutate(diff = (UB-LB)/mean) 
-# Let's  use a uniform distribution because CI tight
+# Let's  use a uniform distribution because CI so tight (LB == mean and UB == mean for some rows)
 #_______________________________________________________________________________
 
 
@@ -127,19 +127,24 @@ rm(row_replacement,workshop,lognorm_param)
 #WT to Delta multiplier
 workshop <- read.csv('1_inputs/severe_outcome_variant_multiplier.csv')
 workshop = workshop %>% filter(variant == 'delta')
-lognorm_param = mapply(fit_lognormal, workshop$multiplier, workshop$lower_est, workshop$upper_est)
-delta_multiplier = cbind(workshop,t(lognorm_param)) 
+norm_param = mapply(fit_normal, workshop$multiplier, workshop$lower_est, workshop$upper_est)
+delta_multiplier = cbind(workshop,sd = norm_param) 
 
-# sampled_value = mapply(rlnorm,10000000,delta_multiplier$lognorm_a, delta_multiplier$lognorm_b)
-# plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
-# plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
-# plot(density(sampled_value[,3])); mean(sampled_value[,3]); min(sampled_value[,3])
-# 
+sampled_value = mapply(rnorm,10000000,delta_multiplier$multiplier, delta_multiplier$sd)
+plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
+plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
+plot(density(sampled_value[,3])); mean(sampled_value[,3]); min(sampled_value[,3])
 
 #Delta to Omicron multiplier
 omicron_multiplier <- read.csv('1_inputs/severe_outcome_variant_multiplier_complex.csv') #omicron vs delta
-omicron_multiplier = omicron_multiplier %>% rename(LB=lower_est, UB=upper_est)
-# Let's  use a uniform distribution because CI tight
+workshop = omicron_multiplier
+norm_param = mapply(fit_normal, workshop$multiplier, workshop$lower_est, workshop$upper_est)
+omicron_multiplier = cbind(workshop,sd = norm_param) 
+
+sampled_value = mapply(rnorm,10000000,omicron_multiplier$multiplier, omicron_multiplier$sd)
+sampled_value2 =  mapply(runif,10000000,omicron_multiplier$lower_est, omicron_multiplier$upper_est)
+plot(density(sampled_value[,1]));lines(density(sampled_value2[,1]))
+plot(density(sampled_value[,2]));lines(density(sampled_value2[,2]))
 
 save(delta_multiplier, file = '1_inputs/delta_multiplier.Rdata' )
 save(omicron_multiplier, file = '1_inputs/omicron_multiplier.Rdata' )
@@ -179,7 +184,7 @@ RR_sample = cbind(RR_sample,sd = param_est)
 # sampled_value = mapply(rnorm,10000000,RR_sample$RR, RR_sample$sd)
 # plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
 # plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
-#save(RR_sample,file = '1_inputs/RR_sample.Rdata') #VERIFIED 04/11/2022
+save(RR_sample,file = '1_inputs/RR_sample.Rdata') #VERIFIED 04/11/2022
 #_______________________________________________________________________________
 
 
@@ -192,12 +197,76 @@ UB = 0.971
 rho_SO_sample = fit_beta(mean,LB,UB)
 # sampled_value = rbeta(10000000,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
 # plot(density(sampled_value)); mean(sampled_value); min(sampled_value);max(sampled_value)
-# save(rho_SO_sample,file = '1_inputs/rho_SO_sample.Rdata') #VERIFIED 04/11/2022
+save(rho_SO_sample,file = '1_inputs/rho_SO_sample.Rdata') #VERIFIED 04/11/2022
 #_______________________________________________________________________________
 
 
 
-### PART SEVEN: Antiviral effectiveness ________________________________________
+### PART SEVEN: raw_VE_point_est (dose 1 and 2) ________________________________
+raw = read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
+raw = raw %>% mutate(
+  VE = VE/100,
+  lower_est = lower_est/100,
+  upper_est = upper_est/100
+)
+workshop = raw[is.na(raw$VE) == FALSE,]
+# beta_param = mapply(fit_beta, workshop$VE, workshop$lower_est, workshop$upper_est)
+# VE_WHO_est_norm = cbind(workshop,t(beta_param))
+
+norm_param = mapply(fit_normal, workshop$VE, workshop$lower_est, workshop$upper_est)
+VE_WHO_est = cbind(workshop,sd = norm_param) 
+
+VE_WHO_est = VE_WHO_est %>% select(strain,vaccine_type,primary_if_booster,dose,outcome,actual.measure,reference,sd)
+VE_WHO_est = raw %>% left_join(VE_WHO_est)
+
+save(VE_WHO_est,file = '1_inputs/VE_WHO_est.Rdata')
+
+# check
+ sampled_value_beta = mapply(rbeta,100,VE_WHO_est_norm $beta_a, VE_WHO_est_norm$beta_b)
+ sampled_value_norm = mapply(rnorm,100,VE_WHO_est$VE, VE_WHO_est$sd)
+ sampled_value_unif = mapply(runif,100,min=VE_WHO_est$lower_est, max=VE_WHO_est$upper_est)
+# 
+ plot(density(sampled_value_norm[,1]));  lines(density(sampled_value_unif[,1]));mean(sampled_value_beta[,1]); mean(sampled_value_norm[,1])
+ plot(density(sampled_value_norm[,2])); lines(density(sampled_value_beta[,2])); lines(density(sampled_value_unif[,2]));mean(sampled_value_beta[,2]); mean(sampled_value_norm[,2])
+ plot(density(sampled_value_norm[,3])); lines(density(sampled_value_beta[,3])); lines(density(sampled_value_unif[,3]));mean(sampled_value_beta[,3]); mean(sampled_value_norm[,3])
+# plot(density(sampled_value_norm[,4])); lines(density(sampled_value_beta[,4])); lines(density(sampled_value_unif[,4]));mean(sampled_value_beta[,4]); mean(sampled_value_norm[,4])
+# plot(density(sampled_value_norm[,5])); lines(density(sampled_value_beta[,5])); lines(density(sampled_value_unif[,5]));mean(sampled_value_beta[,5]); mean(sampled_value_norm[,5])
+#_______________________________________________________________________________
+
+
+
+### PART EIGHT: booster_VE_point_est (dose 3) __________________________________
+#included in VE_WHO_est
+#_______________________________________________________________________________
+
+
+
+### PART NINE: raw_VE_severe_outcomes (dn to fit) ______________________________
+workshop = read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)
+
+# beta_param = mapply(fit_beta, workshop$VE, workshop$LB, workshop$UB)
+# SO_pt_est_beta = cbind(workshop,t(beta_param))
+
+norm_param = mapply(fit_normal, workshop$VE, workshop$LB, workshop$UB)
+SO_pt_est_norm = cbind(workshop,sd = norm_param) 
+
+VE_severe_outcomes_waning_pt_est = SO_pt_est_norm
+save(VE_severe_outcomes_waning_pt_est,file = '1_inputs/VE_severe_outcomes_waning_pt_est.Rdata')
+
+# sampled_value_beta = mapply(rbeta,100000,SO_pt_est_beta $beta_a, SO_pt_est_beta$beta_b)
+# sampled_value_norm = mapply(rnorm,100000,SO_pt_est_norm$VE, SO_pt_est_norm$sd)
+# sampled_value_unif = mapply(runif,100000,min=SO_pt_est_norm$LB, max=SO_pt_est_norm$UB)
+# 
+# plot(density(sampled_value_norm[,1])); lines(density(sampled_value_beta[,1])); lines(density(sampled_value_unif[,1]));mean(sampled_value_beta[,1]); mean(sampled_value_norm[,1])
+# plot(density(sampled_value_norm[,2])); lines(density(sampled_value_beta[,2])); lines(density(sampled_value_unif[,2]));mean(sampled_value_beta[,2]); mean(sampled_value_norm[,2])
+# plot(density(sampled_value_norm[,3])); lines(density(sampled_value_beta[,3])); lines(density(sampled_value_unif[,3]));mean(sampled_value_beta[,3]); mean(sampled_value_norm[,3])
+# plot(density(sampled_value_norm[,4])); lines(density(sampled_value_beta[,4])); lines(density(sampled_value_unif[,4]));mean(sampled_value_beta[,4]); mean(sampled_value_norm[,4])
+# plot(density(sampled_value_norm[,5])); lines(density(sampled_value_beta[,5])); lines(density(sampled_value_unif[,5]));mean(sampled_value_beta[,5]); mean(sampled_value_norm[,5])
+#_______________________________________________________________________________
+
+
+
+### PART TEN: Antiviral effectiveness ________________________________________
 workshop = read.csv('1_inputs/antiviral_effectiveness.csv')
 beta_param = mapply(fit_beta, workshop$mean, workshop$LB, workshop$UB)
 antiviral_effectiveness = cbind(workshop,t(beta_param)) 
@@ -207,11 +276,12 @@ rm(workshop,beta_param)
 
 # check
 # sampled_value = mapply(rbeta,10000000,antiviral_effectiveness$beta_a, antiviral_effectiveness$beta_b)
-# plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
-# plot(density(sampled_value[,2])); mean(sampled_value[,2])
-# plot(density(sampled_value[,3])); mean(sampled_value[,3])
-# plot(density(sampled_value[,4])); mean(sampled_value[,4])
-# plot(density(sampled_value[,5])); mean(sampled_value[,5])
+# sampled_value2 = mapply(rbeta,10000000,antiviral_effectiveness_prev $beta_a, antiviral_effectiveness_prev $beta_b)
+# plot(density(sampled_value[,1])); lines(density(sampled_value2[,1])); mean(sampled_value[,1]); mean(sampled_value2[,1])
+# plot(density(sampled_value[,2])); lines(density(sampled_value2[,2])); mean(sampled_value[,2]); mean(sampled_value2[,2])
+# plot(density(sampled_value[,3])); lines(density(sampled_value2[,3])); mean(sampled_value[,3]); mean(sampled_value2[,3])
+# plot(density(sampled_value[,4])); lines(density(sampled_value2[,4])); mean(sampled_value[,4]); mean(sampled_value2[,4])
+# plot(density(sampled_value[,5])); lines(density(sampled_value2[,5])); mean(sampled_value[,5]); mean(sampled_value2[,5])
 #_______________________________________________________________________________
 
 
