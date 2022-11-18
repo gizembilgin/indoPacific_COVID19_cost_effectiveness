@@ -1,7 +1,7 @@
 ### This program includes uncertainty in our estimates of VE by sampling from each VE estimate confidence interval using a uniform distribution
 
-raw_VE_point_est <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
-raw_VE_severe_outcomes <- read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)
+load(file = '1_inputs/VE_WHO_est.Rdata')
+load(file = '1_inputs/VE_severe_outcomes_waning_pt_est.Rdata')
 load(file = '1_inputs/pop_estimates.Rdata')
 
 #system.time({stochastic_VE()}) #1.28 sec
@@ -9,17 +9,23 @@ load(file = '1_inputs/pop_estimates.Rdata')
 stochastic_VE <- function(
     age_groups_num = c(0,4,9,17,29,44,59,69,110),
     age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100'),
-    strain_now = 'omicron'
+    strain_now = 'omicron',
+    toggle_sampling = "normal" # options: "normal" or "uniform"
 ){
 
   ##### PART ONE: point estimates of primary schedule ####################################################################################
   ### (1/2) Inital estimates from IVAC living systematic review 
+  raw_VE_point_est <- VE_WHO_est
+  raw_VE_severe_outcomes <- VE_severe_outcomes_waning_pt_est
   
   ######SAMPLE HERE
   options(warn = -1 )   
-  sampled_value = mapply(runif,1,raw_VE_point_est$lower_est, raw_VE_point_est$upper_est)
+  if (toggle_sampling == "normal"){ sampled_value = mapply(rnorm,1,raw_VE_point_est$VE, raw_VE_point_est$sd)
+  } else if (toggle_sampling == "uniform"){ sampled_value = mapply(runif,1,raw_VE_point_est$lower_est, raw_VE_point_est$upper_est)}
   options(warn = 0)   
   sampled_value[is.nan(sampled_value)] = NA
+  sampled_value[sampled_value>1] = 1
+  sampled_value[sampled_value<0] = 0
   VE_estimates = cbind(raw_VE_point_est,sampled_value)
   VE_estimates$VE = VE_estimates$sampled_value
   #######
@@ -227,7 +233,7 @@ stochastic_VE <- function(
   ### (1/2) Inital estimates from IVAC living systematic review 
   booster_VE_point_est = raw_VE_point_est %>% #loaded in PART ONE
     filter(dose == 3 & vaccine_type == 'Pfizer') %>% 
-    select(strain, vaccine_type, primary_if_booster, outcome,VE,lower_est,upper_est) %>%
+    select(strain, vaccine_type, primary_if_booster, outcome,VE,lower_est,upper_est,sd) %>%
     mutate(primary_if_booster_long = case_when(
       primary_if_booster == "AstraZeneca" ~ "AstraZeneca Vaxzevria (ChAdOx1)",
       primary_if_booster == "Johnson & Johnson" ~ "Johnson & Johnson Janssen (Ad26.COV2.S)",
@@ -239,13 +245,16 @@ stochastic_VE <- function(
   
   ######SAMPLE HERE
   options(warn = -1 )   
-  sampled_value = mapply(runif,1,booster_VE_point_est$lower_est, booster_VE_point_est$upper_est)
+  if (toggle_sampling == "normal"){ sampled_value = mapply(rnorm,1,booster_VE_point_est$VE, booster_VE_point_est$sd)
+  } else if (toggle_sampling == "uniform"){ sampled_value = mapply(runif,1,booster_VE_point_est$lower_est, booster_VE_point_est$upper_est)}
   options(warn = 0)   
-  sampled_value[is.nan(sampled_value)] = NA
+  sampled_value[is.nan(sampled_value)] = NA  
+  sampled_value[sampled_value>1] = 1
+  sampled_value[sampled_value<0] = 0
   VE_estimates = cbind(booster_VE_point_est,sampled_value)
   VE_estimates$VE = VE_estimates$sampled_value
   #######
-  
+
   #Average across estimates from IVAC living systematic review
   VE_estimates = VE_estimates %>% 
     select(strain, vaccine_type, primary_if_booster, outcome,VE) %>% 
@@ -295,7 +304,10 @@ stochastic_VE <- function(
   raw <- raw_VE_severe_outcomes
   
   ######SAMPLE HERE
-  sampled_value = mapply(runif,1,raw$LB, raw$UB)
+  if (toggle_sampling == "normal"){ sampled_value = mapply(rnorm,1,raw$VE, raw$sd)
+  } else if (toggle_sampling == "uniform"){ sampled_value = mapply(runif,1,raw$LB, raw$UB)}
+  sampled_value[sampled_value>1] = 1
+  sampled_value[sampled_value<0] = 0
   raw = cbind(raw,sampled_value)
   raw$VE = raw$sampled_value
   #######
@@ -439,7 +451,7 @@ stochastic_VE <- function(
     left_join(apply_ratio_MODEL,by='schedule') %>%
     left_join(apply_distribution_MODEL, by = c('schedule','age_group')) %>%
     rename(VE_days = VE) %>%
-    mutate(VE_days = VE_days*VE_internal*VE_ratio/100)  %>%
+    mutate(VE_days = VE_days*VE_internal*VE_ratio)  %>%
     mutate(VE_days = case_when(VE_days>1 ~ 1, TRUE ~ VE_days))
   
   
