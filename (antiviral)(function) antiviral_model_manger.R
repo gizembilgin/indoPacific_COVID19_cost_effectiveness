@@ -8,6 +8,7 @@ antiviral_model_manger <- function(
                                  # "all willing adults vaccinated with a primary schedule and high risk group recieve a booster"
                                  # "all willing adults vaccinated with a primary schedule plus booster dose"
     LIST_antiviral_target_group, # options:'adults_with_comorbidities', 'pregnant_women','unvaccinated_adults','all_adults','unvaccinated_adults_AND_adults_with_comorbidities'
+    LIST_antiviral_type = 'nirmatrelvir_ritonavir', # options:"nirmatrelvir_ritonavir","molunipiravir"     
     toggle_high_risk_group = "adults_with_comorbidities",  #options:'adults_with_comorbidities', 'pregnant_women'
     
     RECORD_antiviral_setup,                           # results file of '(antiviral) set up.R'
@@ -16,20 +17,19 @@ antiviral_model_manger <- function(
     toggle_cluster_number = 4,                        # number of computer cores to engage
     toggle_stochastic_SO = "off",                     # run severe outcomes stochastically
     toggle_compare_to_vaccine_effect = "off",
-    toggle_antiviral_type = 'nirmatrelvir_ritonavir', # options:"nirmatrelvir_ritonavir","molunipiravir"     
     toggle_sensitivity_analysis = list(),
     pathway_to_care = "fixed",                        # options: "fixed","realistic"
     toggle_antiviral_delivery_capacity = NA,          # this toggle is used in combination with pathway_to_care == "realistic"
     toggle_fixed_antiviral_coverage = 0.2,            # this toggle is used in combination with pathway_to_care == "fixed"
     
-    antiviral_model_worker = copy_function_into_cluster
+    antiviral_model_worker = copy_function_into_cluster,
+    manager_stochastic_VE_sampling = "normal"
     
 ){
  
   ### Step One: create list of scenarios
   manager_scenario_dataframe = crossing(
                                 vax_scenario = LIST_vax_scenario,
-                                antiviral_target_group = LIST_antiviral_target_group,
                                 vax_scenario_risk_group = toggle_high_risk_group
                                 )
   booster_start_date = min(RECORD_antiviral_setup$vaccination_history_FINAL$date[RECORD_antiviral_setup$vaccination_history_FINAL$dose == 8])
@@ -61,8 +61,9 @@ antiviral_model_manger <- function(
         manager_scenario_dataframe,
         RECORD_antiviral_setup,
 
+        local_LIST_antiviral_target_group = LIST_antiviral_target_group,
         local_LIST_antiviral_start_date = LIST_antiviral_start_date,
-        local_antiviral_type = toggle_antiviral_type,
+        local_LIST_antiviral_type = LIST_antiviral_type,
         local_stochastic_SO = toggle_stochastic_SO,
         local_compare_to_vaccine_effect = toggle_compare_to_vaccine_effect,
         local_sensitivity_analysis = toggle_sensitivity_analysis,
@@ -71,6 +72,8 @@ antiviral_model_manger <- function(
         local_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage,
         local_antiviral_effectiveness = antiviral_effectiveness,
         local_booster_start_date = booster_start_date,
+        
+        worker_stochastic_VE_sampling = manager_stochastic_VE_sampling,
         
         stochastic_severe_outcomes_sampling = copy_sampling_fx_into_cluster,
         stochastic_severe_outcomes_application = copy_application_fx_into_cluster
@@ -87,7 +90,7 @@ antiviral_model_manger <- function(
   ### Step Three: summary over runs
   summary_over_runs <-
     RECORD_antiviral_model_simulations %>% 
-    group_by(vax_scenario, vax_scenario_risk_group, antiviral_target_group, outcome,intervention, evaluation_group) %>%
+    group_by(antiviral_type,vax_scenario, vax_scenario_risk_group, antiviral_target_group, outcome,intervention, evaluation_group) %>%
     dplyr::summarise(
       intervention_doses_delivered = mean(intervention_doses_delivered),
       
@@ -106,7 +109,7 @@ antiviral_model_manger <- function(
   
   summary_over_runs_tidy = summary_over_runs %>%
     pivot_longer(
-      cols = 8:ncol(summary_over_runs) ,
+      cols = 9:ncol(summary_over_runs) ,
       names_to = 'result',
       values_to = 'value'
     ) 

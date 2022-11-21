@@ -14,7 +14,8 @@ stochastic_severe_outcomes_sampling <- function(
     risk_group_name = toggle_vax_scenario_risk_group,
     num_age_groups = 8,
     age_groups_num = c(0,4,9,17,29,44,59,69,110),
-    age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
+    age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100'),
+    local_stochastic_VE_sampling = 'normal'
     
 ){
   
@@ -275,7 +276,7 @@ stochastic_severe_outcomes_sampling <- function(
     
     #(2) Load stochastic VE distirbution
     #VE_waning_distribution_SO - sample UNIFORM from all point estimates, waning distribution, ratios between age groups etc. 
-    VE_waning_distribution = stochastic_VE() %>%
+    VE_waning_distribution = stochastic_VE(toggle_sampling = local_stochastic_VE_sampling) %>%
       filter(strain == strain_now & vaccine_type %in% vaccine_type_list)
     
     rho_SO_est = rbeta(1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
