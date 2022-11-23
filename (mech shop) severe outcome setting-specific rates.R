@@ -73,11 +73,11 @@ for (VOC in c('omicron')){ #since we are only consideirng severe outcomes during
   #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
   # who would be subject during the remaining of their lives to the mortality rates of a given period."
   # https://population.un.org/wpp/Download/Standard/Mortality/
-  lifeExpect <- read.csv('1_inputs/UN_life_expectancy_est_v2.csv') #updated 20/10/2022
-  YLL_FINAL = lifeExpect %>%
-    filter(setting == setting,
-           year == '2022') %>%
-    rename(life_expectancy = medium_variant) %>%
+  load(file = "1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata")
+  YLL_FINAL = UN_lifeExpect_est %>%
+    filter(ISO3_code == setting) %>%
+    rename(life_expectancy = ex,
+           age = AgeGrp) %>%
     left_join(pop_setting_orig, by = 'age') %>%
     select(age,life_expectancy,population) %>%
     mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
