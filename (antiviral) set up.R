@@ -296,9 +296,6 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",Sys.Date(),".Rdata",sep=''))
 save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",Sys.Date(),".Rdata",sep=''))
 
-pop_estimates <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
-save(pop_estimates,file = '1_inputs/pop_estimates.Rdata')
-
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
 ###############################################################################################################

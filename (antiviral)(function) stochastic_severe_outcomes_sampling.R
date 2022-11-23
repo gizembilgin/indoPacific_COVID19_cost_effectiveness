@@ -27,7 +27,7 @@ stochastic_severe_outcomes_sampling <- function(
   load(file = '1_inputs/SA_VE_older_muted_SO.Rdata')
   load(file = '1_inputs/RR_sample.Rdata')
   load(file = '1_inputs/rho_SO_sample.Rdata') 
-  load(file = '1_inputs/pop_estimates.Rdata')
+  load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
   severe_outcome_country_level_input <- read.csv('1_inputs/severe_outcome_country_level.csv')
 
   source(paste(getwd(),"/(antiviral)(function) stochastic_VE.R",sep=""))
@@ -81,7 +81,7 @@ stochastic_severe_outcomes_sampling <- function(
     age_groups_RAW = c(0,9,19,29,39,49,59,69,100)
     age_group_labels_RAW = c('0 to 9','10 to 19','20 to 29','30 to 39','40 to 49','50 to 59','60 to 69','70 to 100')
     
-    pop_bands_RAW <- pop_estimates  %>% #pop banding by Seedat et al. 
+    pop_bands_RAW <- UN_pop_est  %>% #pop banding by Seedat et al. 
       filter(country == setting) %>%
       mutate(agegroup = cut(age,breaks = age_groups_RAW, include.lowest = T,labels = age_group_labels_RAW)) %>%
       group_by(agegroup) %>%
@@ -124,7 +124,7 @@ stochastic_severe_outcomes_sampling <- function(
     
     
     ### PART THREE: convert RR to model age groups ########################################################
-    pop_setting = pop_estimates %>%
+    pop_setting = UN_pop_est %>%
       filter(country == setting) %>%
       mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
       ungroup() %>%
@@ -132,7 +132,7 @@ stochastic_severe_outcomes_sampling <- function(
       summarise(pop = sum(population),.groups = "keep") %>%
       ungroup() %>% 
       mutate(pop_percent = pop/sum(pop))
-    pop_w <- pop_estimates %>%
+    pop_w <- UN_pop_est %>%
       filter(country == setting) %>%
       mutate(agegroup_RAW = cut(age,breaks = age_groups_RAW, include.lowest = T,labels = age_group_labels_RAW),
              agegroup_model = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
