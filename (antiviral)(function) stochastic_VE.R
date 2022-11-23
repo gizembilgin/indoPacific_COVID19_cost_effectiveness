@@ -2,8 +2,7 @@
 
 load(file = '1_inputs/VE_WHO_est.Rdata')
 load(file = '1_inputs/VE_severe_outcomes_waning_pt_est.Rdata')
-load(file = '1_inputs/pop_estimates.Rdata')
-
+load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
 #system.time({stochastic_VE()}) #1.28 sec
 
 stochastic_VE <- function(
@@ -393,7 +392,8 @@ stochastic_VE <- function(
   
   #(C) Convert ratio to age groups in model
   CS_age_groupings = c(0,59,79,110) #age groupings in VE estimate data
-  pop_RAW <- pop_estimates %>%
+  pop_RAW <- UN_pop_est %>%
+    filter(ISO3_code == setting) %>%
     mutate(agegroup_RAW = cut(age,breaks = CS_age_groupings, include.lowest = T, labels = unique(apply_ratio$agegroup_RAW)),
            agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
     ungroup() %>%
