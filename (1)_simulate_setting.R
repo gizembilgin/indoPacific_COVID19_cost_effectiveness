@@ -10,7 +10,6 @@
 ### Creates: pop_*, contact_matrix, vaccination_history_*, NPI_estimates
 
 
-if (setting == "SLE"){setting_long = "Sierra Leone"}
 if (exists("rootpath") == FALSE){rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")}
 if (exists("num_risk_groups") == FALSE){num_risk_groups = 1}
 if (exists("fitting") == FALSE){ fitting = "off" }
@@ -29,13 +28,26 @@ age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 5
 num_age_groups = J = length(age_group_labels)          
 age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
 
-pop_orig <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
+load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+
+pop_orig <- UN_pop_est %>% 
+  rename(country = ISO3_code,
+         country_long = Location,
+         population = PopTotal,
+         population_female = PopFemale,
+         age = AgeGrp)
+rm(UN_pop_est)
+
 pop_setting_orig <- pop_orig %>%
-  filter(country == setting)
+  filter(country == setting) 
+
+setting_long = unique(pop_setting_orig$country_long)
+
 pop_setting <- pop_setting_orig %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
   group_by(age_group) %>%
   summarise(pop = as.numeric(sum(population)))
+
 pop <- pop_setting$pop
 #_______________________________________________________
 
