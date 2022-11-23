@@ -6,40 +6,52 @@
 
 
 ### read in data
-ASFR = read.csv("1_inputs/DHS_ASFR.csv",header=TRUE)
-women_pop = read.csv(paste(rootpath,"inputs/pop_estimates_female.csv",sep=''),header=TRUE)
+if (setting == "SLE"){ #use SLE DHS 2019 data
+  ASFR = read.csv("1_inputs/DHS_ASFR.csv",header=TRUE)
+  
+  # add 10-14 pregnancy as reported in DHS 2019 with retrospective data
+  row_10_14 = data.frame(' 10-14 ',4/1000,NA,NA)
+  colnames(row_10_14) = colnames(ASFR)
+  ASFR = rbind(row_10_14,ASFR)
+  
+  ggplot(data=ASFR) + 
+    geom_pointrange(aes(x=ASFR*100,y=AGE,xmin=LCI*100,xmax=UCI*100)) +
+    # xlim(0,1) +
+    xlab("Age-specific fertility ratio (%)") + 
+    ylab("") + 
+    labs(title="") +
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          axis.line = element_line(color = 'black'))
+  
+} else { # use UN estimates
+  load(file = "1_inputs/UN_world_population_prospects/UN_ASFR_est.Rdata")
+  
+  ASFR = UN_ASFR_est %>%
+    filter(ISO3_code == setting) %>%
+    rename(AGE = AgeGrp) %>%
+    select(AGE,ASFR)
+  rm(UN_ASFR_est)
+  
+  ggplot(data=ASFR) + 
+    geom_point(aes(x=ASFR*100,y=AGE)) +
+    # xlim(0,1) +
+    xlab("Age-specific fertility ratio (%)") + 
+    ylab("") + 
+    labs(title="") +
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          axis.line = element_line(color = 'black'))
+}
 
-
-### add 10-14 pregnancy as reported in DHS 2019 with retrospective data
-row_10_14 = data.frame(' 10-14 ',4/1000,NA,NA)
-colnames(row_10_14) = colnames(ASFR)
-ASFR = rbind(row_10_14,ASFR)
-
-
-### plot ASFR
-#View(ASFR)
-ggplot(data=ASFR) + 
-  geom_pointrange(aes(x=ASFR*100,y=AGE,xmin=LCI*100,xmax=UCI*100)) +
- # xlim(0,1) +
-  xlab("Age-specific fertility ratio (%)") + 
-  ylab("") + 
-  labs(title="") +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.line = element_line(color = 'black'))
 
 
 ### calculate and plot female ratio estimates
-#pop_setting_orig - colnames: age, country, population
-#women_pop - colnames: age, country, population, population_thousands
-women_pop = women_pop %>% 
-  rename(pop_women = population) %>% 
-  select(-population_thousands)
 pop_together = pop_setting_orig %>% 
-  left_join(women_pop) %>%
-  mutate(female_prop = pop_women/population) %>%
-  select(-pop_women)
+  mutate(female_prop = population_female/population) %>%
+  select(-population_female)
 ggplot(data=pop_together) + 
   geom_point(aes(x=female_prop*100,y=age)) +
   xlim(0,100) +
