@@ -117,8 +117,7 @@ num_age_groups = J = length(age_group_labels)
 age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
 
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") 
-pop_orig <- read.csv(paste(rootpath,"inputs/pop_estimates.csv",sep=''), header=TRUE)
-pop_setting_orig <- pop_orig %>%
+pop_setting_orig <- UN_pop_est %>%
   filter(country == setting)
 pop_setting <- pop_setting_orig %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
