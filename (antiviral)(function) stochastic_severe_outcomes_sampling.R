@@ -15,7 +15,7 @@ stochastic_severe_outcomes_sampling <- function(
     num_age_groups = 8,
     age_groups_num = c(0,4,9,17,29,44,59,69,110),
     age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100'),
-    local_stochastic_VE_sampling = 'normal'
+    local_stochastic_VE_sampling = 'uniform'
     
 ){
   

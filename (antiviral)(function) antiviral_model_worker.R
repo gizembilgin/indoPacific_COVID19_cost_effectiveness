@@ -19,7 +19,7 @@ antiviral_model_worker <- function(
     local_antiviral_effectiveness = antiviral_effectiveness,
     local_booster_start_date = as.Date('2023-01-01'),
     
-    worker_stochastic_VE_sampling = "normal",
+    worker_stochastic_VE_sampling = "uniform",
   
     stochastic_severe_outcomes_sampling = copy_sampling_fx_into_cluster,
     stochastic_severe_outcomes_application = copy_application_fx_into_cluster

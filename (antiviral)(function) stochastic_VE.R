@@ -10,7 +10,7 @@ stochastic_VE <- function(
     age_groups_num = c(0,4,9,17,29,44,59,69,110),
     age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100'),
     strain_now = 'omicron',
-    toggle_sampling = "normal" # options: "normal" or "uniform"
+    toggle_sampling = "uniform" # options: "normal" or "uniform"
 ){
 
   ##### PART ONE: point estimates of primary schedule ####################################################################################
