@@ -56,13 +56,13 @@ RECORD_antiviral_model_simulations <- antiviral_model_manger(
   toggle_number_of_runs = 100,
   toggle_cluster_number = 4,
   
-  toggle_stochastic_SO = "on",
+  toggle_stochastic_SO = "off",
   toggle_compare_to_vaccine_effect = "on",
           
   toggle_sensitivity_analysis = list(),
   pathway_to_care = "fixed",
   toggle_fixed_antiviral_coverage = 0.2,
-  manager_stochastic_VE_sampling = "normal" # options: "normal" or "uniform"
+  manager_stochastic_VE_sampling = "uniform" # options: "normal" or "uniform"
 )
 
 time.end.AntiviralSimulations=proc.time()[[3]]
@@ -72,7 +72,6 @@ time = Sys.time()
 time = gsub(':','-',time)
 
 temp_name = ''
-temp_name = 'normal_'
 time = paste(temp_name,time,sep='')
 #____________________________________________________________________________
 
@@ -90,16 +89,17 @@ workshop = RECORD_antiviral_model_simulations %>%
   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
   filter( !(intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
   #filter(!(intervention == 'vaccine' & vax_scenario == 'all willing adults vaccinated with a primary schedule plus booster dose')) %>%
-  filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+  #filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+  filter(result %in% c("doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
    # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
     intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
     TRUE ~ intervention
-  )) %>%
-  pivot_wider(
-    id_cols = c(vax_scenario,vax_scenario_risk_group,antiviral_target_group,outcome,intervention),
-    names_from = result,
-    values_from = value)
+  )) #%>%
+  #pivot_wider(
+   # id_cols = c(vax_scenario,vax_scenario_risk_group,antiviral_target_group,outcome,intervention),
+    #names_from = result,
+    #values_from = value)
 
 
 options(warn = -1)
@@ -107,11 +107,18 @@ plot_list = list()
 for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
+  # plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
+  #   geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(intervention),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+  #   labs(title = paste(this_outcome), color = 'intervention') +
+  #   ylab('')+
+  #   xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
+  #   xlab('doses to avert an outcome')
+  
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(intervention),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+    geom_boxplot(aes(x=value,y=vax_scenario,color=as.factor(intervention)))  + 
     labs(title = paste(this_outcome), color = 'intervention') +
     ylab('')+
-    xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
+    #xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
     xlab('doses to avert an outcome')
   
 }
@@ -136,16 +143,17 @@ workshop = RECORD_antiviral_model_simulations %>%
   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
   filter( !(intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
   #filter(!(intervention == 'vaccine' & vax_scenario == 'all willing adults vaccinated with a primary schedule plus booster dose')) %>%
-  filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+  #filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+  filter(result %in% c("doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
     # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
     intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
     TRUE ~ intervention
-  )) %>%
-  pivot_wider(
-    id_cols = c(vax_scenario,vax_scenario_risk_group,antiviral_target_group,outcome,intervention),
-    names_from = result,
-    values_from = value)
+  )) #%>%
+  # pivot_wider(
+  #   id_cols = c(vax_scenario,vax_scenario_risk_group,antiviral_target_group,outcome,intervention),
+  #   names_from = result,
+  #   values_from = value)
 
 
 options(warn = -1)
@@ -153,11 +161,17 @@ plot_list = list()
 for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
+  # plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
+  #   geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(intervention),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+  #   labs(title = paste(this_outcome), color = 'intervention') +
+  #   ylab('')+
+  #   xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
+  #   xlab('doses to avert an outcome')
+  
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(intervention),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+    geom_boxplot(aes(x=value,y=vax_scenario,color=as.factor(intervention)))  + 
     labs(title = paste(this_outcome), color = 'intervention') +
     ylab('')+
-    xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
     xlab('doses to avert an outcome')
   
 }
@@ -181,16 +195,17 @@ LIST_target_group = list('adults_with_comorbidities',
 ### Calculate # of antivirals per outcome averted
 workshop = RECORD_antiviral_model_simulations  %>% 
   filter(antiviral_type == "nirmatrelvir_ritonavir" & intervention == "antiviral 2023-01-01") %>% 
-  filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+  #filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+  filter(result %in% c("doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
     # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
     intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
     TRUE ~ intervention
-  )) %>%
-  pivot_wider(
-    id_cols = c(vax_scenario,vax_scenario_risk_group,antiviral_target_group,outcome,intervention),
-    names_from = result,
-    values_from = value)
+  )) #%>%
+  # pivot_wider(
+  #   id_cols = c(vax_scenario,vax_scenario_risk_group,antiviral_target_group,outcome,intervention),
+  #   names_from = result,
+  #   values_from = value)
 
 
 options(warn = -1)
@@ -198,12 +213,18 @@ plot_list = list()
 for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
+  # plot_list[[a]] = ggplot(data = workshop[workshop$outcome == this_outcome,]) +
+  #   geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(antiviral_target_group),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+  #   labs(title = paste(this_outcome), color = 'intervention') +
+  #   ylab('')+
+  #   xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
+  #   xlab('antiviral doses to avert an outcome')
+  
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(antiviral_target_group),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
+    geom_boxplot(aes(x=value,y=vax_scenario,color=as.factor(antiviral_target_group)))  + 
     labs(title = paste(this_outcome), color = 'intervention') +
     ylab('')+
-    xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
-    xlab('antiviral doses to avert an outcome')
+    xlab('doses to avert an outcome')
   
 }
 ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],

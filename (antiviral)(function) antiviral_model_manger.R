@@ -23,7 +23,7 @@ antiviral_model_manger <- function(
     toggle_fixed_antiviral_coverage = 0.2,            # this toggle is used in combination with pathway_to_care == "fixed"
     
     antiviral_model_worker = copy_function_into_cluster,
-    manager_stochastic_VE_sampling = "normal"
+    manager_stochastic_VE_sampling = "uniform"
     
 ){
  
@@ -88,42 +88,87 @@ antiviral_model_manger <- function(
   
   
   ### Step Three: summary over runs
-  summary_over_runs <-
-    RECORD_antiviral_model_simulations %>% 
-    group_by(antiviral_type,vax_scenario, vax_scenario_risk_group, antiviral_target_group, outcome,intervention, evaluation_group) %>%
-    dplyr::summarise(
-      intervention_doses_delivered = mean(intervention_doses_delivered),
-      
-      average = mean(n),
-      sd = sd(n),
-      UCI = average - qnorm(0.975) * sd,
-      LCI = average - qnorm(0.025) * sd, 
-      percentage = mean(percentage),
-      percentage_sd = sd(percentage),
-      UCI_percentage = average - qnorm(0.975) * percentage_sd,
-      LCI_percentage = average - qnorm(0.025) * percentage_sd, 
-      
-      .groups = 'keep'
-    )  %>%
-    select(-sd, - percentage_sd)
+  # summary_over_runs <-
+  #   RECORD_antiviral_model_simulations %>% 
+  #   group_by(antiviral_type,vax_scenario, vax_scenario_risk_group, antiviral_target_group, outcome,intervention, evaluation_group) %>%
+  #   dplyr::summarise(
+  #     intervention_doses_delivered = mean(intervention_doses_delivered),
+  #     
+  #     average = mean(n),
+  #     sd = sd(n),
+  #     UCI = average - qnorm(0.975) * sd,
+  #     LCI = average - qnorm(0.025) * sd, 
+  #     percentage = mean(percentage),
+  #     percentage_sd = sd(percentage),
+  #     UCI_percentage = average - qnorm(0.975) * percentage_sd,
+  #     LCI_percentage = average - qnorm(0.025) * percentage_sd, 
+  #     
+  #     .groups = 'keep'
+  #   )  %>%
+  #   select(-sd, - percentage_sd)
+  # 
+  # summary_over_runs_tidy = summary_over_runs %>%
+  #   pivot_longer(
+  #     cols = 9:ncol(summary_over_runs) ,
+  #     names_to = 'result',
+  #     values_to = 'value'
+  #   ) 
+  # 
+  # workshop = summary_over_runs_tidy %>%
+  #   filter(result %in% c('average','UCI','LCI')) %>%
+  #   mutate(result = paste(result,'_doses_per_outcome_averted',sep=''),
+  #          value = intervention_doses_delivered/value) 
+  # 
+  # summary_over_runs_tidy = rbind(summary_over_runs_tidy,workshop) %>%
+  #   select(-intervention_doses_delivered) %>%
+  #   mutate(evaluation_group = case_when(evaluation_group == 'overall' ~ 'pop_level', TRUE ~ evaluation_group))
+  # 
+  # 
+  # #monitor if daily capacity being used or not enough seeking/accessing care
+  # if (pathway_to_care == 'realistic') {
+  #   antiviral_rollout_capacity_utilised = round(
+  #     100 * length_antiviral_delivery_tracker / (
+  #       local_antiviral_delivery_capacity * antiviral_delivery_length
+  #     ),
+  #     digits = 1
+  #   )
+  #   antiviral_eligible_pop_coverage = round(100 *
+  #                                             length_antiviral_delivery_tracker / total_target,
+  #                                           digits = 1)
+  #   row1 = c(outcome = 'program_measure',
+  #            result = 'antiviral_rollout_capacity_utilised',
+  #            value = antiviral_rollout_capacity_utilised)
+  #   row2 = c(outcome = 'program_measure',
+  #            result = 'antiviral_eligible_pop_coverage',
+  #            value = antiviral_eligible_pop_coverage)
+  #   
+  #   summary_over_runs_tidy = rbind(summary_over_runs_tidy, row1, row2)
+  # } 
+  # #____________________________________________________________________________
+  # 
+  # 
+  # if (length(toggle_sensitivity_analysis)>0){
+  #   summary_over_runs_tidy = summary_over_runs_tidy %>% mutate(sensitivity_analysis = paste(names(toggle_sensitivity_analysis),toggle_sensitivity_analysis))
+  # }
   
-  summary_over_runs_tidy = summary_over_runs %>%
+  ### alternative
+  RECORD_antiviral_model_simulations_tidy = RECORD_antiviral_model_simulations %>%
     pivot_longer(
-      cols = 9:ncol(summary_over_runs) ,
+      cols = "n":"percentage" ,
       names_to = 'result',
       values_to = 'value'
     ) 
   
-  workshop = summary_over_runs_tidy %>%
-    filter(result %in% c('average','UCI','LCI')) %>%
-    mutate(result = paste(result,'_doses_per_outcome_averted',sep=''),
+  workshop = RECORD_antiviral_model_simulations_tidy %>%
+    filter(result %in% c('n')) %>%
+    mutate(result = 'doses_per_outcome_averted',
            value = intervention_doses_delivered/value) 
   
-  summary_over_runs_tidy = rbind(summary_over_runs_tidy,workshop) %>%
+  RECORD_antiviral_model_simulations_tidy = rbind(RECORD_antiviral_model_simulations_tidy,workshop) %>%
     select(-intervention_doses_delivered) %>%
     mutate(evaluation_group = case_when(evaluation_group == 'overall' ~ 'pop_level', TRUE ~ evaluation_group))
   
-
+  
   #monitor if daily capacity being used or not enough seeking/accessing care
   if (pathway_to_care == 'realistic') {
     antiviral_rollout_capacity_utilised = round(
@@ -142,14 +187,15 @@ antiviral_model_manger <- function(
              result = 'antiviral_eligible_pop_coverage',
              value = antiviral_eligible_pop_coverage)
     
-    summary_over_runs_tidy = rbind(summary_over_runs_tidy, row1, row2)
+    RECORD_antiviral_model_simulations_tidy = rbind(RECORD_antiviral_model_simulations_tidy, row1, row2)
   } 
   #____________________________________________________________________________
   
-
+  
   if (length(toggle_sensitivity_analysis)>0){
-    summary_over_runs_tidy = summary_over_runs_tidy %>% mutate(sensitivity_analysis = paste(names(toggle_sensitivity_analysis),toggle_sensitivity_analysis))
+    RECORD_antiviral_model_simulations_tidy = RECORD_antiviral_model_simulations_tidy %>% mutate(sensitivity_analysis = paste(names(toggle_sensitivity_analysis),toggle_sensitivity_analysis))
   }
   
-  return(summary_over_runs_tidy) 
+  return(RECORD_antiviral_model_simulations_tidy)
+  #return(summary_over_runs_tidy) 
 }
