@@ -57,10 +57,45 @@ pop_risk_group_dn = pop_setting %>%
   mutate(risk_group = 'general_public')
 
 if (num_risk_groups>1){
-  risk_dn = read.csv('1_inputs/risk_group_distribution.csv')
-  
+ 
   if(risk_group_name %in% c('adults_with_comorbidities')){
-    risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name,]
+    if (setting == "SLE"){
+      risk_dn = read.csv('1_inputs/risk_group_distribution.csv')
+      risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name,]
+    } else{
+      
+      workshop <- read.csv('1_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
+      workshop = workshop %>% 
+        filter(age_group_charac != 'all ages') %>%
+        filter(country == setting) %>%
+        rename(agegroup_RAW = age_group_charac,
+               value = high_risk) # CHOICE between high_risk and increased_risk 
+
+      underlying_age_grouping <- c(0,4,9,14,19,24,29,34,39,44,49,54,59,64,69,74,79,84,89,94,110)
+      
+      pop_RAW =  pop_orig %>%
+        filter(country == setting) %>%
+        mutate(agegroup_RAW = cut(age,breaks = underlying_age_grouping, include.lowest = T, labels = unique(workshop$agegroup_RAW)),
+               agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
+        ungroup() %>%
+        group_by(agegroup_MODEL) %>%
+        mutate(model_group_percent = population/sum(population))
+      
+      toggle_upper_cut_off = 60  # CHOICE
+      
+      workshop = pop_RAW %>% 
+        left_join(workshop, by = c("country", "agegroup_RAW")) %>% 
+        mutate(value = case_when(
+          age_group_num >= toggle_upper_cut_off ~ 1,
+          TRUE ~ value
+        )) %>%
+        mutate(interim = model_group_percent * value) %>%
+        group_by(agegroup_MODEL) %>%
+        summarise(prop = sum(interim)) %>%
+        rename(age_group = agegroup_MODEL)
+      
+      
+    }
   } else if (risk_group_name %in% c('pregnant_women')){
     load(file = "1_inputs/prevalence_pregnancy.Rdata")
     risk_dn = prevalence_pregnancy
