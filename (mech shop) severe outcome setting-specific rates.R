@@ -8,6 +8,16 @@ discounting_rate = 0
 
 ##### (1/7) Load population-level wild-type estimate of severe outcomes
 severe_outcome_0 <- read.csv('1_inputs/severe_outcome_country_level.csv')
+
+#Note, the paper includes no estimates for nations < 1 million, 
+#hence estimating Fiji <-> Indonesia and Solomon Islands <-> PNG as closest in pop over 65 and HAQ Index in the region
+severe_outcome_0 = severe_outcome_0 %>% filter(! country %in% c('FJI','SLB')) #remove NAs
+workshop = severe_outcome_0 %>% 
+  filter(country %in% c('PNG','IDN')) %>%
+  mutate(country = case_when (country == 'PNG' ~ 'SLB', country == 'IDN' ~ 'FJI'),
+         country_long  = case_when (country == 'SLB' ~ 'Solomon Islands', country == 'FJI' ~ 'Fiji'))
+severe_outcome_0 = rbind(severe_outcome_0,workshop)
+
 severe_outcome_0$percentage = severe_outcome_0$percentage/100 #make it between 0-1
 severe_outcome_0 <- severe_outcome_0[severe_outcome_0$outcome %in% c('death','severe_disease','hosp') &
                                        severe_outcome_0$country == setting
