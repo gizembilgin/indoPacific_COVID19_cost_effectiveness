@@ -71,7 +71,7 @@ omicron,Moderna,,2,death,,,,,none currently avaliable,,,,,,,,
 omicron,Moderna,,1,severe_disease,,,,,none currently avaliable,,,,,,,,
 omicron,Moderna,,2,severe_disease,hospitalisation,72,,,"Baum et al., 2022",,,,,,,,retrospective cohort of adults aged 70+ hence don't really trust the CI
 omicron,Moderna,,1,symptomatic_disease,,,,,none currently avaliable,,,,,,,,
-omicron,Moderna,,2,symptomatic_disease,,76,72,79,"UKHSA/Andrews et al., 2022",,,,,,,,
+omicron,Moderna,,2,symptomatic_disease,,43.2,15,62.1,Chemaitelly et al. 2022,2/06/2022,Qatar,general population,test negative case control,,,,previously used UKHSA estimate of 76% but too high! BA.1 much higher than BA.2!
 omicron,Moderna,Pfizer,3,symptomatic_disease,,74.7,73.7,75.7,"UKHSA/Andrews et al., 2022",,,,,,,,
 omicron,Moderna,AstraZeneca,3,symptomatic_disease,,70.3,69.5,71,"UKHSA/Andrews et al., 2022",,,,,,,,
 omicron,Pfizer,,1,any_infection,,,,,none currently avaliable,,,,,,,,
@@ -81,7 +81,7 @@ omicron,Pfizer,,2,death,,,,,none currently avaliable,,,,,,,,
 omicron,Pfizer,,1,severe_disease,,64.3,55.6,71.3,"Florentino et al., 2022",,,,,,,,"this study's estimates for dose two align well with UKHSA; 447,882 adolescents 12-17"
 omicron,Pfizer,,2,severe_disease,hospitalisation,73.6,40.7,88.3,"UKHSA/Andrews et al., 2022",,,,,,,,"aligns with all other studies in the forest plot, England, test-negative case control"
 omicron,Pfizer,,1,symptomatic_disease,,28.1,26.3,29.9,"Florentino et al., 2022",,,,,,,,"this study's estimates for dose two align well with UKHSA; 447,882 adolescents 12-17"
-omicron,Pfizer,,2,symptomatic_disease,,65.8,64.4,67.2,"UKHSA/Andrews et al., 2022",,,,,,,,aligns with other included studies
+omicron BA.1,Pfizer,,2,symptomatic_disease,,65.8,64.4,67.2,"UKHSA/Andrews et al., 2022",,,,,,,,aligns with other included studies
 omicron,Pfizer,Pfizer,3,symptomatic_disease,,68.7,67.9,69.5,"UKHSA/Andrews et al., 2022",,,,,,,,Pfizer primary + Pfizer booster
 omicron,Pfizer,AstraZeneca,3,symptomatic_disease,,62.7,62,63.4,"UKHSA/Andrews et al., 2022",14/01/2022,England,general population,test negative case control,2,4,14 weeks,
 omicron,Sinopharm,,1,any_infection,,,,,none currently avaliable,,,,,,,,
@@ -116,3 +116,27 @@ omicron,Pfizer,Pfizer,3,severe_disease,hospitalisation,86,84,89,Smid,25/02/2022,
 omicron,Pfizer,Pfizer,3,severe_disease,hospitalisation,88.8,87.3,90.1,Hansen,30/03/2022,Denmark,general population,retrospective cohort,1,4,4 weeks,
 omicron,Pfizer,Pfizer,3,severe_disease,,88.3,85.1,90.7,Cerqueira-Silva,18/07/2022,Brazil,general population,,2,4,4 weeks,
 omicron,Pfizer,Pfizer,3,any_infection,,47.9,47.4,48.2,Hansen,30/03/2022,Denmark,general population,retrospective cohort,1,4,4 weeks,
+omicron,Moderna,Moderna,3,any_infection,,47.7,47,48.3,Hansen,30/03/2022,Denmark,general population,retrospective cohort,1,4,5 weeks,
+omicron,Moderna,Moderna,4,any_infection,VE against BA.2,64.3,50.7,74.2,Tseng,1/10/2022,USA,general population,test negative case control,1,4,,"this VE is against BA.2, similar VE against BA.2.12.1, higher for BA.4, lower for BA.5 (but v wide confidence interval)"
+omicron,Pfizer,Pfizer,4,death,,87.7,76.1,93.7,Jara,6/10/2022,Chile,general population,retrospective cohort,2,,24 weeks,
+omicron,Pfizer,Sinovac,4,death,,79.3,73.8,83.7,Jara,6/10/2022,Chile,general population,retrospective cohort,2,,24 weeks,
+omicron,Moderna,Moderna,4,severe_disease,hospitalisation,96.4,88.4,98.9,Tseng,1/10/2022,USA,general population,test negative case control,2,,,
+omicron,mRNA,Sinovac,4,severe_disease,ICU admission,86.3,83.2,88.8,Jara,6/10/2022,Chile,general population,retrospective cohort,2,,24 weeks,VE for Pfizer or Moderna with first booster Pfizer
+omicron,Sinovac,Sinovac,3,any_infection,,32.4,9,49.8,Tsang,25/08/2022,Hong Kong,general population,prospective cohort,2,,12 weeks,against BA.2
+delta,Moderna,Moderna,3,any_infection,,94.5,92.9,95.7,Tseng,18/02/2022,USA,general population,test negative case control,2,,6.5 weeks,
+delta,Pfizer,Pfizer,3,any_infection,,85.9,84.2,87.4,Willet,26/02/2022,Scotland,general population,test negative case control,2,,11 weeks,
+delta,AstraZeneca,Sinovac,3,any_infection,,86,74,93,Sritipsukho,3/02/2022,Thailand,general population,test negative case control,1,,6 weeks,
+delta,mRNA,mRNA,3,death,,98,96,100,Castillo,21/04/2022,France,,test negative case control,1,2,22 weeks,
+delta,Sinovac,Sinovac,3,death,,86.7,80.5,91,Jara,23/04/2022,Chile,,prospective cohort,2,,11 weeks,
+delta,Pfizer,Sinovac,3,death,,96.8,93.9,98.3,Jara,23/04/2022,Chile,,prospective cohort,2,,11 weeks,
+delta,AstraZeneca,Sinovac,3,death,,98.1,97.3,98.6,Jara,23/04/2022,Chile,,prospective cohort,2,,11 weeks,
+delta,Pfizer,Pfizer,3,severe_disease,severe disease,99,98,99,Buchan,22/09/2022,Canada,general population,test negative case control,1,,19 weeks,
+delta,Pfizer,Moderna,3,severe_disease,severe disease,99,98,100,Buchan,22/09/2022,Canada,general population,test negative case control,1,,19 weeks,
+delta,AstraZeneca,Sinovac,3,severe_disease,hospitalisation,97.7,97.3,98,Jara,23/04/2022,Chile,16+,prospective cohort,2,,11 weeks,
+omicron,mRNA,Moderna,3,severe_disease,severe disease,93,74,98,Buchan,22/09/2022,Canada,18+,test negative case control,1,,19 weeks,
+omicron,AstraZeneca,AstraZeneca,3,severe_disease,hospitalisaiton or death,84.5,79.4,88.4,Cerqueira-Silva,1/07/2022,Brazil,18+,test negative case control,2,10,28 weeks,
+omicron,Sinovac,Sinovac,3,severe_disease,hospitalisaiton or death,76.6,68.1,82.8,Cerqueira-Silva,1/07/2022,Brazil,18+,test negative case control,2,10,28 weeks,
+omicron,Moderna,AstraZeneca,3,symptomatic_disease,,55.3,50.9,59.3,Cerqueira-Silva,14/04/2022,Brazil,general population,test negative case control,2,4,6 weeks,
+omicron,Moderna,Moderna,3,symptomatic_disease,,68,64,72,"UKHSA/Andrews et al., 2022",14/04/2022,England,,,,,,
+omicron,AstraZeneca,AstraZeneca,3,symptomatic_disease,,60.5,59.1,61.9,Cerqueira-Silva,1/07/2022,Brazil,general population,test negative case control,,,,
+omicron,Pfizer,,2,symptomatic_disease,,51.7,43.2,58.9,Chemaitelly et al. 2022,2/06/2022,Qatar,general population,test negative case control,,,,previously used UKHSA estimatebut too high! BA.1 much higher than BA.2!

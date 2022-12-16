@@ -10,27 +10,27 @@ PNG,Papua New Guinea,infection criticallity rate,critical_disease,0.1,0.1,0.1
 PNG,Papua New Guinea,infection acute-care bed,hosp,1.38,1.34,1.4
 PNG,Papua New Guinea,infection ICU bed,ICU,0.21,0.21,0.21
 TLS,Timor-Leste,infection acute-care bed hospital admission,hosp,1.39,1.36,1.41
-TLS,Timor-Leste,infection ICU admission,icu,0.23,0.23,0.24
+TLS,Timor-Leste,infection ICU admission,ICU,0.23,0.23,0.24
 TLS,Timor-Leste,infection severity rate,severe_disease,0.35,0.34,0.35
 TLS,Timor-Leste,infection criticality rate,critical_disease,0.12,0.11,0.12
 TLS,Timor-Leste,infection fatality ratio,death,0.051,0.048,0.053
 IDN,Indonesia,infection acute-care bed hospital admission,hosp,1.73,1.68,1.75
-IDN,Indonesia,infection ICU admission,icu,0.32,0.32,0.33
+IDN,Indonesia,infection ICU admission,ICU,0.32,0.32,0.33
 IDN,Indonesia,infection severity rate,severe_disease,0.51,0.5,0.52
 IDN,Indonesia,infection criticality rate,critical_disease,0.17,0.17,0.17
 IDN,Indonesia,infection fatality ratio,death,0.073,0.069,0.076
 FJI,Fiji,infection acute-care bed hospital admission,hosp,,,
-FJI,Fiji,infection ICU admission,icu,,,
+FJI,Fiji,infection ICU admission,ICU,,,
 FJI,Fiji,infection severity rate,severe_disease,,,
 FJI,Fiji,infection criticality rate,critical_disease,,,
 FJI,Fiji,infection fatality ratio,death,,,
 SLB,Solomon Islands,infection acute-care bed hospital admission,hosp,,,
-SLB,Solomon Islands,infection ICU admission,icu,,,
+SLB,Solomon Islands,infection ICU admission,ICU,,,
 SLB,Solomon Islands,infection severity rate,severe_disease,,,
 SLB,Solomon Islands,infection criticality rate,critical_disease,,,
 SLB,Solomon Islands,infection fatality ratio,death,,,
 PHL,Philippines,infection acute-care bed hospital admission,hosp,1.38,1.34,1.4
-PHL,Philippines,infection ICU admission,icu,0.21,0.21,0.21
+PHL,Philippines,infection ICU admission,ICU,0.21,0.21,0.21
 PHL,Philippines,infection severity rate,severe_disease,0.33,0.32,0.34
 PHL,Philippines,infection criticality rate,critical_disease,0.1,0.1,0.1
 PHL,Philippines,infection fatality ratio,death,0.063,0.06,0.067

@@ -1,0 +1,730 @@
+WHO_REGION,UNICEF_REGION,WBINCOME_LONG_STATUS,WHO_LEGAL_STATUS_TITLE,DEVELOPMENT_STATUS,COVAX_STATUS,COUNTRYNAME,ISO_3_CODE,DATE,UNPOP,VACCINE_NAME,NUMBER_TARGET,N_VACC_LAST_DOSE,N_VACC_DOSE1,PARTIALLY_VACCINATED,NOT_VACCINATED,PERSONS_VACCINATED_1PLUS_DOSE_PER100,TOTAL_VACCINATIONS_PER100
+,,,,,,"China, Province of Taiwan",TWN,2022-11,23893394,Unknown Vaccine,,,,,,,
+,,,,,,"China, Province of Taiwan",TWN,2022-11,23893394,Medigen - MVC-COV1901,,952456,1009638,57182,,4.225594739700856,3.986273360745652
+,,,,,,"China, Province of Taiwan",TWN,2022-11,23893394,Moderna - Spikevax,,4813581,4774962,-38619,,19.98444423592563,20.146074684910815
+,,,,,,"China, Province of Taiwan",TWN,2022-11,23893394,Pfizer BioNTech - Comirnaty,,6206146,7274916,1068770,,30.447394790375952,25.974317420120393
+,,,,,,"China, Province of Taiwan",TWN,2022-11,23893394,AstraZeneca - Vaxzevria,,7161549,8071727,910178,,33.78225378947838,29.972924733924366
+,,,Territory or Area,,,Pitcairn,PCN,2022-11,,Moderna - Spikevax,,0,9,9,,,
+,,,Territory or Area,,,Pitcairn,PCN,2022-11,,AstraZeneca - Vaxzevria,,37,46,9,,,
+AFR,ESARO,High income,Member State,Developing,No,Seychelles,SYC,2022-09,107118,Beijing CNBG - BBIBP-CorV,,,,,,,
+AFR,ESARO,High income,Member State,Developing,No,Seychelles,SYC,2022-09,107118,Gamaleya - Gam-Covid-Vac,,,,,,,
+AFR,ESARO,High income,Member State,Developing,No,Seychelles,SYC,2022-09,107118,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,ESARO,High income,Member State,Developing,No,Seychelles,SYC,2022-09,107118,SII - Covishield,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Ethiopia,ETH,2022-07,123379924,AstraZeneca - Vaxzevria,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Ethiopia,ETH,2022-07,123379924,Beijing CNBG - BBIBP-CorV,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Ethiopia,ETH,2022-07,123379924,Janssen - Ad26.COV 2-S,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Ethiopia,ETH,2022-07,123379924,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Madagascar,MDG,2022-07,29611714,AstraZeneca - Vaxzevria,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Madagascar,MDG,2022-07,29611714,Beijing Minhai - KCONVAC,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Madagascar,MDG,2022-07,29611714,Janssen - Ad26.COV 2-S,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Madagascar,MDG,2022-07,29611714,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Madagascar,MDG,2022-07,29611714,SII - Covishield,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Mozambique,MOZ,2021-06,32077072,Beijing CNBG - BBIBP-CorV,,97028,153321,56293,,0.477976917593975,0.302483967364602
+AFR,ESARO,Low income,Member State,Least developed,AMC,Mozambique,MOZ,2021-06,32077072,SII - Covishield,,223514,240913,17399,,0.751044234960099,0.696802999974561
+AFR,ESARO,Low income,Member State,Least developed,AMC,Zambia,ZMB,2022-06,20017675,AstraZeneca - Vaxzevria,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Zambia,ZMB,2022-06,20017675,Beijing CNBG - BBIBP-CorV,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Zambia,ZMB,2022-06,20017675,Janssen - Ad26.COV 2-S,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Zambia,ZMB,2022-06,20017675,Moderna - Spikevax,,,,,,,
+AFR,ESARO,Low income,Member State,Least developed,AMC,Zambia,ZMB,2022-06,20017675,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Developing,AMC,Eswatini,SWZ,2022-08,1201670,AstraZeneca - Vaxzevria,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Developing,AMC,Eswatini,SWZ,2022-08,1201670,Janssen - Ad26.COV 2-S,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Developing,AMC,Eswatini,SWZ,2022-08,1201670,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Developing,AMC,Kenya,KEN,2021-04,53005614,AstraZeneca - Vaxzevria,,,884858,884858,,1.669366569359993,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Angola,AGO,2022-03,35588987,Moderna - Spikevax,,147492,896632,749140,,2.519408602442098,0.414431576824595
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Angola,AGO,2022-03,35588987,Unknown Vaccine,,222572,355520,132948,,0.998960717819813,0.62539571581512
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Angola,AGO,2022-03,35588987,Janssen - Ad26.COV 2-S,,403311,403311,0,,1.133246641720935,1.133246641720935
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Angola,AGO,2022-03,35588987,AstraZeneca - Vaxzevria,,1618491,3155371,1536880,,8.866144462049453,4.547729891834235
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Angola,AGO,2022-03,35588987,Beijing CNBG - BBIBP-CorV,,1753967,3286178,1532211,,9.233693558066152,4.928398214874731
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Angola,AGO,2022-03,35588987,Pfizer BioNTech - Comirnaty,,1981304,3702825,1721521,,10.404412466137348,5.567182904082097
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Comoros,COM,2021-04,821625,Beijing CNBG - BBIBP-CorV,,,43140,43140,,5.250570515746235,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Lesotho,LSO,2022-04,2305825,AstraZeneca - Vaxzevria,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Lesotho,LSO,2022-04,2305825,Janssen - Ad26.COV 2-S,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Lesotho,LSO,2022-04,2305825,Moderna - Spikevax,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,Lesotho,LSO,2022-04,2305825,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,United Republic of Tanzania,TZA,2022-04,65497748,Beijing CNBG - BBIBP-CorV,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,United Republic of Tanzania,TZA,2022-04,65497748,Janssen - Ad26.COV 2-S,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,United Republic of Tanzania,TZA,2022-04,65497748,Moderna - Spikevax,,,,,,,
+AFR,ESARO,Lower middle income,Member State,Least developed,AMC,United Republic of Tanzania,TZA,2022-04,65497748,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,ESARO,Upper middle income,Member State,Developing,Self-financing,Botswana,BWA,2022-03,2630296,Unknown Vaccine,,1292541,1454775,162234,,55.30841395797279,49.14051498386494
+AFR,MENA,Lower middle income,Member State,Developing,AMC,Algeria,DZA,2022-03,44903225,Unknown Vaccine,,191251,208147,16896,,0.463545769819428,0.425918182936749
+AFR,MENA,Lower middle income,Member State,Developing,AMC,Algeria,DZA,2022-03,44903225,Beijing CNBG - BBIBP-CorV,,256873,297939,41066,,0.663513589502758,0.572059133837269
+AFR,MENA,Lower middle income,Member State,Developing,AMC,Algeria,DZA,2022-03,44903225,Janssen - Ad26.COV 2-S,,370474,370474,0,,0.825049871139545,0.825049871139545
+AFR,MENA,Lower middle income,Member State,Developing,AMC,Algeria,DZA,2022-03,44903225,AstraZeneca - Vaxzevria,,675048,770278,95230,,1.715417990578628,1.503339682172049
+AFR,MENA,Lower middle income,Member State,Developing,AMC,Algeria,DZA,2022-03,44903225,Sinovac - CoronaVac,,4653532,5834439,1180907,,12.993362948875053,10.363469438999092
+AFR,WCARO,Low income,Member State,Least developed,AMC,Guinea,GIN,2021-09,13531906,Janssen - Ad26.COV 2-S,,,173060,173060,,1.278903356260382,
+AFR,WCARO,Low income,Member State,Least developed,AMC,Niger,NER,2022-01,26207977,AstraZeneca - Vaxzevria,,,,,,,
+AFR,WCARO,Low income,Member State,Least developed,AMC,Niger,NER,2022-01,26207977,Janssen - Ad26.COV 2-S,,,,,,,
+AFR,WCARO,Low income,Member State,Least developed,AMC,Niger,NER,2022-01,26207977,Pfizer BioNTech - Comirnaty,,,,,,,
+AFR,WCARO,Low income,Member State,Least developed,AMC,Niger,NER,2022-01,26207977,Wuhan CNBG - Inactivated,,,,,,,
+AFR,WCARO,Lower middle income,Member State,Developing,AMC,Côte d'Ivoire,CIV,2021-11,27478249,Janssen - Ad26.COV 2-S,,135672,,,,,0.493743251253018
+AFR,WCARO,Lower middle income,Member State,Developing,AMC,Côte d'Ivoire,CIV,2021-11,27478249,Beijing CNBG - BBIBP-CorV,,201888,654407,452519,,2.38154549076253,0.734719304712611
+AFR,WCARO,Lower middle income,Member State,Developing,AMC,Côte d'Ivoire,CIV,2021-11,27478249,Pfizer BioNTech - Comirnaty,,469935,910058,440123,,3.311921367333122,1.710207226086349
+AFR,WCARO,Lower middle income,Member State,Developing,AMC,Côte d'Ivoire,CIV,2021-11,27478249,AstraZeneca - Vaxzevria,,547731,1468763,921032,,5.345184112714023,1.99332570281316
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Benin,BEN,2022-03,13352864,Unknown Vaccine,,,47716,47716,,0.357346558760727,
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Benin,BEN,2022-03,13352864,AstraZeneca - Vaxzevria,,30379,93694,63315,,0.701677183261958,0.227509244458717
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Benin,BEN,2022-03,13352864,Moderna - Spikevax,,81481,162715,81234,,1.218577527637517,0.61021365903225
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Benin,BEN,2022-03,13352864,Pfizer BioNTech - Comirnaty,,139855,380216,240361,,2.84744905662186,1.047378300265771
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Benin,BEN,2022-03,13352864,Sinovac - CoronaVac,,176232,288232,112000,,2.158578114777474,1.319806747076882
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Benin,BEN,2022-03,13352864,Janssen - Ad26.COV 2-S,,2092615,2092615,0,,15.671656657328343,15.671656657328343
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Mauritania,MRT,2021-05,4614974,AstraZeneca - Vaxzevria,,9492,155420,145928,,3.367732949308057,0.205678298512624
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Senegal,SEN,2021-06,16876720,Beijing CNBG - BBIBP-CorV,,96823,172851,76028,,1.024197829910077,0.573707450262847
+AFR,WCARO,Lower middle income,Member State,Least developed,AMC,Senegal,SEN,2021-06,16876720,AstraZeneca - Vaxzevria,,111004,384160,273156,,2.276271692603776,0.65773444128954
+AMR,,High income,Territory or Area,Developing,,Bermuda,BMU,2021-07,64185,AstraZeneca - Vaxzevria,,37,113,76,,0.176053595076731,0.057645867414505
+AMR,,High income,Territory or Area,Developing,,Bermuda,BMU,2021-07,64185,Pfizer BioNTech - Comirnaty,,40011,42079,2068,,65.55893121445821,62.33699462491236
+AMR,,High income,Territory or Area,Developing,,Cayman Islands,CYM,2022-07,68706,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,,High income,Territory or Area,Developing,,Cayman Islands,CYM,2022-07,68706,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,No,United States of America,USA,2022-08,338289857,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,No,United States of America,USA,2022-08,338289857,Moderna - Spikevax,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,No,United States of America,USA,2022-08,338289857,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,No,United States of America,USA,2022-08,338289857,Unknown Vaccine,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,AstraZeneca - Vaxzevria,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,Medicago - Covifenz,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,Moderna - Spikevax,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,Novavax-NUVAXOVID,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,SII - Covishield,,,,,,,
+AMR,Dev,High income,Member State,Developed economy,Self-financing,Canada,CAN,2022-07,38454327,Unknown Vaccine,,,,,,,
+AMR,LACRO,,Territory or Area,Developing,,Anguilla,AIA,2022-09,15857,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,,Territory or Area,Developing,,Anguilla,AIA,2022-09,15857,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,High income,Territory or Area,Developing,,British Virgin Islands,VGB,2021-05,31122,AstraZeneca - Vaxzevria,,5949,11917,5968,,38.291240922819874,19.115095430884903
+AMR,LACRO,High income,Member State,Developing,Self-financing,Antigua and Barbuda,ATG,2021-12,93219,Gamaleya - Sputnik-Light,,200,217,17,,0.232785161823233,0.214548536242611
+AMR,LACRO,High income,Member State,Developing,Self-financing,Antigua and Barbuda,ATG,2021-12,93219,Janssen - Ad26.COV 2-S,,1182,1182,0,,1.267981849193834,1.267981849193834
+AMR,LACRO,High income,Member State,Developing,Self-financing,Antigua and Barbuda,ATG,2021-12,93219,Pfizer BioNTech - Comirnaty,,12458,14872,2414,,15.95382915500059,13.364228322552268
+AMR,LACRO,High income,Member State,Developing,Self-financing,Antigua and Barbuda,ATG,2021-12,93219,AstraZeneca - Vaxzevria,,45111,45237,126,,48.52766067003508,48.39249509220223
+AMR,LACRO,High income,Member State,Developing,Self-financing,Bahamas,BHS,2022-08,409984,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Bahamas,BHS,2022-08,409984,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Bahamas,BHS,2022-08,409984,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Barbados,BRB,2022-09,281635,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Barbados,BRB,2022-09,281635,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Barbados,BRB,2022-09,281635,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Barbados,BRB,2022-09,281635,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Barbados,BRB,2022-09,281635,SII - Covishield,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Chile,CHL,2022-09,19603733,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Chile,CHL,2022-09,19603733,CanSino - Convidecia,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Chile,CHL,2022-09,19603733,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Chile,CHL,2022-09,19603733,Moderna – Spikevax Bivalent Original/Omicron BA.1,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Chile,CHL,2022-09,19603733,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Chile,CHL,2022-09,19603733,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Panama,PAN,2022-08,4408581,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Panama,PAN,2022-08,4408581,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Saint Kitts and Nevis,KNA,2021-04,47606,AstraZeneca - Vaxzevria,,,12570,12570,,26.40423476032433,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Trinidad and Tobago,TTO,2021-08,1525663,Pfizer BioNTech - Comirnaty,,213,26714,26501,,1.750976460725599,0.013961143450421
+AMR,LACRO,High income,Member State,Developing,Self-financing,Trinidad and Tobago,TTO,2021-08,1525663,AstraZeneca - Vaxzevria,,88238,119647,31409,,7.842295447946237,5.783583923841635
+AMR,LACRO,High income,Member State,Developing,Self-financing,Trinidad and Tobago,TTO,2021-08,1525663,Beijing CNBG - BBIBP-CorV,,309241,364187,54946,,23.870736853420446,20.26928620540709
+AMR,LACRO,High income,Member State,Developing,Self-financing,Uruguay,URY,2022-09,3422794,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Uruguay,URY,2022-09,3422794,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,High income,Member State,Developing,Self-financing,Uruguay,URY,2022-09,3422794,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Bolivia (Plurinational State of),BOL,2022-08,12224110,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Bolivia (Plurinational State of),BOL,2022-08,12224110,Gamaleya - Gam-Covid-Vac,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Bolivia (Plurinational State of),BOL,2022-08,12224110,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Bolivia (Plurinational State of),BOL,2022-08,12224110,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Bolivia (Plurinational State of),BOL,2022-08,12224110,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Bolivia (Plurinational State of),BOL,2022-08,12224110,SII - Covishield,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,El Salvador,SLV,2022-07,6336392,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,El Salvador,SLV,2022-07,6336392,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,El Salvador,SLV,2022-07,6336392,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,El Salvador,SLV,2022-07,6336392,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,El Salvador,SLV,2022-07,6336392,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Honduras,HND,2022-07,10432860,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Honduras,HND,2022-07,10432860,Gamaleya - Sputnik-Light,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Honduras,HND,2022-07,10432860,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Honduras,HND,2022-07,10432860,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Honduras,HND,2022-07,10432860,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,Gamaleya - Sputnik-Light,,,1509545,1509545,,22.035416186169265,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,Janssen - Ad26.COV 2-S,,,750,750,,0.010948042052159,
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,Finlay - Soberana Plus,,25260,,,,,0.368730056316728
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,Unknown Vaccine,,34317,863969,829652,,12.61169192501613,0.500938612138605
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,Pfizer BioNTech - Comirnaty,,48214,89044,40830,,1.299809941989975,0.703798532670417
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,SII - Covishield,,167750,167750,0,,2.448712072332984,2.448712072332984
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,Finlay - Soberana-02,,191338,504080,312742,,7.358252050203342,2.793035293568098
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,Gamaleya - Gam-Covid-Vac,,228000,228000,0,,3.328204783856455,3.328204783856455
+AMR,LACRO,Lower middle income,Member State,Developing,AMC,Nicaragua,NIC,2021-12,6850540,AstraZeneca - Vaxzevria,,927787,1565087,637300,,22.84618438838398,13.543268121929074
+AMR,LACRO,Lower middle income,Member State,Least developed,AMC,Haiti,HTI,2021-11,11447569,Janssen - Ad26.COV 2-S,,,341,341,,0.002978798380687,
+AMR,LACRO,Lower middle income,Member State,Least developed,AMC,Haiti,HTI,2021-11,11447569,Moderna - Spikevax,,66330,117303,50973,,1.024697907477125,0.579424330178748
+AMR,LACRO,NA,Member State,Developing,Self-financing,Venezuela (Bolivarian Republic of),VEN,2021-11,28199867,Finlay - Soberana-02,,12743,329140,316397,,1.167168625298836,0.045188156383858
+AMR,LACRO,NA,Member State,Developing,Self-financing,Venezuela (Bolivarian Republic of),VEN,2021-11,28199867,Unknown Vaccine,,47890,52345,4455,,0.185621442824535,0.169823495976063
+AMR,LACRO,NA,Member State,Developing,Self-financing,Venezuela (Bolivarian Republic of),VEN,2021-11,28199867,Sinovac - CoronaVac,,402121,629123,227002,,2.230943145937532,1.425967718216543
+AMR,LACRO,NA,Member State,Developing,Self-financing,Venezuela (Bolivarian Republic of),VEN,2021-11,28199867,Gamaleya - Sputnik-Light,,3886456,4087345,200889,,14.49419956484192,13.781823864630285
+AMR,LACRO,NA,Member State,Developing,Self-financing,Venezuela (Bolivarian Republic of),VEN,2021-11,28199867,Beijing CNBG - BBIBP-CorV,,7306985,13295566,5988581,,47.147619526006984,25.911416532567337
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Dominica,DMA,2022-09,72737,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Dominica,DMA,2022-09,72737,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Dominica,DMA,2022-09,72737,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Dominica,DMA,2022-09,72737,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Grenada,GRD,2021-09,124610,Pfizer BioNTech - Comirnaty,,4154,10981,6827,,8.812294358398201,3.333600834603964
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Grenada,GRD,2021-09,124610,AstraZeneca - Vaxzevria,,20400,23554,3154,,18.90217478533023,16.37107776261937
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Guyana,GUY,2022-08,808726,CanSino - Ad5-nCoV-IH,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Guyana,GUY,2022-08,808726,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Guyana,GUY,2022-08,808726,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Guyana,GUY,2022-08,808726,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Saint Lucia,LCA,2021-06,179651,AstraZeneca - Vaxzevria,,3129,2663,-466,,1.482318495304785,1.741710316112908
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Saint Vincent and the Grenadines,VCT,2022-07,103948,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Saint Vincent and the Grenadines,VCT,2022-07,103948,Gamaleya - Gam-Covid-Vac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Saint Vincent and the Grenadines,VCT,2022-07,103948,Gamaleya - Sputnik-Light,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,AMC,Saint Vincent and the Grenadines,VCT,2022-07,103948,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Argentina,ARG,2022-05,45510318,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Argentina,ARG,2022-05,45510318,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Argentina,ARG,2022-05,45510318,CanSino - Convidecia,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Argentina,ARG,2022-05,45510318,Gamaleya - Gam-Covid-Vac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Argentina,ARG,2022-05,45510318,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Argentina,ARG,2022-05,45510318,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Argentina,ARG,2022-05,45510318,SII - Covishield,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Belize,BLZ,2022-09,405272,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Belize,BLZ,2022-09,405272,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Belize,BLZ,2022-09,405272,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Belize,BLZ,2022-09,405272,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Brazil,BRA,2022-09,215313498,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Brazil,BRA,2022-09,215313498,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Brazil,BRA,2022-09,215313498,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Brazil,BRA,2022-09,215313498,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Colombia,COL,2022-08,51874024,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Colombia,COL,2022-08,51874024,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Colombia,COL,2022-08,51874024,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Colombia,COL,2022-08,51874024,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Colombia,COL,2022-08,51874024,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Costa Rica,CRI,2022-08,5180829,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Costa Rica,CRI,2022-08,5180829,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Costa Rica,CRI,2022-08,5180829,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Dominican Republic,DOM,2022-07,11228821,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Dominican Republic,DOM,2022-07,11228821,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Dominican Republic,DOM,2022-07,11228821,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Dominican Republic,DOM,2022-07,11228821,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Ecuador,ECU,2022-08,18001000,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Ecuador,ECU,2022-08,18001000,CanSino - Convidecia,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Ecuador,ECU,2022-08,18001000,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Ecuador,ECU,2022-08,18001000,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Guatemala,GTM,2022-08,17843908,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Guatemala,GTM,2022-08,17843908,Gamaleya - Gam-Covid-Vac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Guatemala,GTM,2022-08,17843908,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Guatemala,GTM,2022-08,17843908,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Jamaica,JAM,2022-09,2827377,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Jamaica,JAM,2022-09,2827377,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Jamaica,JAM,2022-09,2827377,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Jamaica,JAM,2022-09,2827377,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Mexico,MEX,2022-07,127504125,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Mexico,MEX,2022-07,127504125,CanSino - Convidecia,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Mexico,MEX,2022-07,127504125,Gamaleya - Gam-Covid-Vac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Mexico,MEX,2022-07,127504125,Janssen - Ad26.COV 2-S,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Mexico,MEX,2022-07,127504125,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Mexico,MEX,2022-07,127504125,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Mexico,MEX,2022-07,127504125,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,AstraZeneca - Vaxzevria,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,Beijing CNBG - BBIBP-CorV,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,Bharat - Covaxin,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,Gamaleya - Sputnik-Light,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,Julphar - Hayat-Vax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,Moderna - Spikevax,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,Pfizer BioNTech - Comirnaty,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Paraguay,PRY,2022-07,6780744,Sinovac - CoronaVac,,,,,,,
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Suriname,SUR,2021-09,612985,Moderna - Spikevax,,599,528,-71,,0.086135876081796,0.097718541236735
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Suriname,SUR,2021-09,612985,Beijing CNBG - BBIBP-CorV,,13522,3402,-10120,,0.554989110663393,2.205926735564492
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Suriname,SUR,2021-09,612985,Pfizer BioNTech - Comirnaty,,16936,13583,-3353,,2.215878039430002,2.762873479775198
+AMR,LACRO,Upper middle income,Member State,Developing,Self-financing,Suriname,SUR,2021-09,612985,AstraZeneca - Vaxzevria,,164599,33977,-130622,,5.54287625308939,26.852043687855332
+EMR,ESARO,Low income,Member State,Least developed,AMC,Somalia,SOM,2021-12,17065581,Beijing CNBG - BBIBP-CorV,,7480,15594,8114,,0.091376906534855,0.043830913228211
+EMR,ESARO,Low income,Member State,Least developed,AMC,Somalia,SOM,2021-12,17065581,AstraZeneca - Vaxzevria,,297164,727769,430605,,4.264542765933372,1.741306082693581
+EMR,ESARO,Low income,Member State,Least developed,AMC,Somalia,SOM,2021-12,17065581,Janssen - Ad26.COV 2-S,,539517,539517,0,,3.161433531035363,3.161433531035363
+EMR,MENA,High income,Member State,Developing,Self-financing,Oman,OMN,2021-12,4520471,AstraZeneca - Vaxzevria,,1561966,1613756,51790,,35.69884642551628,34.55316934894616
+EMR,MENA,High income,Member State,Developing,Self-financing,Oman,OMN,2021-12,4520471,Pfizer BioNTech - Comirnaty,,4194730,4351008,156278,,96.25120922133999,92.79409158912866
+EMR,MENA,High income,Member State,Developing,Self-financing,Qatar,QAT,2022-09,2695122,AstraZeneca - Vaxzevria,,,,,,,
+EMR,MENA,High income,Member State,Developing,Self-financing,Qatar,QAT,2022-09,2695122,Moderna - Spikevax,,,,,,,
+EMR,MENA,High income,Member State,Developing,Self-financing,Qatar,QAT,2022-09,2695122,Pfizer BioNTech - Comirnaty,,,,,,,
+EMR,MENA,High income,Member State,Developing,Self-financing,Saudi Arabia,SAU,2022-03,36408820,Moderna - Spikevax,,,,,,,
+EMR,MENA,High income,Member State,Developing,Self-financing,Saudi Arabia,SAU,2022-03,36408820,Pfizer BioNTech - Comirnaty,,,,,,,
+EMR,MENA,High income,Member State,Developing,Self-financing,Saudi Arabia,SAU,2022-03,36408820,SII - Covishield,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,AstraZeneca - Vaxzevria,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,Beijing CNBG - BBIBP-CorV,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,CIGB - CIGB-66,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,Finlay - Soberana-02,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,Gamaleya - Gam-Covid-Vac,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,Gamaleya - Sputnik-Light,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,Janssen - Ad26.COV 2-S,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,SII - Covishield,,,,,,,
+EMR,MENA,Low income,Member State,Developing,AMC,Syrian Arab Republic,SYR,2022-05,22125249,Sinovac - CoronaVac,,,,,,,
+EMR,MENA,Low income,Member State,Least developed,AMC,Sudan,SDN,2022-07,46874204,AstraZeneca - Vaxzevria,,,,,,,
+EMR,MENA,Low income,Member State,Least developed,AMC,Sudan,SDN,2022-07,46874204,Beijing CNBG - BBIBP-CorV,,,,,,,
+EMR,MENA,Low income,Member State,Least developed,AMC,Sudan,SDN,2022-07,46874204,Janssen - Ad26.COV 2-S,,,,,,,
+EMR,MENA,Low income,Member State,Least developed,AMC,Sudan,SDN,2022-07,46874204,Pfizer BioNTech - Comirnaty,,,,,,,
+EMR,MENA,Low income,Member State,Least developed,AMC,Yemen,YEM,2021-09,32981641,SII - Covishield,,15218,315187,299969,,0.955643777700449,0.046140821192008
+EMR,MENA,Low income,Member State,Least developed,AMC,Yemen,YEM,2021-09,32981641,AstraZeneca - Vaxzevria,,94950,26994,-67956,,0.081845533398414,0.287887434103112
+EMR,MENA,Low income,Member State,Least developed,AMC,Yemen,YEM,2021-09,32981641,Janssen - Ad26.COV 2-S,,122887,122887,0,,0.37259213390868,0.37259213390868
+EMR,MENA,Lower middle income,Territory or Area,Developing,AMC,"occupied Palestinian territory, including east Jerusalem",PSE,2022-06,5250072,AstraZeneca - Vaxzevria,,,,,,,
+EMR,MENA,Lower middle income,Territory or Area,Developing,AMC,"occupied Palestinian territory, including east Jerusalem",PSE,2022-06,5250072,Gamaleya - Gam-Covid-Vac,,,,,,,
+EMR,MENA,Lower middle income,Territory or Area,Developing,AMC,"occupied Palestinian territory, including east Jerusalem",PSE,2022-06,5250072,Gamaleya - Sputnik-Light,,,,,,,
+EMR,MENA,Lower middle income,Territory or Area,Developing,AMC,"occupied Palestinian territory, including east Jerusalem",PSE,2022-06,5250072,Moderna - Spikevax,,,,,,,
+EMR,MENA,Lower middle income,Territory or Area,Developing,AMC,"occupied Palestinian territory, including east Jerusalem",PSE,2022-06,5250072,Pfizer BioNTech - Comirnaty,,,,,,,
+EMR,MENA,Lower middle income,Territory or Area,Developing,AMC,"occupied Palestinian territory, including east Jerusalem",PSE,2022-06,5250072,Wuhan CNBG - Inactivated,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,AstraZeneca - Vaxzevria,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Baqiyatallah University - Noora,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Beijing CNBG - BBIBP-CorV,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Bharat - Covaxin,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Gamaleya - Gam-Covid-Vac,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,ODIR- Fakhravac (MIVAC),,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Pasteur Institute of Iran - Pasteurcovac,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Ravi - COV PARS,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Shifa - COVIran Barakat,,,,,,,
+EMR,MENA,Lower middle income,Member State,Developing,Self-financing,Iran (Islamic Republic of),IRN,2022-09,88550570,Vaxine-SpikoGen,,,,,,,
+EMR,MENA,Upper middle income,Member State,Developing,Self-financing,Iraq,IRQ,2022-04,44496122,AstraZeneca - Vaxzevria,,537993,592018,54025,,1.330493475363988,1.209078400135634
+EMR,MENA,Upper middle income,Member State,Developing,Self-financing,Iraq,IRQ,2022-04,44496122,Beijing CNBG - BBIBP-CorV,,1259477,1754993,495516,,3.94414821138795,2.830532062996411
+EMR,MENA,Upper middle income,Member State,Developing,Self-financing,Iraq,IRQ,2022-04,44496122,Pfizer BioNTech - Comirnaty,,5640738,8233187,2592449,,18.50315629753083,12.67692047410334
+EMR,ROSA,Low income,Member State,Least developed,AMC,Afghanistan,AFG,2022-07,41128771,Beijing CNBG - BBIBP-CorV,,,,,,,
+EMR,ROSA,Low income,Member State,Least developed,AMC,Afghanistan,AFG,2022-07,41128771,Bharat - Covaxin,,,,,,,
+EMR,ROSA,Low income,Member State,Least developed,AMC,Afghanistan,AFG,2022-07,41128771,Janssen - Ad26.COV 2-S,,,,,,,
+EMR,ROSA,Low income,Member State,Least developed,AMC,Afghanistan,AFG,2022-07,41128771,SII - Covishield,,,,,,,
+EMR,ROSA,Lower middle income,Member State,Developing,AMC,Pakistan,PAK,2022-07,235824862,AstraZeneca - Vaxzevria,,,,,,,
+EMR,ROSA,Lower middle income,Member State,Developing,AMC,Pakistan,PAK,2022-07,235824862,Beijing CNBG - BBIBP-CorV,,,,,,,
+EMR,ROSA,Lower middle income,Member State,Developing,AMC,Pakistan,PAK,2022-07,235824862,CanSino - Convidecia,,,,,,,
+EMR,ROSA,Lower middle income,Member State,Developing,AMC,Pakistan,PAK,2022-07,235824862,Gamaleya - Sputnik-Light,,,,,,,
+EMR,ROSA,Lower middle income,Member State,Developing,AMC,Pakistan,PAK,2022-07,235824862,Moderna - Spikevax,,,,,,,
+EMR,ROSA,Lower middle income,Member State,Developing,AMC,Pakistan,PAK,2022-07,235824862,Pfizer BioNTech - Comirnaty,,,,,,,
+EMR,ROSA,Lower middle income,Member State,Developing,AMC,Pakistan,PAK,2022-07,235824862,Sinovac - CoronaVac,,,,,,,
+EUR,,Upper middle income,Territory or Area,,AMC,Kosovo (in accordance with UN Security Council resolution 1244 (1999)),XKX,2022-10,1659714,AstraZeneca - Vaxzevria,,74111,86546,12435,,5.214512861854512,4.465287392888172
+EUR,,Upper middle income,Territory or Area,,AMC,Kosovo (in accordance with UN Security Council resolution 1244 (1999)),XKX,2022-10,1659714,Pfizer BioNTech - Comirnaty,,730061,789184,59123,,47.54939706479551,43.98715682340451
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Croatia,HRV,2022-10,4030358,Novavax-NUVAXOVID,3360840,609,734,125,3360106,0.018211781682917,0.015110320224655
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Croatia,HRV,2022-10,4030358,Unknown Vaccine,3360840,8610,8954,344,3351886,0.222163887178261,0.213628665245122
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Croatia,HRV,2022-10,4030358,Moderna - Spikevax,3360840,191195,197053,5858,3163787,4.88921827788003,4.743871388100015
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Croatia,HRV,2022-10,4030358,Janssen - Ad26.COV 2-S,3360840,200632,199865,-767,3160975,4.958988754845103,4.978019322353002
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Croatia,HRV,2022-10,4030358,AstraZeneca - Vaxzevria,3360840,279747,288206,8459,3072634,7.150878408320055,6.940996308516514
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Croatia,HRV,2022-10,4030358,Pfizer BioNTech - Comirnaty,3360840,1532699,1587333,54634,1773507,39.38441696742572,38.028855004940006
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Romania,ROU,2022-10,19659267,AstraZeneca - Vaxzevria,14962102,418229,434060,15831,14528042,2.207915483318885,2.127388574558756
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Romania,ROU,2022-10,19659267,Janssen - Ad26.COV 2-S,14962102,2018469,2018469,0,12943633,10.26726479680041,10.26726479680041
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Romania,ROU,2022-10,19659267,Moderna - Spikevax,16622113,406639,406958,319,16215155,2.070056833756823,2.068434189331678
+EUR,CEE-CIS,High income,Member State,Developed economy,No,Romania,ROU,2022-10,19659267,Pfizer BioNTech - Comirnaty,16622113,5033969,5053939,19970,11568174,25.707667534094735,25.606086941084833
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Kyrgyzstan,KGZ,2022-10,6630623,Sinovac - CoronaVac,2369189,0,0,0,2369189,0,0
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Kyrgyzstan,KGZ,2022-10,6630623,RIBSP - QazVac,2369189,4314,4915,601,2364274,0.074125764652884,0.065061759656672
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Kyrgyzstan,KGZ,2022-10,6630623,Moderna - Spikevax,2369189,23074,33869,10795,2335320,0.510796647615164,0.347991433082532
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Kyrgyzstan,KGZ,2022-10,6630623,Gamaleya - Gam-Covid-Vac,2369189,55747,59699,3952,2309490,0.900352802444054,0.840750559939843
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Kyrgyzstan,KGZ,2022-10,6630623,AstraZeneca - Vaxzevria,2369189,64133,79252,15119,2289937,1.195242136372404,0.967224346792149
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Kyrgyzstan,KGZ,2022-10,6630623,Pfizer BioNTech - Comirnaty,2369189,114409,132257,17848,2236932,1.994639116113222,1.725463806342179
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Kyrgyzstan,KGZ,2022-10,6630623,Beijing CNBG - BBIBP-CorV,2369189,1038058,1158219,120161,1210970,17.467725129297804,15.655512310080065
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Tajikistan,TJK,2022-10,9952787,Gamaleya - Sputnik-Light,,0,0,0,,0,0
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Tajikistan,TJK,2022-10,9952787,Gamaleya - Gam-Covid-Vac,,47596,48654,1058,,0.488847998053209,0.47821780974515
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Tajikistan,TJK,2022-10,9952787,Pfizer BioNTech - Comirnaty,,364659,358125,-6534,,3.598238362782204,3.663888315905886
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Tajikistan,TJK,2022-10,9952787,AstraZeneca - Vaxzevria,,1036562,969140,-67422,,9.737373059425463,10.414791354421633
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Tajikistan,TJK,2022-10,9952787,Moderna - Spikevax,,1245834,1300745,54911,,13.069153393918707,12.517438582780883
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Tajikistan,TJK,2022-10,9952787,Sinovac - CoronaVac,,2405727,2446153,40426,,24.57756807213899,24.171390385426715
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Tajikistan,TJK,2022-10,9952787,SII - Covishield,0,20184,160046,139862,,1.608052096362557,0.202797467684177
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Ukraine,UKR,2022-10,39701739,Janssen - Ad26.COV 2-S,,497,497,0,,0.001251834334007,0.001251834334007
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Ukraine,UKR,2022-10,39701739,Moderna - Spikevax,,1438444,1544380,105936,,3.88995555081353,3.623125929068246
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Ukraine,UKR,2022-10,39701739,AstraZeneca - Vaxzevria,,1862899,1674656,-188243,,4.218092310767546,4.692235269593606
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Ukraine,UKR,2022-10,39701739,Sinovac - CoronaVac,0,4761591,5032042,270451,,12.674613572972207,11.993406636419628
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Ukraine,UKR,2022-10,39701739,Pfizer BioNTech - Comirnaty,0,6993773,6931206,-62567,,17.458192448446653,17.615785041556997
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Ukraine,UKR,2022-10,39701739,SII - Covishield,34198849,11700,488021,476321,33710828,1.229218196210498,0.029469741866975
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Uzbekistan,UZB,2022-10,34627652,Gamaleya - Sputnik-Light,,0,162831,162831,,0.470234019909869,0
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Uzbekistan,UZB,2022-10,34627652,Gamaleya - Gam-Covid-Vac,,460702,1189364,728662,,3.434723209070023,1.330445390868546
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Uzbekistan,UZB,2022-10,34627652,Sinovac - CoronaVac,,914307,1094546,180239,,3.160901582353895,2.640395600602663
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Uzbekistan,UZB,2022-10,34627652,SII - Covishield,,1014983,1035443,20460,,2.990220070364575,2.931134343154425
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Uzbekistan,UZB,2022-10,34627652,Pfizer BioNTech - Comirnaty,,2214659,2319552,104893,,6.698554091972508,6.395637220796836
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Uzbekistan,UZB,2022-10,34627652,Anhui ZL - Zifivax,,10026342,12703164,2676822,,36.68502848532727,28.954726702232076
+EUR,CEE-CIS,Lower middle income,Member State,Economy in transition,AMC,Uzbekistan,UZB,2022-10,34627652,Moderna - Spikevax,2257600,1683815,1538380,-145435,719220,4.4426344587268,4.862631171180766
+EUR,CEE-CIS,Upper middle income,Member State,Developed economy,No,Bulgaria,BGR,2022-10,6781953,Moderna - Spikevax,0,193225,196344,3119,,2.895095262382385,2.849105560006093
+EUR,CEE-CIS,Upper middle income,Member State,Developed economy,No,Bulgaria,BGR,2022-10,6781953,AstraZeneca - Vaxzevria,0,230362,248162,17800,,3.659152459475906,3.396691189101428
+EUR,CEE-CIS,Upper middle income,Member State,Developed economy,No,Bulgaria,BGR,2022-10,6781953,Janssen - Ad26.COV 2-S,0,512745,512745,0,,7.560432813379863,7.560432813379863
+EUR,CEE-CIS,Upper middle income,Member State,Developed economy,No,Bulgaria,BGR,2022-10,6781953,Pfizer BioNTech - Comirnaty,0,1110033,1116435,6402,,16.461851033175844,16.367453445932167
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,Unknown Vaccine,,0,0,0,,0,0
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,Moderna - Spikevax,0,21555,25748,4193,,0.786679849287931,0.658570924009684
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,Beijing CNBG - BBIBP-CorV,0,45522,47234,1712,,1.44314261306766,1.390835796927341
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,Sinovac - CoronaVac,0,58259,60295,2036,,1.84219595746527,1.779989954158209
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,Gamaleya - Gam-Covid-Vac,0,112051,114041,1990,,3.484300011365733,3.423499448211975
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,Pfizer BioNTech - Comirnaty,0,241171,249550,8379,,7.6245128316686,7.368508852439783
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,AstraZeneca - Vaxzevria,0,285826,297214,11388,,9.080793254864963,8.732855157782044
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,AMC,Republic of Moldova,MDA,2022-10,3272996,Janssen - Ad26.COV 2-S,0,301421,301421,0,,9.20932992279856,9.20932992279856
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Belarus,BLR,2022-10,9534954,Gamaleya - Sputnik-Light,9255524,331532,331532,0,8923992,3.477017298667618,3.477017298667618
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Belarus,BLR,2022-10,9534954,Gamaleya - Gam-Covid-Vac,9255524,3298549,3960796,662247,5294728,41.53974943140785,34.59428330750206
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Belarus,BLR,2022-10,9534954,Chumakov - Covi-Vac,9349645,192473,138588,-53885,9211057,1.453473189278102,2.018604389701303
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Belarus,BLR,2022-10,9534954,Beijing CNBG - BBIBP-CorV,9349645,2463758,1963686,-500072,7385959,20.594603812456775,25.839222716753536
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Kazakhstan,KAZ,2022-10,19397998,Sinovac - CoronaVac,,260919,269065,8146,,1.38707613022746,1.34508210589567
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Kazakhstan,KAZ,2022-10,19397998,RIBSP - QazVac,,804044,839349,35305,,4.32698776440744,4.14498444633307
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Kazakhstan,KAZ,2022-10,19397998,Julphar - Hayat-Vax,,2130256,2116591,-13665,,10.911388896936684,10.98183431094281
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Kazakhstan,KAZ,2022-10,19397998,Pfizer BioNTech - Comirnaty,,3505998,2748384,-757614,,14.168389954468497,18.074019803486937
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Kazakhstan,KAZ,2022-10,19397998,Gamaleya - Gam-Covid-Vac,,6308672,6375317,66645,,32.86585038311686,32.52228400064791
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,North Macedonia,MKD,2022-10,2093599,Moderna - Spikevax,,7,7,0,,0.00033435247151,0.00033435247151
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,North Macedonia,MKD,2022-10,2093599,Gamaleya - Gam-Covid-Vac,,22573,22892,319,,1.093428111113924,1.078191191340844
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,North Macedonia,MKD,2022-10,2093599,AstraZeneca - Vaxzevria,,64061,66015,1954,,3.153182629529342,3.05985052533938
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,North Macedonia,MKD,2022-10,2093599,Beijing CNBG - BBIBP-CorV,,149571,150467,896,,7.187001904376148,7.144204788022921
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,North Macedonia,MKD,2022-10,2093599,Sinovac - CoronaVac,,245063,251298,6235,,12.003158197916601,11.705345675079133
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,North Macedonia,MKD,2022-10,2093599,Pfizer BioNTech - Comirnaty,,352916,360578,7662,,17.22287792456913,16.856905262182494
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Turkmenistan,TKM,2021-12,6341855,SRCVB - EpiVacCorona,0,117,150,33,,0.002365238561903,0.001844886078285
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Turkmenistan,TKM,2021-12,6341855,AstraZeneca - Vaxzevria,0,449,450,1,,0.00709571568571,0.007079947428631
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Turkmenistan,TKM,2021-12,6341855,Beijing CNBG - BBIBP-CorV,0,3995,22440,18445,,0.353839688860751,0.062994187032028
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Turkmenistan,TKM,2021-12,6341855,Gamaleya - Gam-Covid-Vac,0,5192,9200,4008,,0.145067965130076,0.081868790756017
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,No,Turkmenistan,TKM,2021-12,6341855,Unknown Vaccine,0,3196529,4342454,1145925,,68.47293102727829,50.403691033617136
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Albania,ALB,2022-10,2842321,SII - Covishield,,1836,54623,52787,,1.921774493450951,0.064595096753674
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Albania,ALB,2022-10,2842321,Gamaleya - Gam-Covid-Vac,,26253,28441,2188,,1.000625896934231,0.923646555051312
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Albania,ALB,2022-10,2842321,AstraZeneca - Vaxzevria,,194065,161887,-32178,,5.695591736471707,6.827694690360448
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Albania,ALB,2022-10,2842321,Sinovac - CoronaVac,,420562,436239,15677,,15.347984974251675,14.796428693310855
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Albania,ALB,2022-10,2842321,Pfizer BioNTech - Comirnaty,,619169,652714,33545,,22.964119816164324,21.783922364856043
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,Pfizer BioNTech - Comirnaty,2256291,2205,6421,4216,2249870,0.230932263585748,0.079303167918794
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,Gamaleya - Sputnik-Light,2256291,6815,6089,-726,2250202,0.21899183195353,0.245102534860126
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,Wuhan CNBG - Inactivated,2256291,8179,3768,-4411,2252523,0.135516705994564,0.29415900698767
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,Sinovac - CoronaVac,2256291,47282,50115,2833,2206176,1.802393768821015,1.700504483236461
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,Moderna - Spikevax,2256291,154784,164803,10019,2091488,5.927165524952805,5.566830631810677
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,Gamaleya - Gam-Covid-Vac,2256291,158535,168782,10247,2087509,6.07027087876182,5.701735930161422
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,AstraZeneca - Vaxzevria,2256291,186025,219419,33394,2036872,7.891438458763611,6.690418055371234
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Armenia,ARM,2022-10,2780469,Beijing CNBG - BBIBP-CorV,2256291,422708,510272,87564,1746019,18.352011836851982,15.202758959010152
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Azerbaijan,AZE,2022-10,10358074,Gamaleya - Sputnik-Light,7484519,7,2,-5,7484517,0.000019308608917,0.00006758013121
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Azerbaijan,AZE,2022-10,10358074,AstraZeneca - Vaxzevria,7484519,4452,4851,399,7479668,0.046833030928337,0.042980963449383
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Azerbaijan,AZE,2022-10,10358074,Gamaleya - Gam-Covid-Vac,7484519,7601,8554,953,7475965,0.082582920338279,0.073382368189299
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Azerbaijan,AZE,2022-10,10358074,Pfizer BioNTech - Comirnaty,7543333,106490,112187,5697,7431146,1.083087454289282,1.028086881789028
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Azerbaijan,AZE,2022-10,10358074,Sinovac - CoronaVac,7543333,4755155,5285004,529849,2258329,51.023037680557216,45.90771411750872
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Georgia,GEO,2022-10,3744385,AstraZeneca - Vaxzevria,,58897,59881,984,,1.599221233927601,1.572941884982447
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Georgia,GEO,2022-10,3744385,Sinovac - CoronaVac,,108061,114498,6437,,3.057858633660801,2.885947892644586
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Georgia,GEO,2022-10,3744385,Beijing CNBG - BBIBP-CorV,,364121,387871,23750,,10.35873714909124,9.724454082579648
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Georgia,GEO,2022-10,3744385,Pfizer BioNTech - Comirnaty,,638222,723484,85262,,19.321837898613524,17.04477504316463
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Montenegro,MNE,2022-10,627082,Unknown Vaccine,,4361,8093,3732,,1.290580817181804,0.695443339148628
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Montenegro,MNE,2022-10,627082,Gamaleya - Gam-Covid-Vac,,7339,7872,533,,1.255338217330429,1.170341358865348
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Montenegro,MNE,2022-10,627082,AstraZeneca - Vaxzevria,,24164,24423,259,,3.894705955520969,3.853403542120488
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Montenegro,MNE,2022-10,627082,Pfizer BioNTech - Comirnaty,,63997,62522,-1475,,9.970306913609384,10.205523360581232
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Montenegro,MNE,2022-10,627082,Beijing CNBG - BBIBP-CorV,,152830,167937,15107,,26.78070810516009,24.371613281835547
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Serbia,SRB,2022-10,7221365,Moderna - Spikevax,5740336,398,538,140,5739798,0.007450115040578,0.005511423394331
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Serbia,SRB,2022-10,7221365,AstraZeneca - Vaxzevria,5740336,133531,144171,10640,5596165,1.996450809507621,1.849110244392854
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Serbia,SRB,2022-10,7221365,Gamaleya - Gam-Covid-Vac,5740336,310147,313444,3297,5426892,4.340509031187317,4.294852842918202
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Serbia,SRB,2022-10,7221365,Pfizer BioNTech - Comirnaty,5740336,955696,981519,25823,4758817,13.591876328090326,13.23428465394008
+EUR,CEE-CIS,Upper middle income,Member State,Economy in transition,Self-financing,Serbia,SRB,2022-10,7221365,Beijing CNBG - BBIBP-CorV,5740336,1921510,1956668,35158,3783668,27.095542186276415,26.60868132271392
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Unknown Vaccine,7358443,0,0,0,7358443,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Moderna – Spikevax Bivalent Original/Omicron BA.1,7358443,17,32,15,7358411,0.000357957169753,0.000190164746432
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Valneva - VLA2001,7358443,192,319,127,7358124,0.00356838553598,0.002147743018521
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,7358443,308,363,55,7358080,0.004060576644391,0.003445337758877
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,7358443,511,790,279,7357653,0.008837067628289,0.005716128554501
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Novavax-NUVAXOVID,7358443,3721,4582,861,7353861,0.051254992244075,0.041623707145396
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Janssen - Ad26.COV 2-S,7358443,353290,352416,-874,7006027,3.942182310494957,3.951959015693849
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Moderna - Spikevax,7358443,547240,563639,16399,6794804,6.304956912583615,6.121515049246517
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,AstraZeneca - Vaxzevria,7358443,773186,817302,44116,6541141,9.142472211057813,8.648983507906435
+EUR,Dev,High income,Member State,Developed economy,No,Austria,AUT,2022-10,8939617,Pfizer BioNTech - Comirnaty,7358443,4508735,4627688,118953,2730755,51.7660655931904,50.43543811776276
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,Moderna – Spikevax Bivalent Original/Omicron BA.1,9202196,0,0,0,9202196,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,Novavax-NUVAXOVID,9202196,0,0,0,9202196,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,9202196,0,0,0,9202196,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,9202196,0,0,0,9202196,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,Janssen - Ad26.COV 2-S,9202196,426855,426855,0,8775341,3.662127346337873,3.662127346337873
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,Moderna - Spikevax,9202196,686827,695044,8217,8507152,5.963007670773589,5.89251136545947
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,AstraZeneca - Vaxzevria,9202196,1416638,1431925,15287,7770271,12.284948519766335,12.15379639376695
+EUR,Dev,High income,Member State,Developed economy,No,Belgium,BEL,2022-10,11655930,Pfizer BioNTech - Comirnaty,9202196,5785510,5834877,49367,3367319,50.059300287493144,49.63576479954838
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,Moderna – Spikevax Bivalent Original/Omicron BA.1,8513726,0,0,0,8513726,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,8513726,33,2,-31,8513724,0.00001905853505,0.000314465828333
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,8513726,53,3,-50,8513723,0.000028587802576,0.000505051178837
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,Novavax-NUVAXOVID,8513726,4922,5311,389,8508415,0.050609939826487,0.046903054759173
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,Janssen - Ad26.COV 2-S,8513726,410996,410967,-29,8102759,3.916214487040482,3.916490835798714
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,AstraZeneca - Vaxzevria,8513726,439035,446755,7720,8066971,4.257247913233351,4.183681967938589
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,Moderna - Spikevax,8513726,508832,517431,8599,7996295,4.930738424846383,4.848796253396946
+EUR,Dev,High income,Member State,Developed economy,No,Czechia,CZE,2022-10,10493986,Pfizer BioNTech - Comirnaty,8513726,5112522,5167730,55208,3345996,49.244681668147834,48.718589866615034
+EUR,Dev,High income,Member State,Developed economy,No,Denmark,DNK,2022-10,5882261,Unknown Vaccine,4740740,11,8,-3,4740732,0.000136002125713,0.000187002922856
+EUR,Dev,High income,Member State,Developed economy,No,Denmark,DNK,2022-10,5882261,AstraZeneca - Vaxzevria,4740740,2882,152644,149762,4588096,2.594988559671188,0.048994765788189
+EUR,Dev,High income,Member State,Developed economy,No,Denmark,DNK,2022-10,5882261,Janssen - Ad26.COV 2-S,4740740,46332,46332,0,4694408,0.787656311068142,0.787656311068142
+EUR,Dev,High income,Member State,Developed economy,No,Denmark,DNK,2022-10,5882261,Moderna - Spikevax,4740740,651784,569718,-82066,4171022,9.685357382135884,11.080501188233573
+EUR,Dev,High income,Member State,Developed economy,No,Denmark,DNK,2022-10,5882261,Pfizer BioNTech - Comirnaty,4740740,3611269,3536995,-74274,1203745,60.129854829630986,61.39253256528399
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,1071932,5,3,-2,1071929,0.000226233765842,0.000377056276403
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,Moderna – Spikevax Bivalent Original/Omicron BA.1,1071932,6,2,-4,1071930,0.000150822510561,0.000452467531684
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,1071932,14,10,-4,1071922,0.000754112552807,0.001055757573929
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,Novavax-NUVAXOVID,1071932,178,184,6,1071748,0.013875670971644,0.01342320343996
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,Moderna - Spikevax,1071932,77977,78599,622,993333,5.927249253805629,5.88034345302105
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,Janssen - Ad26.COV 2-S,1071932,78629,78629,0,993303,5.929511591464049,5.929511591464049
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,AstraZeneca - Vaxzevria,1071932,117056,118845,1789,953087,8.962250633831601,8.827339898134476
+EUR,Dev,High income,Member State,Developed economy,No,Estonia,EST,2022-10,1326062,Pfizer BioNTech - Comirnaty,1071932,510510,514230,3720,557702,38.77872980298055,38.49819993333645
+EUR,Dev,High income,Member State,Developed economy,No,Finland,FIN,2022-10,5540745,Janssen - Ad26.COV 2-S,4476235,0,0,0,4476235,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Finland,FIN,2022-10,5540745,Novavax-NUVAXOVID,4476235,0,0,0,4476235,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Finland,FIN,2022-10,5540745,Unknown Vaccine,4476235,1364,2335,971,4473900,0.042142347283623,0.024617628134845
+EUR,Dev,High income,Member State,Developed economy,No,Finland,FIN,2022-10,5540745,AstraZeneca - Vaxzevria,4476235,191814,361651,169837,4114584,6.527118645597298,3.461881028634236
+EUR,Dev,High income,Member State,Developed economy,No,Finland,FIN,2022-10,5540745,Moderna - Spikevax,4476235,481149,458962,-22187,4017273,8.283398712627996,8.683832228337526
+EUR,Dev,High income,Member State,Developed economy,No,Finland,FIN,2022-10,5540745,Pfizer BioNTech - Comirnaty,4476235,3315986,3267648,-48338,1208587,58.97488514631155,59.8472949034832
+EUR,Dev,High income,Member State,Developed economy,No,France,FRA,2022-10,64626628,Unknown Vaccine,52780048,1652,1173,-479,52778875,0.001815041317025,0.002556221871888
+EUR,Dev,High income,Member State,Developed economy,No,France,FRA,2022-10,64626628,Novavax-NUVAXOVID,52780048,12579,17290,4711,52762758,0.026753678065951,0.019464113151625
+EUR,Dev,High income,Member State,Developed economy,No,France,FRA,2022-10,64626628,Janssen - Ad26.COV 2-S,52780048,161890,160496,-1394,52619552,0.248343453723131,0.250500459346262
+EUR,Dev,High income,Member State,Developed economy,No,France,FRA,2022-10,64626628,AstraZeneca - Vaxzevria,52780048,3440786,4414891,974105,48365157,6.831380711987635,5.324099533709232
+EUR,Dev,High income,Member State,Developed economy,No,France,FRA,2022-10,64626628,Moderna - Spikevax,52780048,6662796,5933379,-729417,46846669,9.181012817193556,10.3096760672706
+EUR,Dev,High income,Member State,Developed economy,No,France,FRA,2022-10,64626628,Pfizer BioNTech - Comirnaty,52780048,37838103,38539680,701577,14240368,59.634366193452024,58.548781161845554
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,Moderna – Spikevax Bivalent Original/Omicron  - Generic,69488809,171,107,-64,69488702,0.000128343770541,0.000205110137967
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,Valneva - VLA2001,69488809,394,744,350,69488065,0.000892409021329,0.000472592949467
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron - Generic,69488809,4084,4562,478,69484247,0.005472002628097,0.004898653821382
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,Novavax-NUVAXOVID,69488809,66013,71360,5347,69417449,0.085594499680178,0.07918090957662
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,AstraZeneca - Vaxzevria,69488809,3513994,9273737,5759743,60215072,11.12361096805712,4.21494616464613
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,Janssen - Ad26.COV 2-S,69488809,3724030,3711713,-12317,65777096,4.452105061538859,4.466878988844923
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,Moderna - Spikevax,69488809,6373769,5144145,-1229624,64344664,6.170270705679511,7.645173327242562
+EUR,Dev,High income,Member State,Developed economy,No,Germany,DEU,2022-10,83369843,Pfizer BioNTech - Comirnaty,69488809,51217284,46591578,-4625706,22897231,55.88540930801561,61.433825658038
+EUR,Dev,High income,Member State,Developed economy,No,Greece,GRC,2021-12,10445365,Janssen - Ad26.COV 2-S,10718565,0,553711,553711,10164854,5.301021074897814,0
+EUR,Dev,High income,Member State,Developed economy,No,Greece,GRC,2021-12,10445365,Moderna - Spikevax,10718565,564869,581989,17120,10136576,5.571744022348669,5.407843574638129
+EUR,Dev,High income,Member State,Developed economy,No,Greece,GRC,2021-12,10445365,AstraZeneca - Vaxzevria,10718565,764064,781856,17792,9936709,7.485195586750678,7.314861663522529
+EUR,Dev,High income,Member State,Developed economy,No,Greece,GRC,2021-12,10445365,Pfizer BioNTech - Comirnaty,10718565,5005191,5431649,426458,5286916,52.000566758557504,47.9178180944371
+EUR,Dev,High income,Member State,Developed economy,No,Hungary,HUN,2022-10,9967308,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,8060478,85,174,89,8060304,0.001745707065539,0.000852787934315
+EUR,Dev,High income,Member State,Developed economy,No,Hungary,HUN,2022-10,9967308,Janssen - Ad26.COV 2-S,8060478,228096,227880,-216,7832598,2.286274287902009,2.288441372535092
+EUR,Dev,High income,Member State,Developed economy,No,Hungary,HUN,2022-10,9967308,Moderna - Spikevax,8060478,352445,365378,12933,7695100,3.665764116048185,3.536009923642372
+EUR,Dev,High income,Member State,Developed economy,No,Hungary,HUN,2022-10,9967308,AstraZeneca - Vaxzevria,8060478,610434,636944,26510,7423534,6.390331270991124,6.12436176347716
+EUR,Dev,High income,Member State,Developed economy,No,Hungary,HUN,2022-10,9967308,Gamaleya - Gam-Covid-Vac,8060478,894446,912079,17633,7148399,9.15070548637606,8.973797137602249
+EUR,Dev,High income,Member State,Developed economy,No,Hungary,HUN,2022-10,9967308,Beijing CNBG - BBIBP-CorV,8060478,1080754,1127700,46946,6932778,11.313987688551412,10.8429878960297
+EUR,Dev,High income,Member State,Developed economy,No,Hungary,HUN,2022-10,9967308,Pfizer BioNTech - Comirnaty,8060478,2565822,2647801,81979,5412677,26.564855826668545,25.742376978819156
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Moderna – Spikevax Bivalent Original/Omicron BA.1,282770,0,0,0,282770,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,282770,0,0,0,282770,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,282770,0,0,0,282770,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Unknown Vaccine,282770,0,0,0,282770,0,0
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Novavax-NUVAXOVID,282770,1,2,1,282768,0.000536338257812,0.000268169128906
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Moderna - Spikevax,282770,20206,20379,173,262391,5.465018677979828,5.418625418679053
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Janssen - Ad26.COV 2-S,282770,54244,54194,-50,228576,14.533157771943609,14.54656622838892
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,AstraZeneca - Vaxzevria,282770,55290,60177,4887,222593,16.137613670189516,14.827071137224824
+EUR,Dev,High income,Member State,Developed economy,No,Iceland,ISL,2022-10,372899,Pfizer BioNTech - Comirnaty,282770,131821,129337,-2484,153433,34.68419062534359,35.35032274154664
+EUR,Dev,High income,Member State,Developed economy,No,Ireland,IRL,2022-10,5023109,Novavax-NUVAXOVID,3762805,168,195,27,3762610,0.003882057904776,0.003344542194884
+EUR,Dev,High income,Member State,Developed economy,No,Ireland,IRL,2022-10,5023109,Janssen - Ad26.COV 2-S,3762805,236419,236419,0,3526386,4.706626911739323,4.706626911739323
+EUR,Dev,High income,Member State,Developed economy,No,Ireland,IRL,2022-10,5023109,Moderna - Spikevax,3762805,284796,286377,1581,3476428,5.701190238953604,5.669715707941038
+EUR,Dev,High income,Member State,Developed economy,No,Ireland,IRL,2022-10,5023109,AstraZeneca - Vaxzevria,3762805,591416,596021,4605,3166784,11.865579663909344,11.773903373388872
+EUR,Dev,High income,Member State,Developed economy,No,Ireland,IRL,2022-10,5023109,Pfizer BioNTech - Comirnaty,3762805,2471946,2486699,14753,1276106,49.505176973065886,49.21147440758303
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,Moderna – Spikevax Bivalent Original/Omicron BA.1,0,7,2,-5,,0.000003387678816,0.000011856875855
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,0,237,194,-43,,0.000328604845119,0.000401439939656
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,0,477,371,-106,,0.000628414420305,0.000807961397535
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,Novavax-NUVAXOVID,0,18171,21399,3228,,0.036246469488176,0.030778755879698
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,Janssen - Ad26.COV 2-S,0,1481883,1481715,-168,,2.509787258174359,2.510071823194874
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,AstraZeneca - Vaxzevria,0,5544679,6429714,885035,,10.890902954282902,9.391795793973165
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,Moderna - Spikevax,0,6275988,6578540,302552,,11.142990297992764,10.630515797474668
+EUR,Dev,High income,Member State,Developed economy,No,Italy,ITA,2022-10,59037474,Pfizer BioNTech - Comirnaty,0,30332793,31625315,1292522,,53.56820483206988,51.378880132981294
+EUR,Dev,High income,Member State,Developed economy,No,Latvia,LVA,2022-10,1850651,Novavax-NUVAXOVID,1518893,86,112,26,1518781,0.006051924430916,0.004647013402311
+EUR,Dev,High income,Member State,Developed economy,No,Latvia,LVA,2022-10,1850651,AstraZeneca - Vaxzevria,1518893,128242,130837,2595,1388056,7.069782471141236,6.929561543478484
+EUR,Dev,High income,Member State,Developed economy,No,Latvia,LVA,2022-10,1850651,Moderna - Spikevax,1518893,203314,206943,3629,1311950,11.182173192028104,10.986080033458496
+EUR,Dev,High income,Member State,Developed economy,No,Latvia,LVA,2022-10,1850651,Janssen - Ad26.COV 2-S,1518893,273208,272474,-734,1246419,14.723143369549417,14.762805088587745
+EUR,Dev,High income,Member State,Developed economy,No,Latvia,LVA,2022-10,1850651,Pfizer BioNTech - Comirnaty,1518893,592875,610786,17911,908107,33.00384567376561,32.03602408017503
+EUR,Dev,High income,Member State,Developed economy,No,Lithuania,LTU,2022-10,2750055,Unknown Vaccine,2295269,98,89,-9,2295180,0.003236298910385,0.003563565092335
+EUR,Dev,High income,Member State,Developed economy,No,Lithuania,LTU,2022-10,2750055,Moderna - Spikevax,2295269,135288,139485,4197,2155784,5.072080376574287,4.919465247058695
+EUR,Dev,High income,Member State,Developed economy,No,Lithuania,LTU,2022-10,2750055,AstraZeneca - Vaxzevria,2295269,262762,273519,10757,2021750,9.945946535614741,9.554790722367372
+EUR,Dev,High income,Member State,Developed economy,No,Lithuania,LTU,2022-10,2750055,Janssen - Ad26.COV 2-S,2295269,273688,273688,0,2021581,9.952091867253564,9.952091867253564
+EUR,Dev,High income,Member State,Developed economy,No,Lithuania,LTU,2022-10,2750055,Pfizer BioNTech - Comirnaty,2295269,1150635,1177853,27218,1117416,42.830161578586605,41.840435918554356
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,Moderna – Spikevax Bivalent Original/Omicron BA.1,506569,4,4,0,506565,0.000617666179225,0.000617666179225
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,506569,5,3,-2,506566,0.000463249634419,0.000772082724031
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,506569,7,9,2,506560,0.001389748903256,0.001080915813644
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,Novavax-NUVAXOVID,506569,177,210,33,506359,0.032427474409318,0.027331728430711
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,Janssen - Ad26.COV 2-S,506569,41348,41326,-22,465243,6.381418130664192,6.38481529464993
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,Moderna - Spikevax,506569,43555,43567,12,463002,6.727465607575058,6.725612609037383
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,AstraZeneca - Vaxzevria,506569,50486,54597,4111,451972,8.43068009678829,7.795873681089687
+EUR,Dev,High income,Member State,Developed economy,No,Luxembourg,LUX,2022-10,647599,Pfizer BioNTech - Comirnaty,506569,285800,285948,148,220621,44.155102154265215,44.13224850563389
+EUR,Dev,High income,Member State,Developed economy,No,Malta,MLT,2022-10,533286,Moderna - Spikevax,516100,25402,25610,208,490490,4.802301204231876,4.763297742674662
+EUR,Dev,High income,Member State,Developed economy,No,Malta,MLT,2022-10,533286,Janssen - Ad26.COV 2-S,516100,32282,32245,-37,483855,6.046474124578556,6.05341224033633
+EUR,Dev,High income,Member State,Developed economy,No,Malta,MLT,2022-10,533286,AstraZeneca - Vaxzevria,516100,113341,114175,834,401925,21.409712611994312,21.253323732481256
+EUR,Dev,High income,Member State,Developed economy,No,Malta,MLT,2022-10,533286,Pfizer BioNTech - Comirnaty,516100,236545,239230,2685,276870,44.85960629005824,44.356124106014406
+EUR,Dev,High income,Member State,Developed economy,No,Netherlands,NLD,2022-10,17564014,Novavax-NUVAXOVID,14070340,1107,1600,493,14068740,0.009109534984429,0.006302659517352
+EUR,Dev,High income,Member State,Developed economy,No,Netherlands,NLD,2022-10,17564014,Unknown Vaccine,14070340,3203,4928,1725,14065412,0.028057367752041,0.018236150346954
+EUR,Dev,High income,Member State,Developed economy,No,Netherlands,NLD,2022-10,17564014,Janssen - Ad26.COV 2-S,14070340,754283,753257,-1026,13317083,4.288638121103752,4.294479610412517
+EUR,Dev,High income,Member State,Developed economy,No,Netherlands,NLD,2022-10,17564014,Moderna - Spikevax,14070340,922939,995684,72745,13074656,5.668886394647602,5.254715693121174
+EUR,Dev,High income,Member State,Developed economy,No,Netherlands,NLD,2022-10,17564014,AstraZeneca - Vaxzevria,14070340,1193312,1279925,86613,12790415,7.287200978090771,6.794073382086805
+EUR,Dev,High income,Member State,Developed economy,No,Netherlands,NLD,2022-10,17564014,Pfizer BioNTech - Comirnaty,14070340,8324774,8844824,520050,5225516,50.35764603694805,47.39676249404037
+EUR,Dev,High income,Member State,Developed economy,No,Norway,NOR,2022-10,5434319,AstraZeneca - Vaxzevria,4248972,4489,143104,138615,4105868,2.633338234284737,0.082604646506766
+EUR,Dev,High income,Member State,Developed economy,No,Norway,NOR,2022-10,5434319,Janssen - Ad26.COV 2-S,4248972,7274,7080,-194,4241892,0.130283113670729,0.133853018197864
+EUR,Dev,High income,Member State,Developed economy,No,Norway,NOR,2022-10,5434319,Moderna - Spikevax,4248972,1038358,548269,-490089,3700703,10.08901023292891,19.107417139111636
+EUR,Dev,High income,Member State,Developed economy,No,Norway,NOR,2022-10,5434319,Pfizer BioNTech - Comirnaty,4248972,2862001,3298568,436567,950404,60.69882905291353,52.665310961686274
+EUR,Dev,High income,Member State,Developed economy,No,Poland,POL,2022-10,39857145,Novavax-NUVAXOVID,31044901,2859,3310,451,31041591,0.008304659051721,0.007173117893918
+EUR,Dev,High income,Member State,Developed economy,No,Poland,POL,2022-10,39857145,Moderna - Spikevax,31044901,1540812,1548189,7377,29496712,3.884344952454572,3.865836351299121
+EUR,Dev,High income,Member State,Developed economy,No,Poland,POL,2022-10,39857145,AstraZeneca - Vaxzevria,31044901,2633243,2659058,25815,28385843,6.67147132590656,6.606702512184453
+EUR,Dev,High income,Member State,Developed economy,No,Poland,POL,2022-10,39857145,Janssen - Ad26.COV 2-S,31044901,2652129,2652129,0,28392772,6.654086739027595,6.654086739027595
+EUR,Dev,High income,Member State,Developed economy,No,Poland,POL,2022-10,39857145,Pfizer BioNTech - Comirnaty,31044901,13832788,13972060,139272,17072841,35.05534578555489,34.70591784735209
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Moderna – Spikevax Bivalent Original/Omicron BA.1,8578859,10,7,-3,8578852,0.000068153948085,0.000097362782979
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,8578859,20,29,9,8578830,0.000282352070639,0.000194725565958
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Bharat - Covaxin,8578859,45,43,-2,8578816,0.000418659966809,0.000438132523405
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Novavax-NUVAXOVID,8578859,62,59,-3,8578800,0.000574440419575,0.000603649254469
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,8578859,178,284,106,8578575,0.002765103036599,0.001733057537023
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Beijing CNBG - BBIBP-CorV,8578859,1758,1743,-15,8577116,0.016970333073212,0.017116377247681
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Sinovac - CoronaVac,8578859,3283,3186,-97,8575673,0.03101978265706,0.031964201651954
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Moderna - Spikevax,8578859,977322,1133092,155770,7445767,11.03209904910638,9.515478978644934
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,AstraZeneca - Vaxzevria,8578859,1060456,1201964,141508,7376895,11.702656008038272,10.324894738661252
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Janssen - Ad26.COV 2-S,8578859,1134970,1134970,0,7443889,11.050383779749808,11.050383779749808
+EUR,Dev,High income,Member State,Developed economy,No,Portugal,PRT,2022-10,10270865,Pfizer BioNTech - Comirnaty,8578859,4911093,5288681,377588,3290178,51.492070044733325,47.81576819479178
+EUR,Dev,High income,Member State,Developed economy,No,Slovakia,SVK,2022-10,5643453,Unknown Vaccine,4437897,7,4,-3,4437893,0.000070878591529,0.000124037535176
+EUR,Dev,High income,Member State,Developed economy,No,Slovakia,SVK,2022-10,5643453,Novavax-NUVAXOVID,4437897,823,919,96,4436978,0.016284356403783,0.014583270207088
+EUR,Dev,High income,Member State,Developed economy,No,Slovakia,SVK,2022-10,5643453,Gamaleya - Gam-Covid-Vac,4437897,18922,19038,116,4418859,0.337346656382183,0.335291177227843
+EUR,Dev,High income,Member State,Developed economy,No,Slovakia,SVK,2022-10,5643453,Janssen - Ad26.COV 2-S,4437897,173743,173743,0,4264154,3.078664782004918,3.078664782004918
+EUR,Dev,High income,Member State,Developed economy,No,Slovakia,SVK,2022-10,5643453,Moderna - Spikevax,4437897,255764,258361,2597,4179536,4.578065946504737,4.532048020954547
+EUR,Dev,High income,Member State,Developed economy,No,Slovakia,SVK,2022-10,5643453,AstraZeneca - Vaxzevria,4437897,419195,424970,5775,4012927,7.530318760517718,7.427987793997753
+EUR,Dev,High income,Member State,Developed economy,No,Slovakia,SVK,2022-10,5643453,Pfizer BioNTech - Comirnaty,4437897,1796475,1826899,30424,2610998,32.37200699642577,31.832904429256345
+EUR,Dev,High income,Member State,Developed economy,No,Slovenia,SVN,2022-10,2119844,Unknown Vaccine,1724466,4,3,-1,1724463,0.000141519847687,0.000188693130249
+EUR,Dev,High income,Member State,Developed economy,No,Slovenia,SVN,2022-10,2119844,Novavax-NUVAXOVID,1724466,85,95,10,1724371,0.004481461843419,0.004009729017796
+EUR,Dev,High income,Member State,Developed economy,No,Slovenia,SVN,2022-10,2119844,Moderna - Spikevax,1724466,97308,99220,1912,1625246,4.68053309583158,4.590337779572459
+EUR,Dev,High income,Member State,Developed economy,No,Slovenia,SVN,2022-10,2119844,Janssen - Ad26.COV 2-S,1724466,135756,135692,-64,1588774,6.40103705744385,6.404056147527837
+EUR,Dev,High income,Member State,Developed economy,No,Slovenia,SVN,2022-10,2119844,AstraZeneca - Vaxzevria,1724466,156490,166841,10351,1557625,7.870437635976987,7.382146988174602
+EUR,Dev,High income,Member State,Developed economy,No,Slovenia,SVN,2022-10,2119844,Pfizer BioNTech - Comirnaty,1724466,771862,787409,15547,937057,37.14466724909946,36.41126422510336
+EUR,Dev,High income,Member State,Developed economy,No,Spain,ESP,2022-10,47558630,Janssen - Ad26.COV 2-S,0,1981095,1981095,0,,4.16558466886031,4.16558466886031
+EUR,Dev,High income,Member State,Developed economy,No,Spain,ESP,2022-10,47558630,Moderna - Spikevax,0,4277243,4917403,640160,,10.33966495670712,8.993621136689598
+EUR,Dev,High income,Member State,Developed economy,No,Spain,ESP,2022-10,47558630,AstraZeneca - Vaxzevria,0,4685012,5109583,424571,,10.74375565486222,9.85102388357276
+EUR,Dev,High income,Member State,Developed economy,No,Spain,ESP,2022-10,47558630,Pfizer BioNTech - Comirnaty,0,22722492,24439929,1717437,,51.3890517872361,47.77785230566987
+EUR,Dev,High income,Member State,Developed economy,No,Sweden,SWE,2022-10,10549347,Novavax-NUVAXOVID,8147081,226,276,50,8146805,0.002616275680381,0.002142312694805
+EUR,Dev,High income,Member State,Developed economy,No,Sweden,SWE,2022-10,10549347,AstraZeneca - Vaxzevria,8147081,590709,731339,140630,7415742,6.932552318167181,5.599484024935382
+EUR,Dev,High income,Member State,Developed economy,No,Sweden,SWE,2022-10,10549347,Moderna - Spikevax,8147081,923115,941631,18516,7205450,8.925964801423254,8.750446828604652
+EUR,Dev,High income,Member State,Developed economy,No,Sweden,SWE,2022-10,10549347,Pfizer BioNTech - Comirnaty,8147081,5586014,5547926,-38088,2599155,52.59023141432356,52.95127745821613
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Andorra,AND,2022-10,79824,Moderna - Spikevax,82317,4605,4538,-67,77779,5.685007015433955,5.768941671677691
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Andorra,AND,2022-10,79824,Pfizer BioNTech - Comirnaty,82317,18401,18216,-185,64101,22.820204449789536,23.051964321507317
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Andorra,AND,2022-10,79824,AstraZeneca - Vaxzevria,82317,29254,33771,4517,48546,42.30682501503307,36.64812587692925
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Monaco,MCO,2022-08,36469,AstraZeneca - Vaxzevria,,,,,,,
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Monaco,MCO,2022-08,36469,Janssen - Ad26.COV 2-S,,,,,,,
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Monaco,MCO,2022-08,36469,Moderna - Spikevax,,,,,,,
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Monaco,MCO,2022-08,36469,Novavax-NUVAXOVID,,,,,,,
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Monaco,MCO,2022-08,36469,Pfizer BioNTech - Comirnaty,,,,,,,
+EUR,Dev,High income,Member State,Developed economy,Self-financing,San Marino,SMR,2022-10,33660,Gamaleya - Sputnik-Light,34559,0,0,0,34559,0,0
+EUR,Dev,High income,Member State,Developed economy,Self-financing,San Marino,SMR,2022-10,33660,Pfizer BioNTech - Comirnaty,34559,3162,4368,1206,30191,12.976827094474151,9.393939393939394
+EUR,Dev,High income,Member State,Developed economy,Self-financing,San Marino,SMR,2022-10,33660,Gamaleya - Gam-Covid-Vac,34559,18727,20249,1522,14310,60.15745692216281,55.63576945929887
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Switzerland,CHE,2022-10,8740472,Moderna – Spikevax Bivalent Original/Omicron BA.1,8670300,3,2,-1,8670298,0.000022882059459,0.000034323089188
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Switzerland,CHE,2022-10,8740472,Novavax-NUVAXOVID,8670300,211,320,109,8669980,0.003661129513372,0.00241405727288
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Switzerland,CHE,2022-10,8740472,Janssen - Ad26.COV 2-S,8670300,60009,59694,-315,8610606,0.682960828660054,0.686564753024779
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Switzerland,CHE,2022-10,8740472,Pfizer BioNTech - Comirnaty,8670300,1791653,1877668,86015,6792632,21.482455409730733,20.49835523756612
+EUR,Dev,High income,Member State,Developed economy,Self-financing,Switzerland,CHE,2022-10,8740472,Moderna - Spikevax,8670300,3567734,3817336,249602,4852964,43.67425466267726,40.818550760187776
+EUR,Dev,High income,Member State,Developing,Self-financing,Israel,ISR,2022-10,9038309,AstraZeneca - Vaxzevria,,210,338,128,,0.003739637580437,0.002323443467135
+EUR,Dev,High income,Member State,Developing,Self-financing,Israel,ISR,2022-10,9038309,Moderna - Spikevax,7311044,53650,150792,97142,7160252,1.668365177601253,0.593584485770513
+EUR,Dev,High income,Member State,Developing,Self-financing,Israel,ISR,2022-10,9038309,Pfizer BioNTech - Comirnaty,7311044,5691244,6083565,392321,1227479,67.30866360068016,62.968017579394555
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Moderna – Spikevax Bivalent Original/Omicron BA.1,717452,0,0,0,717452,0,0
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Moderna – Spikevax Bivalent Original/Omicron BA.4/BA.5,717452,0,0,0,717452,0,0
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.1,717452,0,0,0,717452,0,0
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Pfizer BioNTech - Comirnaty Bivalent Original/Omicron BA.4/BA.5,717452,6,0,-6,717452,0,0.000479429287376
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Novavax-NUVAXOVID,717452,107,785,678,716667,0.062725331765067,0.008549822291544
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Janssen - Ad26.COV 2-S,717452,24693,24393,-300,693059,1.949119767828377,1.973091232197192
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Moderna - Spikevax,717452,50991,52796,1805,664656,4.218658109386586,4.074429798767547
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,AstraZeneca - Vaxzevria,717452,124334,130197,5863,587255,10.40337582142218,9.934893502774296
+EUR,MENA,High income,Member State,Developed economy,No,Cyprus,CYP,2022-10,1251488,Pfizer BioNTech - Comirnaty,717452,419731,421950,2219,295502,33.71586463473881,33.538555703290804
+SEAR,EAPRO,Lower middle income,Member State,Developing,AMC,Indonesia,IDN,2022-08,275501339,AstraZeneca - Vaxzevria,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Developing,AMC,Indonesia,IDN,2022-08,275501339,Beijing CNBG - BBIBP-CorV,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Developing,AMC,Indonesia,IDN,2022-08,275501339,Janssen - Ad26.COV 2-S,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Developing,AMC,Indonesia,IDN,2022-08,275501339,Moderna - Spikevax,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Developing,AMC,Indonesia,IDN,2022-08,275501339,Pfizer BioNTech - Comirnaty,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Developing,AMC,Indonesia,IDN,2022-08,275501339,SII - Covovax,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Developing,AMC,Indonesia,IDN,2022-08,275501339,Sinovac - CoronaVac,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Least developed,AMC,Myanmar,MMR,2021-11,53798084,AstraZeneca - Vaxzevria,,1527284,1810426,283142,,3.365223936227915,2.838918947373665
+SEAR,EAPRO,Lower middle income,Member State,Least developed,AMC,Timor-Leste,TLS,2022-02,1341296,AstraZeneca - Vaxzevria,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Least developed,AMC,Timor-Leste,TLS,2022-02,1341296,Pfizer BioNTech - Comirnaty,,,,,,,
+SEAR,EAPRO,Lower middle income,Member State,Least developed,AMC,Timor-Leste,TLS,2022-02,1341296,Sinovac - CoronaVac,,,,,,,
+SEAR,EAPRO,Upper middle income,Member State,Developing,No,Thailand,THA,2021-08,71601103,Beijing CNBG - BBIBP-CorV,,,2075,2075,,0.002898000048966,
+SEAR,EAPRO,Upper middle income,Member State,Developing,No,Thailand,THA,2021-08,71601103,AstraZeneca - Vaxzevria,,57187,3036651,2979464,,4.241067347803287,0.079868881349495
+SEAR,EAPRO,Upper middle income,Member State,Developing,No,Thailand,THA,2021-08,71601103,Sinovac - CoronaVac,,2552474,3499126,946652,,4.886972202090239,3.564852904570478
+SEAR,ROSA,Lower middle income,Member State,Developing,AMC,India,IND,2021-09,1407563842,Bharat - Covaxin,,51000000,72000000,21000000,,5.115220912303031,3.623281479547981
+SEAR,ROSA,Lower middle income,Member State,Developing,AMC,India,IND,2021-09,1407563842,SII - Covishield,,306000000,671000000,365000000,,47.671017113268526,21.739688877287882
+SEAR,ROSA,Lower middle income,Member State,Developing,AMC,Sri Lanka,LKA,2022-04,21832143,Beijing CNBG - BBIBP-CorV,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Developing,AMC,Sri Lanka,LKA,2022-04,21832143,Gamaleya - Gam-Covid-Vac,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Developing,AMC,Sri Lanka,LKA,2022-04,21832143,Moderna - Spikevax,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Developing,AMC,Sri Lanka,LKA,2022-04,21832143,Pfizer BioNTech - Comirnaty,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Developing,AMC,Sri Lanka,LKA,2022-04,21832143,SII - Covishield,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bangladesh,BGD,2022-09,171186372,AstraZeneca - Vaxzevria,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bangladesh,BGD,2022-09,171186372,Beijing CNBG - BBIBP-CorV,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bangladesh,BGD,2022-09,171186372,Janssen - Ad26.COV 2-S,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bangladesh,BGD,2022-09,171186372,Moderna - Spikevax,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bangladesh,BGD,2022-09,171186372,Pfizer BioNTech - Comirnaty,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bangladesh,BGD,2022-09,171186372,Sinovac - CoronaVac,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bhutan,BTN,2022-03,782455,AstraZeneca - Vaxzevria,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bhutan,BTN,2022-03,782455,Moderna - Spikevax,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bhutan,BTN,2022-03,782455,Pfizer BioNTech - Comirnaty,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Bhutan,BTN,2022-03,782455,SII - Covishield,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Nepal,NPL,2022-07,30547580,AstraZeneca - Vaxzevria,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Nepal,NPL,2022-07,30547580,Janssen - Ad26.COV 2-S,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Nepal,NPL,2022-07,30547580,Moderna - Spikevax,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Nepal,NPL,2022-07,30547580,Pfizer BioNTech - Comirnaty,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Nepal,NPL,2022-07,30547580,SII - Covishield,,,,,,,
+SEAR,ROSA,Lower middle income,Member State,Least developed,AMC,Nepal,NPL,2022-07,30547580,Sinovac - CoronaVac,,,,,,,
+SEAR,ROSA,Upper middle income,Member State,Developing,AMC,Maldives,MDV,2022-09,523787,AstraZeneca - Vaxzevria,,,,,,,
+SEAR,ROSA,Upper middle income,Member State,Developing,AMC,Maldives,MDV,2022-09,523787,Beijing CNBG - BBIBP-CorV,,,,,,,
+SEAR,ROSA,Upper middle income,Member State,Developing,AMC,Maldives,MDV,2022-09,523787,Pfizer BioNTech - Comirnaty,,,,,,,
+SEAR,ROSA,Upper middle income,Member State,Developing,AMC,Maldives,MDV,2022-09,523787,SII - Covishield,,,,,,,
+WPR,,,Associate Member,,,Tokelau,TKL,2022-11,1871,Pfizer BioNTech - Comirnaty,,1494,1494,0,,79.85034740780331,79.85034740780331
+WPR,,,Territory or Area,,,Wallis and Futuna,WLF,2022-11,11572,Moderna - Spikevax,,6989,6592,-397,,56.96508814379537,60.39578292430003
+WPR,,High income,Territory or Area,,,"China, Macao SAR",MAC,2022-11,695168,Pfizer BioNTech - Comirnaty,,94633,98726,4093,,14.201746915853434,13.612968375989688
+WPR,,High income,Territory or Area,,,"China, Macao SAR",MAC,2022-11,695168,Beijing CNBG - BBIBP-CorV,,490756,508423,17667,,73.13670939974223,70.59530933529737
+WPR,,High income,Territory or Area,Developing,,French Polynesia,PYF,2022-11,306279,Novavax-NUVAXOVID,,6,43,37,,0.01403948687308,0.001958998168337
+WPR,,High income,Territory or Area,Developing,,French Polynesia,PYF,2022-11,306279,Janssen - Ad26.COV 2-S,,33214,33242,28,,10.853502851974833,10.844360860522595
+WPR,,High income,Territory or Area,Developing,,French Polynesia,PYF,2022-11,306279,Pfizer BioNTech - Comirnaty,,150328,153312,2984,,50.05632119733968,49.08204610828689
+WPR,,High income,Territory or Area,Developing,,French Polynesia,PYF,2022-11,306279,Unknown Vaccine,,185669,190658,4989,,62.24977879645682,60.62087181948485
+WPR,,High income,Territory or Area,Developing,,Guam,GUM,2022-11,171774,Janssen - Ad26.COV 2-S,,11754,11754,0,,6.842711935450068,6.842711935450068
+WPR,,High income,Territory or Area,Developing,,Guam,GUM,2022-11,171774,Moderna - Spikevax,,40303,44591,4288,,25.959109061906926,23.462805779687265
+WPR,,High income,Territory or Area,Developing,,Guam,GUM,2022-11,171774,Pfizer BioNTech - Comirnaty,,88957,98880,9923,,57.564008522826505,51.78723206073096
+WPR,,High income,Territory or Area,Developing,,New Caledonia,NCL,2022-11,289950,Pfizer BioNTech - Comirnaty,,167447,179533,12086,,61.91860665632006,57.75030177616831
+WPR,,High income,Territory or Area,Developing,,New Caledonia,NCL,2022-11,289950,Unknown Vaccine,,184013,191568,7555,,66.06932229694775,63.46370063804104
+WPR,,High income,Territory or Area,Developing,,Northern Mariana Islands,MNP,2022-11,49551,Janssen - Ad26.COV 2-S,,1162,1162,0,,2.345058626465662,2.345058626465662
+WPR,,High income,Territory or Area,Developing,,Northern Mariana Islands,MNP,2022-11,49551,Moderna - Spikevax,,5231,5361,130,,10.8191560210692,10.556800064579928
+WPR,,High income,Territory or Area,Developing,,Northern Mariana Islands,MNP,2022-11,49551,Pfizer BioNTech - Comirnaty,,37551,38291,740,,77.27593792254444,75.7825270932978
+WPR,,High income,Territory or Area,Developing,,Northern Mariana Islands,MNP,2022-11,49551,Unknown Vaccine,,45046,46340,1294,,93.51980787471494,90.90835704627555
+WPR,,Upper middle income,Territory or Area,Developing,,American Samoa,ASM,2022-11,44273,Janssen - Ad26.COV 2-S,,576,576,0,,1.301018679556389,1.301018679556389
+WPR,,Upper middle income,Territory or Area,Developing,,American Samoa,ASM,2022-11,44273,Moderna - Spikevax,,9430,10335,905,,23.343798703498745,21.299663451765184
+WPR,,Upper middle income,Territory or Area,Developing,,American Samoa,ASM,2022-11,44273,Pfizer BioNTech - Comirnaty,,31417,33974,2557,,76.73751496397354,70.9619858604567
+WPR,Dev,High income,Member State,Developed economy,Self-financing,Australia,AUS,2022-11,26177413,Unknown Vaccine,,21784904,22443557,658653,,85.73634453488586,83.22023264865784
+WPR,Dev,High income,Member State,Developed economy,Self-financing,Japan,JPN,2022-11,123951692,Novavax-NUVAXOVID,,29873,34749,4876,,0.028034308720852,0.024100518127659
+WPR,Dev,High income,Member State,Developed economy,Self-financing,Japan,JPN,2022-11,123951692,AstraZeneca - Vaxzevria,,59135,58696,-439,,0.047353932046365,0.047708102282299
+WPR,Dev,High income,Member State,Developed economy,Self-financing,Japan,JPN,2022-11,123951692,Moderna - Spikevax,,16196813,16398700,201887,,13.229912182239511,13.067036632303495
+WPR,Dev,High income,Member State,Developed economy,Self-financing,Japan,JPN,2022-11,123951692,Pfizer BioNTech - Comirnaty,,86571100,87730578,1159478,,70.77803988347331,69.84261255586571
+WPR,Dev,High income,Member State,Developed economy,Self-financing,New Zealand,NZL,2022-11,5185288,Novavax-NUVAXOVID,,2209,2383,174,,0.045956945882273,0.04260129813426
+WPR,Dev,High income,Member State,Developed economy,Self-financing,New Zealand,NZL,2022-11,5185288,AstraZeneca - Vaxzevria,,3637,3313,-324,,0.063892304535447,0.07014075206623
+WPR,Dev,High income,Member State,Developed economy,Self-financing,New Zealand,NZL,2022-11,5185288,Pfizer BioNTech - Comirnaty,,4089517,4250043,160526,,81.96348978108834,78.8676925948954
+WPR,Dev,High income,Territory or Area,Developing,,"China, Hong Kong SAR",HKG,2022-11,7488865,Unknown Vaccine,,,,,,,
+WPR,Dev,High income,Territory or Area,Developing,,"China, Hong Kong SAR",HKG,2022-11,7488865,Sinovac - CoronaVac,,2983200,3072400,89200,,41.026243629708915,39.83514190735178
+WPR,Dev,High income,Territory or Area,Developing,,"China, Hong Kong SAR",HKG,2022-11,7488865,Pfizer BioNTech - Comirnaty,,3746200,3812600,66400,,50.910251419941474,50.02360170733483
+WPR,EAPRO,,Member State,Developing,No,Cook Islands,COK,2022-11,17011,Pfizer BioNTech - Comirnaty,,14676,15020,344,,88.2958085944389,86.27358767856093
+WPR,EAPRO,,Member State,Developing,No,Niue,NIU,2022-11,1934,Pfizer BioNTech - Comirnaty,,1436,1650,214,,85.31540847983455,74.25025853154085
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Brunei Darussalam,BRN,2022-11,449002,Beijing CNBG - BBIBP-CorV,,33803,34035,232,,7.580144409156307,7.528474260693716
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Brunei Darussalam,BRN,2022-11,449002,Pfizer BioNTech - Comirnaty,,86072,88328,2256,,19.672072730188283,19.169625079621024
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Brunei Darussalam,BRN,2022-11,449002,AstraZeneca - Vaxzevria,,130751,130914,163,,29.156662999273944,29.120360265655833
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Brunei Darussalam,BRN,2022-11,449002,Moderna - Spikevax,,194798,196783,1985,,43.82675355566345,43.384661983688275
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Nauru,NRU,2022-11,12668,AstraZeneca - Vaxzevria,,333,7662,7329,,60.483107041364065,2.628670666245658
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Nauru,NRU,2022-11,12668,Pfizer BioNTech - Comirnaty,,1083,1647,564,,13.001263024944745,8.549100094726871
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Nauru,NRU,2022-11,12668,SII - Covishield,,7169,155,-7014,,1.223555415219451,56.59141143037575
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Nauru,NRU,2022-11,12668,Unknown Vaccine,,8585,10493,1908,,82.83075465740448,67.76918219134828
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Republic of Korea,KOR,2022-11,51815810,Novavax-NUVAXOVID,,97688,122858,25170,,0.23710523872926,0.188529331105699
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Republic of Korea,KOR,2022-11,51815810,Janssen - Ad26.COV 2-S,,1516636,1516636,0,,2.926975376820318,2.926975376820318
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Republic of Korea,KOR,2022-11,51815810,Moderna - Spikevax,,6639073,6813225,174152,,13.148930799306235,12.812832608425884
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Republic of Korea,KOR,2022-11,51815810,AstraZeneca - Vaxzevria,,9242971,11076305,1833334,,21.376303873277287,17.83812894172647
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Republic of Korea,KOR,2022-11,51815810,Pfizer BioNTech - Comirnaty,,27050301,25455330,-1594971,,49.126569670531055,52.204724774156766
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Republic of Korea,KOR,2022-11,51815810,Unknown Vaccine,,44678807,45113628,434821,,87.06537251854213,86.2262058626508
+WPR,EAPRO,High income,Member State,Developing,Self-financing,Singapore,SGP,2022-11,5975689,Unknown Vaccine,,5120432,5161367,40935,,86.37275132624873,85.68772571664958
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Micronesia (Federated States of),FSM,2022-11,114164,Janssen - Ad26.COV 2-S,,13081,13081,0,,11.458077852913352,11.458077852913352
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Micronesia (Federated States of),FSM,2022-11,114164,Pfizer BioNTech - Comirnaty,,13455,19588,6133,,17.157773028275113,11.785676745734207
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Micronesia (Federated States of),FSM,2022-11,114164,Moderna - Spikevax,,32205,37077,4872,,32.47696296555832,28.209418030202166
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Micronesia (Federated States of),FSM,2022-11,114164,Unknown Vaccine,,66174,70204,4030,,61.49399110052206,57.963981640447074
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Mongolia,MNG,2022-11,3398366,Gamaleya - Gam-Covid-Vac,,46239,49884,3645,,1.467881917368524,1.360624488357052
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Mongolia,MNG,2022-11,3398366,SII - Covishield,,53211,99364,46153,,2.923875768531112,1.565781908128789
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Mongolia,MNG,2022-11,3398366,AstraZeneca - Vaxzevria,,56717,12280,-44437,,0.361350131210117,1.668949136143664
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Mongolia,MNG,2022-11,3398366,Pfizer BioNTech - Comirnaty,,367507,389930,22423,,11.474043702179223,10.814226601843355
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Mongolia,MNG,2022-11,3398366,Beijing CNBG - BBIBP-CorV,,1660107,1731724,71617,,50.95754842180036,48.8501532795467
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Papua New Guinea,PNG,2022-11,10142619,Beijing CNBG - BBIBP-CorV,,9428,11512,2084,,0.113501256430908,0.092954295138169
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Papua New Guinea,PNG,2022-11,10142619,SII - Covishield,,15180,77850,62670,,0.767553232552657,0.149665485807956
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Papua New Guinea,PNG,2022-11,10142619,AstraZeneca - Vaxzevria,,81508,76634,-4874,,0.755564218669754,0.803618868065536
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Papua New Guinea,PNG,2022-11,10142619,Janssen - Ad26.COV 2-S,,191698,191698,0,,1.89002465733949,1.89002465733949
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Papua New Guinea,PNG,2022-11,10142619,Unknown Vaccine,,271349,330825,59476,,3.261731511358161,2.675334644828915
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,Gamaleya - Sputnik-Light,,842,842,0,,0.000728632070564,0.000728632070564
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,Beijing CNBG - BBIBP-CorV,,495037,544763,49726,,0.471415430708652,0.428384601325198
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,Gamaleya - Gam-Covid-Vac,,533456,581109,47653,,0.502867759968416,0.461630819281256
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,Janssen - Ad26.COV 2-S,,7154094,7154094,0,,6.190857867256373,6.190857867256373
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,Moderna - Spikevax,,7371295,7883229,511934,,6.821821222090958,6.378814653905521
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,AstraZeneca - Vaxzevria,,9074876,9845278,770402,,8.519697499309638,7.853023384788632
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,Sinovac - CoronaVac,,22068666,23111622,1042956,,19.999844408496095,19.09731330423576
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Philippines,PHL,2022-11,115559009,Pfizer BioNTech - Comirnaty,,26750865,28873231,2122366,,24.98570319169144,23.149095195165614
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Samoa,WSM,2022-11,222382,Pfizer BioNTech - Comirnaty,,21342,27281,5939,,12.267629574336052,9.596999757174592
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Samoa,WSM,2022-11,222382,AstraZeneca - Vaxzevria,,108947,118708,9761,,53.380219622091715,48.99092552454785
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Samoa,WSM,2022-11,222382,Unknown Vaccine,,177489,191071,13582,,85.92017339532875,79.81266469408496
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Vanuatu,VUT,2022-11,326740,Moderna - Spikevax,,143,476,333,,0.145681581685744,0.043765685254331
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Vanuatu,VUT,2022-11,326740,Beijing CNBG - BBIBP-CorV,,12372,13713,1341,,4.196914978270184,3.786496908857195
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Vanuatu,VUT,2022-11,326740,Janssen - Ad26.COV 2-S,,30089,30089,0,,9.208851074248638,9.208851074248638
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Vanuatu,VUT,2022-11,326740,AstraZeneca - Vaxzevria,,88696,100012,11316,,30.609046948644185,27.14574279243435
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Vanuatu,VUT,2022-11,326740,Unknown Vaccine,,131300,144290,12990,,44.16049458284875,40.184856460794514
+WPR,EAPRO,Lower middle income,Member State,Developing,AMC,Viet Nam,VNM,2022-11,98186856,Unknown Vaccine,,84433722,90044496,5610774,,91.70728106417829,85.99289705334897
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Cambodia,KHM,2022-11,16767842,Moderna - Spikevax,,2,0,-2,,0,0.000011927593306
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Cambodia,KHM,2022-11,16767842,Pfizer BioNTech - Comirnaty,,412,253,-159,,0.001508840553245,0.002457084221094
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Cambodia,KHM,2022-11,16767842,SII - Covishield,,157736,165656,7920,,0.987938698372754,0.940705428879876
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Cambodia,KHM,2022-11,16767842,AstraZeneca - Vaxzevria,,184513,184513,0,,1.100398011861037,1.100398011861037
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Cambodia,KHM,2022-11,16767842,Janssen - Ad26.COV 2-S,,1053151,4158876,3105725,,24.80269076962915,6.28077840905228
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Cambodia,KHM,2022-11,16767842,Beijing CNBG - BBIBP-CorV,,3593906,3746454,152548,,22.34308982634736,21.433324574503985
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Cambodia,KHM,2022-11,16767842,Sinovac - CoronaVac,,9588908,10061748,472840,,60.0062190471499,57.186297437678625
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Kiribati,KIR,2022-11,131232,Unknown Vaccine,,70464,93685,23221,,71.38883808827116,53.694220921726405
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Lao People's Democratic Republic,LAO,2022-11,7529475,Gamaleya - Gam-Covid-Vac,,500,500,0,,0.006640569229594,0.006640569229594
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Lao People's Democratic Republic,LAO,2022-11,7529475,Gamaleya - Sputnik-Light,,22404,22404,0,,0.297550626039664,0.297550626039664
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Lao People's Democratic Republic,LAO,2022-11,7529475,Pfizer BioNTech - Comirnaty,,76184,71157,-5027,,0.945045969340492,1.011810252374834
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Lao People's Democratic Republic,LAO,2022-11,7529475,Sinovac - CoronaVac,,503776,662658,158882,,8.80085264908908,6.690718808416257
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Lao People's Democratic Republic,LAO,2022-11,7529475,SII - Covishield,,1024813,1134486,109673,,15.067265646011176,13.610683347776572
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Lao People's Democratic Republic,LAO,2022-11,7529475,Janssen - Ad26.COV 2-S,,1030411,1030411,0,,13.68503116087111,13.68503116087111
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Lao People's Democratic Republic,LAO,2022-11,7529475,Beijing CNBG - BBIBP-CorV,,2635449,3017640,382191,,40.07769465998626,35.001763071130455
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Solomon Islands,SLB,2022-11,724273,Janssen - Ad26.COV 2-S,,2506,2506,0,,0.346002129031456,0.346002129031456
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Solomon Islands,SLB,2022-11,724273,Pfizer BioNTech - Comirnaty,,19891,40059,20168,,5.530925493563891,2.746340123130367
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Solomon Islands,SLB,2022-11,724273,Beijing CNBG - BBIBP-CorV,,25606,36239,10633,,5.003500061440921,3.535407229042088
+WPR,EAPRO,Lower middle income,Member State,Least developed,AMC,Solomon Islands,SLB,2022-11,724273,SII - Covishield,,164170,237165,72995,,32.74524937420006,22.66686732765131
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Fiji,FJI,2022-11,929766,Unknown Vaccine,,638724,710182,71458,,76.38287483087143,68.69728512335361
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Marshall Islands,MHL,2022-11,41569,Janssen - Ad26.COV 2-S,,2899,2899,0,,6.973946931607688,6.973946931607688
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Marshall Islands,MHL,2022-11,41569,Pfizer BioNTech - Comirnaty,,5399,9871,4472,,23.74606076643653,12.988043975077582
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Marshall Islands,MHL,2022-11,41569,Moderna - Spikevax,,20779,23813,3034,,57.28547715845943,49.986768986504366
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Marshall Islands,MHL,2022-11,41569,Unknown Vaccine,,36633,43458,6825,,104.54425172604586,88.12576679737305
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Tonga,TON,2022-11,106858,Moderna - Spikevax,,0,49,49,,0.045855247150424,0
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Tonga,TON,2022-11,106858,Pfizer BioNTech - Comirnaty,,21411,25683,4272,,24.034700256415057,20.036871361994425
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Tonga,TON,2022-11,106858,AstraZeneca - Vaxzevria,,55389,61510,6121,,57.56237249433828,51.83420988601696
+WPR,EAPRO,Upper middle income,Member State,Developing,AMC,Tonga,TON,2022-11,106858,Unknown Vaccine,,72688,77510,4822,,72.5355144210073,68.02298377285744
+WPR,EAPRO,Upper middle income,Member State,Developing,No,Malaysia,MYS,2022-11,33938221,AstraZeneca - Vaxzevria,,,,,,,
+WPR,EAPRO,Upper middle income,Member State,Developing,No,Malaysia,MYS,2022-11,33938221,Beijing CNBG - BBIBP-CorV,,,,,,,
+WPR,EAPRO,Upper middle income,Member State,Developing,No,Malaysia,MYS,2022-11,33938221,CanSino - Convidecia,,,,,,,
+WPR,EAPRO,Upper middle income,Member State,Developing,No,Malaysia,MYS,2022-11,33938221,Pfizer BioNTech - Comirnaty,,,,,,,
+WPR,EAPRO,Upper middle income,Member State,Developing,No,Malaysia,MYS,2022-11,33938221,Sinovac - CoronaVac,,,,,,,
+WPR,EAPRO,Upper middle income,Member State,Developing,No,Malaysia,MYS,2022-11,33938221,Unknown Vaccine,,27516882,28107427,590545,,82.81938820541006,81.07932940857448
+WPR,EAPRO,Upper middle income,Member State,Developing,Self-financing,China,CHN,2022-11,1425887337,Unknown Vaccine,,1270000000,1300000000,30000000,,91.17129847966382,89.06734543782542
+WPR,EAPRO,Upper middle income,Member State,Developing,Self-financing,Palau,PLW,2022-11,18055,Janssen - Ad26.COV 2-S,,2339,2339,0,,12.954860149543064,12.954860149543064
+WPR,EAPRO,Upper middle income,Member State,Developing,Self-financing,Palau,PLW,2022-11,18055,Pfizer BioNTech - Comirnaty,,3299,4732,1433,,26.208806424813073,18.271946829133203
+WPR,EAPRO,Upper middle income,Member State,Developing,Self-financing,Palau,PLW,2022-11,18055,Moderna - Spikevax,,12765,13023,258,,72.129603987815,70.70063694267516
+WPR,EAPRO,Upper middle income,Member State,Least developed,AMC,Tuvalu,TUV,2022-11,11312,AstraZeneca - Vaxzevria,,9322,9603,281,,84.89214992927865,82.40806223479491
