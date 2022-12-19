@@ -7,50 +7,81 @@ rm(list=ls())
 
 
 ### Setup ____________________________________________________________________________________________________________
+FR_parameters = FR_next_state = FR_fitted_incidence_log_tidy = FR_fitted_incidence_log = data.frame()
+
 #start timing
 time.start.FleetAdmiral=proc.time()[[3]]
 
-# toggles
-setting = "SLE"
-risk_group_toggle = "on"
-risk_group_name = "pregnant_women"
-RR_estimate = RR_default =  2.4
-risk_group_prioritisation_to_date = NA
-risk_group_lower_cov_ratio = NA
-default_prioritisation_proportion = 0.5
+#for (this_setting in c("SLE","PNG","TLS","IDN","FJI","SLB","PHL")){
+for (this_setting in c("SLE")){
+  # toggles
+  risk_group_toggle = "on"
+  risk_group_name = "pregnant_women"
+  RR_estimate = RR_default =  2.4
+  risk_group_prioritisation_to_date = NA
+  risk_group_lower_cov_ratio = NA
+  default_prioritisation_proportion = 0.5
+  
+  
+  #configure sensitivity analysis
+  vax_strategy_max_expected_cov = 0.88
+  risk_group_lower_cov_ratio = 70/88
+  sensitivity_analysis_toggles = list(vax_hesistancy_risk_group = vax_strategy_max_expected_cov * risk_group_lower_cov_ratio )
+  #______________________________________
+  
+  
+  
+  ### fit to this sensitivity analysis scenario
+  fitting = "on"; plotting = "on"
+  
+  #setting toggles
+  setting = this_setting
+  
+  #UPDATE TO INCLUDE FIT TO STUDY SETTINGS HERE
+  if (setting == "SLE"){
+    date_start = as.Date('2021-03-31')
+    strain_inital = strain_now = 'WT' 
+    
+    covid19_waves =  data.frame(date = c(as.Date('2021-04-25'),as.Date('2021-09-01')),
+                                strain = c('delta','omicron'))
+  } else if (setting == "FJI"){
+    date_start = as.Date('2021-04-30')
+    strain_inital = strain_now = 'WT' 
+    
+    covid19_waves = data.frame(date = c(as.Date('2021-06-15'),as.Date('2021-12-01'),as.Date('2022-04-01')),
+                               strain = c('delta','omicron','omicron'))
+  }
+  model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
+  
+  outbreak_timing = "off"
+  vax_strategy_toggle = "off"
+  vax_risk_strategy_toggle = "off"
+  
+  waning_toggle_acqusition = TRUE
+  waning_toggle_severe_outcome = FALSE
+  waning_toggle_rho_acqusition = TRUE
+  
+  source(paste(getwd(),"/CommandDeck.R",sep=""))
+  
+  workshop_fitted_incidence_log_tidy = incidence_log_tidy %>% mutate(country == setting)
+  workshop_fitted_incidence_log = incidence_log %>% select(date, daily_cases) %>% mutate(country == setting)
+  workshop_parameters = parameters %>% mutate(country == setting)
+  workshop_next_state = next_state  %>% mutate(country == setting)
+  
+  FR_fitted_incidence_log_tidy = rbind(FR_fitted_incidence_log_tidy,workshop_fitted_incidence_log_tidy)
+  FR_fitted_incidence_log      = rbind(FR_fitted_incidence_log     ,workshop_fitted_incidence_log)
+  FR_parameters                = rbind(FR_parameters               ,workshop_parameters)
+  FR_next_state                = rbind(FR_next_state               ,workshop_next_state)
+  
+  grid.arrange(plot1,plot2,plot3,plot4,plot5, layout_matrix = lay)
+}
 
-
-#configure sensitivity analysis
-vax_strategy_max_expected_cov = 0.88
-risk_group_lower_cov_ratio = 70/88
-sensitivity_analysis_toggles = list(vax_hesistancy_risk_group = vax_strategy_max_expected_cov * risk_group_lower_cov_ratio )
-#______________________________________
-
-
-
-### fit to this sensitivity analysis scenario
-fitting = "on"; plotting = "on"
-
-date_start = as.Date('2021-03-31')
-strain_inital = strain_now = 'WT' 
-seed_date = c(as.Date('2021-04-25'),as.Date('2021-09-01')) #first is seed date for delta, second is omicron
-model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
-
-outbreak_timing = "off"
-vax_strategy_toggle = "off"
-vax_risk_strategy_toggle = "off"
-
-waning_toggle_acqusition = TRUE
-waning_toggle_severe_outcome = FALSE
-waning_toggle_rho_acqusition = TRUE
-
-source(paste(getwd(),"/CommandDeck.R",sep=""))
-
-SA_vaxHest_fitted_incidence_log_tidy = incidence_log_tidy 
-SA_vaxHest_fitted_incidence_log = incidence_log %>% select(date,daily_cases)
-SA_vaxHest_fitted_results = list(parameters,next_state,SA_vaxHest_fitted_incidence_log_tidy,SA_vaxHest_fitted_incidence_log,risk_group_name)
-grid.arrange(plot1,plot2,plot3,plot4,plot5, layout_matrix = lay)
-
+SA_vaxHest_fitted_results = list(
+  FR_parameters,
+  FR_next_state,
+  FR_fitted_incidence_log_tidy,
+  FR_fitted_incidence_log
+)
 SA_vaxHest_fitted_max_date = date_now-1
 save(SA_vaxHest_fitted_max_date,file = '1_inputs/SA_vaxHest_last_fit_date.Rdata')
 save(SA_vaxHest_fitted_results, file = '1_inputs/SA_vaxHest_fitted_results.Rdata')
