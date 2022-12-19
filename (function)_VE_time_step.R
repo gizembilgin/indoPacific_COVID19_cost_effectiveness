@@ -23,18 +23,18 @@ VE_time_step <- function(strain_now,date_now,outcome,
   
   #(2) doses delivered to this date
   vax_to_this_date <- vaccination_history_LOCAL[vaccination_history_LOCAL$date <= date_now,] 
+  
+  #re code additional booster doses to correct dose number
   if (nrow(vaccination_history_LOCAL[vaccination_history_LOCAL$dose == 8,])>0){
     
     booster_type = unique(vaccination_history_LOCAL$vaccine_type[vaccination_history_LOCAL$dose == 8])
-    vaccination_history_LOCAL[vaccination_history_LOCAL$dose == 8,]
-    if (booster_type == 'Johnson & Johnson'){
-      booster_dose_number = 2
-    } else{
-      booster_dose_number = 3
-    }
+
+    if (booster_type == 'Johnson & Johnson'){booster_dose_number = 2
+    } else{booster_dose_number = 3}
     
     vax_to_this_date = vax_to_this_date %>% mutate(
     dose = case_when(
+      dose == 9 ~ booster_dose_number + 1,
       dose == 8 ~ booster_dose_number,
       TRUE ~ dose
       ))
@@ -52,8 +52,7 @@ VE_time_step <- function(strain_now,date_now,outcome,
     left_join(total_doses_up_to_this_date, by = c("risk_group", "vaccine_type", "dose", "age_group")) %>%
     mutate(prop = case_when(
       total_delivered >0 ~ doses/total_delivered,
-      total_delivered == 0 ~ 0
-      ),
+      total_delivered == 0 ~ 0),
       days = as.numeric(date_now - date ))
   
   #<interlude> to add together all days >365 to 365
