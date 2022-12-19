@@ -4,14 +4,14 @@ raw = read.csv("1_inputs/model_param_raw.csv",header=TRUE)
 raw = raw %>% rename(agegroup_RAW = age_group)
 underlying_age_grouping <- c(0,9,19,29,39,49,59,69,110)
 
-setting_list = c('SLE')
+setting_list = c("SLE","PNG","TLS","IDN","FJI","SLB","PHL")
 param_age = data.frame()
 
 for (i in 1:length(setting_list)){
-  setting = setting_list[i]
+  this_setting = setting_list[i]
   
   pop_RAW =  pop_orig %>%
-    filter(country == setting) %>%
+    filter(country == this_setting) %>%
     mutate(agegroup_RAW = cut(age,breaks = underlying_age_grouping, include.lowest = T, labels = unique(raw$agegroup_RAW)),
            agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
     ungroup() %>%
@@ -22,7 +22,8 @@ for (i in 1:length(setting_list)){
     mutate(interim = model_group_percent * value) %>%
     group_by(param,agegroup_MODEL) %>%
     summarise(value = sum(interim)) %>%
-    rename(agegroup = agegroup_MODEL)
+    rename(agegroup = agegroup_MODEL) %>%
+    mutate(country = this_setting)
 
   param_age = rbind(param_age,workshop)
 }

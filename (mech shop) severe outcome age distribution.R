@@ -2,7 +2,7 @@
 ### Creates: age_dn_severe_outcomes
 
 age_dn_severe_outcomes = data.frame()
-for (setting in c('SLE')){
+for (this_setting in c('SLE',"PNG","TLS","IDN","FJI","SLB","PHL")){
   
   ### (1) Importing raw age distributions ########################################################
   #(A) importing raw values from Seedat et al. (Ayoub et al underlying data)
@@ -56,11 +56,11 @@ for (setting in c('SLE')){
   
   
   
-  ### (2) Adjust age-distributions to setting ###########################################################
+  ### (2) Adjust age-distributions to this_setting ###########################################################
   #(A) Multiply RR by pop-level value
-  pop_level <- read.csv('1_inputs/severe_outcome_country_level.csv')
-  pop_level = pop_level %>%
-    filter(country == setting) %>%
+  load(file = "1_inputs/severe_outcome_country_level.Rdata")
+  pop_level = severe_outcome_country_level %>%
+    filter(country == this_setting) %>%
     mutate(pop_est = percentage) %>%
     select(outcome,pop_est)
   workshop = workshop %>% left_join(pop_level) %>%
@@ -70,8 +70,8 @@ for (setting in c('SLE')){
   age_groups_10 = c(0,9,19,29,39,49,59,69,100)
   age_group_labels_10 = c('0 to 9','10 to 19','20 to 29','30 to 39','40 to 49','50 to 59','60 to 69','70 to 100')
   
-  pop_10_bands <- UN_pop_est %>%
-    filter(country == setting) %>%
+  pop_10_bands <- pop_orig %>%
+    filter(country == this_setting) %>%
     mutate(agegroup = cut(age,breaks = age_groups_10, include.lowest = T,labels = age_group_labels_10)) %>%
     group_by(agegroup) %>%
     summarise(pop = sum(population)) 
@@ -116,8 +116,8 @@ for (setting in c('SLE')){
   age_groups_10 = c(0,9,19,29,39,49,59,69,100)
   age_group_labels_10 = c('0 to 9','10 to 19','20 to 29','30 to 39','40 to 49','50 to 59','60 to 69','70 to 100')
   
-  pop_w <- UN_pop_est %>%
-    filter(country == setting) %>%
+  pop_w <- pop_orig %>%
+    filter(country == this_setting) %>%
     mutate(agegroup_10 = cut(age,breaks = age_groups_10, include.lowest = T,labels = age_group_labels_10),
            agegroup_model = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
     ungroup() %>%
@@ -135,6 +135,12 @@ for (setting in c('SLE')){
   
   #(D) CHECK
   #find pop % within model agroups
+  pop_setting <- pop_orig %>%
+    filter(country == this_setting) %>%
+    mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
+    group_by(age_group) %>%
+    summarise(pop = as.numeric(sum(population)))
+  
   workshop_sum = workshop_sum %>% left_join(pop_setting) %>%
     mutate(pop_percent = pop/sum(pop_setting$pop),
            interim =RR*pop_percent)
@@ -148,7 +154,7 @@ for (setting in c('SLE')){
   ###(4) Finalise
   age_distribution_save = workshop_sum %>%
     select(outcome,age_group,RR) %>%
-    mutate(setting=setting)
+    mutate(country=this_setting)
   age_dn_severe_outcomes = rbind(age_dn_severe_outcomes,age_distribution_save)
 }
 
@@ -160,8 +166,8 @@ plot_list = list()
 for (i in 1:length(unique(workshop$outcome))){
   outcome = unique(workshop$outcome)[i]
   plot_list [[i]] <- ggplot() + 
-    #geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR,color=as.factor(setting))) +
-    geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR)) +
+    geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR,color=as.factor(country))) +
+    #geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR)) +
     labs(title=paste(outcome,sep=""))
 }
 gridExtra::grid.arrange(grobs=plot_list)
@@ -170,8 +176,8 @@ plot_list = list()
 for (i in 1:length(unique(workshop$outcome))){
   outcome = unique(workshop$outcome)[i]
   plot_list [[i]] <- ggplot() + 
-    #geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR,color=as.factor(setting))) +
-    geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR)) +
+    geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR,color=as.factor(country))) +
+    #geom_point(data=workshop[workshop$outcome==outcome,],aes(x=age_group,y=RR)) +
     labs(title=paste(outcome,"(log-scale)",sep=""))+ scale_y_log10()
 }
 gridExtra::grid.arrange(grobs=plot_list)
