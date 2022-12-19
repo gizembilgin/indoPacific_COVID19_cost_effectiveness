@@ -15,8 +15,6 @@ vaccination_primary_FINAL = vaccination_history_FINAL %>% filter(schedule == "pr
 vaccination_booster_FINAL = vaccination_history_FINAL %>% filter(schedule == "booster" & doses_delivered_this_date >0)
 D_primary = max(vaccination_primary_FINAL$dose)
 
-  
-
 for (increments_number in 1:num_time_steps){
 
   if (fitting == "on" & increments_number == 1){
@@ -63,12 +61,30 @@ for (increments_number in 1:num_time_steps){
         parameters$NPI = NPI_this_step
       } #i.e. assume after end date that NPI constant
         
-      if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
-        parameters$VE = VE_time_step(strain_now,date_now,'any_infection',
-                                     VE_waning_LOCAL = VE_waning_distribution,
-                                     vaccination_history_LOCAL = vaccination_history_FINAL,
-                                     SA_toggles_local = sensitivity_analysis_toggles)
+      if (fitting == "off"){
+        if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
+          parameters$VE = VE_time_step(strain_now,date_now,'any_infection',
+                                       VE_waning_LOCAL = VE_waning_distribution,
+                                       vaccination_history_LOCAL = vaccination_history_FINAL,
+                                       SA_toggles_local = sensitivity_analysis_toggles)
+          
+          #gradual shift in VE from omicron to delta
+          if (date_now %in% omicron_shift$date){
+            parameters$VE = VE_time_step("delta",date_now,'any_infection',
+                                    VE_waning_LOCAL = VE_waning_distribution,
+                                    vaccination_history_LOCAL = vaccination_history_FINAL,
+                                    SA_toggles_local = sensitivity_analysis_toggles) %>%
+              rename(delta_VE = VE) %>%
+              left_join(parameters$VE) %>%
+              mutate(VE = VE * omicron_shift$percentage[omicron_shift$date == date_now] + 
+                       delta_VE * (1-omicron_shift$percentage[omicron_shift$date == date_now])) %>%
+              select(-delta_VE)
+          }
+        }
+      } else if (fitting == "on"){
+       parameters$VE = VE_real_range %>% filter(date == date_now)
       }
+
       
       if (waning_toggle_rho_acqusition == TRUE ){
         parameters$rho = rho_time_step(date_now)
