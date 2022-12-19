@@ -104,21 +104,20 @@ CommandDeck <- function(
       }
       
       if (risk_group_toggle == "off"){
-        loaded_fit = fitted_results[[1]]
-      } else if (risk_group_name == 'pregnant_women'){
-        loaded_fit = fitted_results[[2]]
-      } else if (risk_group_name == 'adults_with_comorbidities'){
-        loaded_fit = fitted_results[[3]]
+        this_risk_group_scenario = "no risk group"
+      } else {
+        this_risk_group_scenario = risk_group_name
       }
+      
+      parameters = fitted_results[[1]] %>% 
+        filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+      fitted_next_state = fitted_results[[2]] %>% 
+        filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+      fitted_incidence_log_tidy = fitted_results[[3]] %>% 
+        filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+      fitted_incidence_log = fitted_results[[4]] %>% 
+        filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
       rm(fitted_results)
-      
-      if (risk_group_toggle == "on"){if(!loaded_fit[[5]] == risk_group_name){stop('risk group name != fitted risk group name')}}
-      
-      parameters = loaded_fit[[1]]
-      fitted_next_state = loaded_fit[[2]]
-      fitted_incidence_log_tidy = loaded_fit[[3]]
-      fitted_incidence_log = loaded_fit[[4]]
-      rm(loaded_fit)
       
       fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) 
       fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
@@ -134,13 +133,12 @@ CommandDeck <- function(
     if (! risk_group_name == 'pregnant_women'){stop('havent configured vax hesistance sensitivity analysis for another risk group')}
     
     load(file = '1_inputs/SA_vaxHest_fitted_results.Rdata')
-    loaded_fit = SA_vaxHest_fitted_results
     
-    parameters = loaded_fit[[1]]
-    fitted_next_state = loaded_fit[[2]]
-    fitted_incidence_log_tidy = loaded_fit[[3]]
-    fitted_incidence_log = loaded_fit[[4]]
-    rm(loaded_fit)
+    parameters = SA_vaxHest_fitted_results[[1]] %>% filter(country == setting)
+    fitted_next_state = SA_vaxHest_fitted_results[[2]]  %>% filter(country == setting)
+    fitted_incidence_log_tidy = SA_vaxHest_fitted_results[[3]]  %>% filter(country == setting)
+    fitted_incidence_log = SA_vaxHest_fitted_results[[4]]  %>% filter(country == setting)
+    rm(SA_vaxHest_fitted_results)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) # CHECKED last of fitted log = first of new log
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
@@ -231,7 +229,7 @@ CommandDeck <- function(
       age_group_labels = age_group_labels,
       severe_outcome_this_run = severe_outcome_this_run,
       severe_outcome_log_tidy = severe_outcome_log_tidy,
-      seed_date = seed_date,
+      covid19_waves = covid19_waves,
       exposed_log = exposed_log)
     vars = append(vars,vars_extra)
     #COMEBACK - include a rm() in Table 2 or 3 for these variables when implemented
