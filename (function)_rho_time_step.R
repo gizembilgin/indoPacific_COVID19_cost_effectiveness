@@ -39,35 +39,57 @@ rho_dn_wide = rho_dn %>%
 
 
 ### (2) Shape of introduction ###############################################################################
-intro_raw <- read.csv("1_inputs/GISAID_omicron_intro_Africa.csv", header=TRUE)
-intro_raw$date = as.Date(intro_raw$date, '%d/%m/%Y')
+if (setting %in% c('SLE')){
+  intro_raw <- read.csv("1_inputs/GISAID_omicron_intro_Africa.csv", header=TRUE)
+} else if (setting %in% c('IDN','FJI','PHL','PNG','SLB','TLS')){
+  intro_raw <- read.csv("1_inputs/GISAID_Oceania.csv", header=TRUE)
+}
 
-intro_raw = intro_raw %>% 
-  mutate(days = as.numeric(date - min(intro_raw$date)),
-         percentage = percentage/100)
-
-ggplot(intro_raw) + geom_point(aes(x=days,y=percentage))
-
-days_to_predict = seq(0,365)
-smoothed_spline <- smooth.spline(x = intro_raw$days, y = intro_raw$percentage, df = 9)
-fitted.results = predict(smoothed_spline,days_to_predict,deriv = 0)
-fit = data.frame(fitted.results)
-colnames(fit) = c('days','percentage')
-
-ggplot() + geom_point(data = intro_raw, aes(x=days,y=percentage)) +
-  geom_line(data = fit, aes(x=days,y=percentage)) 
-
-synthetic_strain_shift = fit %>% filter(percentage >=0 & percentage <=1) 
-synthetic_strain_shift$days = synthetic_strain_shift$days - min(synthetic_strain_shift$days)
-
-ggplot() + geom_point(data = intro_raw, aes(x=days,y=percentage)) +
-  geom_line(data = synthetic_strain_shift, aes(x=days,y=percentage)) +
-  ylab('percentage of circulating strains') +
-  xlab('days since introduction')+
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.line = element_line(color = 'black'))
+synthetic_strain_shift = data.frame()
+plot_list = list()
+for (i in 1:length(unique(intro_raw$strain))){
+  
+  this_strain = unique(intro_raw$strain)[i]
+  this_raw = intro_raw %>% filter(strain == this_strain)
+  if(this_strain == 'delta'){df_this_strain = 7}
+  if(this_strain == 'omicron'){df_this_strain = 9}
+  
+  this_raw$date = as.Date(this_raw$date, '%d/%m/%Y')
+  
+  this_raw = this_raw %>% 
+    mutate(days = as.numeric(date - min(this_raw$date)),
+           percentage = percentage/100)
+  
+  ggplot(this_raw) + geom_point(aes(x=days,y=percentage))
+  
+  days_to_predict = seq(0,365)
+  smoothed_spline <- smooth.spline(x = this_raw$days, y = this_raw$percentage, df = df_this_strain)
+  fitted.results = predict(smoothed_spline,days_to_predict,deriv = 0)
+  fit = data.frame(fitted.results)
+  colnames(fit) = c('days','percentage')
+  
+  ggplot() + geom_point(data = this_raw, aes(x=days,y=percentage)) +
+    geom_line(data = fit, aes(x=days,y=percentage)) 
+  
+  this_synthetic_strain_shift = fit %>% filter(percentage >=0 & percentage <=1) 
+  real_days_removed = min(this_synthetic_strain_shift$days)
+  this_synthetic_strain_shift$days = this_synthetic_strain_shift$days - min(this_synthetic_strain_shift$days)
+  this_synthetic_strain_shift$strain = this_strain
+  
+  plot_list[[i]] = ggplot() + geom_point(data = this_raw, aes(x=days-real_days_removed,y=percentage)) +
+    geom_line(data = this_synthetic_strain_shift, aes(x=days,y=percentage)) +
+    ylab('percentage of circulating strains') +
+    xlab('days since introduction')+
+    theme_bw() +
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          axis.line = element_line(color = 'black')) + 
+    labs(title = paste(this_strain))
+  
+  synthetic_strain_shift = rbind(synthetic_strain_shift,this_synthetic_strain_shift)
+}
+#grid.arrange(plot_list[[1]],plot_list[[2]])
+rm(intro_raw,this_strain,this_raw,df_this_strain,days_to_predict,smoothed_spline,fitted.results,fit,this_synthetic_strain_shift,real_days_removed,plot_list)
 #######################################################################################################
 
 
@@ -94,8 +116,10 @@ rho_time_step <- function(date_now){
     mutate(date = date + round(AverageSymptomaticPeriod)) %>%
     filter(date <= date_now & date > (date_now - 1/omega)) %>%
     mutate(days = round(as.numeric(date_now - date)))
+  if (sum(workshop$daily_cases) == 0){return(0)} #if no recovered cases, then rho = 0!
+  
+  workshop = workshop %>% mutate(prop_window = daily_cases/sum(workshop$daily_cases))  
   workshop$date = as.Date(workshop$date, '%Y-%m-%d')
-  workshop = workshop %>% mutate(prop_window = daily_cases/sum(workshop$daily_cases))   
   if (round(sum(workshop$prop_window),digits=5) != 1){stop('error in rho_time_step')}
   
   ggplot(workshop) + geom_line(aes(date,prop_window)) 
@@ -103,17 +127,18 @@ rho_time_step <- function(date_now){
   
   
   #calculate protection to latest versus previous strains
-  if (length(variant_change_date[variant_change_date<date_now])>0){ # do we have any new variants?
+  if (nrow(covid19_waves[covid19_waves$date<date_now & covid19_waves$strain == "omicron",])>0){ # do we have any immune escape variants?
     
-    num_variants_introduced = length(variant_change_date[variant_change_date<date_now])
+    num_variants_introduced = nrow(covid19_waves[covid19_waves$date<date_now & covid19_waves$strain == "omicron",])
     
     #rho = how protected are people today from the circulating strains today?
     #    = %new circulating today * protection to new today + %old circulating today * protection to old today
     
     for (variant_num in 1:num_variants_introduced){
       
-      this_variant_introduction = variant_change_date[variant_num]
-      this_variant_shift = synthetic_strain_shift %>% 
+      this_variant_introduction = covid19_waves$date[covid19_waves$strain == "omicron"][variant_num]
+      
+      this_variant_shift = synthetic_strain_shift %>% filter(strain == covid19_waves$strain[covid19_waves$date == this_variant_introduction]) %>% 
         select(days,percentage) %>%
         mutate(date = days + this_variant_introduction) %>%
         select(-days)
