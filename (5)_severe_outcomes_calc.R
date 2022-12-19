@@ -1,45 +1,98 @@
 ### This script calculates the incidence of severe outcomes by age_group and vaccination status per time step of the model
 ### Incidences of severe outcomes vary across time due to the waning of vaccine- and infection-derived immunity
 
+
+
+#SETUP: Load VE against severe outcomes
 # VE_loop set to 0 when no sensitivity analysis of reduced VE in older adults or adults with comorbidities is conducted
 if (exists("VE_loop") == FALSE){ VE_loop = 0} 
 if (exists("antiviral_setup") == FALSE){ antiviral_setup = "off"} 
 if (VE_loop == 0 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles) & antiviral_setup == "off"){VE_loop = 1}
+
+#Step One: load  relevant file
 if (VE_loop == 0){
   if (length(unique(VE_waning_distribution$outcome)) == 1){ #'any_infection'
     save_VE_waning_distribution = VE_waning_distribution
   } else{
     VE_waning_distribution = save_VE_waning_distribution
   }
-
   load( file = '1_inputs/VE_waning_distribution_SO.Rdata')
-  VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(waning == waning_toggle_severe_outcome )
-  VE_waning_distribution = bind_rows(VE_waning_distribution,VE_waning_distribution_SO)
-  
-  workshop = VE_waning_distribution %>% 
-    filter(dose == 3 & strain == strain_now) %>%
-    group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-    summarise(VE_days = mean(VE_days),.groups = "keep")
-  #ggplot(workshop) +  geom_line(data=workshop[workshop$waning == TRUE,],aes(x=days,y=VE_days,linetype = as.factor(outcome) ))
-  VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
-  VE_waning_distribution = rbind(VE_waning_distribution,workshop)
-  
 } else if (VE_loop == 1 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles)){
   #Note: VE_loop == 2 (comorb) will use this same dn
   load( file = '1_inputs/SA_VE_older_muted_SO.Rdata')
-  VE_waning_distribution_SO = SA_VE_older_muted_SO %>% filter(waning == waning_toggle_severe_outcome )
-  VE_waning_distribution = bind_rows(save_VE_waning_distribution,VE_waning_distribution_SO)
-  VE_waning_distribution = VE_waning_distribution %>% group_by(age_group)
+  VE_waning_distribution_SO = SA_VE_older_muted_SO %>% 
+    filter(waning == waning_toggle_severe_outcome & country == setting) %>% 
+    group_by(age_group)
+} 
+
+#Step Two: select estimates with relevant primary + booster combinations
+if (VE_loop %in% c(0,1)){
+  VE_waning_distribution_SO = VE_waning_distribution_SO %>% 
+    filter(waning == waning_toggle_severe_outcome)%>%
+    mutate(schedule = case_when(
+      dose > 2 ~ 'booster',
+      dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
+      TRUE ~ 'primary'
+    ))
   
-  workshop = VE_waning_distribution %>% 
-    filter(dose == 3 & strain == strain_now) %>%
-    group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-    summarise(VE_days = mean(VE_days),.groups = "keep")
-  #ggplot(workshop) +  geom_line(data=workshop[workshop$waning == TRUE,],aes(x=days,y=VE_days,linetype = as.factor(outcome) ))
-  VE_waning_distribution = VE_waning_distribution %>% filter(! dose == 3) %>% select(-primary_if_booster)
-  VE_waning_distribution = rbind(VE_waning_distribution,workshop)
-}  
-rm(VE_waning_distribution_SO)
+  #average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
+  workshop = data.frame()
+  if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booster",])>0){ #if booster dose exists
+    for (this_dose in unique(vaccination_history_FINAL$dose[vaccination_history_FINAL$schedule == "booster"])){ # for each booster dose
+      for (this_vax in unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$schedule == "booster" & vaccination_history_FINAL$dose == this_dose])){ # for each booster type
+        
+        # First Choice = exact primary dose + booster dose combination
+        this_combo = VE_waning_distribution_SO %>% 
+          filter(schedule == "booster" & 
+                   dose == this_dose & 
+                   primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
+                   vaccine_type == this_vax) %>%
+          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+          summarise(VE_days = mean(VE_days),.groups = "keep") 
+        
+        # Second Choice = same primary schedule + booster of same vaccine mode
+        if (nrow(this_combo) == 0){
+          this_vax_mode = unique(vaccination_history_FINAL$vaccine_mode[vaccination_history_FINAL$vaccine_type == this_vax])
+          this_combo = VE_waning_distribution_SO %>% 
+            filter(schedule == "booster" & dose == this_dose & 
+                     primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
+                     vaccine_mode == this_vax_mode) %>%
+            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days),.groups = "keep") 
+        }
+        
+        # Third Choice = same primary schedule + any booster
+        if (nrow(this_combo) == 0){ 
+          this_combo = VE_waning_distribution_SO %>% 
+            filter(schedule == "booster" & dose == this_dose & 
+                     primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax])) %>%
+            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days),.groups = "keep") 
+        }
+        
+        # Otherwise... rethink!
+        if (nrow(this_combo) == 0){stop('Need a VE for this booster!')}
+        
+        workshop = rbind(workshop,this_combo)
+      }
+    }
+  }
+  
+  VE_waning_distribution_SO = VE_waning_distribution_SO %>% 
+    filter(schedule == "primary") %>%
+    select(-primary_if_booster)
+  VE_waning_distribution_SO = rbind(VE_waning_distribution_SO,workshop)
+  
+  VE_waning_distribution = bind_rows(VE_waning_distribution,VE_waning_distribution_SO)
+  
+  if (VE_loop == 1 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles)){
+    VE_waning_distribution = bind_rows(save_VE_waning_distribution,VE_waning_distribution_SO)
+    rm(SA_VE_older_muted_SO)
+  }
+  rm(VE_waning_distribution_SO)
+}
+###<END SETUP>
+
 
 
 #(A/C) calculate VE against severe outcomes by day
@@ -92,6 +145,7 @@ if ('VE_adults_comorb' %in% names(sensitivity_analysis_toggles)){
 
 #(B/C) 
 load(file = '1_inputs/severe_outcome_FINAL.Rdata')
+severe_outcome_FINAL = severe_outcome_FINAL %>% filter(country == setting)
 if (risk_group_toggle == "on"){
   #if risk-group included, then adjust general population incidence rate so pop-level estimates stay the same
 
