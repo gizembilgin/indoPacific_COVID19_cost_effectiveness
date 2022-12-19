@@ -83,8 +83,7 @@ if (fitting == "on"){
 } else if ( ! 'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
   load(file = '1_inputs/last_fit_date.Rdata')
   if (as.numeric(abs(fitted_max_date - Sys.Date()))>30){ 
-    warning('refitting model as fitted_max_date over one month since today!')
-    source(paste(getwd(),"/(0)_fitting_model.R",sep=""))
+    warning('need to refit model as fitted_max_date over one month since today!')
   } else{
     load(file = '1_inputs/fitted_results.Rdata')
     
@@ -95,20 +94,20 @@ if (fitting == "on"){
     }
     
     if (risk_group_toggle == "off"){
-      loaded_fit = fitted_results[[1]]
-    } else if (risk_group_name == 'pregnant_women'){
-      loaded_fit = fitted_results[[2]]
-    } else if (risk_group_name == 'adults_with_comorbidities'){
-      loaded_fit = fitted_results[[3]]
+      this_risk_group_scenario = "no risk group"
+    } else {
+      this_risk_group_scenario = risk_group_name
     }
+
+    parameters = fitted_results[[1]] %>% 
+      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+    fitted_next_state = fitted_results[[2]] %>% 
+      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+    fitted_incidence_log_tidy = fitted_results[[3]] %>% 
+      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+    fitted_incidence_log = fitted_results[[4]] %>% 
+      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
     rm(fitted_results)
-    if (risk_group_toggle == "on"){if(!loaded_fit[[5]] == risk_group_name){stop('risk group name != fitted risk group name')}}
-    
-    parameters = loaded_fit[[1]]
-    fitted_next_state = loaded_fit[[2]]
-    fitted_incidence_log_tidy = loaded_fit[[3]]
-    fitted_incidence_log = loaded_fit[[4]]
-    rm(loaded_fit)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) 
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
@@ -124,13 +123,12 @@ if (fitting == "on"){
     if (! risk_group_name == 'pregnant_women'){stop('havent configured vax hesistance sensitivity analysis for another risk group')}
     
     load(file = '1_inputs/SA_vaxHest_fitted_results.Rdata')
-    loaded_fit = SA_vaxHest_fitted_results
        
-    parameters = loaded_fit[[1]]
-    fitted_next_state = loaded_fit[[2]]
-    fitted_incidence_log_tidy = loaded_fit[[3]]
-    fitted_incidence_log = loaded_fit[[4]]
-    rm(loaded_fit)
+    parameters = SA_vaxHest_fitted_results[[1]] %>% filter(country == setting)
+    fitted_next_state = SA_vaxHest_fitted_results[[2]]  %>% filter(country == setting)
+    fitted_incidence_log_tidy = SA_vaxHest_fitted_results[[3]]  %>% filter(country == setting)
+    fitted_incidence_log = SA_vaxHest_fitted_results[[4]]  %>% filter(country == setting)
+    rm(SA_vaxHest_fitted_results)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) # CHECKED last of fitted log = first of new log
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
@@ -180,14 +178,6 @@ prev_run_date = Sys.Date()
 prev_risk_num = num_risk_groups 
 prev_risk_group = risk_group_name
 
-#making some interim variables to assist with configuring states
-num_disease_classes = 4                                
-disease_class_list = c('S','E','I','R')
-num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  
-vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
-num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
-num_vax_classes = num_vax_doses*num_vax_types + 1 # + 1 for unvaccinated
-
 
 ##(B) Load functions
 source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
@@ -204,9 +194,11 @@ for (run_number in 1:complete_model_runs){
   source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
   source(paste(getwd(),"/(2)_inital_state.R",sep=""))
   source(paste(getwd(),"/(4)_time_step.R",sep=""))
-  source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) # COMEBACK - should this just save its results somewhere?
-  incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
-  source(paste(getwd(),"/(6)_severe_outcome_proj.R",sep=""))
+  if (fitting == "off"){
+    source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) # COMEBACK - should this just save its results somewhere?
+    incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
+    source(paste(getwd(),"/(6)_severe_outcome_proj.R",sep=""))
+  }
 }
 
 if (complete_model_runs>1){
