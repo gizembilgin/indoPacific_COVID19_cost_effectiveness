@@ -84,7 +84,7 @@ booster_strategy <- function(
         TRUE ~ 'N'), 
         boosted = case_when(
           vaccine_type == "Johnson & Johnson" & dose == 2 ~ 'Y',
-          dose == 3 ~ 'Y',
+          dose > 2 ~ 'Y',
           TRUE ~ 'N')) %>% 
       filter(boosted == booster_delivery_includes_previously_boosted)
   }
@@ -432,8 +432,13 @@ booster_strategy <- function(
              vaccine_type = booster_strategy_vaccine_type,
              dose = 8,
              vaccine_mode = case_when(
-               vaccine_type %in% c("Moderna","Pfizer") ~ 'mRNA',
-               vaccine_type %in% c("AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac") ~ 'viral'),
+               vaccine_type == 'Pfizer' ~ 'mRNA',
+               vaccine_type == 'Moderna' ~ 'mRNA',
+               vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+               vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+               vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+               vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+             ),
              coverage_this_date = NA #shouldn't be used anyway
       ) %>% 
       select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,risk_group,age_group,FROM_dose,FROM_vaccine_type)
