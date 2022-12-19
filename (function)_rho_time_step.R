@@ -89,6 +89,13 @@ for (i in 1:length(unique(intro_raw$strain))){
   synthetic_strain_shift = rbind(synthetic_strain_shift,this_synthetic_strain_shift)
 }
 #grid.arrange(plot_list[[1]],plot_list[[2]])
+
+omicron_shift =  synthetic_strain_shift %>% filter(strain == "omicron") %>% 
+  select(days,percentage) %>%
+  mutate(date = days + min(covid19_waves$date[covid19_waves$strain == "omicron"])) %>%
+  select(-days)
+omicron_shift$date = as.Date(omicron_shift$date, format =  '%Y-%m-%d')
+
 rm(intro_raw,this_strain,this_raw,df_this_strain,days_to_predict,smoothed_spline,fitted.results,fit,this_synthetic_strain_shift,real_days_removed,plot_list)
 #######################################################################################################
 
