@@ -6,6 +6,7 @@ load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
 #system.time({stochastic_VE()}) #1.28 sec
 
 stochastic_VE <- function(
+    setting = "SLE",
     age_groups_num = c(0,4,9,17,29,44,59,69,110),
     age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100'),
     strain_now = 'omicron',
@@ -27,11 +28,20 @@ stochastic_VE <- function(
   sampled_value[sampled_value<0] = 0
   VE_estimates = cbind(raw_VE_point_est,sampled_value)
   VE_estimates$VE = VE_estimates$sampled_value
+  sampled_VE_point_est <- VE_estimates
   #######
   
   #correct so J&J after Sinopharm primary = dose 2 (J&J booster)
   VE_estimates$dose[VE_estimates$vaccine_type == 'Johnson & Johnson' & VE_estimates$primary_if_booster == "Sinopharm" & VE_estimates$outcome %in% c('severe_disease','death')] = 2
   VE_estimates = VE_estimates  %>% select(strain, vaccine_type, dose, outcome,VE,lower_est,upper_est)
+  
+  #filler mRNA to moderna and pfizer
+  workshop = VE_estimates  %>% filter(vaccine_type == 'mRNA')
+  moderna = workshop %>% mutate(vaccine_type = 'Moderna')
+  pfizer = workshop %>% mutate(vaccine_type = 'Pfizer')
+  VE_estimates = rbind(VE_estimates[VE_estimates$vaccine_type != "mRNA",],moderna,pfizer) ; rm(moderna,pfizer)
+  
+  
   
   #(A/D) compare VE against death (where available) to VE against severe disease
   #Not statistically significantly different to 1 in '(mech shop) VE primary doses point estimates'
@@ -44,12 +54,11 @@ stochastic_VE <- function(
   any_infection = VE_estimates[VE_estimates$outcome == 'any_infection',] %>% 
     select(strain,vaccine_type,dose,VE) %>%
     rename(any_infection = VE)
-  infection_sympt_ratio = symptomatic_disease %>% 
+  infection_sympt_ratio = symptomatic_disease  %>%
     left_join(any_infection, by = c("strain", "vaccine_type", "dose")) %>%
+    filter(dose<3) %>%
     mutate(ratio = any_infection/symptomatic_disease) %>% group_by(strain) %>%
-    summarise(count = sum(is.na(ratio)),
-              mean = mean(ratio,na.rm=TRUE),
-              sd = sd(ratio,na.rm=TRUE),.groups = "keep")
+    summarise(mean = mean(ratio,na.rm=TRUE),.groups = "keep")
   #_________________________
   
   #(C/D) compare VE against omicron (where avaliable) to delta
@@ -61,11 +70,10 @@ stochastic_VE <- function(
     rename(omicron = VE)
   delta_omicron_ratio = delta %>% 
     left_join(omicron, by = c("outcome", "vaccine_type", "dose")) %>%
+    filter(dose<3)  %>%
     mutate(ratio = omicron/delta) %>% 
     group_by(outcome) %>%
-    summarise(count = sum(is.na(ratio)),
-              mean = mean(ratio,na.rm=TRUE),
-              sd = sd(ratio,na.rm=TRUE),.groups = "keep")
+    summarise(mean = mean(ratio,na.rm=TRUE),.groups = "keep")
   delta_omicron_ratio$mean[delta_omicron_ratio$outcome == 'death'] = delta_omicron_ratio$mean[delta_omicron_ratio$outcome == 'severe_disease'] #since death is missing
   #_________________________
   
@@ -189,10 +197,10 @@ stochastic_VE <- function(
     vaccine_mode = case_when(
       vaccine_type == 'Pfizer' ~ 'mRNA',
       vaccine_type == 'Moderna' ~ 'mRNA',
-      vaccine_type == 'AstraZeneca' ~ 'viral',
-      vaccine_type == 'Sinopharm' ~ 'viral',
-      vaccine_type == 'Sinovac' ~ 'viral',
-      vaccine_type == 'Johnson & Johnson' ~ 'viral'
+      vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+      vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+      vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+      vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
     ),
     outcome_family = case_when(
       outcome %in% c('any_infection','symptomatic_disease') ~ 'acquisition',
@@ -201,7 +209,7 @@ stochastic_VE <- function(
     ))
   
   # to_plot = VE_estimates_imputed %>%
-  #   filter(strain == 'omicron' & dose !=3)
+  #   filter(strain == 'omicron' & dose < 3)
   # #to_plot = VE_estimates_imputed %>% filter(vaccine_type %in% c('Moderna','Pfizer','AstraZeneca'), strain == 'omicron')
   # 
   # plot_list = list()
@@ -230,33 +238,28 @@ stochastic_VE <- function(
   
   ##### PART TWO: point estimates for booster doses ##############################################################################################################
   ### (1/2) Inital estimates from IVAC living systematic review 
-  booster_VE_point_est = raw_VE_point_est %>% #loaded in PART ONE
-    filter(dose == 3 & vaccine_type == 'Pfizer') %>% 
-    select(strain, vaccine_type, primary_if_booster, outcome,VE,lower_est,upper_est,sd) %>%
-    mutate(primary_if_booster_long = case_when(
-      primary_if_booster == "AstraZeneca" ~ "AstraZeneca Vaxzevria (ChAdOx1)",
-      primary_if_booster == "Johnson & Johnson" ~ "Johnson & Johnson Janssen (Ad26.COV2.S)",
-      primary_if_booster == "Moderna" ~ "Moderna Spikevax (mRNA-1273)",
-      primary_if_booster == "Pfizer" ~ "Pfizer-BioNTech Comirnaty (BNT162b2)",
-      primary_if_booster == "Sinopharm" ~ "Sinopharm BIBP vaccine",
-      primary_if_booster == "Sinovac" ~ "Sinovac Biotech CoronaVac"         
-    ))
+  booster_VE_point_est = sampled_VE_point_est  #SAMPLED in PART ONE
   
-  ######SAMPLE HERE
-  options(warn = -1 )   
-  if (toggle_sampling == "normal"){ sampled_value = mapply(rnorm,1,booster_VE_point_est$VE, booster_VE_point_est$sd)
-  } else if (toggle_sampling == "uniform"){ sampled_value = mapply(runif,1,booster_VE_point_est$lower_est, booster_VE_point_est$upper_est)}
-  options(warn = 0)   
-  sampled_value[is.nan(sampled_value)] = NA  
-  sampled_value[sampled_value>1] = 1
-  sampled_value[sampled_value<0] = 0
-  VE_estimates = cbind(booster_VE_point_est,sampled_value)
-  VE_estimates$VE = VE_estimates$sampled_value
-  #######
-
+  #convert generic "mRNA" rows to Moderna and Pfizer
+  workshop = booster_VE_point_est  %>% filter(vaccine_type == 'mRNA')
+  moderna = workshop %>% mutate(vaccine_type = 'Moderna')
+  pfizer = workshop %>% mutate(vaccine_type = 'Pfizer')
+  booster_VE_point_est = rbind(booster_VE_point_est[booster_VE_point_est$vaccine_type != "mRNA",],moderna,pfizer) ; rm(moderna,pfizer)
+  
+  workshop = booster_VE_point_est  %>% filter(primary_if_booster == 'mRNA')
+  moderna = workshop %>% mutate(primary_if_booster = 'Moderna')
+  pfizer = workshop %>% mutate(primary_if_booster = 'Pfizer')
+  booster_VE_point_est = rbind(booster_VE_point_est[booster_VE_point_est$primary_if_booster != "mRNA",],moderna,pfizer) ; rm(moderna,pfizer)
+  
+  
+  booster_VE_point_est = booster_VE_point_est %>% 
+    mutate(primary_if_booster = case_when(dose<3 ~ vaccine_type,TRUE ~ primary_if_booster)) %>%
+    select(strain, vaccine_type, primary_if_booster,dose, outcome,VE,lower_est,upper_est) 
+  
+  
   #Average across estimates from IVAC living systematic review
   VE_estimates = VE_estimates %>% 
-    select(strain, vaccine_type, primary_if_booster, outcome,VE) %>% 
+    select(strain, vaccine_type, primary_if_booster, dose,outcome,VE) %>% 
     group_by(strain, vaccine_type, primary_if_booster, outcome) %>%
     summarise(VE = sum(VE)/n(),.groups = "keep")
   
@@ -269,7 +272,7 @@ stochastic_VE <- function(
   
   #Save point estimate for booster doses 
   VE_booster_estimates = VE_estimates %>%
-    mutate(dose = 3,
+    mutate(
            vaccine_type_long = case_when(
              vaccine_type == "AstraZeneca" ~ "AstraZeneca Vaxzevria (ChAdOx1)",
              vaccine_type == "Johnson & Johnson" ~ "Johnson & Johnson Janssen (Ad26.COV2.S)",
@@ -281,10 +284,10 @@ stochastic_VE <- function(
            vaccine_mode = case_when(
              vaccine_type == 'Pfizer' ~ 'mRNA',
              vaccine_type == 'Moderna' ~ 'mRNA',
-             vaccine_type == 'AstraZeneca' ~ 'viral',
-             vaccine_type == 'Sinopharm' ~ 'viral',
-             vaccine_type == 'Sinovac' ~ 'viral',
-             vaccine_type == 'Johnson & Johnson' ~ 'viral'
+             vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+             vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+             vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+             vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
            ),
            outcome_family = case_when(
              outcome %in% c('any_infection','symptomatic_disease') ~ 'acquisition',
@@ -392,8 +395,11 @@ stochastic_VE <- function(
   
   #(C) Convert ratio to age groups in model
   CS_age_groupings = c(0,59,79,110) #age groupings in VE estimate data
-  pop_RAW <- UN_pop_est %>%
-    filter(ISO3_code == setting) %>%
+  pop_RAW <- UN_pop_est%>% 
+    rename(country = ISO3_code,
+           population = PopTotal,
+           age = AgeGrp) %>%
+    filter(country == setting) %>%
     mutate(agegroup_RAW = cut(age,breaks = CS_age_groupings, include.lowest = T, labels = unique(apply_ratio$agegroup_RAW)),
            agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
     ungroup() %>%
@@ -434,7 +440,7 @@ stochastic_VE <- function(
   
   #(D) apply to point estimates
   point_estimates = VE_estimates_imputed %>% 
-    filter(outcome_family == 'severe_outcome' & !(vaccine_type == 'Pfizer' & dose == 3)) %>%
+    filter(outcome_family == 'severe_outcome' &  dose < 3) %>%
     select(strain,vaccine_type,dose,outcome,outcome_family,VE) %>%
     mutate(schedule = case_when(
       dose > 2 ~ 'booster',
@@ -481,10 +487,10 @@ stochastic_VE <- function(
   VE_waning_distribution_SO = together %>% select(strain, vaccine_type,primary_if_booster, dose, outcome, age_group,days,VE_days)
   
   workshop = VE_waning_distribution_SO %>% 
-    filter(dose == 3 & strain == strain_now) %>%
+    filter(dose > 2 & strain == strain_now) %>%
     group_by(strain,outcome,vaccine_type,dose,age_group,days,.add = TRUE) %>%
     summarise(VE_days = mean(VE_days),.groups = "keep")
-  VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(! dose == 3) %>% select(-primary_if_booster)
+  VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(dose < 3) %>% select(-primary_if_booster)
   VE_waning_distribution_SO = rbind(VE_waning_distribution_SO,workshop)
 
 return(VE_waning_distribution_SO)
