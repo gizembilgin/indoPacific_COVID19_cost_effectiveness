@@ -13,6 +13,14 @@ colnames(VE_estimates)
 
 VE_estimates = VE_estimates  %>% select(strain, vaccine_type, dose, outcome,VE,lower_est,upper_est)
 
+#filler mRNA to moderna and pfizer
+workshop = VE_estimates  %>% filter(vaccine_type == 'mRNA')
+moderna = workshop %>% mutate(vaccine_type = 'Moderna')
+pfizer = workshop %>% mutate(vaccine_type = 'Pfizer')
+VE_estimates = rbind(VE_estimates[VE_estimates$vaccine_type != "mRNA",],moderna,pfizer) ; rm(moderna,pfizer)
+
+
+
 this_strain = 'delta'
 this_strain = 'omicron'
 to_plot = VE_estimates[VE_estimates$strain == this_strain,]
@@ -53,16 +61,18 @@ severe_disease = VE_estimates[VE_estimates$outcome == 'severe_disease',] %>%
 workshop = death %>% 
   left_join(severe_disease, by = c("strain", "vaccine_type", "dose")) %>%
   mutate(ratio = severe_disease/death)
-workshop %>% summarise(mean = mean(ratio,na.rm=TRUE),
+workshop %>% ungroup() %>% summarise(mean = mean(ratio,na.rm=TRUE),
                        sd = sd(ratio,na.rm=TRUE))
 # mean        sd
 # 1 0.9667011 0.1131279
 workshop %>% group_by(dose) %>%
   summarise(mean = mean(ratio,na.rm=TRUE),
-                       sd = sd(ratio,na.rm=TRUE))
+                       sd = sd(ratio,na.rm=TRUE),
+            count = n())
 # dose  mean     sd
-#   1     1 0.929 0.145 
-#   2     2 1.02  0.0171
+#   1 0.929 0.145 
+#   2 1.02  0.0171
+#   3 0.899 0.0535
 #close enough to one!
 #____________________
 
@@ -77,26 +87,33 @@ any_infection = VE_estimates[VE_estimates$outcome == 'any_infection',] %>%
 workshop = symptomatic_disease %>% 
   left_join(any_infection, by = c("strain", "vaccine_type", "dose")) %>%
   mutate(ratio = any_infection/symptomatic_disease)
-workshop %>% summarise(mean = mean(ratio,na.rm=TRUE),
+workshop %>% ungroup() %>% summarise(mean = mean(ratio,na.rm=TRUE),
                        sd = sd(ratio,na.rm=TRUE))
 # mean        sd
 # 1 0.9017756 0.2476893
 workshop %>% group_by(dose) %>%
-  summarise(count = sum(is.na(ratio)),
+  summarise(count = sum(is.na(ratio) == FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 # dose count    mean      sd
 # 1     9   1.11   0.0834
 # 2     5   0.779  0.231 
-workshop %>% group_by(strain) %>%
-  summarise(count = sum(is.na(ratio)),
+workshop %>% filter(dose<3) %>% group_by(strain) %>%
+  summarise(count = sum(is.na(ratio) == FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 # strain  count  mean     sd
 # 1 delta       5 1.03  0.109 
 # 2 omicron    13 0.530 0.0450
-infection_sympt_ratio = workshop %>% group_by(strain) %>%
-  summarise(count = sum(is.na(ratio)),
+workshop %>% filter(dose>2) %>% group_by(strain) %>%
+  summarise(count = sum(is.na(ratio) == FALSE),
+            mean = mean(ratio,na.rm=TRUE),
+            sd = sd(ratio,na.rm=TRUE))
+#omicron     1 0.804 0.150
+
+infection_sympt_ratio = workshop %>% 
+  filter(dose<3) %>% group_by(strain) %>%
+  summarise(count = sum(is.na(ratio) == FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 #_________________________
@@ -118,13 +135,15 @@ workshop %>% summarise(mean = mean(ratio,na.rm=TRUE),
 # mean        sd
 # 1 0.6210314 0.1543049
 workshop %>% group_by(dose) %>%
-  summarise(mean = mean(ratio,na.rm=TRUE),
+  summarise(count = sum(is.na(ratio)==FALSE),
+            mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 # dose  mean    sd
 # 1     1 0.540 0.171
 # 2     2 0.651 0.148
+# 3     3 0.806 0.147
 workshop %>% group_by(outcome) %>%
-  summarise(count = sum(is.na(ratio)),
+  summarise(count = sum(is.na(ratio)==FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 # outcome             count    mean      sd
@@ -133,7 +152,7 @@ workshop %>% group_by(outcome) %>%
 # 3 severe_disease          6   0.620  0.164 
 # 4 symptomatic_disease     7   0.710  0.112 
 delta_omicron_ratio = workshop %>% group_by(outcome) %>%
-  summarise(count = sum(is.na(ratio)),
+  summarise(count = sum(is.na(ratio)==FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 delta_omicron_ratio$mean[delta_omicron_ratio$outcome == 'death'] = delta_omicron_ratio$mean[delta_omicron_ratio$outcome == 'severe_disease']
@@ -158,7 +177,7 @@ workshop %>% summarise(mean = mean(ratio,na.rm=TRUE),
                        sd = sd(ratio,na.rm=TRUE))
 
 workshop %>% group_by(strain) %>%
-  summarise(count = sum(is.na(ratio)),
+  summarise(count = sum(is.na(ratio) == FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 # strain  count  mean    sd
@@ -166,7 +185,7 @@ workshop %>% group_by(strain) %>%
 # 2 omicron    16 0.709 0.232
 
 workshop %>% group_by(vaccine_type) %>%
-  summarise(count = sum(is.na(ratio)),
+  summarise(count = sum(is.na(ratio) == FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 # vaccine_type count  mean     sd
@@ -178,7 +197,7 @@ workshop %>% group_by(vaccine_type) %>%
 # 5 Sinovac          6 0.769 0.220 
 
 workshop %>% group_by(outcome) %>%
-  summarise(count = sum(is.na(ratio)),
+  summarise(count = sum(is.na(ratio) == FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 # outcome             count  mean     sd
@@ -188,7 +207,7 @@ workshop %>% group_by(outcome) %>%
 # 4 symptomatic_disease     5 0.596 0.106 
 
 dose_ratio = workshop %>% group_by(outcome) %>%
-  summarise(count = sum(is.na(ratio)),
+  summarise(count = sum(is.na(ratio) == FALSE),
             mean = mean(ratio,na.rm=TRUE),
             sd = sd(ratio,na.rm=TRUE))
 #_________________________
@@ -308,13 +327,13 @@ VE_estimates_imputed = workshop %>%
     vaccine_type == "Sinovac" ~ "Sinovac Biotech CoronaVac"         
   ),
   vaccine_mode = case_when(
-      vaccine_type == 'Pfizer' ~ 'mRNA',
-      vaccine_type == 'Moderna' ~ 'mRNA',
-      vaccine_type == 'AstraZeneca' ~ 'viral',
-      vaccine_type == 'Sinopharm' ~ 'viral',
-      vaccine_type == 'Sinovac' ~ 'viral',
-      vaccine_type == 'Johnson & Johnson' ~ 'viral'
-    ),
+    vaccine_type == 'Pfizer' ~ 'mRNA',
+    vaccine_type == 'Moderna' ~ 'mRNA',
+    vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+    vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+    vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+    vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+  ),
   outcome_family = case_when(
     outcome %in% c('any_infection','symptomatic_disease') ~ 'acquisition',
     outcome %in% c('severe_disease','death') ~ 'severe_outcome'
@@ -323,7 +342,7 @@ VE_estimates_imputed = workshop %>%
 
 
 to_plot = VE_estimates_imputed %>%
-  filter(strain == 'omicron' & dose !=3)
+  filter(strain == 'omicron' & dose <3)
 #to_plot = VE_estimates_imputed %>% filter(vaccine_type %in% c('Moderna','Pfizer','AstraZeneca'), strain == 'omicron')
 
 plot_list = list()

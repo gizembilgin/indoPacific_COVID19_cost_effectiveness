@@ -150,10 +150,9 @@ load(file = "1_inputs/VE_estimates_imputed.Rdata")
 load(file = "1_inputs/VE_booster_estimates.Rdata")
 
 point_estimates = VE_estimates_imputed %>% 
-  filter(outcome_family == 'severe_outcome' & !(vaccine_type == 'Pfizer' & dose == 3)) %>%
+  filter(outcome_family == 'severe_outcome' & dose < 3) %>%
   select(strain,vaccine_type,dose,outcome,outcome_family,VE) %>%
   mutate(schedule = case_when(
-    dose > 2 ~ 'booster',
     dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
     TRUE ~ 'primary'
   ))
@@ -161,7 +160,8 @@ point_estimates = VE_estimates_imputed %>%
 point_estimates_booster = VE_booster_estimates %>% 
   filter(outcome_family == 'severe_outcome') %>%
   select(strain,vaccine_type,primary_if_booster,dose,outcome,outcome_family,VE) %>%
-  mutate(schedule = 'booster')
+  mutate(schedule = 'booster',
+         dose = as.numeric(dose))
 
 point_estimates = bind_rows(point_estimates,point_estimates_booster)
 
@@ -193,13 +193,40 @@ ggplot() +
   theme_bw() +
   theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
 
+booster_plot = waning_to_plot %>%
+  filter(dose == 3 &
+           strain == 'omicron' &
+           outcome == 'severe_disease')
+ggplot() + 
+  geom_point(data = booster_plot, aes(x=days,y=VE_days,color=as.factor(vaccine_type))) +
+  theme_bw() + 
+  xlab("") + 
+  ylim(0,1) +
+  labs(title=(paste("VE against acqusition")),color='booster type') +
+  ylab("") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(color = 'black')) + 
+  facet_grid(primary_if_booster ~ .)
+
+
 waning = together %>% mutate(waning = TRUE)
 no_waning = together %>% mutate(waning = FALSE) %>%
   group_by(strain,vaccine_type,primary_if_booster,dose,outcome) %>%
   mutate(VE_days = max(VE_days))
 
 
-VE_waning_distribution_SO = rbind(waning,no_waning) %>% select(strain, vaccine_type,primary_if_booster, dose, outcome,days,VE_days,waning)
+VE_waning_distribution_SO = rbind(waning,no_waning) %>% 
+  select(strain, vaccine_type,primary_if_booster, dose, outcome,days,VE_days,waning) %>%
+  mutate(vaccine_mode = case_when(
+      vaccine_type == 'Pfizer' ~ 'mRNA',
+      vaccine_type == 'Moderna' ~ 'mRNA',
+      vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+      vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+      vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+      vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+    ))
+    
 save(VE_waning_distribution_SO, file = '1_inputs/VE_waning_distribution_SO.Rdata')
 
 

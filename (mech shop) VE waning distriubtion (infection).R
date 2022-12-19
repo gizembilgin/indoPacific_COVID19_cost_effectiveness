@@ -91,8 +91,13 @@ save(predicted_distribution, file = '1_inputs/VE_predicted_distribution.Rdata')
 #(A) calculate internal
 apply_distribution <- predicted_distribution %>%
   mutate(vaccine_mode = case_when(
-    vaccine_type %in% c('Pfizer','Moderna') ~ 'mRNA',
-    vaccine_type == 'AstraZeneca' ~ 'viral'),
+    vaccine_type == 'Pfizer' ~ 'mRNA',
+    vaccine_type == 'Moderna' ~ 'mRNA',
+    vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+    vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+    vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+    vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+  ),
     outcome_family =  'acquisition') %>%
   group_by(outcome_family,strain,vaccine_type) %>%
   mutate(VE_internal = VE / max(VE)) %>%
@@ -170,7 +175,7 @@ for (s in c('omicron','delta')){
 imputed = imputed %>% select(-VE_internal)
 
 together = rbind(imputed,direct) %>%
-  select(strain,vaccine_type,dose,days,VE) %>%
+  select(strain,vaccine_mode,vaccine_type,dose,days,VE) %>%
   rename(VE_days = VE) %>%
   mutate(VE_days = VE_days/100)
 
@@ -201,5 +206,5 @@ no_waning = together %>% mutate(waning = FALSE) %>%
   group_by(strain,vaccine_type,dose) %>%
   mutate(VE_days = max(VE_days))
 
-VE_waning_distribution = rbind(waning,no_waning) %>% select(strain,vaccine_type,dose,days,VE_days,waning)
+VE_waning_distribution = rbind(waning,no_waning) %>% select(strain,vaccine_mode,vaccine_type,dose,days,VE_days,waning)
 save(VE_waning_distribution, file = '1_inputs/VE_waning_distribution.Rdata')
