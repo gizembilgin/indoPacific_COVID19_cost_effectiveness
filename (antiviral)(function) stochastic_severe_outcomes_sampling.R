@@ -24,11 +24,10 @@ stochastic_severe_outcomes_sampling <- function(
   load(file = '1_inputs/delta_multiplier.Rdata' )
   load(file = '1_inputs/omicron_multiplier.Rdata' )
   load(file = '1_inputs/YLL_FINAL.Rdata' )
-  load(file = '1_inputs/SA_VE_older_muted_SO.Rdata')
   load(file = '1_inputs/RR_sample.Rdata')
   load(file = '1_inputs/rho_SO_sample.Rdata') 
   load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
-  severe_outcome_country_level_input <- read.csv('1_inputs/severe_outcome_country_level.csv')
+  load(file = "1_inputs/severe_outcome_country_level.Rdata")
 
   source(paste(getwd(),"/(antiviral)(function) stochastic_VE.R",sep=""))
   source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
@@ -63,9 +62,8 @@ stochastic_severe_outcomes_sampling <- function(
     
     
     ### PART TWO: Adjust age-distributions to setting ######################################################
-    severe_outcome_country_level = severe_outcome_country_level_input %>%
-      filter(country == setting & outcome %in% c('death','severe_disease','hosp')) %>%
-      mutate(percentage = percentage/100) #make percentage between 0-1
+    severe_outcome_country_level = severe_outcome_country_level %>%
+      filter(country == setting & outcome %in% c('death','severe_disease','hosp')) 
     
     sampled_value = mapply(runif,1,severe_outcome_country_level$LB, severe_outcome_country_level$UB) 
     severe_outcome_country_level = cbind(severe_outcome_country_level,sampled_value)
@@ -81,7 +79,10 @@ stochastic_severe_outcomes_sampling <- function(
     age_groups_RAW = c(0,9,19,29,39,49,59,69,100)
     age_group_labels_RAW = c('0 to 9','10 to 19','20 to 29','30 to 39','40 to 49','50 to 59','60 to 69','70 to 100')
     
-    pop_bands_RAW <- UN_pop_est  %>% #pop banding by Seedat et al. 
+    pop_bands_RAW <- UN_pop_est  %>% 
+      rename(country = ISO3_code,
+             population = PopTotal,
+             age = AgeGrp) %>% #pop banding by Seedat et al. 
       filter(country == setting) %>%
       mutate(agegroup = cut(age,breaks = age_groups_RAW, include.lowest = T,labels = age_group_labels_RAW)) %>%
       group_by(agegroup) %>%
@@ -124,7 +125,10 @@ stochastic_severe_outcomes_sampling <- function(
     
     
     ### PART THREE: convert RR to model age groups ########################################################
-    pop_setting = UN_pop_est %>%
+    pop_setting = UN_pop_est %>% 
+      rename(country = ISO3_code,
+             population = PopTotal,
+             age = AgeGrp) %>%
       filter(country == setting) %>%
       mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
       ungroup() %>%
@@ -132,7 +136,12 @@ stochastic_severe_outcomes_sampling <- function(
       summarise(pop = sum(population),.groups = "keep") %>%
       ungroup() %>% 
       mutate(pop_percent = pop/sum(pop))
-    pop_w <- UN_pop_est %>%
+    pop_w <- UN_pop_est %>% 
+      rename(country = ISO3_code,
+             country_long = Location,
+             population = PopTotal,
+             population_female = PopFemale,
+             age = AgeGrp) %>%
       filter(country == setting) %>%
       mutate(agegroup_RAW = cut(age,breaks = age_groups_RAW, include.lowest = T,labels = age_group_labels_RAW),
              agegroup_model = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
@@ -191,7 +200,7 @@ stochastic_severe_outcomes_sampling <- function(
     # discounting_rate = 0
     # #apply discounting using continuous approach, as per larson et al.
     # if (discounting_rate >0){YLL_FINAL$life_expectancy = (1/discounting_rate)*(1-exp(-discounting_rate*YLL_FINAL$life_expectancy ))}
-    
+    YLL_FINAL = YLL_FINAL %>% filter(ISO3_code == setting)
     YLL_row = severe_outcome_country_level %>%
       filter(outcome == 'death') %>%
       mutate(outcome = 'YLL') %>%
@@ -215,7 +224,8 @@ stochastic_severe_outcomes_sampling <- function(
         risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name, ]
       } else if (risk_group_name %in% c('pregnant_women')) {
         load(file = "1_inputs/prevalence_pregnancy.Rdata")
-        risk_dn = prevalence_pregnancy
+        risk_dn = prevalence_pregnancy %>%
+          filter(country == setting)
       } else {
         stop('risk_group_name not a valid value')
       }
@@ -276,7 +286,8 @@ stochastic_severe_outcomes_sampling <- function(
     
     #(2) Load stochastic VE distirbution
     #VE_waning_distribution_SO - sample UNIFORM from all point estimates, waning distribution, ratios between age groups etc. 
-    VE_waning_distribution = stochastic_VE(toggle_sampling = local_stochastic_VE_sampling) %>%
+    VE_waning_distribution = stochastic_VE(setting = setting,
+                                           toggle_sampling = local_stochastic_VE_sampling) %>%
       filter(strain == strain_now & vaccine_type %in% vaccine_type_list)
     
     rho_SO_est = rbeta(1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
