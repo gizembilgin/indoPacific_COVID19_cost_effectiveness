@@ -5,7 +5,7 @@ require(ggpubr); require(readr); require(gridExtra); require(ggplot2); require(t
 
 
 ### Showing that Pfizer booster to CoronaVac EQ to Pfizer dose 2 waning
-#rm(list=ls())
+rm(list=ls())
 raw <- read.csv(file = '1_inputs/VE_acq.csv',header=TRUE)
 raw = raw %>% filter(dose == 3 & age_group == 'overall') %>% select(dose,days,VE) %>% mutate(label = 'Pfizer booster with CoronaVac primary schedule')
 
@@ -70,38 +70,52 @@ predicted_distribution = data.frame()
   load(file = "1_inputs/VE_estimates_imputed.Rdata")
   
   imputed = data.frame()
-    for (t in 1:length(unique(VE_booster_estimates$primary_if_booster))){
-         this_vax = unique(VE_booster_estimates$primary_if_booster)[t]
-      
-          workshop = apply_distribution  %>% 
-            mutate(primary_if_booster = this_vax)
-          
-          ratio_top = VE_booster_estimates %>% filter(primary_if_booster == this_vax & outcome == 'any_infection')
-          ratio_bottom = VE_estimates_imputed %>% filter(dose == 2 & vaccine_type == 'Pfizer'& outcome == 'any_infection' & strain == 'omicron')
-          
-          ratio = ratio_top$VE/ratio_bottom$VE
-          
-          workshop$VE = workshop$VE * ratio
-          workshop$VE[workshop$VE>1] = 1
-          
-          imputed = rbind(imputed,workshop)
+  for (d in unique(VE_booster_estimates$dose)){
+    for (t in 1:length(unique(VE_booster_estimates$vaccine_type))){
+      for (p in 1:length(unique(VE_booster_estimates$primary_if_booster))){
+        for (s in unique(VE_booster_estimates$strain)){
+           this_primary = unique(VE_booster_estimates$primary_if_booster)[p]
+           this_booster = unique(VE_booster_estimates$vaccine_type)[t]
+        
+            workshop = apply_distribution  %>% 
+              mutate(primary_if_booster = this_primary, vaccine_type = this_booster, dose = d, strain = s)
+            
+            ratio_top = VE_booster_estimates %>% filter(primary_if_booster == this_primary & vaccine_type == this_booster & strain == s & outcome == 'any_infection' & dose == d)
+            ratio_bottom = VE_estimates_imputed %>% filter(dose == 2 & vaccine_type == this_booster & outcome == 'any_infection' & strain == s)
+            
+            if (nrow(ratio_top)>0){
+              ratio = ratio_top$VE/ratio_bottom$VE
+              
+              workshop$VE = workshop$VE * ratio
+              workshop$VE[workshop$VE>1] = 1
+              
+              imputed = rbind(imputed,workshop)
+            }
+        }
+      }
     }
+  }
 
   imputed = imputed %>% 
     select(-VE_internal) %>%
     rename(VE_days=VE)
   
+  to_plot = imputed %>%
+    filter(dose == 3 &
+             strain == 'omicron')
   plot_1 = ggplot() + 
-    geom_line(data = imputed, aes(x=days,y=VE_days,color=as.factor(primary_if_booster))) +
+    geom_point(data = to_plot, aes(x=days,y=VE_days,color=as.factor(vaccine_type))) +
     theme_bw() + 
     xlab("") + 
     ylim(0,1) +
-    labs(title=(paste("VE against acqusition")),color='primary schedule') +
+    labs(title=(paste("VE against acqusition")),color='booster type') +
     ylab("") +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), 
-          axis.line = element_line(color = 'black'))
- 
+          axis.line = element_line(color = 'black')) + 
+    facet_grid(primary_if_booster ~ .)
+  plot_1
+  
   ###load booster from severe outcome `(mech shop) VE waning distribution (severe outcomes).R`
   # check = waning_to_plot %>% filter(is.na(primary_if_booster) == FALSE)
   # plot_2 = ggplot() +
@@ -137,8 +151,16 @@ predicted_distribution = data.frame()
     mutate(VE_days = max(VE_days))
   
   together = rbind(waning,no_waning) %>% 
-    mutate(strain = 'omicron', dose = 3, vaccine_type = "Pfizer") %>%
-    select(strain,vaccine_type,dose,days,VE_days,waning,primary_if_booster)
+    select(strain,vaccine_type,dose,days,VE_days,waning,primary_if_booster) %>%
+    mutate(dose = as.numeric(dose),
+           vaccine_mode = case_when(
+      vaccine_type == 'Pfizer' ~ 'mRNA',
+      vaccine_type == 'Moderna' ~ 'mRNA',
+      vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+      vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+      vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+      vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+    ))
   
   load(file = '1_inputs/VE_waning_distribution.Rdata')
   VE_waning_distribution = bind_rows(VE_waning_distribution,together)
