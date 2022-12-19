@@ -3,6 +3,15 @@
 
 
 ###### (1/5) Vaccination
+#making some interim variables to assist with configuring states
+disease_class_list = c('S','E','I','R')
+num_disease_classes = length(disease_class_list)
+num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))  
+vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
+num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
+num_vax_classes = num_vax_doses*num_vax_types + 1 # + 1 for unvaccinated
+
+
 #(A/B) Coverage 
 #(i/iii) Vaccine coverage at end of known history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% 
@@ -397,7 +406,7 @@ count=J*(T*D+1)*RISK # +1 is unvax
 if (setting == "SLE"){
   seed = 0.001*sum(pop) #seed of outbreak at covid19_waves$date 
 } else{
-  seed = 0.0001*sum(pop)
+  seed = 0.001*sum(pop)
 }
 
 
