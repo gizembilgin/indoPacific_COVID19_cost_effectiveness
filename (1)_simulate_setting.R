@@ -11,7 +11,7 @@
 
 
 if (exists("rootpath") == FALSE){rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")}
-if (exists("num_risk_groups") == FALSE){num_risk_groups = 1}
+if (exists("num_risk_groups") == FALSE){num_risk_groups = 2}
 if (exists("fitting") == FALSE){ fitting = "off" }
 #______________________________________________________________________________________________________________________________________
 
