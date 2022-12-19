@@ -109,137 +109,156 @@ apply_ratio = workshop_age %>% filter(days == 22) %>% rename(VE_ratio = VE_overa
 
 
 ### COVERT TO MODEL AGE GROUP ##################################################################################################################################
-setting = "SLE"
-age_groups_num = c(0,4,9,17,29,44,59,69,110)
-age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
-
-num_age_groups = J = length(age_group_labels)          
-age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
-
-rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") 
-pop_setting_orig <- UN_pop_est %>%
-  filter(country == setting)
-pop_setting <- pop_setting_orig %>%
-  mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
-  group_by(age_group) %>%
-  summarise(pop = as.numeric(sum(population)))
-
-CS_age_groupings = c(0,59,79,110) #age groupings in VE estimate data
-pop_RAW <- pop_setting_orig %>%
-  mutate(agegroup_RAW = cut(age,breaks = CS_age_groupings, include.lowest = T, labels = unique(apply_ratio$agegroup_RAW)),
-         agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
-  ungroup() %>%
-  group_by(agegroup_MODEL) %>%
-  mutate(model_group_percent = population/sum(population))
-
-#ratio
-workshop = pop_RAW %>% left_join(apply_ratio) %>% 
-  mutate(interim = model_group_percent * VE_ratio)
-workshop = aggregate(workshop$interim, by=list(category = workshop$dose,workshop$agegroup_MODEL),FUN=sum)
-colnames(workshop) = c('dose','age_group','VE_ratio')
-
-apply_ratio_MODEL = workshop %>% arrange(dose) %>%
-  mutate(schedule = case_when(
-    dose > 2 ~ 'booster',
-    TRUE ~ 'primary'
-  ))  %>%  
-  select(-dose)
-
-#waning
-workshop = apply_distribution %>% rename(agegroup_RAW = age_group)
-
-workshop = pop_RAW %>% left_join(workshop) %>% 
-  mutate(interim = model_group_percent * VE_internal)
-workshop = aggregate(workshop$interim, by=list(category = workshop$dose,workshop$agegroup_MODEL,workshop$days),FUN=sum)
-colnames(workshop) = c('dose','age_group','days','VE_internal')
-
-apply_distribution_MODEL = workshop %>% arrange(dose)  %>%
-  mutate(schedule = case_when(
-    dose > 2 ~ 'booster',
-    TRUE ~ 'primary'
-  )) %>%  
-  select(-dose)
-
-plot_dose2 = ggplot() + 
-  geom_line(data = apply_distribution_MODEL[apply_distribution_MODEL$schedule == 'primary',], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
-  ylim(0,1)  +
-  ylab('% of max protection') +
-  xlab('days since vaccination') +
-  labs(color='age group') +
-  ggtitle('primary schedule') +
-  plotting_standard
-plot_dose3 = ggplot() + 
-  geom_line(data = apply_distribution_MODEL[apply_distribution_MODEL$schedule == 'booster',], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
-  ylim(0,1) +
-  ylab('% of max protection') +
-  xlab('days since vaccination') +
-  labs(color='age group') +
-  ggtitle('booster dose') +
-  plotting_standard
-grid.arrange(plot_dose2,plot_dose3, nrow=2)
-#_________________________________________________________________________________________________________________________________________
-
-
-
-### APPLY TO POINT ESTIMATES ##################################################################################################################################
-load(file = "1_inputs/VE_estimates_imputed.Rdata")
-load(file = "1_inputs/VE_booster_estimates.Rdata")
-
-point_estimates = VE_estimates_imputed %>% 
-  filter(outcome_family == 'severe_outcome' & !(vaccine_type == 'Pfizer' & dose == 3)) %>%
-  select(strain,vaccine_type,dose,outcome,outcome_family,VE) %>%
-  mutate(schedule = case_when(
-    dose > 2 ~ 'booster',
-    dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
-    TRUE ~ 'primary'
-  ))
-
-point_estimates_booster = VE_booster_estimates %>% 
-  filter(outcome_family == 'severe_outcome') %>%
-  select(strain,vaccine_type,primary_if_booster,dose,outcome,outcome_family,VE) %>%
-  mutate(schedule = 'booster')
-
-point_estimates = bind_rows(point_estimates,point_estimates_booster)
-
-together = point_estimates %>% 
-  left_join(apply_ratio_MODEL,by='schedule') %>%
-  left_join(apply_distribution_MODEL, by = c('schedule','age_group')) %>%
-  rename(VE_days = VE) %>%
-  mutate(VE_days = VE_days*VE_internal*VE_ratio/100)  %>%
-  mutate(VE_days = case_when(VE_days>1 ~ 1, TRUE ~ VE_days))
-
-#_________________________________________________________________________________________________________________________________________
-
-
-
-### PLOT ##################################################################################################################################
-if (exists("vax_type_list") == FALSE){  vax_type_list = c("AstraZeneca","Johnson & Johnson", "Pfizer", "Sinopharm" ) }
-
-waning_to_plot = together %>%
-  filter(vaccine_type %in% vax_type_list) %>%
-  mutate(immunity = paste(vaccine_type,dose))
-
-strain_test = 'omicron'
-outcome_test = 'severe_disease'
-vaccine_type_test = 'Johnson & Johnson'
-vaccine_type_test = 'Pfizer'
-
-ggplot() +
-  geom_point(data=waning_to_plot[waning_to_plot$strain == strain_test  & waning_to_plot$outcome == outcome_test & waning_to_plot$vaccine_type == vaccine_type_test,],
-            aes(x=days,y=VE_days,color=as.factor(age_group),shape=as.factor(dose)),na.rm=TRUE) +
-  labs(title=(paste("Waning of VE against","(",strain_test,")"))) +
-  xlab("days since vaccination") +
-  ylab("% max protection") +
-  ylim(0,1)+
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
-
-waning = together %>% mutate(waning = TRUE)
-no_waning = together %>% mutate(waning = FALSE) %>%
-  group_by(strain,vaccine_type,primary_if_booster,dose,age_group,outcome) %>%
-  mutate(VE_days = max(VE_days))
+load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+SA_VE_older_muted_SO = data.frame()
+for (setting in c("SLE","PNG","TLS","IDN","FJI","SLB","PHL")){
+  age_groups_num = c(0,4,9,17,29,44,59,69,110)
+  age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
+  
+  num_age_groups = J = length(age_group_labels)          
+  age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
+  
+  rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") 
+  pop_setting_orig <- UN_pop_est %>% 
+    rename(country = ISO3_code,
+           population = PopTotal,
+           age = AgeGrp) %>%
+    filter(country == setting)
+  pop_setting <- pop_setting_orig %>%
+    mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
+    group_by(age_group) %>%
+    summarise(pop = as.numeric(sum(population)))
+  
+  CS_age_groupings = c(0,59,79,110) #age groupings in VE estimate data
+  pop_RAW <- pop_setting_orig %>%
+    mutate(agegroup_RAW = cut(age,breaks = CS_age_groupings, include.lowest = T, labels = unique(apply_ratio$agegroup_RAW)),
+           agegroup_MODEL = cut(age,breaks = age_groups_num, include.lowest = T, labels = age_group_labels)) %>%
+    ungroup() %>%
+    group_by(agegroup_MODEL) %>%
+    mutate(model_group_percent = population/sum(population))
+  
+  #ratio
+  workshop = pop_RAW %>% left_join(apply_ratio) %>% 
+    mutate(interim = model_group_percent * VE_ratio)
+  workshop = aggregate(workshop$interim, by=list(category = workshop$dose,workshop$agegroup_MODEL),FUN=sum)
+  colnames(workshop) = c('dose','age_group','VE_ratio')
+  
+  apply_ratio_MODEL = workshop %>% arrange(dose) %>%
+    mutate(schedule = case_when(
+      dose > 2 ~ 'booster',
+      TRUE ~ 'primary'
+    ))  %>%  
+    select(-dose)
+  
+  #waning
+  workshop = apply_distribution %>% rename(agegroup_RAW = age_group)
+  
+  workshop = pop_RAW %>% left_join(workshop) %>% 
+    mutate(interim = model_group_percent * VE_internal)
+  workshop = aggregate(workshop$interim, by=list(category = workshop$dose,workshop$agegroup_MODEL,workshop$days),FUN=sum)
+  colnames(workshop) = c('dose','age_group','days','VE_internal')
+  
+  apply_distribution_MODEL = workshop %>% arrange(dose)  %>%
+    mutate(schedule = case_when(
+      dose > 2 ~ 'booster',
+      TRUE ~ 'primary'
+    )) %>%  
+    select(-dose)
+  
+  plot_dose2 = ggplot() + 
+    geom_line(data = apply_distribution_MODEL[apply_distribution_MODEL$schedule == 'primary',], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
+    ylim(0,1)  +
+    ylab('% of max protection') +
+    xlab('days since vaccination') +
+    labs(color='age group') +
+    ggtitle('primary schedule') +
+    plotting_standard
+  plot_dose3 = ggplot() + 
+    geom_line(data = apply_distribution_MODEL[apply_distribution_MODEL$schedule == 'booster',], aes(x=days,y=VE_internal,color=as.factor(age_group))) +
+    ylim(0,1) +
+    ylab('% of max protection') +
+    xlab('days since vaccination') +
+    labs(color='age group') +
+    ggtitle('booster dose') +
+    plotting_standard
+  grid.arrange(plot_dose2,plot_dose3, nrow=2)
+  #_________________________________________________________________________________________________________________________________________
+  
+  
+  
+  ### APPLY TO POINT ESTIMATES ##################################################################################################################################
+  load(file = "1_inputs/VE_estimates_imputed.Rdata")
+  load(file = "1_inputs/VE_booster_estimates.Rdata")
+  
+  point_estimates = VE_estimates_imputed %>% 
+    filter(outcome_family == 'severe_outcome' &  dose < 3) %>%
+    select(strain,vaccine_type,dose,outcome,outcome_family,VE) %>%
+    mutate(schedule = case_when(
+      dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
+      TRUE ~ 'primary'
+    ))
+  
+  point_estimates_booster = VE_booster_estimates %>% 
+    filter(outcome_family == 'severe_outcome') %>%
+    select(strain,vaccine_type,primary_if_booster,dose,outcome,outcome_family,VE) %>%
+    mutate(schedule = 'booster',
+           dose = as.numeric(dose))
+  
+  point_estimates = bind_rows(point_estimates,point_estimates_booster)
+  
+  together = point_estimates %>% 
+    left_join(apply_ratio_MODEL,by='schedule') %>%
+    left_join(apply_distribution_MODEL, by = c('schedule','age_group')) %>%
+    rename(VE_days = VE) %>%
+    mutate(VE_days = VE_days*VE_internal*VE_ratio/100)  %>%
+    mutate(VE_days = case_when(VE_days>1 ~ 1, TRUE ~ VE_days))
+  
+  #_________________________________________________________________________________________________________________________________________
+  
+  
+  
+  ### PLOT ##################################################################################################################################
+  if (exists("vax_type_list") == FALSE){  vax_type_list = c("AstraZeneca","Johnson & Johnson", "Pfizer", "Sinopharm" ) }
+  
+  waning_to_plot = together %>%
+    filter(vaccine_type %in% vax_type_list) %>%
+    mutate(immunity = paste(vaccine_type,dose))
+  
+  strain_test = 'omicron'
+  outcome_test = 'severe_disease'
+  vaccine_type_test = 'Johnson & Johnson'
+  vaccine_type_test = 'Pfizer'
+  
+  ggplot() +
+    geom_point(data=waning_to_plot[waning_to_plot$strain == strain_test  & waning_to_plot$outcome == outcome_test & waning_to_plot$vaccine_type == vaccine_type_test,],
+              aes(x=days,y=VE_days,color=as.factor(age_group),shape=as.factor(dose)),na.rm=TRUE) +
+    labs(title=(paste("Waning of VE against","(",strain_test,")"))) +
+    xlab("days since vaccination") +
+    ylab("% max protection") +
+    ylim(0,1)+
+    theme_bw() +
+    theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+  
+  waning = together %>% mutate(waning = TRUE)
+  no_waning = together %>% mutate(waning = FALSE) %>%
+    group_by(strain,vaccine_type,primary_if_booster,dose,age_group,outcome) %>%
+    mutate(VE_days = max(VE_days))
+  SA_VE_older_muted_SO_0 = rbind(waning,no_waning) %>% 
+    select(strain, vaccine_type,primary_if_booster, dose, outcome,days,age_group,VE_days,waning) %>%
+    mutate(country = setting)
+  SA_VE_older_muted_SO = rbind(SA_VE_older_muted_SO,SA_VE_older_muted_SO_0)
+}
 
 ### SAVE ##################################################################################################################################
-SA_VE_older_muted_SO = rbind(waning,no_waning) %>% select(strain, vaccine_type,primary_if_booster, dose, outcome,days,age_group,VE_days,waning)
+SA_VE_older_muted_SO = SA_VE_older_muted_SO %>%
+  mutate(vaccine_mode = case_when(
+    vaccine_type == 'Pfizer' ~ 'mRNA',
+    vaccine_type == 'Moderna' ~ 'mRNA',
+    vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+    vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+    vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+    vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+  ))
+
 save(SA_VE_older_muted_SO, file = '1_inputs/SA_VE_older_muted_SO.Rdata')
 #_________________________________________________________________________________________________________________________________________
