@@ -26,7 +26,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   
   #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
-  list_doses = list_doses[! list_doses %in% c(8)]
+  list_doses = list_doses[! list_doses %in% c(8,9)]
   num_vax_doses = D = length(list_doses)
   num_vax_doses = max(num_vax_doses,vax_strategy_toggles$vax_dose_strategy)
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
@@ -60,7 +60,7 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   
   #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
-  list_doses = list_doses[! list_doses %in% c(8)]
+  list_doses = list_doses[! list_doses %in% c(8,9)]
   num_vax_doses = D = length(list_doses)
   num_vax_doses = max(num_vax_doses,vax_strategy_toggles$vax_dose_strategy)
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
@@ -97,6 +97,8 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 }
 
 
+
+
 ### sensitivity analysis - booster doses in 2023
 if (exists("booster_toggles") == FALSE){booster_toggles = "no"}
 if (exists("booster_prioritised_strategies") == FALSE){booster_prioritised_strategies = "no"}
@@ -130,7 +132,7 @@ if (length(booster_toggles)>1){
 
   #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
-  list_doses = list_doses[! list_doses %in% c(8)]
+  list_doses = list_doses[! list_doses %in% c(8,9)]
   num_vax_doses = D = length(list_doses)
   vax_type_list = sort(unique(vaccination_history_FINAL$vaccine_type))
   num_vax_types = T = length(vax_type_list)
@@ -149,6 +151,12 @@ if (length(booster_toggles)>1){
       summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = 'keep')
   }
 }
+vaccination_history_FINAL = vaccination_history_FINAL %>%
+  mutate(schedule = case_when(
+    dose > 2 ~ 'booster',
+    dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
+    TRUE ~ 'primary'
+  ))
 
 
 
@@ -163,28 +171,33 @@ vaxCovDelay = vaxCovDelay %>%
 
 
 #extract other attributes
-if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$dose == 8,])>0){
-  booster_type = unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$dose == 8])
-  if (booster_type == 'Johnson & Johnson'){
-    booster_dose_number = 2
+if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booster",])>0){
+  booster_type = unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$dose %in% c(3,4,8)])
+  if (booster_type == 'Johnson & Johnson'){booster_dose_number = 2
+  } else{booster_dose_number = 3}
+}
+
+
+#load covid19_waves with variables: fitted_setting, fitted_date, date ,strain
+if (fitting == "off"){
+  if (setting == "SLE"){
+    covid19_waves =  data.frame(date = c(as.Date('2021-04-25'),as.Date('2021-09-01')),
+                               strain = c('delta','omicron'))
   } else{
-    booster_dose_number = 3
+    load(file = '1_inputs/fit/fitted_covid19_waves.Rdata')
+    covid19_waves = fitted_covid19_waves %>% filter(fitted_setting == setting)
+    covid19_waves = covid19_waves %>% filter(fitted_date == max(covid19_waves$fitted_date))
   }
+  
+  if (outbreak_timing != "off"){ #if additional outbreak
+    if (outbreak_timing == "after"){ new_seed_date = max(vaccination_history_FINAL$date)  #outbreak after vaccine rollout
+    } else if(outbreak_timing == "during"){ new_seed_date = date_start + 7                #outbreak during vaccine rollout
+    }
+    covid19_waves = c(covid19_waves,new_seed_date)
+  }
+
 }
 
-
-fitted_seed_dates =  c(as.Date('2021-04-25'),c(as.Date('2021-09-01'))) #COMEBACK - this is hard coded :(
-
-if (fitting == "on"){ #seed date specified in Command Deck
-  if (length(fitted_seed_dates[! fitted_seed_dates %in% seed_date])>0 ){stop('seed dates for fitting have changed')}
-} else if (outbreak_timing == "after"){ seed_date = max(vaccination_history_FINAL$date)  #outbreak after vaccine rollout
-} else if(outbreak_timing == "during"){ seed_date = date_start + 7                       #outbreak during vaccine rollout
-} else if(outbreak_timing == "off")   { seed_date = as.Date('1900-01-01')                #no outbreak
-}
-
-variant_change_date = c(fitted_seed_dates,seed_date)
-variant_change_date = unique(sort(variant_change_date))
-variant_change_date = variant_change_date[variant_change_date>as.Date('2021-06-01')] #because delta is not immune escape
 
 date_now = date_start
 #_________________________________________________
@@ -262,19 +275,63 @@ if(nrow(check)>1){stop('inital vaccine coverage > 100%')}
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution %>%
   filter(waning == waning_toggle_acqusition) %>%
-  mutate(outcome = 'any_infection')
+  mutate(outcome = 'any_infection',
+         schedule = case_when(
+    dose > 2 ~ 'booster',
+    dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
+    TRUE ~ 'primary'
+  ))
 
-#ASSUMPTION - averaging across heterogeneous combinations of VE dose 3
-workshop = VE_waning_distribution %>% 
-  filter(dose == 3 & strain == strain_now) %>%
-  group_by(strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-  summarise(VE_days = mean(VE_days),.groups = "keep") 
+
+#average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
+workshop = data.frame()
+if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booster",])>0){ #if booster dose exists
+  for (this_dose in unique(vaccination_history_FINAL$dose[vaccination_history_FINAL$schedule == "booster"])){ # for each booster dose
+    for (this_vax in unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$schedule == "booster" & vaccination_history_FINAL$dose == this_dose])){ # for each booster type
+      
+      # First Choice = exact primary dose + booster dose combination
+      this_combo = VE_waning_distribution %>% 
+        filter(schedule == "booster" & 
+                 dose == this_dose & 
+                 primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
+                 vaccine_type == this_vax) %>%
+        group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+        summarise(VE_days = mean(VE_days),.groups = "keep") 
+      
+      # Second Choice = same primary schedule + booster of same vaccine mode
+      if (nrow(this_combo) == 0){
+        this_vax_mode = unique(vaccination_history_FINAL$vaccine_mode[vaccination_history_FINAL$vaccine_type == this_vax])
+        this_combo = VE_waning_distribution %>% 
+          filter(schedule == "booster" & dose == this_dose & 
+                   primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
+                   vaccine_mode == this_vax_mode) %>%
+          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+          summarise(VE_days = mean(VE_days),.groups = "keep") 
+      }
+      
+      # Third Choice = same primary schedule + any booster
+      if (nrow(this_combo) == 0){ 
+        this_combo = VE_waning_distribution %>% 
+          filter(schedule == "booster" & dose == this_dose & 
+                   primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax])) %>%
+          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+          summarise(VE_days = mean(VE_days),.groups = "keep") 
+      }
+      
+      # Otherwise... rethink!
+      if (nrow(this_combo) == 0){stop('Need a VE for this booster!')}
+      
+      workshop = rbind(workshop,this_combo)
+    }
+  }
+}
+
 VE_waning_distribution = VE_waning_distribution %>% 
-  filter(! dose == 3) %>%
+  filter(schedule == "primary") %>%
   select(-primary_if_booster)
 VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 
-if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_POP$date)){
+if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_TRUE$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
   #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
 }
@@ -305,12 +362,13 @@ if (fitting == "off"){
 
 ###### (2/5) Seroprevalence
 load(file = "1_inputs/seroprev.Rdata")
+this_setting = setting
 seroprev = seroprev %>%
-  filter(setting == setting & 
-           year == as.numeric(format(date_start, format="%Y")))
-if (as.numeric(format(date_start, format="%Y")) > 2022){
-  load(file = "1_inputs/seroprev.Rdata")
-  seroprev = seroprev[seroprev$setting == setting & seroprev$year ==  2022,]
+  filter(setting == this_setting & 
+           year == max(as.numeric(format(date_start, format="%Y")),2022))
+if (nrow(seroprev) == 0){ #e.g., for FJI
+  seroprev = crossing(age_group = age_group_labels,
+                      seroprev = 0)
 }
 #___________________________________________________________________
 
@@ -336,7 +394,12 @@ D=num_vax_doses
 RISK=num_risk_groups
 count=J*(T*D+1)*RISK # +1 is unvax
 
-seed = 0.001*sum(pop) #seed of outbreak at seed_dates (introduction of delta and omicron)
+if (setting == "SLE"){
+  seed = 0.001*sum(pop) #seed of outbreak at covid19_waves$date 
+} else{
+  seed = 0.0001*sum(pop)
+}
+
 
 initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
@@ -352,6 +415,7 @@ workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
 hist_cases = workshop
 
 if (fitting == "on"){
+  #NOTE: this will not work if heterogeneous booster dose combinations exist in the inital state
 
   S_inital=E_inital=I_inital=R_inital=(rep(0,count)) 
   
@@ -539,7 +603,7 @@ if (fitting == "on"){
 
 ###### (5/5) calculate inital infection-derived protection (rho) & beta
 if (waning_toggle_rho_acqusition == TRUE ){
-  rho_inital = rho_time_step(date_start)
+    rho_inital = rho_time_step(date_start)
 } else{
   rho_inital = 0.95 #Chemaitelly et al. 2 week estimate
 }
