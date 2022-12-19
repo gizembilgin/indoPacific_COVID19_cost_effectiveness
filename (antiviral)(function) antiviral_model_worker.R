@@ -5,6 +5,7 @@
 antiviral_model_worker <- function(
     manager_scenario_dataframe,
     RECORD_antiviral_setup,
+    setting,
   
     #copy all variables into the local memory of the function
     local_LIST_antiviral_target_group = LIST_antiviral_target_group,
@@ -51,7 +52,8 @@ antiviral_model_worker <- function(
   if (local_stochastic_SO == "on"){
     input_vaccine_type_list = unique(RECORD_antiviral_setup$vaccination_history_FINAL$vaccine_type)
     
-    SO_sample = stochastic_severe_outcomes_sampling( vaccine_type_list = input_vaccine_type_list,
+    SO_sample = stochastic_severe_outcomes_sampling( setting = setting,
+                                                     vaccine_type_list = input_vaccine_type_list,
                                                      risk_group_name = unique(manager_scenario_dataframe$vax_scenario_risk_group),
                                                      local_stochastic_VE_sampling = worker_stochastic_VE_sampling)
     sampled_severe_outcome_country_level = SO_sample$SAVE_severe_outcome_country_level
