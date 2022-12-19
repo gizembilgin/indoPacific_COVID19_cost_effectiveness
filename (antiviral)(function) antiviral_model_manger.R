@@ -12,6 +12,7 @@ antiviral_model_manger <- function(
     toggle_high_risk_group = "adults_with_comorbidities",  #options:'adults_with_comorbidities', 'pregnant_women'
     
     RECORD_antiviral_setup,                           # results file of '(antiviral) set up.R'
+    setting = "SLE",                                  # setting from loop in (antiviral)(plot)
                             
     toggle_number_of_runs = 100,
     toggle_cluster_number = 4,                        # number of computer cores to engage
@@ -33,7 +34,7 @@ antiviral_model_manger <- function(
                                 vax_scenario_risk_group = toggle_high_risk_group
                                 )
   booster_start_date = min(RECORD_antiviral_setup$vaccination_history_FINAL$date[RECORD_antiviral_setup$vaccination_history_FINAL$dose == 8])
-  
+
   #load functions to be copied into clusters
   load(file = '1_inputs/antiviral_effectiveness.Rdata' )
   source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
@@ -56,10 +57,12 @@ antiviral_model_manger <- function(
       .combine = rbind,
       .inorder = FALSE
     )  %dopar% {
+        
       
       antiviral_model_worker(
         manager_scenario_dataframe,
         RECORD_antiviral_setup,
+        setting = setting,
 
         local_LIST_antiviral_target_group = LIST_antiviral_target_group,
         local_LIST_antiviral_start_date = LIST_antiviral_start_date,
