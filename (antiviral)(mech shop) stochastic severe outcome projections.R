@@ -156,16 +156,15 @@ save(omicron_multiplier, file = '1_inputs/omicron_multiplier.Rdata' )
 #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
 # who would be subject during the remaining of their lives to the mortality rates of a given period."
 # https://population.un.org/wpp/Download/Standard/Mortality/
+load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
 load(file = "1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata")
 YLL_FINAL = UN_lifeExpect_est %>%
-  filter(ISO3_code == setting) %>%
-  rename(life_expectancy = ex,
-         age = AgeGrp) %>%
-  left_join(pop_setting_orig, by = 'age') %>%
-  select(age,life_expectancy,population) %>%
-  mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
-  group_by(age_group) %>%
-  mutate(group_percent = population/sum(population),
+  rename(life_expectancy = ex) %>%
+  left_join(UN_pop_est, by = c('AgeGrp','ISO3_code')) %>%
+  select(ISO3_code,AgeGrp,life_expectancy,PopTotal) %>%
+  mutate(age_group = cut(AgeGrp,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
+  group_by(ISO3_code,age_group) %>%
+  mutate(group_percent = PopTotal/sum(PopTotal),
          interim = life_expectancy * group_percent) %>%
   summarise(YLL = sum(interim)) 
 save(YLL_FINAL, file = '1_inputs/YLL_FINAL.Rdata' )
