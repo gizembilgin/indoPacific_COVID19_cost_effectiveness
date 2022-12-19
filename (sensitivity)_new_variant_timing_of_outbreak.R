@@ -43,7 +43,7 @@ for (ticket in 1:length(queue)){
   
   severe_outcome_projections = severe_outcome_log %>% 
     mutate(label = vax_strategy_description, 
-           day = as.numeric(date - max(seed_date) )) # day = start of outbreak
+           day = as.numeric(date - max(covid19_waves$date) )) # day = start of outbreak
   warehouse_plot = rbind(warehouse_plot,severe_outcome_projections)
   
   row = row %>% mutate(scenario = vax_strategy_description) %>% relocate(scenario, .before = colnames(row)[[1]])
