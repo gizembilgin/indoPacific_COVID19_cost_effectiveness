@@ -51,7 +51,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
   booster_dose = "N"
   vax_proportion_booster = 0
   
-  if (vax_dose_strategy == 3){booster_dose = "Y"}
+  if (vax_dose_strategy > 2){booster_dose = "Y"}
   if (vax_dose_strategy == 2 & vax_strategy_vaccine_type == "Johnson & Johnson"){booster_dose = "Y"}
   
   if (booster_dose == "Y"){
@@ -378,8 +378,12 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
     mutate(date = vax_strategy_start_date + (day-1),
            vaccine_type = vax_strategy_vaccine_type,
            vaccine_mode = case_when(
-             vaccine_type %in% c("Moderna","Pfizer") ~ 'mRNA',
-             vaccine_type %in% c("AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac") ~ 'viral'
+             vaccine_type == 'Pfizer' ~ 'mRNA',
+             vaccine_type == 'Moderna' ~ 'mRNA',
+             vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+             vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+             vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+             vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
            ),
            coverage_this_date = NA #shouldn't be used anyway
            ) %>%
@@ -428,7 +432,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
         TRUE ~ 'N'),
         boosted = case_when(
           vaccine_type == "Johnson & Johnson" & dose == 2 ~ 'Y',
-          dose == 3 ~ 'Y',
+          dose > 2 ~ 'Y',
           TRUE ~ 'N'))  %>%
       filter(risk_group %in% this_risk_group &
                # primary_schedule_complete == "Y" & #CAN CHANGE THIS TOGGLE #ASSUMPTION / COMEBACK - including those with only 1 primary dose
@@ -695,8 +699,13 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
       mutate(vaccine_type = vax_strategy_vaccine_type,
              dose = 8,
              vaccine_mode = case_when(
-               vaccine_type %in% c("Moderna","Pfizer") ~ 'mRNA',
-               vaccine_type %in% c("AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac") ~ 'viral'),
+               vaccine_type == 'Pfizer' ~ 'mRNA',
+               vaccine_type == 'Moderna' ~ 'mRNA',
+               vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+               vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+               vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+               vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+             ),
              coverage_this_date = NA #shouldn't be used anyway
              ) %>% 
       select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,FROM_dose,FROM_vaccine_type)
@@ -723,7 +732,7 @@ vax_strategy <- function(vax_strategy_start_date,       # start of hypothetical 
         TRUE ~ 'N'),
       boosted = case_when(
         vaccine_type == "Johnson & Johnson" & dose == 2 ~ 'Y',
-        dose == 3 ~ 'Y',
+        dose > 2 ~ 'Y',
         TRUE ~ 'N'))  %>%
       filter(risk_group %in% this_risk_group &
                # primary_schedule_complete == "Y" & #CAN CHANGE THIS TOGGLE
