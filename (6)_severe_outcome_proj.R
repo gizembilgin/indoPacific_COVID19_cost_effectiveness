@@ -12,10 +12,10 @@ plot_standard =     theme_bw() +
         panel.grid.minor = element_blank(), 
         panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
-if (as.Date('1900-01-01') %in% seed_date){
+if (outbreak_timing != "off"){
   use_date = date_start +1
 } else{
-  use_date = seed_date[1]
+  use_date = min(covid19_waves$date)
 }
 
 
@@ -70,7 +70,7 @@ if (age_split_results == "N"){
       is.na(proj) ~ 0,
       TRUE ~ proj),
       proj_cum = cumsum(proj)) %>%
-    filter(! outcome == 'cases' & !date %in% seed_date)
+    filter(! outcome == 'cases' & !date %in% covid19_waves$date)
   
   plot1 <- 
     ggplot() + 
