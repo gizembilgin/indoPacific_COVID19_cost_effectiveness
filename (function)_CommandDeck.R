@@ -74,7 +74,8 @@ CommandDeck <- function(
   setting = "SLE",
   
   age_split_results = "N",
-  fitting = "off"
+  fitting = "off",
+  fitting_details = "off" #track Reff, rho, VE over time
  
 ){
 
@@ -145,7 +146,7 @@ CommandDeck <- function(
   } 
   
   
-  if ( fitting == "on"){
+  if ( fitting_details == "on"){
     Reff_tracker = data.frame()
     rho_tracker_dataframe = data.frame()
     VE_tracker_dataframe = data.frame()
@@ -183,7 +184,7 @@ CommandDeck <- function(
           panel.border = element_blank(),
           axis.line = element_line(color = 'black'))
 
-  if (fitting == "on"){
+  if (fitting_details == "on"){
     plot1 <- 
       ggplot() + 
       geom_line(data=incidence_log_plot,aes(x=date,y=rolling_average_percentage),na.rm=TRUE) +

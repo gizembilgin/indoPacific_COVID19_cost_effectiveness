@@ -46,9 +46,12 @@ for (increments_number in 1:num_time_steps){
     sol_log <- sol
     sol_log_unedited <- sol
    
-    Reff <- NA
-    Reff_tracker = rbind(Reff_tracker,Reff)
-    colnames(Reff_tracker) <- c('Reff')
+    if (fitting_details == "on"){
+      Reff <- NA
+      Reff_tracker = rbind(Reff_tracker,Reff)
+      colnames(Reff_tracker) <- c('Reff')
+    }
+
     
   } else{
     
@@ -56,11 +59,13 @@ for (increments_number in 1:num_time_steps){
     
     if (increments_number > 1){ 
     
+      #update NPI
       if (date_now <= max(NPI_estimates$date)){
         NPI_this_step <- NPI_estimates$NPI[NPI_estimates$date == date_now]/100
         parameters$NPI = NPI_this_step
       } #i.e. assume after end date that NPI constant
         
+      #update VE
       if (fitting == "off"){
         if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
           parameters$VE = VE_time_step(strain_now,date_now,'any_infection',
@@ -85,17 +90,17 @@ for (increments_number in 1:num_time_steps){
        parameters$VE = VE_real_range %>% filter(date == date_now)
       }
 
-      
+      #update rho
       if (waning_toggle_rho_acqusition == TRUE ){
         parameters$rho = rho_time_step(date_now)
         rho = parameters$rho
       }
       
+      #reconstruct state_tidy
       state_working = tail.matrix(sol, 1)
       state_working = select(state_working, -time) #remove column with time
       state_working = as.vector(state_working)
         
-      # lets reconstruct our tidy matrix (easier to work with)
       A = RISK * J * (T * D + 1) # +1 is unvax
       
       S = as.matrix(state_working[1:A])
@@ -235,8 +240,7 @@ for (increments_number in 1:num_time_steps){
         }
         
         if (fitting == "on" & date_now == as.Date('2021-11-14')){next_state_FIT = next_state} #savings to compare against known point of seroprevalence
-        if (! date_start %in%  covid19_waves$date & date_now %in% covid19_waves$date){
-          if (fitting == "on"){
+        if (date_now %in% covid19_waves$date){
             if (date_now == min(covid19_waves$date[covid19_waves$strain == "delta"])){
               strain_now = 'delta'
             } else if (date_now == min(covid19_waves$date[covid19_waves$strain == "omicron"])){
@@ -245,14 +249,13 @@ for (increments_number in 1:num_time_steps){
               parameters$delta = 1/9.87
             }
             parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)
-          } 
           
-          seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
-          seed.Exposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
-    
-          #ASSUMPTION: uniform across age groups
-          seed.Infected = round(seed.Infected * pop/sum(pop))
-          seed.Exposed = round(seed.Exposed * pop/sum(pop))
+            seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
+            seed.Exposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
+      
+            #ASSUMPTION: uniform across age groups
+            seed.Infected = round(seed.Infected * pop/sum(pop))
+            seed.Exposed = round(seed.Exposed * pop/sum(pop))
     
           for (i in 1:num_age_groups){ # across age groups
             infect = seed.Infected[i]
@@ -268,7 +271,7 @@ for (increments_number in 1:num_time_steps){
           }
         }
         # if (fitting == "off"){
-        #   if (date_now>=seed_date & (! as.Date('1900-01-01') %in% seed_date)){
+        #   if (date_now>=seed_date){
         #     parameters$VE$VE = parameters$VE$VE * 0.9
         #     parameters$rho = parameters$rho * 0.9
         #   }
@@ -284,17 +287,14 @@ for (increments_number in 1:num_time_steps){
         if (date_now > max(vaccination_history_TRUE$date + max(vaxCovDelay$delay))) {
           stop('(4)_time_step line ~290')
         } else{
-          if (nrow(next_state[round(next_state$pop) < -100, ]) > 0) {
-            warning(
-              '(4)_time_step line ~290, possibility to do with vaccination_history configuration'
-            )
+          if (nrow(next_state[round(next_state$pop) < -100, ]) > 0) {#Note: some negatives expected here due to recreation of vaccination_history
+            warning('(4)_time_step line ~290, possibility to do with vaccination_history configuration')
           }
-          #Note: some negatives expected here due to recreation of vaccination_history
         }
       }
         
         
-      # convert back into long vector form for ODE solver
+      # convert back into untidy long vector form for ODE solver
       workshop = next_state
       workshop$class = factor(workshop$class, levels = disease_class_list)
       workshop$risk_group = factor(workshop$risk_group, levels = risk_group_labels)
@@ -347,26 +347,24 @@ for (increments_number in 1:num_time_steps){
              cumulative_incidence = cumsum(daily_cases),
              cumulative_incidence_percentage = 100*cumsum(daily_cases)/sum(pop))
     
-    if (fitting == "on"){
-      if (fitting == "off" & increments_number == 1){
-      } else{
-        Reff <- Reff_time_step(parameters,next_state)
-        Reff_tracker = rbind(Reff_tracker,Reff)
-      }
+    if (fitting_details == "on"){
       
-    rho_tracker_dataframe = rbind(rho_tracker_dataframe,parameters$rho) 
-    
-    workshop = parameters$VE
-    workshop = workshop[workshop$VE > 0, ] %>% mutate(immunity = paste(vaccine_type, dose))
-    if (nrow(workshop) > 0) {
-      workshop = aggregate(workshop$VE,
-                           by = list(category = workshop$immunity),
-                           FUN = mean)
-      colnames(workshop) = c('dose', 'VE')
-      workshop$date = date_now
-      VE_tracker_dataframe = rbind(VE_tracker_dataframe, workshop)
+      Reff <- Reff_time_step(parameters, next_state)
+      Reff_tracker = rbind(Reff_tracker, Reff)
+      
+      rho_tracker_dataframe = rbind(rho_tracker_dataframe,parameters$rho) 
+      
+      workshop = parameters$VE
+      workshop = workshop[workshop$VE > 0, ] %>% mutate(immunity = paste(vaccine_type, dose))
+      if (nrow(workshop) > 0) {
+        workshop = aggregate(workshop$VE,
+                             by = list(category = workshop$immunity),
+                             FUN = mean)
+        colnames(workshop) = c('dose', 'VE')
+        workshop$date = date_now
+        VE_tracker_dataframe = rbind(VE_tracker_dataframe, workshop)
+      }
     }
-  }
   }
 } ### END INCREMENT (#incidence log moved within loop to allow rho_time_step to access)
 if (fitting == "off"){
@@ -470,10 +468,10 @@ exposed_log = exposed_log_tidy %>% ungroup() %>% pivot_wider(
 #ggplot(exposed_log) + geom_line(aes(x=date,y=reinfection_ratio,color=as.factor(age_group)))
 
 
-if ( fitting == "on"){
+if (fitting_details == "on"){
   colnames(rho_tracker_dataframe) = c('rho')
   rho_tracker_dataframe = cbind(rho = rho_tracker_dataframe, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe),by="days"))
-  if (fitting == "on"){Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe)+1,by="days"))}
+  Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe)+1,by="days"))
   colnames(Reff_tracker) = c('Reff','date')
 }
 

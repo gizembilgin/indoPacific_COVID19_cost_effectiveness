@@ -19,6 +19,7 @@ for (this_setting in c("FJI")){
   
   #general toggles
   fitting = "on"
+  fitting_details = "on"
   plotting = "on"
   outbreak_timing = "off" #i.e., no new outbreak if =="after" than new VOC after last vaccine delivery date, if == 'during" new VOC introduced one week from now
   vax_strategy_toggle = "off" #no additional vax
