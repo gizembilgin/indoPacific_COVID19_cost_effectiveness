@@ -20,6 +20,7 @@ debug_type = "partial" #options: "full", "partial"
 
 ### set default values of toggles if debug is on
 if (exists("fitting") == FALSE){fitting = "off"}
+if (exists("fitting_details") == FALSE){fitting_details = "off"}# Reff tracking, VE tracking, rho tracking
 if (fitting == "on"){debug = "off"} # can not debug while fitting the model
 if ( debug == "on"){
   
@@ -134,8 +135,7 @@ if (fitting == "on"){
     fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
 } 
 
-
-if ( debug == "on" | fitting == "on"){
+if ( debug == "on" | fitting_details == "on"){
   Reff_tracker = data.frame()
   rho_tracker_dataframe = data.frame()
   VE_tracker_dataframe = data.frame()
@@ -158,8 +158,7 @@ complete_model_runs = 1   # when >1 samples randomly from distribution of parame
 if (complete_model_runs == 1){run_type="point"
 } else if (complete_model_runs > 1){run_type="rand"}
 
-if (risk_group_toggle == "on"){
-  num_risk_groups = 2
+if (risk_group_toggle == "on"){ num_risk_groups = 2
 } else{ num_risk_groups = 1; vax_risk_strategy_toggle = "off"}
 
 if (exists("ticket") == FALSE){ ticket = 1 }
@@ -246,7 +245,7 @@ plot2 <- ggplot() +
 grid.arrange(plot1, plot2, nrow=2)
 }
 
-if (debug == "on" | fitting == "on"){
+if (debug == "on" | fitting_details == "on"){
   #number as % of whole population
   lay <- rbind(c(1,2),c(3,3))
   plot1 <- 
