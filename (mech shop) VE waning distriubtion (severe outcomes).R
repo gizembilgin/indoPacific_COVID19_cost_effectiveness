@@ -210,6 +210,7 @@ ggplot() +
   facet_grid(primary_if_booster ~ .)
 
 
+#(B/B) save!
 waning = together %>% mutate(waning = TRUE)
 no_waning = together %>% mutate(waning = FALSE) %>%
   group_by(strain,vaccine_type,primary_if_booster,dose,outcome) %>%

@@ -19,6 +19,12 @@ moderna = workshop %>% mutate(vaccine_type = 'Moderna')
 pfizer = workshop %>% mutate(vaccine_type = 'Pfizer')
 VE_estimates = rbind(VE_estimates[VE_estimates$vaccine_type != "mRNA",],moderna,pfizer) ; rm(moderna,pfizer)
 
+#NOTES ON ODD BEHAVIOUR: Sinopharm -> J&J 3rd is higher than Sinopharm 1 & 2 but lower than J&J 2nd
+#repeat Sinopharm 3rd with J&J as J&J booster
+workshop = VE_estimates %>% 
+  filter(vaccine_type == 'Johnson & Johnson' & dose == 3 & outcome %in% c('severe_disease','death'))
+workshop$dose = 2
+VE_estimates = rbind(VE_estimates,workshop)
 
 
 this_strain = 'delta'
@@ -41,12 +47,7 @@ plot_group = ggarrange(plot_list[[1]],plot_list[[4]],plot_list[[2]],plot_list[[3
 )
 annotate_figure(plot_group,top=text_grob(paste(this_strain)))
 
-#NOTES ON ODD BEHAVIOUR: Sinopharm -> J&J 3rd is higher than Sinopharm 1 & 2 but lower than J&J 2nd
-#repeat Sinopharm 3rd with J&J as J&J booster
-workshop = VE_estimates %>% 
-  filter(vaccine_type == 'Johnson & Johnson' & dose == 3 & outcome %in% c('severe_disease','death'))
-workshop$dose = 2
-VE_estimates = rbind(VE_estimates,workshop)
+
 
 
 ###Calculate ratios:
