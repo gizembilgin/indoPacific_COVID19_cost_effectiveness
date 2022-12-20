@@ -221,13 +221,13 @@ VE_WHO_est = raw %>% left_join(VE_WHO_est)
 save(VE_WHO_est,file = '1_inputs/VE_WHO_est.Rdata')
 
 # check
- sampled_value_beta = mapply(rbeta,100,VE_WHO_est_norm $beta_a, VE_WHO_est_norm$beta_b)
+# sampled_value_beta = mapply(rbeta,100,VE_WHO_est_norm $beta_a, VE_WHO_est_norm$beta_b)
  sampled_value_norm = mapply(rnorm,100,VE_WHO_est$VE, VE_WHO_est$sd)
  sampled_value_unif = mapply(runif,100,min=VE_WHO_est$lower_est, max=VE_WHO_est$upper_est)
 # 
  plot(density(sampled_value_norm[,1]));  lines(density(sampled_value_unif[,1]));mean(sampled_value_beta[,1]); mean(sampled_value_norm[,1])
- plot(density(sampled_value_norm[,2])); lines(density(sampled_value_beta[,2])); lines(density(sampled_value_unif[,2]));mean(sampled_value_beta[,2]); mean(sampled_value_norm[,2])
- plot(density(sampled_value_norm[,3])); lines(density(sampled_value_beta[,3])); lines(density(sampled_value_unif[,3]));mean(sampled_value_beta[,3]); mean(sampled_value_norm[,3])
+ plot(density(sampled_value_norm[,2]));  lines(density(sampled_value_unif[,2]));mean(sampled_value_unif[,2]); mean(sampled_value_norm[,2])# ; lines(density(sampled_value_beta[,2]));
+ plot(density(sampled_value_norm[,3])); lines(density(sampled_value_unif[,3]));mean(sampled_value_unif[,3]); mean(sampled_value_norm[,3]) # ; lines(density(sampled_value_beta[,3]))
 # plot(density(sampled_value_norm[,4])); lines(density(sampled_value_beta[,4])); lines(density(sampled_value_unif[,4]));mean(sampled_value_beta[,4]); mean(sampled_value_norm[,4])
 # plot(density(sampled_value_norm[,5])); lines(density(sampled_value_beta[,5])); lines(density(sampled_value_unif[,5]));mean(sampled_value_beta[,5]); mean(sampled_value_norm[,5])
 #_______________________________________________________________________________

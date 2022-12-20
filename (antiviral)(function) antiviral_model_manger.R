@@ -5,7 +5,7 @@ antiviral_model_manger <- function(
     LIST_antiviral_start_date,   # options: any date >= 01/01/2023 (due to '(antiviral) set up.R' configuration)
     LIST_vax_scenario,           # options: 
                                  # "all willing adults vaccinated with a primary schedule"
-                                 # "all willing adults vaccinated with a primary schedule and high risk group recieve a booster"
+                                 # "all willing adults vaccinated with a primary schedule and high risk group receive a booster"
                                  # "all willing adults vaccinated with a primary schedule plus booster dose"
     LIST_antiviral_target_group, # options:'adults_with_comorbidities', 'pregnant_women','unvaccinated_adults','all_adults','unvaccinated_adults_AND_adults_with_comorbidities'
     LIST_antiviral_type = 'nirmatrelvir_ritonavir', # options:"nirmatrelvir_ritonavir","molunipiravir"     

@@ -6,6 +6,7 @@ load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
 #system.time({stochastic_VE()}) #1.28 sec
 
 stochastic_VE <- function(
+    booster_combinations, #combinations of boosters for which to calculate VE
     setting = "SLE",
     age_groups_num = c(0,4,9,17,29,44,59,69,110),
     age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100'),
@@ -14,8 +15,9 @@ stochastic_VE <- function(
 ){
 
   ##### PART ONE: point estimates of primary schedule ####################################################################################
+  #NB: original (mech shop) VE primary doses point estimate
   ### (1/2) Inital estimates from IVAC living systematic review 
-  raw_VE_point_est <- VE_WHO_est
+  raw_VE_point_est <- VE_WHO_est %>% filter(strain != "omicron BA.1")
   raw_VE_severe_outcomes <- VE_severe_outcomes_waning_pt_est
   
   ######SAMPLE HERE
@@ -47,7 +49,7 @@ stochastic_VE <- function(
   #Not statistically significantly different to 1 in '(mech shop) VE primary doses point estimates'
   #____________________
   
-  #(B/D) compare VE against any infection (where avaliable) to symptomatic disease
+  #(B/D) compare VE against any infection (where available) to symptomatic disease
   symptomatic_disease = VE_estimates[VE_estimates$outcome == 'symptomatic_disease',] %>% 
     select(strain,vaccine_type,dose,VE) %>%
     rename(symptomatic_disease = VE)
@@ -87,6 +89,7 @@ stochastic_VE <- function(
   dose_ratio =  dose_one %>% 
     left_join(dose_two, by = c("strain", "outcome", "vaccine_type")) %>%
     mutate(ratio = dose_one/dose_two) %>% 
+    filter(vaccine_type != "Johnson & Johnson") %>%
     group_by(outcome) %>%
     summarise(count = sum(is.na(ratio)),
               mean = mean(ratio,na.rm=TRUE),
@@ -186,14 +189,7 @@ stochastic_VE <- function(
   if (nrow(workshop[is.na(workshop$VE) & workshop$dose < 3,])>0){stop('Some values to go!')}
   
   VE_estimates_imputed = workshop %>%
-    mutate(vaccine_type_long = case_when(
-      vaccine_type == "AstraZeneca" ~ "AstraZeneca Vaxzevria (ChAdOx1)",
-      vaccine_type == "Johnson & Johnson" ~ "Johnson & Johnson Janssen (Ad26.COV2.S)",
-      vaccine_type == "Moderna" ~ "Moderna Spikevax (mRNA-1273)",
-      vaccine_type == "Pfizer" ~ "Pfizer-BioNTech Comirnaty (BNT162b2)",
-      vaccine_type == "Sinopharm" ~ "Sinopharm BIBP vaccine",
-      vaccine_type == "Sinovac" ~ "Sinovac Biotech CoronaVac"         
-    ),
+    mutate(
     vaccine_mode = case_when(
       vaccine_type == 'Pfizer' ~ 'mRNA',
       vaccine_type == 'Moderna' ~ 'mRNA',
@@ -216,7 +212,7 @@ stochastic_VE <- function(
   # for (i in 1:length(unique(to_plot$outcome))){
   #   outcome = unique(to_plot$outcome)[i]
   #   plot_list [[i]] <- ggplot(data=to_plot[to_plot$outcome==outcome,]) + 
-  #     geom_pointrange(aes(x=VE,y=vaccine_type_long,color=as.factor(dose),shape=source,xmin=lower_est,xmax=upper_est)) +
+  #     geom_pointrange(aes(x=VE,y=vaccine_type,color=as.factor(dose),shape=source,xmin=lower_est,xmax=upper_est)) +
   #     xlim(0,100) +
   #     xlab("") +
   #     theme_bw() + 
@@ -237,8 +233,11 @@ stochastic_VE <- function(
   
   
   ##### PART TWO: point estimates for booster doses ##############################################################################################################
-  ### (1/2) Inital estimates from IVAC living systematic review 
-  booster_VE_point_est = sampled_VE_point_est  #SAMPLED in PART ONE
+  #NB: original (mech shop) VE booster doses point estimate
+  ### (1/3) Initial estimates from IVAC living systematic review 
+  booster_VE_point_est = sampled_VE_point_est %>%  #SAMPLED in PART ONE
+    mutate(primary_if_booster = case_when(dose<3 ~ vaccine_type,TRUE ~ primary_if_booster)) %>%
+    select(strain, vaccine_type, primary_if_booster,dose, outcome,VE) 
   
   #convert generic "mRNA" rows to Moderna and Pfizer
   workshop = booster_VE_point_est  %>% filter(vaccine_type == 'mRNA')
@@ -251,37 +250,177 @@ stochastic_VE <- function(
   pfizer = workshop %>% mutate(primary_if_booster = 'Pfizer')
   booster_VE_point_est = rbind(booster_VE_point_est[booster_VE_point_est$primary_if_booster != "mRNA",],moderna,pfizer) ; rm(moderna,pfizer)
   
-  
-  booster_VE_point_est = booster_VE_point_est %>% 
-    mutate(primary_if_booster = case_when(dose<3 ~ vaccine_type,TRUE ~ primary_if_booster)) %>%
-    select(strain, vaccine_type, primary_if_booster,dose, outcome,VE,lower_est,upper_est) 
-  
-  
-  #Average across estimates from IVAC living systematic review
-  VE_estimates = VE_estimates %>% 
-    select(strain, vaccine_type, primary_if_booster, dose,outcome,VE) %>% 
-    group_by(strain, vaccine_type, primary_if_booster, outcome) %>%
+  #average across estimates from IVAC living systematic review
+  booster_VE_point_est = booster_VE_point_est  %>% 
+    group_by(strain, vaccine_type, primary_if_booster, dose,outcome) %>%
     summarise(VE = sum(VE)/n(),.groups = "keep")
   
-  #Impute missing values based on previous analysis (NB:only 'any_infection' needs imputing)
-  imputed_rows = VE_estimates %>% 
-    filter(outcome == 'symptomatic_disease' & (!primary_if_booster %in% unique(VE_estimates$primary_if_booster[VE_estimates$outcome == 'any_infection']))) %>%
-    mutate(VE = VE * infection_sympt_ratio$mean[infection_sympt_ratio$strain == 'omicron'],
-           outcome = 'any_infection')
-  VE_estimates = rbind(VE_estimates,imputed_rows)
+  #use dose 1 and 2 as previously decided
+  workshop = VE_estimates_imputed %>% 
+    select(strain, vaccine_type, dose, outcome,VE) %>%
+    filter(dose<3)
+  booster_VE_point_est = rbind(booster_VE_point_est[booster_VE_point_est$dose>2,],workshop)  %>%
+    mutate(primary_if_booster = case_when(dose<3 ~ vaccine_type,TRUE ~ primary_if_booster))
   
-  #Save point estimate for booster doses 
-  VE_booster_estimates = VE_estimates %>%
+  #force dose four >= dose three (if < likely due to eligible pop immunosuppressed)
+  booster_VE_point_est = booster_VE_point_est %>%
+    pivot_wider(names_from = dose,
+                names_prefix = "dose_",
+                values_from = VE) %>%
+    mutate(dose_4 = case_when((is.na(dose_4) == FALSE & is.na(dose_3) == FALSE & dose_4<dose_3) ~ dose_3, TRUE ~ dose_4),
+           dose_3 = case_when((is.na(dose_3) == FALSE & is.na(dose_2) == FALSE & dose_3<dose_2) ~ dose_2, TRUE ~ dose_3)) %>%
+    pivot_longer(
+      cols = c('dose_1','dose_2','dose_3','dose_4'),
+      names_to = "dose",
+      names_prefix = "dose_*",
+      values_to = "VE"
+    )
+  #___________________________________________________
+  
+  
+  ###(2/3) Calculate ratios
+  booster_estimates = booster_VE_point_est %>% filter(dose>2)
+  
+  #(A/D) compare VE against death (where available) to VE against severe disease
+  death = booster_estimates %>%
+    filter(outcome == "death") %>% 
+    select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
+    rename(death = VE)
+  severe_disease = booster_estimates %>%
+    filter(outcome == "severe_disease") %>% 
+    select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
+    rename(severe_disease = VE)
+  severe_disease_death_ratio = death %>% 
+    left_join(severe_disease, by = c("strain", "vaccine_type", "primary_if_booster","dose")) %>%
+    mutate(ratio = severe_disease/death) %>% 
+    filter(is.na(ratio) == FALSE) %>% 
+    group_by(dose) %>%
+    summarise(mean = mean(ratio,na.rm=TRUE))
+  #____________________
+  
+  #(B/D) compare VE against any infection (where available) to symptomatic disease
+  symptomatic_disease = booster_estimates %>%
+    filter(outcome == "symptomatic_disease") %>% 
+    select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
+    rename(symptomatic_disease = VE)
+  any_infection = booster_estimates %>%
+    filter(outcome == "any_infection") %>% 
+    select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
+    rename(any_infection = VE)
+  infection_sympt_ratio = symptomatic_disease %>% 
+    left_join(any_infection, by = c("strain", "vaccine_type", "dose")) %>%
+    mutate(ratio = any_infection/symptomatic_disease) %>% 
+    ungroup() %>% 
+    summarise(mean = mean(ratio,na.rm=TRUE))
+  #_________________________
+  
+  #(C/D) compare VE against omicron (where available) to delta
+  delta =  booster_estimates %>% ungroup() %>%
+    filter(strain == "delta") %>% 
+    select(outcome,vaccine_type,primary_if_booster,dose,VE)  %>%
+    rename(delta = VE)
+  omicron =  booster_estimates %>% ungroup() %>%
+    filter(strain == "omicron") %>% 
+    select(outcome,vaccine_type,primary_if_booster,dose,VE)  %>%
+    rename(omicron = VE)
+  delta_omicron_ratio = delta %>% 
+    left_join(omicron, by = c("outcome", "vaccine_type","primary_if_booster", "dose")) %>%
+    mutate(ratio = omicron/delta) %>% 
+    group_by(outcome) %>%
+    summarise(mean = mean(ratio,na.rm=TRUE)) #NB: symptomatic disease missing
+  #_________________________
+  
+  #(D/D) from same vaccine type (homologous combinations only)
+  dose_two = booster_VE_point_est[booster_VE_point_est$dose == 2,] %>% 
+    select(strain,outcome,primary_if_booster,vaccine_type,VE) %>%
+    rename(dose_two = VE)
+  dose_three = booster_VE_point_est[booster_VE_point_est$dose == 3,] %>% 
+    select(strain,outcome,primary_if_booster,vaccine_type,VE) %>%
+    rename(dose_three = VE)
+  dose_ratio = dose_three %>% 
+    left_join(dose_two, by = c("strain", "outcome","primary_if_booster", "vaccine_type")) %>%
+    mutate(ratio = dose_three/dose_two) %>% 
+    filter(is.na(ratio) == FALSE) %>%
+    group_by(strain) %>%
+    summarise(ratio = mean(ratio,na.rm=TRUE))
+  #____________________
+  #___________________________________________________
+  
+  
+  
+  
+  ###(3/3) Impute missing estimates (only need severe outcome!)
+  #Step One: from outcome
+  booster_VE_point_est =  booster_VE_point_est %>%
+    filter(outcome %in% c('severe_disease','death')) %>%
+    pivot_wider(names_from = outcome,
+                values_from = VE) %>%
+    left_join(severe_disease_death_ratio, by = 'dose') %>%
     mutate(
-           vaccine_type_long = case_when(
-             vaccine_type == "AstraZeneca" ~ "AstraZeneca Vaxzevria (ChAdOx1)",
-             vaccine_type == "Johnson & Johnson" ~ "Johnson & Johnson Janssen (Ad26.COV2.S)",
-             vaccine_type == "Moderna" ~ "Moderna Spikevax (mRNA-1273)",
-             vaccine_type == "Pfizer" ~ "Pfizer-BioNTech Comirnaty (BNT162b2)",
-             vaccine_type == "Sinopharm" ~ "Sinopharm BIBP vaccine",
-             vaccine_type == "Sinovac" ~ "Sinovac Biotech CoronaVac"         
-           ),
-           vaccine_mode = case_when(
+      severe_disease = case_when(
+        is.na(severe_disease) & is.na(death) == FALSE  ~ death * mean,
+        TRUE ~ severe_disease
+      ),
+      death = case_when(
+        is.na(death) & is.na(severe_disease) == FALSE  ~ severe_disease * 1/mean,
+        TRUE ~ death
+      )) %>%
+    pivot_longer(
+      cols = c('death','severe_disease'),
+      names_to = "outcome",
+      values_to = "VE"
+    ) %>% select(-mean)
+
+  #Step Two: from strain
+  booster_VE_point_est =  booster_VE_point_est %>% 
+    pivot_wider(names_from = strain,
+                values_from = VE) %>%
+    left_join(delta_omicron_ratio, by = 'outcome') %>%
+    mutate(
+      delta = case_when(
+        is.na(delta) & is.na(omicron) == FALSE  & outcome != "symptomatic disease" & dose == 3  & (omicron * 1/mean)<1 ~ omicron * 1/mean,
+        TRUE ~ delta
+      ),
+      omicron = case_when(
+        is.na(omicron) & is.na(delta) == FALSE  & outcome != "symptomatic disease" & dose == 3 ~ delta * mean,
+        TRUE ~ omicron
+      )) %>%
+    pivot_longer(
+      cols = c('omicron','delta'),
+      names_to = "strain",
+      values_to = "VE"
+    ) %>% 
+    select(-mean)
+  
+  #Step Three: from dose 2
+  booster_VE_point_est = booster_VE_point_est %>%
+    left_join(dose_ratio, by = "strain") %>%
+    pivot_wider(names_from = dose,
+                names_prefix = "dose_",
+                values_from = VE) %>%
+    mutate(
+      dose_3 = case_when(
+        is.na(dose_3) == TRUE & (dose_2 * ratio < 1)~ dose_2 * ratio,
+        TRUE ~ dose_3
+      ),
+      dose_4 = case_when(
+        is.na(dose_4) == TRUE ~ dose_3,
+        TRUE ~ dose_4
+      )
+    ) %>%
+    pivot_longer(
+      cols = c('dose_1','dose_2','dose_3','dose_4'),
+      names_to = "dose",
+      names_prefix = "dose_*",
+      values_to = "VE"
+    ) %>% 
+    select(-ratio)
+  
+  
+ #Save point estimate for booster doses 
+  VE_booster_estimates = booster_VE_point_est %>%
+    filter(dose > 2) %>%
+    mutate(vaccine_mode = case_when(
              vaccine_type == 'Pfizer' ~ 'mRNA',
              vaccine_type == 'Moderna' ~ 'mRNA',
              vaccine_type == 'AstraZeneca' ~ 'viral_vector',
@@ -293,6 +432,7 @@ stochastic_VE <- function(
              outcome %in% c('any_infection','symptomatic_disease') ~ 'acquisition',
              outcome %in% c('severe_disease','death') ~ 'severe_outcome'
            ))
+  VE_booster_estimates = na.omit(VE_booster_estimates)
   #################################################################################################################################################################
   
   
@@ -300,7 +440,7 @@ stochastic_VE <- function(
   
   
   ##### PART THREE: VE waning for severe outcomes #################################################################################################################
-  #including lower VE against severe outcomes in older adults: (1) a faster speed of waning, and (2) lower strength of inital protection.
+  #including lower VE against severe outcomes in older adults: (1) a faster speed of waning, and (2) lower strength of initial protection.
   
   #rm(list=ls())
   raw <- raw_VE_severe_outcomes
@@ -443,14 +583,14 @@ stochastic_VE <- function(
     filter(outcome_family == 'severe_outcome' &  dose < 3) %>%
     select(strain,vaccine_type,dose,outcome,outcome_family,VE) %>%
     mutate(schedule = case_when(
-      dose > 2 ~ 'booster',
       dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
       TRUE ~ 'primary'
     ))
   point_estimates_booster = VE_booster_estimates %>% 
     filter(outcome_family == 'severe_outcome') %>%
     select(strain,vaccine_type,primary_if_booster,dose,outcome,outcome_family,VE) %>%
-    mutate(schedule = 'booster')
+    mutate(schedule = 'booster',
+           dose = as.numeric(dose))
   point_estimates = bind_rows(point_estimates,point_estimates_booster)
   
   together = point_estimates %>% 
@@ -463,35 +603,93 @@ stochastic_VE <- function(
   
   ###(3/3) Plot distributions and save VE_waning_distribution
   #(A/B) Plot
-  if (exists("vax_type_list") == FALSE){  vax_type_list = c("AstraZeneca","Johnson & Johnson", "Pfizer", "Sinopharm" )}
+  # if (exists("vax_type_list") == FALSE){  vax_type_list = c("AstraZeneca","Johnson & Johnson", "Pfizer", "Sinopharm" )}
+  # 
+  # waning_to_plot = together %>%
+  #   filter(vaccine_type %in% vax_type_list) %>%
+  #   mutate(immunity = paste(vaccine_type,dose))
+  # 
+  # strain_test = 'omicron'
+  # outcome_test = 'severe_disease'
+  # #vaccine_type_test = 'Johnson & Johnson'
+  # vaccine_type_test = 'Pfizer'
+  # 
+  # ggplot() +
+  #   geom_point(data=waning_to_plot[waning_to_plot$strain == strain_test  & waning_to_plot$outcome == outcome_test & waning_to_plot$vaccine_type == vaccine_type_test,],
+  #             aes(x=days,y=VE_days,color=as.factor(age_group),shape=as.factor(dose)),na.rm=TRUE) +
+  #   labs(title=(paste("Waning of VE against","(",strain_test,")"))) +
+  #   xlab("days since vaccination") +
+  #   ylab("% max protection") +
+  #   ylim(0,1)+
+  #   theme_bw() +
+  #   theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
   
-  waning_to_plot = together %>%
-    filter(vaccine_type %in% vax_type_list) %>%
-    mutate(immunity = paste(vaccine_type,dose))
+  VE_waning_distribution_SO = together %>% 
+    select(strain, vaccine_type,primary_if_booster, dose, outcome, age_group,days,VE_days) %>%
+    mutate(vaccine_mode = case_when(
+      vaccine_type == 'Pfizer' ~ 'mRNA',
+      vaccine_type == 'Moderna' ~ 'mRNA',
+      vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+      vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+      vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+      vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+    )) %>%
+    mutate(schedule = case_when(
+      dose > 2 ~ 'booster',
+      dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
+      TRUE ~ 'primary'
+    )) %>% 
+    group_by(age_group) %>%
+    filter(strain == strain_now)
   
-  strain_test = 'omicron'
-  outcome_test = 'severe_disease'
-  vaccine_type_test = 'Johnson & Johnson'
-  #vaccine_type_test = 'Pfizer'
+  #average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
+  workshop = data.frame()
+  if (nrow(booster_combinations)>0){ #if booster dose exists
+    for (this_dose in unique(booster_combinations$dose)){ # for each booster dose
+      for (this_vax in unique(booster_combinations$vaccine_type[booster_combinations$dose == this_dose])){ # for each booster type
+        
+        
+        # First Choice = exact primary dose + booster dose combination
+        this_combo = VE_waning_distribution_SO %>% 
+          filter(schedule == "booster" & 
+                   dose == this_dose & 
+                   primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax]) &
+                   vaccine_type == this_vax) %>%
+          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
+          summarise(VE_days = mean(VE_days),.groups = "keep") 
+        
+        # Second Choice = same primary schedule + booster of same vaccine mode
+        if (nrow(this_combo) == 0){
+          this_vax_mode = unique(booster_combinations$vaccine_mode[booster_combinations$vaccine_type == this_vax])
+          this_combo = VE_waning_distribution_SO %>% 
+            filter(schedule == "booster" & dose == this_dose & 
+                     primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax]) &
+                     vaccine_mode == this_vax_mode) %>%
+            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days),.groups = "keep") 
+        }
+        
+        # Third Choice = same primary schedule + any booster
+        if (nrow(this_combo) == 0){ 
+          this_combo = VE_waning_distribution_SO %>% 
+            filter(schedule == "booster" & dose == this_dose & 
+                     primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax])) %>%
+            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days),.groups = "keep") 
+        }
+        
+        # Otherwise... rethink!
+        if (nrow(this_combo) == 0){stop('Need a VE for this booster!')}
+        
+        workshop = rbind(workshop,this_combo)
+      }
+    }
+  }
   
-  ggplot() +
-    geom_point(data=waning_to_plot[waning_to_plot$strain == strain_test  & waning_to_plot$outcome == outcome_test & waning_to_plot$vaccine_type == vaccine_type_test,],
-              aes(x=days,y=VE_days,color=as.factor(age_group),shape=as.factor(dose)),na.rm=TRUE) +
-    labs(title=(paste("Waning of VE against","(",strain_test,")"))) +
-    xlab("days since vaccination") +
-    ylab("% max protection") +
-    ylim(0,1)+
-    theme_bw() +
-    theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
-  
-  VE_waning_distribution_SO = together %>% select(strain, vaccine_type,primary_if_booster, dose, outcome, age_group,days,VE_days)
-  
-  workshop = VE_waning_distribution_SO %>% 
-    filter(dose > 2 & strain == strain_now) %>%
-    group_by(strain,outcome,vaccine_type,dose,age_group,days,.add = TRUE) %>%
-    summarise(VE_days = mean(VE_days),.groups = "keep")
-  VE_waning_distribution_SO = VE_waning_distribution_SO %>% filter(dose < 3) %>% select(-primary_if_booster)
+  VE_waning_distribution_SO = VE_waning_distribution_SO %>% 
+    filter(schedule == "primary") %>%
+    select(-primary_if_booster)
   VE_waning_distribution_SO = rbind(VE_waning_distribution_SO,workshop)
-
-return(VE_waning_distribution_SO)
+  
+  return(VE_waning_distribution_SO)
 }

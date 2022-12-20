@@ -6,7 +6,8 @@
 ### (4) (6)_severe_outcome_proj
 
 stochastic_severe_outcomes_sampling <- function(
-  
+    
+    booster_combinations,
     setting = 'SLE',
     num_time_steps = 365,
     strain_now = 'omicron',
@@ -286,7 +287,8 @@ stochastic_severe_outcomes_sampling <- function(
     
     #(2) Load stochastic VE distirbution
     #VE_waning_distribution_SO - sample UNIFORM from all point estimates, waning distribution, ratios between age groups etc. 
-    VE_waning_distribution = stochastic_VE(setting = setting,
+    VE_waning_distribution = stochastic_VE(booster_combinations = booster_combinations,
+                                           setting = setting,
                                            toggle_sampling = local_stochastic_VE_sampling) %>%
       filter(strain == strain_now & vaccine_type %in% vaccine_type_list)
     
