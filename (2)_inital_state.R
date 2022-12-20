@@ -403,11 +403,7 @@ D=num_vax_doses
 RISK=num_risk_groups
 count=J*(T*D+1)*RISK # +1 is unvax
 
-if (setting == "SLE"){
-  seed = 0.001*sum(pop) #seed of outbreak at covid19_waves$date 
-} else{
-  seed = 0.001*sum(pop)
-}
+seed = 0.001*sum(pop) #seed of outbreak at covid19_waves$date 
 
 
 initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
