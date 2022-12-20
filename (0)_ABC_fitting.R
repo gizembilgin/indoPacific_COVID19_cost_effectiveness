@@ -114,6 +114,7 @@ save(VE_real_range, file = paste('1_inputs/fit/VE_real_range',Sys.Date(),this_se
 
 ### Model run _________________________________________________________________________________________________
 #20/12/2022 - have removed Reff/VE/rho tracking using fitting_details parameter; stop VE_time_step for acq (VE_real_range); stop VE_time_step for SO (don't run (5) or (6) when fitting)
+#21/12/2022 - current ~20 minute run time for date_start to Sys.Date()
 
 system.time(source(paste(getwd(),"/CommandDeck.R",sep="")))
 
@@ -131,7 +132,13 @@ ggplot() +
 
 
 
-### Fit wave peaks ____________________________________________________________________________________________
+### Fit waves _________________________________________________________________________________________________
+#21/12/2022 - abandoned attempt to fit seed dates to wave peaks individually,
+#             it appears that the parameter space for fitting three peaks simultaneously is too confusing
+#             the Nelder-Mead method kept returning the initial conditions
+#             I note here that the timing of the first two peaks is already fairly good, however the second peak appears too large -> impedes a third peak as early as it was reported
+
+#SETUP________________________________________
 require('pracma') #contains findpeaks function
 
 #reported_cases remove NA, and within simulation scope
@@ -146,51 +153,9 @@ window = reported_cases %>% filter(date>as.Date('2022-05-01'))
 third_peak = median(window$date[window$rolling_average == max(window$rolling_average)])
 reported_peaks = c(reported_peaks,third_peak)
 #reported_peaks #"2021-07-21" "2022-01-21" "2022-07-15"
+#_____________________________________________
 
-#fit_wave_peaks function fits to the most likely seed dates that correspond to the peaks of observed waves
-fit_wave_peaks <- function(par){
-  
-  strain_inital = strain_now = 'WT' 
-  
-  covid19_waves = data.frame(date = c(as.Date('2021-06-06')+par[1],as.Date('2021-10-15')+par[2],as.Date('2022-02-01')+par[3]),
-                             strain = c('delta','omicron','omicron'))
-  
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
-  
-  simulated_cases = incidence_log %>% select(date,rolling_average)
-  simulated_cases <- na.omit(simulated_cases)
-  
-  fitted_peaks = findpeaks(simulated_cases$rolling_average,minpeakheight = 500 ,minpeakdistance = 90, npeaks = 3 )
-  fitted_peaks = simulated_cases$date[c(fitted_peaks[,2])]
-  
-  fit_statistic = sum(as.numeric(reported_peaks - fitted_peaks)^2)
 
-  return(fit_statistic)
-}
-fit_wave_peaks(c(0,0,0))
-
-lets_fit_peaks = optim(par = c(0,0,0),
-                       fn = fit_wave_peaks,
-                       method = "Nelder-Mead")
-
-#https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/optim
-# $par
-# [1] "2021-06-06" "2021-10-21" "2022-01-01"
-# 
-# $value
-# [1] 16264.25
-# 
-# $counts
-# function gradient 
-# 4       NA  -> number of f(x) calls used
-# 
-# $convergence
-# [1] 0 -> indicates successful completion
-# 
-# $message
-# NULL
-###not fitting as search space too complicated?
-save(lets_fit_peaks, file = paste('1_inputs/fit/lets_fit_peaks',Sys.Date(),this_setting,'.Rdata',sep=''))
 
 
 ### Fit first wave ###########################################################################################
@@ -234,10 +199,10 @@ ggplot() +
 
 
 
-fit_daily_reported <- function(seed_date_est,
-                               under_reporting_est#,
-                               #beta_est
-                               ){
+fit_daily_reported <- function(par){
+  seed_date_est = par[1]
+  under_reporting_est = par[2]
+  # beta_est = par[3]
   
   strain_inital = strain_now = 'WT' 
   
@@ -250,7 +215,7 @@ fit_daily_reported <- function(seed_date_est,
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   workshop = reported_cases %>%
-    filter(date>date_start & date <max(incidence_log$date)) %>%
+    filter(date %in% unique(incidence_log$date)) %>%
     mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
             rolling_average = rolling_average * under_reporting_est) %>%
     rename(adjusted_reported = rolling_average) %>%
