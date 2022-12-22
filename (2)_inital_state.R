@@ -15,8 +15,12 @@ num_vax_classes = num_vax_doses*num_vax_types + 1 # + 1 for unvaccinated
 #(A/B) Coverage 
 #(i/iii) Vaccine coverage at end of known history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% 
-  filter(date == max(vaccination_history_TRUE$date)) %>%
-  select(dose,vaccine_type,age_group,risk_group,coverage_this_date)
+  group_by(dose,vaccine_type,age_group,risk_group) %>%
+  summarise(coverage_this_date = sum(doses_delivered_this_date),.groups='keep') %>%
+  left_join(pop_risk_group_dn, by = c('age_group','risk_group')) %>%
+  mutate(coverage_this_date = coverage_this_date/pop) %>%
+  select(-pop)
+  
 #_________________________________________________
 
 #(ii/iii) Add hypothetical campaign (if 'on') ____
@@ -110,11 +114,10 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 
 ### sensitivity analysis - booster doses in 2023
 if (exists("booster_toggles") == FALSE){booster_toggles = "no"}
-if (exists("booster_prioritised_strategies") == FALSE){booster_prioritised_strategies = "no"}
 if (length(booster_toggles)>1){
-  source(paste(getwd(),"/(function)_booster_dose_delivery.R",sep=""))
-
-  if (length(booster_prioritised_strategies)>1){
+  
+  if (booster_toggles$function_name == "booster_prioritised_strategies"){
+    source(paste(getwd(),"/(function)_booster_dose_delivery.R",sep=""))
     source(paste(getwd(),"/(function)_prioritised_booster_dose_delivery.R",sep=""))
     
     vaccination_history_FINAL =
@@ -124,7 +127,8 @@ if (length(booster_toggles)>1){
       )
     rm(booster_strategy_prioritised)
     
-  } else{
+  } else if (booster_toggles$function_name == "booster_strategy"){
+    source(paste(getwd(),"/(function)_booster_dose_delivery.R",sep=""))
     vaccination_history_FINAL =
       booster_strategy( booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
                         booster_dose_allocation     = booster_toggles$dose_allocation,  # num of doses avaliable
@@ -136,9 +140,25 @@ if (length(booster_toggles)>1){
                         booster_strategy_vaccine_interval = booster_toggles$vaccine_interval
       )
     rm(booster_strategy)
+  } else if (booster_toggles$function_name == "booster_strategy_informed_prior"){
+    source(paste(getwd(),"/(function)_booster_strategy_informed_prior.R",sep=""))
+    workshop = booster_strategy_informed_prior(booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
+                                     booster_dose_supply        = booster_toggles$dose_supply,      # num of doses avaliable
+                                     booster_rollout_months     = booster_toggles$rollout_months,   # number of months to complete booster program
+                                     
+                                     booster_delivery_risk_group = booster_toggles$delivery_risk_group,
+                                     booster_prev_dose_floor     = booster_toggles$prev_dose_floor, #down to what dose is willing to be vaccinated?
+                                     booster_age_groups          = booster_toggles$age_groups,      #what model age groups are willing to be vaccinated?
+                                     
+                                     booster_prioritised_risk   = booster_toggles$prioritised_risk,
+                                     booster_prioritised_age    = booster_toggles$prioritised_age,   #what age groups are prioritised
+                                     
+                                     booster_strategy_vaccine_type = booster_toggles$vaccine_type,   # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
+                                     
+                                     vaccination_history_FINAL_local = vaccination_history_FINAL)
+    vaccination_history_FINAL = bind_rows(vaccination_history_FINAL,workshop)
   }
-
-
+  
   #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
   list_doses = list_doses[! list_doses %in% c(8,9)]
@@ -290,7 +310,10 @@ VE_waning_distribution = VE_waning_distribution %>%
     dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
     TRUE ~ 'primary'
   ))
-
+if (D == 5){
+  workshop = VE_waning_distribution %>% filter(dose == 4) %>% mutate(dose = 5)
+  VE_waning_distribution = rbind(VE_waning_distribution,workshop)
+}
 
 #average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
 workshop = data.frame()
