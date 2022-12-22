@@ -109,7 +109,8 @@ if (setting == "SLE"){
 receipt = 2
 risk_group_name = "pregnant_women"
 
-booster_toggles = list(start_date = as.Date('2023-01-01'),
+booster_toggles = list(function_name = "booster_prioritised_strategies",
+                       start_date = as.Date('2023-01-01'),
                        dose_allocation = 9999999999,
                        rollout_speed = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_roll_out_speed,
                        delivery_risk_group = c('general_public',risk_group_name),
@@ -126,7 +127,8 @@ source(paste(getwd(),"/(Table 3) high-risk groups.R",sep=""))
 receipt = 3
 risk_group_name = "adults_with_comorbidities"
 
-booster_toggles = list(start_date = as.Date('2023-01-01'),
+booster_toggles = list(function_name = "booster_prioritised_strategies",
+                       start_date = as.Date('2023-01-01'),
                        dose_allocation = 9999999999,
                        rollout_speed = vax_strategy_toggles_CURRENT_TARGET$vax_strategy_roll_out_speed,
                        delivery_risk_group = c('general_public',risk_group_name),
