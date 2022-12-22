@@ -11,9 +11,8 @@ num_time_steps = model_weeks *7
 if (outbreak_timing == "after"){
   num_time_steps = model_weeks *7 + as.numeric(max(covid19_waves$date)-date_start) -7
 }
-vaccination_primary_FINAL = vaccination_history_FINAL %>% filter(schedule == "primary" & doses_delivered_this_date >0)
-vaccination_booster_FINAL = vaccination_history_FINAL %>% filter(schedule == "booster" & doses_delivered_this_date >0)
-D_primary = max(vaccination_primary_FINAL$dose)
+D_primary = max(vaccination_history_FINAL$dose[vaccination_history_FINAL$schedule == "primary"])
+if (exists("fitting_beta") == FALSE){fitting_beta = rep(1,nrow(covid19_waves))}
 
 for (increments_number in 1:num_time_steps){
 
@@ -145,11 +144,13 @@ for (increments_number in 1:num_time_steps){
         
         
       ### Include today's primary doses
-        for (this_risk_group in unique(vaccination_primary_FINAL$risk_group)){
-          for (this_vax in unique(vaccination_primary_FINAL$vaccine_type)){  #iterating over vaccine types
+        for (this_risk_group in unique(vaccination_history_FINAL$risk_group)){
+          for (this_vax in unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$schedule == "primary"])){  #iterating over vaccine types
 
-            this_vax_history = vaccination_primary_FINAL %>%
-              filter(vaccine_type == this_vax & 
+            this_vax_history = vaccination_history_FINAL %>%
+              filter(schedule == "primary" & 
+                       doses_delivered_this_date >0 &
+                       vaccine_type == this_vax & 
                        risk_group == this_risk_group &
                        (dose == 1 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 1]|
                           dose == 2 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2]))
@@ -157,7 +158,7 @@ for (increments_number in 1:num_time_steps){
             if(nrow(this_vax_history)>0){
               for (this_age_group in unique(this_vax_history$age_group)){
 
-                increase = rep(0,max(vaccination_primary_FINAL$dose))
+                increase = rep(0,D_primary)
                 for (d in unique(this_vax_history$dose[this_vax_history$age_group == this_age_group])){
                   increase[d] = this_vax_history$doses_delivered_this_date[this_vax_history$dose == d & this_vax_history$age_group == this_age_group]
                 }
@@ -195,15 +196,16 @@ for (increments_number in 1:num_time_steps){
 
 
         ### Include today's booster doses
-        if (nrow(vaccination_booster_FINAL[vaccination_booster_FINAL$date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2],])>0){
-          for (this_risk_group in unique(vaccination_booster_FINAL$risk_group)){
-            for (this_vax in unique(vaccination_booster_FINAL$vaccine_type)){
-              for (this_dose in unique(vaccination_booster_FINAL$dose)){
+      todays_boosters = vaccination_history_FINAL %>% filter(schedule == "booster" & doses_delivered_this_date >0 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2])
+        if (nrow(todays_boosters)>0){
+          for (this_risk_group in unique(todays_boosters$risk_group)){
+            for (this_vax in unique(todays_boosters$vaccine_type)){
+              for (this_dose in unique(todays_boosters$dose)){
 
-                for (from_vax in unique(vaccination_booster_FINAL$FROM_vaccine_type[vaccination_booster_FINAL$vaccine_type == this_vax & vaccination_booster_FINAL$dose == this_dose])){  #iterating over vaccine types FROM
-                  for (from_dose in unique(vaccination_booster_FINAL$FROM_dose[vaccination_booster_FINAL$vaccine_type == this_vax & vaccination_booster_FINAL$dose == this_dose])){
+                for (from_vax in unique(todays_boosters$FROM_vaccine_type[todays_boosters$vaccine_type == this_vax & todays_boosters$dose == this_dose])){  #iterating over vaccine types FROM
+                  for (from_dose in unique(todays_boosters$FROM_dose[todays_boosters$vaccine_type == this_vax & todays_boosters$dose == this_dose])){
 
-                    this_vax_history = vaccination_booster_FINAL %>%
+                    this_vax_history = todays_boosters %>%
                       filter(FROM_vaccine_type == from_vax &
                                FROM_dose == from_dose &
                                risk_group == this_risk_group &
@@ -240,15 +242,21 @@ for (increments_number in 1:num_time_steps){
         }
         
         if (fitting == "on" & date_now == as.Date('2021-11-14')){next_state_FIT = next_state} #savings to compare against known point of seroprevalence
+      
+
+      
         if (date_now %in% covid19_waves$date){
             if (date_now == min(covid19_waves$date[covid19_waves$strain == "delta"])){
               strain_now = 'delta'
             } else if (date_now == min(covid19_waves$date[covid19_waves$strain == "omicron"])){
               strain_now = 'omicron'
-              parameters$lambda = 1/2.22 #COMEBACK - hard coded :(
-              parameters$delta = 1/9.87
+              #parameters$lambda = 1/2.22 #COMEBACK - hard coded :(
+              #parameters$delta = 1/9.87
             }
-            parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)
+            prev_beta = parameters$beta
+            parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)*
+              fitting_beta[which(covid19_waves$date == date_now)]
+            this_beta = parameters$beta
           
             seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
             seed.Exposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
@@ -269,6 +277,18 @@ for (increments_number in 1:num_time_steps){
             next_state$pop[next_state$class == 'E'  & next_state$age_group == age_group_labels[i]] = next_state$pop[next_state$class == 'E'  & next_state$age_group == age_group_labels[i]] + expose
             
           }
+        }
+        #shift from delta to omicron parameters
+        if (date_now %in% omicron_shift$date){
+          parameters$lambda = 1/2.22*omicron_shift$percentage[omicron_shift$date == date_now] + 
+            1/3.71 * (1-omicron_shift$percentage[omicron_shift$date == date_now])
+          
+          parameters$delta = 1/9.87*omicron_shift$percentage[omicron_shift$date == date_now] + 
+            1/10.9 * (1-omicron_shift$percentage[omicron_shift$date == date_now])
+          
+          parameters$beta = this_beta*omicron_shift$percentage[omicron_shift$date == date_now] + prev_beta * (1-omicron_shift$percentage[omicron_shift$date == date_now])
+          
+
         }
         # if (fitting == "off"){
         #   if (date_now>=seed_date){
