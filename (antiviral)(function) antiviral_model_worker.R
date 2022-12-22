@@ -28,11 +28,15 @@ antiviral_model_worker <- function(
   
   ### INITALISE
   this_worker_result = data.frame()
+  
+  #ensure no booster doses is the FIRST scenario
   if (local_compare_to_vaccine_effect == "on"){
-    manager_scenario_dataframe$vax_scenario = factor(manager_scenario_dataframe$vax_scenario, levels = c('all willing adults vaccinated with a primary schedule',
-                                                                                                         'all willing adults vaccinated with a primary schedule and high risk group recieve a booster', 
-                                                                                                         'all willing adults vaccinated with a primary schedule plus booster dose'))
-    manager_scenario_dataframe = manager_scenario_dataframe %>% arrange(vax_scenario) # order
+    if ('all willing adults vaccinated with a primary schedule' %in% manager_scenario_dataframe$vax_scenario){
+      if ('all willing adults vaccinated with a primary schedule' != manager_scenario_dataframe$vax_scenario[1]){
+        row = manager_scenario_dataframe[manager_scenario_dataframe$vax_scenario == 'all willing adults vaccinated with a primary schedule',]
+        manager_scenario_dataframe = rbind(row,manager_scenario_dataframe[manager_scenario_dataframe$vax_scenario != 'all willing adults vaccinated with a primary schedule',])
+      }
+    }
   }
   
   
