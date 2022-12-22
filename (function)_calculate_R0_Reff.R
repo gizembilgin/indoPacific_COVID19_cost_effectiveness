@@ -15,7 +15,8 @@ NGM_R0_list = list()
 for (loop in 1:length(strain_list)){
   strain = strain_list[loop]
   if (strain == 'WT'){R0_to_fit = 2.79
-  } else if (strain %in% c("delta","omicron")){R0_to_fit = 5.08} #ASSUMPTION: transmission advantage of Omicron entirely immune-escape!
+  } else if (strain =="delta"){R0_to_fit = 5.08
+  } else if (strain == "omicron"){R0_to_fit = 5.08 }#ASSUMPTION: transmission advantage of Omicron entirely immune-escape!
   
   contact_matrix_adjust = matrix(data = 0, nrow = num_age_groups, ncol = num_age_groups)
   for (i in 1:num_age_groups){
