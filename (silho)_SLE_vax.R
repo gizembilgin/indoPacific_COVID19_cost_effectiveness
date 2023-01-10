@@ -76,10 +76,11 @@ for (row in 1:nrow(timing_check)){
 
 
 ### Load data on vaccine supply in from African CDC Dashboard https://africacdc.org/covid-19-vaccination/ (last update 23/09/2022)
-setting_vaccine <- read.csv("1_inputs/vaccine_setting_history.csv",header=TRUE)
+this_setting = setting
+setting_vaccine <- read.csv("1_inputs/vaccination/vaccine_setting_history.csv",header=TRUE)%>%
+  filter(setting == this_setting)
 setting_vaccine$last_update = as.Date(setting_vaccine$last_update,format = '%d/%m/%Y')
-setting_vaccine <- setting_vaccine %>%
-  filter(setting == setting & last_update == max(setting_vaccine$last_update))
+setting_vaccine <- setting_vaccine %>% filter( last_update == max(setting_vaccine$last_update))
 
 if ("Johnson & Johnson" %in% unique(setting_vaccine$vaccine_type)){ #J&J the only single-dose vaccine
   setting_vaccine <- setting_vaccine %>%
