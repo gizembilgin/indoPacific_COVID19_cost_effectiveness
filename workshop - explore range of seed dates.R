@@ -1,4 +1,7 @@
-## Rough check _________________________________________________________________________________________________
+###This program helps find the initial conditions for fitting
+
+
+## Introduction of three waves _________________________________________________________________________________________________
 num_1 = 3
 num_2 = 7
 num_3 = 7
@@ -155,50 +158,70 @@ ggplot() +
 #________________
 
 
+
 #WAVE TWO
-#(1/3) under reporting
-search_list = c(15,20,25,30,35,40,45,50)
+#(1/3) beta mod
+search_list = c(0.5,0.8,1,1.2,1.5,2)
 
 plot_tracker = data.frame()
 fit_tracker = data.frame()
 
 for(this_param in search_list){
-  under_reporting_est = this_param
+  
+  strain_inital = strain_now = 'WT' 
+  model_weeks =as.numeric((fit_cutoff_dates[2]-date_start)/7)
+  
+  under_reporting_est = 40
+  fitting_beta= c(first_wave_fit$par[3],
+                  this_param)
+  covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
+                                      as.Date('2021-11-01')),
+                             strain = c('delta','omicron'))
+  
+  source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   workshop = case_history %>%
-    filter(date > fit_cutoff_dates[1]) %>% #fit only after first wave
     select(date,rolling_average) %>%
     mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
-      rolling_average = rolling_average) %>%
+      rolling_average = case_when(
+        date > fit_cutoff_dates[1] ~ rolling_average * under_reporting_est,
+        date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
     rename(adjusted_reported = rolling_average) %>%
     left_join(incidence_log, by = "date") %>%
-    mutate(rolling_average = rolling_average * (1/under_reporting_est),
-           fit_statistic = abs(rolling_average - adjusted_reported) ^ 2,
-           parameter_mod = this_param)
+    mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2 ,
+           parameter_mod =  this_param)
   
-  fit_statistic = data.frame(fit = sum(workshop$fit_statistic,na.rm=TRUE),
-                             parameter_mod = this_param)
+  fit_statistic = data.frame(fit = sum(workshop$fit_statistic[workshop$date> fit_cutoff_dates[1]], #fit only after first wave
+                      na.rm=TRUE),
+                      parameter_mod = this_param)
   
   plot_tracker = rbind(plot_tracker,workshop)
   fit_tracker = rbind(fit_tracker,fit_statistic)
 }
+beta_fit_tracker = fit_tracker; beta_fit_tracker
+beta_tracker = plot_tracker %>%
+  filter(date<=(date_start+model_weeks*7) & date>=date_start)
 ggplot() +
-  geom_line(data=plot_tracker,aes(x=date,y=rolling_average,color=as.factor(parameter_mod)),na.rm=TRUE) +
-  geom_point(data=plot_tracker,aes(x=date,y=adjusted_reported)) +
-  plot_standard
+  geom_line(data=beta_tracker,aes(x=date,y=rolling_average,color=as.factor(parameter_mod)),na.rm=TRUE) +
+  geom_point(data=beta_tracker,aes(x=date,y=adjusted_reported)) +
+  plot_standard + 
+  labs(color = 'beta modifier')
 
-#better fit with higher under reporting due to entry too early
 
 
 #(2/3) seed date
-search_list = c(as.Date('2021-10-19'),as.Date('2021-11-01'),as.Date('2021-11-15'),as.Date('2021-12-01'))
+search_list = c(as.Date('2021-10-15'),as.Date('2021-11-01'),as.Date('2021-11-15'),as.Date('2021-12-01'))
 
 plot_tracker = data.frame()
 fit_tracker = data.frame()
-
 for(this_param in search_list){
+  
+  strain_inital = strain_now = 'WT' 
+  model_weeks =as.numeric((fit_cutoff_dates[2]-date_start)/7)
+  
   under_reporting_est = 40
-  fitting_beta= c(first_wave_fit$par[3],1)
+  fitting_beta= c(first_wave_fit$par[3],
+                  1)
   covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
                                       this_param),
                              strain = c('delta','omicron'))
@@ -206,30 +229,33 @@ for(this_param in search_list){
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   workshop = case_history %>%
-    filter(date > fit_cutoff_dates[1]) %>% #fit only after first wave
     select(date,rolling_average) %>%
     mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
-      rolling_average = rolling_average) %>%
+      rolling_average = case_when(
+        date > fit_cutoff_dates[1] ~ rolling_average * under_reporting_est,
+        date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
     rename(adjusted_reported = rolling_average) %>%
     left_join(incidence_log, by = "date") %>%
-    mutate(rolling_average = rolling_average * (1/under_reporting_est),
-           fit_statistic = abs(rolling_average - adjusted_reported) ^ 2,
+    mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2 ,
            parameter_mod =  as.Date(this_param))
   
-  fit_statistic = data.frame(fit = sum(workshop$fit_statistic,na.rm=TRUE),
+  fit_statistic = data.frame(fit = sum(workshop$fit_statistic[workshop$date> fit_cutoff_dates[1]], #fit only after first wave
+                                       na.rm=TRUE),
                              parameter_mod = as.Date(this_param))
   
+
   plot_tracker = rbind(plot_tracker,workshop)
   fit_tracker = rbind(fit_tracker,fit_statistic)
 }
+seed_date_fit_tracker = fit_tracker; seed_date_fit_tracker
 seed_date_tracker = plot_tracker %>%
+  filter(date<=(date_start+model_weeks*7) & date>=date_start) %>%
   mutate(parameter_mod = case_when(
     parameter_mod == unique(seed_date_tracker$parameter_mod)[1] ~ search_list[1],
     parameter_mod == unique(seed_date_tracker$parameter_mod)[2] ~ search_list[2],
     parameter_mod == unique(seed_date_tracker$parameter_mod)[3] ~ search_list[3],
     parameter_mod == unique(seed_date_tracker$parameter_mod)[4] ~ search_list[4]
-  )) %>%
-  filter(date<=(date_start+model_weeks*7))
+  ))
 ggplot() +
   geom_line(data=seed_date_tracker,aes(x=date,y=rolling_average,color=as.factor(parameter_mod)),na.rm=TRUE) +
   geom_point(data=seed_date_tracker,aes(x=date,y=adjusted_reported)) +
@@ -238,43 +264,51 @@ ggplot() +
 #best fit in middle two dates
 
 
-#(3/3) beta mod
-search_list = c(0.5,0.8,1,1.2,1.5,2)
+
+
+#(3/3) under reporting
+strain_inital = strain_now = 'WT' 
+under_reporting_est = 40
+fitting_beta= c(first_wave_fit$par[3],
+                1)
+covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
+                                    as.Date('2021-11-01')),
+                           strain = c('delta','omicron'))
+source(paste(getwd(),"/CommandDeck.R",sep=""))
+
+
+search_list = c(15,20,25,30,35,40,45,50)
 
 plot_tracker = data.frame()
 fit_tracker = data.frame()
-
 for(this_param in search_list){
-  under_reporting_est = 40
-  fitting_beta= c(first_wave_fit$par[3],
-                  this_param)
-  covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
-                                      as.Date('2021-11-15')),
-                             strain = c('delta','omicron'))
-  
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
+  under_reporting_est = this_param
   
   workshop = case_history %>%
-    filter(date > fit_cutoff_dates[1]) %>% #fit only after first wave
     select(date,rolling_average) %>%
-    mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
-      rolling_average = rolling_average) %>%
     rename(adjusted_reported = rolling_average) %>%
     left_join(incidence_log, by = "date") %>%
-    mutate(rolling_average = rolling_average * (1/under_reporting_est),
+    mutate(rolling_average =  case_when(
+      date > fit_cutoff_dates[1] ~ rolling_average * (1/under_reporting_est),
+      date <= fit_cutoff_dates[1] ~ rolling_average * (1/first_wave_fit$par[2])),
            fit_statistic = abs(rolling_average - adjusted_reported) ^ 2,
            parameter_mod =  this_param)
   
-  fit_statistic = data.frame(fit = sum(workshop$fit_statistic,na.rm=TRUE),
-                             parameter_mod = this_param)
+  fit_statistic = data.frame(
+    fit = sum(workshop$fit_statistic[workshop$date> fit_cutoff_dates[1]], #fit only after first wave
+              na.rm=TRUE),
+    parameter_mod = this_param)
   
   plot_tracker = rbind(plot_tracker,workshop)
   fit_tracker = rbind(fit_tracker,fit_statistic)
 }
-beta_tracker = plot_tracker %>%
-  filter(date<=(date_start+model_weeks*7))
+underreporting_tracker = fit_tracker; underreporting_tracker
+underreporting_tracker = plot_tracker %>%
+  filter(date<=(date_start+model_weeks*7) & date>=date_start)
 ggplot() +
-  geom_line(data=beta_tracker,aes(x=date,y=rolling_average,color=as.factor(parameter_mod)),na.rm=TRUE) +
-  geom_point(data=beta_tracker,aes(x=date,y=adjusted_reported)) +
+  geom_line(data=underreporting_tracker,aes(x=date,y=rolling_average,color=as.factor(parameter_mod)),na.rm=TRUE) +
+  geom_point(data=underreporting_tracker,aes(x=date,y=adjusted_reported)) +
   plot_standard + 
-  labs(color = 'beta modifier')
+  labs(color = 'underreporting')
+
+#better fit with higher under reporting due to entry too early
