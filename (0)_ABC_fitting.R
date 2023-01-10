@@ -8,7 +8,7 @@
 #clear the field!
 rm(list=ls())
 
-this_setting = setting = "FJI"
+this_setting = setting = "PNG"
 
 
 
@@ -32,6 +32,12 @@ if (setting == "FJI"){
   covid19_waves = data.frame(date = #c(as.Date('2021-06-06'),as.Date('2021-10-21'),as.Date('2022-01-15')), # initial best guess!
                              c(as.Date('2021-06-06'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
                      strain = c('delta','omicron','omicron'))
+} else if (setting == "PNG"){
+  date_start = as.Date('2021-02-01')
+  strain_inital = strain_now = 'WT'
+  
+  covid19_waves = data.frame(date = c(as.Date('2021-03-01'),as.Date('2021-09-01'),as.Date('2022-02-01')),
+                             strain = c('WT','delta','omicron'))
 }
 model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
 
