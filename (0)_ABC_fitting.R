@@ -247,8 +247,8 @@ fit_daily_reported <- function(par){
   
   strain_inital = strain_now = 'WT' 
   model_weeks =as.numeric((fit_cutoff_dates[2]-date_start)/7)
-  covid19_waves = data.frame(date = c(as.Date('2021-06-09')+first_wave_fit$par[1],
-                                      as.Date('2021-10-15')+par[1]),
+  covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
+                                      as.Date('2021-10-15')+round(par[1])),
                              strain = c('delta','omicron'))
   under_reporting_est = par[2]
   fitting_beta= c(first_wave_fit$par[3],par[3])
@@ -256,15 +256,17 @@ fit_daily_reported <- function(par){
   source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
   
   workshop = case_history %>%
-    filter(date > fit_cutoff_dates[1]) %>% #fit only after first wave
     select(date,rolling_average) %>%
     mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
-      rolling_average = rolling_average * under_reporting_est) %>%
+      rolling_average = case_when(
+        date > fit_cutoff_dates[1] ~ rolling_average * under_reporting_est,
+        date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
     rename(adjusted_reported = rolling_average) %>%
     left_join(incidence_log, by = "date") %>%
     mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
   
-  fit_statistic = sum(workshop$fit_statistic,na.rm=TRUE)
+  fit_statistic = sum(workshop$fit_statistic[workshop$date> fit_cutoff_dates[1],], #fit only after first wave
+                      na.rm=TRUE)
   
   return(fit_statistic)
 }
