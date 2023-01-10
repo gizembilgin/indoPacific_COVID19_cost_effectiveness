@@ -15,7 +15,7 @@ this_setting = setting = "FJI"
 ### Setup __________________________________________________________________________________________________
 #general toggles
 fitting = "on"
-plotting = "on"
+plotting = "off"; ticket = 0
 outbreak_timing = "off" #i.e., no new outbreak if =="after" than new VOC after last vaccine delivery date, if == 'during" new VOC introduced one week from now
 vax_strategy_toggle = "off" #no additional vax, use real vax data only
 vax_risk_strategy_toggle = "off"
@@ -153,69 +153,33 @@ window = reported_cases %>% filter(date>as.Date('2022-05-01'))
 third_peak = median(window$date[window$rolling_average == max(window$rolling_average)])
 reported_peaks = c(reported_peaks,third_peak)
 #reported_peaks #"2021-07-21" "2022-01-21" "2022-07-15"
+
+#fit cutoff dates
+fit_cutoff_dates = c(as.Date('2021-10-15'),#earliest likely introduction of Omicron
+                     reported_peaks[2] + as.numeric(reported_peaks[3] - reported_peaks[2])/2)  
 #_____________________________________________
 
 
 
-
-### Fit first wave ###########################################################################################
-#seed date <-> max date
-fit_wave_peak <- function(par){
-  
-  strain_inital = strain_now = 'WT' 
-  
-  run_till = reported_peaks[1]+as.numeric(reported_peaks[2] - reported_peaks[1])
-  model_weeks = as.numeric((run_till-date_start)/7)
-  
-  covid19_waves = data.frame(date = as.Date('2021-06-06')+par,
-                             strain = 'delta')
-  
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
-  
-  simulated_cases = incidence_log %>% select(date,rolling_average)
-  simulated_cases <- na.omit(simulated_cases)
-  
-  fitted_peaks = findpeaks(simulated_cases$rolling_average,minpeakheight = 500 ,minpeakdistance = 90, npeaks = 1 )
-  fitted_peaks = simulated_cases$date[c(fitted_peaks[,2])]
-  
-  fit_statistic = sum(as.numeric(reported_peaks[1] - fitted_peaks)^2)
-  
-  return(fit_statistic)
-}
-
-lets_fit_peak = optimize(fit_wave_peak,c(-3,3))
-coeff <- 1/16
-ggplot() +
-  geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
-             aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
-  geom_line(data=incidence_log,aes(x=date,y=rolling_average)) + 
-  scale_y_continuous(
-    name = "Model projections",
-    sec.axis = sec_axis(~.*coeff, name="Reported cases")
-  )+ 
-  plot_standard
-#decison: on visual inspection close enough to start real fit to fit wave
-
-
-
+#FIT FIRST WAVE_______________________________
+if (exists("fitting_beta")){rm(fitting_beta)}
+if (exists("under_reporting_est")){rm(under_reporting_est)}
+if (exists("covid19_waves")){rm(covid19_waves)}
 
 fit_daily_reported <- function(par){
-  seed_date_est = par[1]
-  under_reporting_est = par[2]
-  # beta_est = par[3]
   
   strain_inital = strain_now = 'WT' 
-  
-  run_till = as.Date('2021-10-15') #earliest likely introduction of Omicron
-  model_weeks = as.numeric((run_till-date_start)/7)
-  
-  covid19_waves = data.frame(date = as.Date('2021-06-06')+seed_date_est,
+  model_weeks = as.numeric((fit_cutoff_dates[1]-date_start-1)/7)
+  covid19_waves = data.frame(date = as.Date('2021-06-09')+round(par[1]),
                              strain = 'delta')
   
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
+  under_reporting_est = par[2]
+  fitting_beta= par[3]
   
-  workshop = reported_cases %>%
-    filter(date %in% unique(incidence_log$date)) %>%
+  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+  
+  workshop = case_history %>% 
+    select(date,rolling_average) %>%
     mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
             rolling_average = rolling_average * under_reporting_est) %>%
     rename(adjusted_reported = rolling_average) %>%
@@ -227,19 +191,95 @@ fit_daily_reported <- function(par){
   return(fit_statistic)
 }
 
-lets_fit_daily_reported = optim(c(0,16),
-                                fit_daily_reported,
-                                method = "Nelder-Mead")
+#Attempt One: fit with no bounds
+system.time({first_wave_fit = optim(c(0, 17.9976092, 1),
+                       fit_daily_reported,
+                       method = "Nelder-Mead")})
+# $par
+# [1] -3.3917404 16.8874017  0.9308657
+# 
+# $value
+# [1] 239881507
+# 
+# $counts
+# function gradient 
+# 156       NA 
+# 
+# $convergence
+# [1] 0
+fit_daily_reported(first_wave_fit$par)
 
+#Attempt Two: fit bounded
+# system.time({first_wave_fit = optim(c(0, 17.9976092,1),
+#                        fit_daily_reported,
+#                        method = "L-BFGS-B",
+#                        lower = c(-7,10,0.8), upper = c(7,20,1.2))})
+# 
+# #Attempt Three: fit with different optimisation function
+# system.time({first_wave_fit = nlm(fit_daily_reported,c(0, 17.9976092,1),
+#                      fscale = 278192872, #estimate of the function at the minimum
+#                      print.level = 1, #inital and final details are printed
+#                      iterlim = 100
+#                      )})
+#
+# Attempt Four: change tol of optim function
+
+
+to_plot = workshop %>% filter(date>date_start & date<=(date_start+model_weeks*7))
 ggplot() +
-  geom_line(data=workshop[workshop$date>date_start & workshop$date <max(workshop$date),],
-             aes(x=date,y=rolling_average),na.rm=TRUE) +
-  geom_point(data=workshop,aes(x=date,y=adjusted_reported)) + 
-  scale_y_continuous(
-    name = "Model projections",
-    sec.axis = sec_axis(~.*coeff, name="Reported cases")
-  )+ 
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
   plot_standard
+save(first_wave_fit, file = paste('1_inputs/fit/first_wave_fit',this_setting,'.Rdata',sep=''))
+#______________________________________________________________________________________________________________
+
+
+
+#FIT SECOND WAVE_______________________________
+if (exists("fitting_beta")){rm(fitting_beta)}
+if (exists("under_reporting_est")){rm(under_reporting_est)}
+if (exists("covid19_waves")){rm(covid19_waves)}
+rm(par)
+
+fit_daily_reported <- function(par){
+  
+  load(file = paste('1_inputs/fit/first_wave_fit',this_setting,'.Rdata',sep=''))
+  
+  strain_inital = strain_now = 'WT' 
+  model_weeks =as.numeric((fit_cutoff_dates[2]-date_start)/7)
+  covid19_waves = data.frame(date = c(as.Date('2021-06-09')+first_wave_fit$par[1],
+                                      as.Date('2021-10-15')+par[1]),
+                             strain = c('delta','omicron'))
+  under_reporting_est = par[2]
+  fitting_beta= c(first_wave_fit$par[3],par[3])
+
+  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+  
+  workshop = case_history %>%
+    filter(date > fit_cutoff_dates[1]) %>% #fit only after first wave
+    select(date,rolling_average) %>%
+    mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
+      rolling_average = rolling_average * under_reporting_est) %>%
+    rename(adjusted_reported = rolling_average) %>%
+    left_join(incidence_log, by = "date") %>%
+    mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
+  
+  fit_statistic = sum(workshop$fit_statistic,na.rm=TRUE)
+  
+  return(fit_statistic)
+}
+
+system.time({second_wave_fit = optim(c(0,40,1),
+                                     fit_daily_reported,
+                                     method = "Nelder-Mead")})
+
+to_plot = workshop %>% filter(date>date_start & date<=(date_start+model_weeks*7))
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  plot_standard
+
+save(second_wave_fit, file = paste('1_inputs/fit/second_wave_fit',this_setting,'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
 
 
@@ -319,12 +359,21 @@ lets_fit_daily_reported = optim(covid19_waves$date,
 
 
 
-
+#NEED TO CREATE FITTED_COVID19_WAVES & FR_parameters,FR_next_state,FR_fitted_incidence_log,FR_fitted_incidence_log
 ### Save ___________________________________________________________________________________________
-#columns: fitted_setting, fitted_date, strain, date
+#fitted_covid19_waves columns: fitted_setting, fitted_date, strain, date
 load(file = '1_inputs/fit/fitted_covid19_waves.Rdata')
 fitted_covid19_waves = fitted_covid19_waves %>% 
   mutate(fitted_setting = this_setting,
          fitted_date = Sys.Date())
 fitted_covid19_waves = rbind(fitted_covid19_waves,this_fit_covid19_waves)
 save(fitted_covid19_waves, file = '1_inputs/fit/fitted_covid19_waves.Rdata')
+
+
+fitted_results = list(
+  FR_parameters = parameters,
+  FR_next_state = next_state,
+  FR_incidence_log_tidy = incidence_log_tidy,
+  FR_incidence_log = incidence_log
+)
+save(fitted_results, file = paste("1_inputs/fitted_results_",setting,Sys.Date(),".Rdata"))
