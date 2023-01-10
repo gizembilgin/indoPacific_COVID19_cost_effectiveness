@@ -25,14 +25,14 @@ waning_toggle_severe_outcome = FALSE #let's save some time, this is not used in 
 waning_toggle_rho_acqusition = TRUE
 
 #initial search range of seed dates
-if (setting == "FJI"){
+if (this_setting == "FJI"){
   date_start = as.Date('2021-04-30')
   strain_inital = strain_now = 'WT' 
   
   covid19_waves = data.frame(date = #c(as.Date('2021-06-06'),as.Date('2021-10-21'),as.Date('2022-01-15')), # initial best guess!
                              c(as.Date('2021-06-06'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
                      strain = c('delta','omicron','omicron'))
-} else if (setting == "PNG"){
+} else if (this_setting == "PNG"){
   date_start = as.Date('2021-02-01')
   strain_inital = strain_now = 'WT'
   
@@ -411,4 +411,4 @@ fitted_results = list(
   FR_incidence_log_tidy = incidence_log_tidy,
   FR_incidence_log = incidence_log
 )
-save(fitted_results, file = paste("1_inputs/fitted_results_",setting,Sys.Date(),".Rdata"))
+save(fitted_results, file = paste("1_inputs/fitted_results_",this_setting,Sys.Date(),".Rdata"))
