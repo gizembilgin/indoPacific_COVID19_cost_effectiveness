@@ -265,7 +265,7 @@ fit_daily_reported <- function(par){
     left_join(incidence_log, by = "date") %>%
     mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
   
-  fit_statistic = sum(workshop$fit_statistic[workshop$date> fit_cutoff_dates[1],], #fit only after first wave
+  fit_statistic = sum(workshop$fit_statistic[workshop$date> fit_cutoff_dates[1]], #fit only after first wave
                       na.rm=TRUE)
   
   return(fit_statistic)
