@@ -366,6 +366,43 @@ fitted_covid19_waves = fitted_covid19_waves %>%
          fitted_date = Sys.Date())
 fitted_covid19_waves = rbind(fitted_covid19_waves,this_fit_covid19_waves)
 save(fitted_covid19_waves, file = '1_inputs/fit/fitted_covid19_waves.Rdata')
+#___________________________________________________________________________
+
+
+#fitted_results = run with best estimates
+load(file = paste('1_inputs/fit/first_wave_fit',this_setting,'.Rdata',sep=''))
+load(file = paste('1_inputs/fit/second_wave_fit',this_setting,'.Rdata',sep=''))
+load(file = paste('1_inputs/fit/third_wave_fit',this_setting,'.Rdata',sep=''))
+
+strain_inital = strain_now = 'WT' 
+model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
+covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
+                                    as.Date('2021-10-15')+round(par[1]),
+                                    as.Date('2022-02-01')),
+                           strain = c('delta','omicron','omicron'))
+fitting_beta= c(first_wave_fit$par[3],
+                par[3],
+                1)
+
+source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+
+workshop = case_history %>%
+  select(date,rolling_average) %>%
+  mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
+    rolling_average = case_when(
+      #COMEBACK - need third wave here
+      date > fit_cutoff_dates[1] ~ rolling_average * second_wave_fit$par[2],
+      date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
+  rename(adjusted_reported = rolling_average) %>%
+  left_join(incidence_log, by = "date") %>%
+  mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
+
+to_plot = workshop %>% filter(date>date_start)
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  plot_standard
+sum(workshop$fit_statistic,na.rm=TRUE)
 
 
 fitted_results = list(
