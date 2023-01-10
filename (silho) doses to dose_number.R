@@ -217,7 +217,7 @@ workshop = workshop %>%
   select(-cumulative_doses)
 workshop[is.na(workshop)] <- 0
 if (nrow(workshop[round(workshop$doses_delivered_this_date) < 0, ]) > 0) {stop('negative doses_delivered_this_date!')}
-#ggplot(workshop) + geom_line(aes(x = date, y = doses_delivered_this_date, color = as.factor(dose)))
+
 
 # compare to smoothed provided
 # check_1 = workshop %>%
@@ -238,6 +238,7 @@ if (nrow(workshop[round(workshop$doses_delivered_this_date) < 0, ]) > 0) {stop('
 
 vaccination_history_DOSE_NUMBER = workshop
 rm(comparison,workshop,check,workshop_expanded,max_date_zero)
+#ggplot(vaccination_history_DOSE_NUMBER) + geom_line(aes(x = date, y = doses_delivered_this_date, color = as.factor(dose)))
 
 
 ### FORCE previous dose to be delivered before next dose
