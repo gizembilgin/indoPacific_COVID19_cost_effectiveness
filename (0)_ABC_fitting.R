@@ -8,7 +8,7 @@
 #clear the field!
 rm(list=ls())
 
-this_setting = setting = "PNG"
+this_setting = setting = "FJI"
 
 
 
@@ -66,54 +66,44 @@ source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))
 source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
 source(paste(getwd(),"/(2)_inital_state.R",sep=""))
 
-
 VE_real_range = data.frame()
 date_list = seq(max(date_start,min(vaccination_history_TRUE$date)+ min(vaxCovDelay$delay)),
                 Sys.Date()+1,
                 by="days")
 
-
 for (i in 1:length(date_list)) {
   #date_now
   date_now = date_list[i]
   
-  #strain_now
-  if (date_now < min(covid19_waves$date[covid19_waves$strain == 'delta'])) {
-    strain_now = "WT"
-  } else if (date_now >= min(covid19_waves$date[covid19_waves$strain == 'delta']) &
-             date_now < min(covid19_waves$date[covid19_waves$strain == 'omicron'])) {
-    strain_now = "delta"
-  } else if (date_now >= min(covid19_waves$date[covid19_waves$strain == 'omicron'])) {
-    strain_now = "omicron"
-  }
-  
-  VE_here = VE_time_step(
-    strain_now,
+  #(1/3) save VE as all WT-delta estimates
+  VE_delta = VE_time_step(
+    "delta",
     date_now,
     'any_infection',
     VE_waning_LOCAL = VE_waning_distribution, #loaded from (2)
     vaccination_history_LOCAL = vaccination_history_TRUE, #loaded from (1)
     SA_toggles_local = sensitivity_analysis_toggles) %>%
-    mutate(date = date_now)
+    mutate(date = date_now,
+           strain = "delta")
   
-  #gradual shift in VE from omicron to delta
-  if (date_now %in% omicron_shift$date){
-    VE_here = VE_time_step("delta",date_now,'any_infection',
-                                 VE_waning_LOCAL = VE_waning_distribution,
-                                 vaccination_history_LOCAL = vaccination_history_TRUE,
-                                 SA_toggles_local = sensitivity_analysis_toggles) %>%
-      rename(delta_VE = VE) %>%
-      left_join(VE_here, by = c("risk_group", "dose", "vaccine_type", "age_group")) %>%
-      mutate(VE = VE * omicron_shift$percentage[omicron_shift$date == date_now] +
-               delta_VE * (1-omicron_shift$percentage[omicron_shift$date == date_now])) %>%
-      select(-delta_VE)
-  }
+  #(2/3) save VE as all omicron estimates
+  VE_omicron = VE_time_step(
+    "omicron",
+    date_now,
+    'any_infection',
+    VE_waning_LOCAL = VE_waning_distribution, #loaded from (2)
+    vaccination_history_LOCAL = vaccination_history_TRUE, #loaded from (1)
+    SA_toggles_local = sensitivity_analysis_toggles) %>%
+    mutate(date = date_now,
+           strain = "omicron")
   
-  VE_real_range = rbind(VE_real_range, VE_here)
+  #(3/3) within time step of each run calculate as mixed WT-delta/omicron estimates within omicron shift
+  
+  VE_real_range = rbind(VE_real_range, VE_delta,VE_omicron)
 }
 
 rm(VE_time_step)
-save(VE_real_range, file = paste('1_inputs/fit/VE_real_range',Sys.Date(),this_setting,'.Rdata',sep=''))
+save(VE_real_range, file = paste('1_inputs/fit/VE_real_range',this_setting,Sys.Date(),'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
 
 
