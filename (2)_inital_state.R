@@ -329,6 +329,15 @@ if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booste
                  vaccine_type == this_vax) %>%
         group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
         summarise(VE_days = mean(VE_days),.groups = "keep") 
+      #small edit for J&J
+      if (this_vax == "Johnson & Johnson" & nrow(this_combo) == 0){
+        this_combo = VE_waning_distribution %>% 
+          filter(schedule == "booster" & 
+                   dose == this_dose & 
+                   vaccine_type == this_vax) %>%
+          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+          summarise(VE_days = mean(VE_days),.groups = "keep") 
+      }
       
       # Second Choice = same primary schedule + booster of same vaccine mode
       if (nrow(this_combo) == 0){
