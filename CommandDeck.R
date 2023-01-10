@@ -31,10 +31,16 @@ if ( debug == "on"){
   ## options for run from fit with omicron onwards
   outbreak_timing = "off"
   strain_inital = strain_now = 'omicron'             
-  load(file = '1_inputs/last_fit_date.Rdata')
-  date_start = fitted_max_date
   model_weeks = 5          
-  
+  #find latest model run in known dates
+  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting,"*",sep=""))
+  list_poss_Rdata_details = double()
+  for (i in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  date_start = as.Date(file.info(paste("1_inputs/fit/",latest_file,sep=''))$mtime) 
   
   ##options for run from start
   # date_start = as.Date('2021-03-31')
@@ -82,11 +88,17 @@ if ( debug == "on"){
 if (fitting == "on"){
   warning('Fitting is on')
 } else if ( ! 'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
-  load(file = '1_inputs/last_fit_date.Rdata')
-  if (as.numeric(abs(fitted_max_date - Sys.Date()))>30){ 
-    warning('need to refit model as fitted_max_date over one month since today!')
-  } else{
-    load(file = '1_inputs/fitted_results.Rdata')
+
+    #load latest model run in known dates
+    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting,"*",sep=""))
+    list_poss_Rdata_details = double()
+    for (i in 1:length(list_poss_Rdata)){
+      list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                      file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+    }
+    latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+    load(paste(rootpath,'x_results/',latest_file,sep=''))
+    #___________________________________
     
     if('additional_doses' %in% names(sensitivity_analysis_toggles)){
       if (sensitivity_analysis_toggles$additional_doses == 'start_2022'){
@@ -101,13 +113,13 @@ if (fitting == "on"){
     }
 
     parameters = fitted_results[[1]] %>% 
-      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+      filter(fitted_risk_group_scenario == this_risk_group_scenario)
     fitted_next_state = fitted_results[[2]] %>% 
-      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+      filter(fitted_risk_group_scenario == this_risk_group_scenario)
     fitted_incidence_log_tidy = fitted_results[[3]] %>% 
-      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+      filter(fitted_risk_group_scenario == this_risk_group_scenario)
     fitted_incidence_log = fitted_results[[4]] %>% 
-      filter(country == setting & fitted_risk_group_scenario == this_risk_group_scenario)
+      filter(fitted_risk_group_scenario == this_risk_group_scenario)
     rm(fitted_results)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) 
@@ -118,7 +130,6 @@ if (fitting == "on"){
         stop('no fitted result avaliable for this risk group characteristic')
       }
     }
-  }
 } else if('vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
     
     if (! risk_group_name == 'pregnant_women'){stop('havent configured vax hesistance sensitivity analysis for another risk group')}
@@ -179,24 +190,24 @@ prev_risk_group = risk_group_name
 
 
 ##(B) Load functions
-source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
-source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_rho_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
+source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""),local=TRUE)
+source(paste(getwd(),"/(function)_VE_time_step.R",sep=""),local=TRUE)
+source(paste(getwd(),"/(function)_rho_time_step.R",sep=""),local=TRUE)
+source(paste(getwd(),"/(function)_vax_strategies.R",sep=""),local=TRUE)
+source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""),local=TRUE)
 if (exists("VE_estimates_imputed") == FALSE){load(file='1_inputs/VE_estimates_imputed.Rdata')}
 
 
 ##(C) Run the model!
 incidence_log_tracker=data.frame()
 for (run_number in 1:complete_model_runs){
-  source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
-  source(paste(getwd(),"/(2)_inital_state.R",sep=""))
-  source(paste(getwd(),"/(4)_time_step.R",sep=""))
+  source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""),local=TRUE)
+  source(paste(getwd(),"/(2)_inital_state.R",sep=""),local=TRUE)
+  source(paste(getwd(),"/(4)_time_step.R",sep=""),local=TRUE)
   if (fitting == "off"){
-    source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) # COMEBACK - should this just save its results somewhere?
+    source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep=""),local=TRUE) # COMEBACK - should this just save its results somewhere?
     incidence_log_tracker <-rbind(incidence_log_tracker,incidence_log[,c('daily_cases','date')])
-    source(paste(getwd(),"/(6)_severe_outcome_proj.R",sep=""))
+    source(paste(getwd(),"/(6)_severe_outcome_proj.R",sep=""),local=TRUE)
   }
 }
 
