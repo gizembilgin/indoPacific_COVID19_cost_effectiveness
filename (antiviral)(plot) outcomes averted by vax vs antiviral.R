@@ -14,7 +14,6 @@ library(foreach)
 rm(list=ls())
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
 
-load(file = '1_inputs/last_fit_date.Rdata')
 source(paste(getwd(),"/(antiviral)(function) antiviral_model_manger.R",sep=""))
 source(paste(getwd(),"/(antiviral)(function) antiviral_model_worker.R",sep=""))
 source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
@@ -28,10 +27,11 @@ RECORD_antiviral_model_simulations = data.frame()
 ### ANTIVIRAL SIMULATIONS ##################################################
 time.start.AntiviralSimulations=proc.time()[[3]]
 
-for (setting in c("PNG","TLS","IDN","FJI","SLB","PHL")){
+#for (setting in c("PNG","TLS","IDN","FJI","SLB","PHL")){
+for (setting in c("FJI")){
 
   #load latest antiviralSetUp_* (transmission model run for 1 year)
-  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = "antiviralSetUp_*")
+  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",setting,"*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
@@ -40,20 +40,13 @@ for (setting in c("PNG","TLS","IDN","FJI","SLB","PHL")){
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
   load(file = paste(rootpath,"x_results/",latest_file,sep=''))
   
-  #subset to save RAM
-  RECORD_antiviral_setup$outcomes_without_antivirals = RECORD_antiviral_setup$outcomes_without_antivirals %>% filter(country == setting)
-  RECORD_antiviral_setup$likelihood_severe_outcome = RECORD_antiviral_setup$likelihood_severe_outcome %>% filter(country == setting)
-  RECORD_antiviral_setup$incidence_log_tidy = RECORD_antiviral_setup$incidence_log_tidy %>% filter(country == setting)
-  RECORD_antiviral_setup$exposed_log = RECORD_antiviral_setup$exposed_log %>% filter(country == setting)
-  RECORD_antiviral_setup$incidence_log = RECORD_antiviral_setup$incidence_log %>% filter(country == setting)
-  RECORD_antiviral_setup$vaccination_history_FINAL = RECORD_antiviral_setup$vaccination_history_FINAL %>% filter(country == setting)
-  
   RECORD_antiviral_model_simulations_0 <- antiviral_model_manger(
    
     LIST_antiviral_start_date = c(as.Date('2023-01-01'),as.Date('2023-07-01')), 
-    LIST_vax_scenario = list('all willing adults vaccinated with a primary schedule',
-                            'all willing adults vaccinated with a primary schedule and high risk group recieve a booster', 
-                            'all willing adults vaccinated with a primary schedule plus booster dose'),
+    LIST_vax_scenario = unique(RECORD_antiviral_setup$outcomes_without_antivirals$vax_scenario),
+    # LIST_vax_scenario = list('all willing adults vaccinated with a primary schedule', #NB: FJI WILL HAVE ADDITIONAL DETAIL HERE
+    #                         'all willing adults vaccinated with a primary schedule and high risk group recieve a booster', 
+    #                         'all willing adults vaccinated with a primary schedule plus booster dose'),
     LIST_antiviral_target_group = list('adults_with_comorbidities', #baseline
                                     'unvaccinated_adults',
                                     'unvaccinated_adults_AND_adults_with_comorbidities',
