@@ -12,9 +12,11 @@ if (outbreak_timing == "after"){
   num_time_steps = model_weeks *7 + as.numeric(max(covid19_waves$date)-date_start) -7
 }
 D_primary = max(vaccination_history_FINAL$dose[vaccination_history_FINAL$schedule == "primary"])
-if (exists("fitting_beta") == FALSE){fitting_beta = rep(1,nrow(covid19_waves))}
+if (exists("fitting_beta") == FALSE & fitting == "off"){fitting_beta = rep(1,nrow(covid19_waves))}
+while(length(fitting_beta) != nrow(covid19_waves) & fitting == "off"){fitting_beta = c(fitting_beta,1)}
 
 for (increments_number in 1:num_time_steps){
+#for (increments_number in 1:167){
 
   if (fitting == "on" & increments_number == 1){
     
@@ -253,7 +255,7 @@ for (increments_number in 1:num_time_steps){
               #parameters$lambda = 1/2.22 #COMEBACK - hard coded :(
               #parameters$delta = 1/9.87
             }
-            prev_beta = parameters$beta
+            prev_beta = rep(parameters$beta1,J)
             parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)*
               fitting_beta[which(covid19_waves$date == date_now)]
             this_beta = parameters$beta
