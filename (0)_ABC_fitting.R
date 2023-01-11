@@ -8,7 +8,7 @@
 #clear the field!
 rm(list=ls())
 
-this_setting = setting = "FJI"
+this_setting = setting = "PNG"
 
 
 
@@ -103,7 +103,7 @@ for (i in 1:length(date_list)) {
 }
 
 rm(VE_time_step)
-save(VE_real_range, file = paste('1_inputs/fit/VE_real_range',this_setting,Sys.Date(),'.Rdata',sep=''))
+save(VE_real_range, file = paste('1_inputs/fit/VE_real_range_',this_setting,'_',Sys.Date(),'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
 
 
