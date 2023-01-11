@@ -89,14 +89,14 @@ for (increments_number in 1:num_time_steps){
         }
       } else if (fitting == "on"){
         #load latest VE saved in known dates
-        list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("VE_real_range",setting,"*",sep=""))
+        list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("VE_real_range_",setting,"*",sep=""))
         list_poss_Rdata_details = double()
         for (i in 1:length(list_poss_Rdata)){
           list_poss_Rdata_details = rbind(list_poss_Rdata_details,
                                           file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
         }
         latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-        load(paste(rootpath,'x_results/',latest_file,sep=''))
+        load(paste('1_inputs/fit/',latest_file,sep=''))
         
         
         if (date_now %in% omicron_shift$date){
@@ -107,7 +107,7 @@ for (increments_number in 1:num_time_steps){
             filter(date == date_now & strain == 'delta') %>%
             rename(delta_VE = VE)
           
-          parameters$VE  = workshop_omicron %>%
+          parameters$VE <- workshop_omicron %>%
             left_join(workshop_delta,by = c("risk_group", "dose", "vaccine_type", "age_group")) %>%
             mutate(VE = omicron_VE * omicron_shift$percentage[omicron_shift$date == date_now] +
                      delta_VE * (1-omicron_shift$percentage[omicron_shift$date == date_now])) %>%
@@ -116,9 +116,9 @@ for (increments_number in 1:num_time_steps){
           rm(workshop_delta,workshop_omicron)
           
         } else{
-          ifelse(strain_now == 'WT',strain_eff = 'delta',strain_eff = strain_now)
+          strain_eff = ifelse(strain_now == 'WT','delta',strain_now)
           
-          parameters$VE= VE_real_range %>% 
+          parameters$VE <- VE_real_range %>% 
             filter(date == date_now & strain == strain_eff)
         }
         rm(VE_real_range)
