@@ -102,10 +102,12 @@ for (increments_number in 1:num_time_steps){
         if (date_now %in% omicron_shift$date){
           workshop_omicron = VE_real_range %>% 
             filter(date == date_now & strain == 'omicron') %>%
-            rename(omicron_VE = VE)
+            rename(omicron_VE = VE) %>%
+            select(-strain,-date)
           workshop_delta  = VE_real_range %>% 
             filter(date == date_now & strain == 'delta') %>%
-            rename(delta_VE = VE)
+            rename(delta_VE = VE) %>%
+            select(-strain,-date)
           
           parameters$VE <- workshop_omicron %>%
             left_join(workshop_delta,by = c("risk_group", "dose", "vaccine_type", "age_group")) %>%
