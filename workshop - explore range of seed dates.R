@@ -169,13 +169,13 @@ fit_tracker = data.frame()
 for(this_param in search_list){
   
   strain_inital = strain_now = 'WT' 
-  model_weeks =as.numeric((fit_cutoff_dates[2]-date_start)/7)
+  model_weeks = as.numeric((fit_cutoff_dates[2]-date_start)/7)
   
   under_reporting_est = 40
   fitting_beta= c(first_wave_fit$par[3],
                   this_param)
   covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
-                                      as.Date('2021-11-01')),
+                                      as.Date('2021-10-19')),
                              strain = c('delta','omicron'))
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
