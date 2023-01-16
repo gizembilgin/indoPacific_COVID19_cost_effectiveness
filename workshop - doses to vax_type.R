@@ -16,8 +16,6 @@ setting_vaccine = setting_vaccine %>%
   group_by(setting,delivery_month,vaccine_type) %>%
   summarise(doses = sum(doses), .groups = "keep")
 
-
-
 this_setting_vaccine_type = setting_vaccine %>%
   filter(setting == this_setting)
 
