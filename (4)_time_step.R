@@ -75,7 +75,7 @@ for (increments_number in 1:num_time_steps){
                                        SA_toggles_local = sensitivity_analysis_toggles)
           
           #gradual shift in VE from omicron to delta
-          if (date_now %in% omicron_shift$date){
+          if (date_now %in% omicron_shift$date[omicron_shift$wave == 1]){
             parameters$VE = VE_time_step("delta",date_now,'any_infection',
                                     VE_waning_LOCAL = VE_waning_distribution,
                                     vaccination_history_LOCAL = vaccination_history_FINAL,
@@ -99,7 +99,7 @@ for (increments_number in 1:num_time_steps){
         load(paste('1_inputs/fit/',latest_file,sep=''))
         
         
-        if (date_now %in% omicron_shift$date){
+        if (date_now %in% omicron_shift$date[omicron_shift$wave == 1]){
           workshop_omicron = VE_real_range %>% 
             filter(date == date_now & strain == 'omicron') %>%
             rename(omicron_VE = VE) %>%
@@ -317,12 +317,15 @@ for (increments_number in 1:num_time_steps){
         }
         #shift from delta to omicron parameters
         if (date_now %in% omicron_shift$date){
-          parameters$lambda = 1/2.22*omicron_shift$percentage[omicron_shift$date == date_now] + 
-            1/3.71 * (1-omicron_shift$percentage[omicron_shift$date == date_now])
           
-          parameters$delta = 1/9.87*omicron_shift$percentage[omicron_shift$date == date_now] + 
-            1/10.9 * (1-omicron_shift$percentage[omicron_shift$date == date_now])
-          
+          if (date_now %in% omicron_shift$date[omicron_shift$wave == 1]){
+            parameters$lambda = 1/2.22*omicron_shift$percentage[omicron_shift$date == date_now] + 
+              1/3.71 * (1-omicron_shift$percentage[omicron_shift$date == date_now])
+            
+            parameters$delta = 1/9.87*omicron_shift$percentage[omicron_shift$date == date_now] + 
+              1/10.9 * (1-omicron_shift$percentage[omicron_shift$date == date_now])
+          }
+
           parameters$beta = this_beta*omicron_shift$percentage[omicron_shift$date == date_now] + prev_beta * (1-omicron_shift$percentage[omicron_shift$date == date_now])
           
 
