@@ -102,6 +102,13 @@ if ("omicron" %in% unique(covid19_waves$strain)){
     omicron_shift$date = as.Date(omicron_shift$date, format =  '%Y-%m-%d')
   }
 }
+if ("delta" %in% unique(covid19_waves$strain) & !(covid19_waves$strain[1] == "delta")){
+  delta_shift =  synthetic_strain_shift %>% filter(strain == "delta") %>% 
+    select(days,percentage) %>%
+    mutate(date = days + min(covid19_waves$date[covid19_waves$strain == "delta"])) %>%
+    select(-days)
+  delta_shift$date = as.Date(delta_shift$date, format =  '%Y-%m-%d')
+}
 
 
 rm(intro_raw,this_strain,this_raw,df_this_strain,days_to_predict,smoothed_spline,fitted.results,fit,this_synthetic_strain_shift,real_days_removed,plot_list)
