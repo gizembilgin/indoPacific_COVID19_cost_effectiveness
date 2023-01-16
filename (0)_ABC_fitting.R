@@ -267,7 +267,7 @@ fit_daily_reported <- function(par){
   return(fit_statistic)
 }
 
-system.time({second_wave_fit = optim(c(0,40,1),
+system.time({second_wave_fit = optim(c(0,50,1.2),
                                      fit_daily_reported,
                                      method = "Nelder-Mead")})
 
