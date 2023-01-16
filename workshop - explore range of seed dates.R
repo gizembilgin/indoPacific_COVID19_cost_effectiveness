@@ -412,11 +412,7 @@ under_reporting_est = 40
 fitting_beta= c(first_wave_fit$par[3],
                 1.2)
 covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
-<<<<<<< Updated upstream
-                                    as.Date('2021-10-15')),
-=======
                                     covid19_waves$date[2]),
->>>>>>> Stashed changes
                            strain = c('delta','omicron'))
 source(paste(getwd(),"/CommandDeck.R",sep=""))
 
