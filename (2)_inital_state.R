@@ -375,7 +375,13 @@ VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_TRUE$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
   #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
-}
+} else(
+  VE = VE_inital = crossing(risk_group = unique(vaccination_history_FINAL$risk_group),
+                            dose = unique(vaccination_history_FINAL$dose),
+                            vaccine_type = unique(vaccination_history_FINAL$vaccine_type),
+                            age_group = unique(vaccination_history_FINAL$age_group),
+                            VE = 0)
+)
 
 if (fitting == "off"){
   waning_shape_plot_list = list()
