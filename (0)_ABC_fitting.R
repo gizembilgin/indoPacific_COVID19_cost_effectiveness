@@ -29,15 +29,17 @@ if (this_setting == "FJI"){
   date_start = as.Date('2021-04-30')
   strain_inital = strain_now = 'WT' 
   
-  covid19_waves = data.frame(date = #c(as.Date('2021-06-06'),as.Date('2021-10-21'),as.Date('2022-01-15')), # initial best guess!
+  baseline_covid19_waves = data.frame(date = #c(as.Date('2021-06-06'),as.Date('2021-10-21'),as.Date('2022-01-15')), # initial best guess!
                              c(as.Date('2021-06-06'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
                      strain = c('delta','omicron','omicron'))
 } else if (this_setting == "PNG"){
-  date_start = as.Date('2021-02-01')
+
   strain_inital = strain_now = 'WT'
   
-  covid19_waves = data.frame(date = c(as.Date('2021-03-01'),as.Date('2021-09-01'),as.Date('2022-02-01')),
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-01-15'),as.Date('2021-09-01'),as.Date('2021-12-01')),
                              strain = c('WT','delta','omicron'))
+  
+  date_start = covid19_waves$date[1] - 2
 }
 model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
 
@@ -114,7 +116,7 @@ save(VE_real_range, file = paste('1_inputs/fit/VE_real_range_',this_setting,'_',
 
 system.time(source(paste(getwd(),"/CommandDeck.R",sep="")))
 
-coeff <- 1/20
+coeff <- 1/150
 ggplot() +
   geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
              aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
@@ -151,8 +153,12 @@ reported_peaks = c(reported_peaks,third_peak)
 #reported_peaks #"2021-07-21" "2022-01-21" "2022-07-15"
 
 #fit cutoff dates
-fit_cutoff_dates = c(as.Date('2021-10-15'),#earliest likely introduction of Omicron
-                     reported_peaks[2] + as.numeric(reported_peaks[3] - reported_peaks[2])/2)  
+if (this_setting == "FJI"){
+  fit_cutoff_dates = c(as.Date('2021-10-15'),#earliest likely introduction of Omicron
+                       reported_peaks[2] + as.numeric(reported_peaks[3] - reported_peaks[2])/2)  
+} else if (this_setting == "PNG"){
+  fit_cutoff_dates = c(as.Date('2021-07-05')) #first good introduction of Delta in PNG
+}
 #_____________________________________________
 
 
@@ -166,7 +172,7 @@ fit_daily_reported <- function(par){
   
   strain_inital = strain_now = 'WT' 
   model_weeks = as.numeric((fit_cutoff_dates[1]-date_start-1)/7)
-  covid19_waves = data.frame(date = as.Date('2021-06-09')+round(par[1]),
+  covid19_waves = data.frame(date = baseline_covid19_waves$date[1]+round(par[1]),
                              strain = 'delta')
   
   under_reporting_est = par[2]
