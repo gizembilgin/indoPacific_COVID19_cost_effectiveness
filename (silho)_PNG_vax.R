@@ -15,7 +15,7 @@ supply = supply %>%
 
 
 
-### LOAD GOVERNMENT REPOT OF DELIVERED VACCINES
+### LOAD GOVERNMENT REPORT OF DELIVERED VACCINES
 #total doses delivered by vaccine type
 setting_vaccine <- read.csv("1_inputs/vaccination/vaccine_setting_history.csv",header=TRUE)%>%
   filter(setting == this_setting)
@@ -36,7 +36,7 @@ setting_vaccine_dn <- setting_vaccine_dn %>% filter( last_update == max(setting_
 ### SPLIT BETWEEN VACCINE TYPES
 workshop = vaccination_history_DOSE_NUMBER 
 
-#dates new vaccine types became avaliable in PNG
+#dates new vaccine types became available in PNG
 vax_type_introduction = supply %>%
   group_by(vaccine_type) %>%
   summarise(date = min(delivery_month)+round(365/12/2)) %>% #added component to make it the middle of the delivery month
