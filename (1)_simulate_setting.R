@@ -217,18 +217,18 @@ case_history <- workshop_cases %>%
          rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
                             +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
 
-# ggplot() + 
-#   geom_point(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) + 
-#   xlab("") + 
+# ggplot() +
+#   geom_point(data=case_history,aes(x=date,y=rolling_average),na.rm=TRUE) +
+#   xlab("") +
 #   scale_x_date(date_breaks="1 month", date_labels="%b") +
 #   ylab("daily cases") +
-#   theme_bw() + 
+#   theme_bw() +
 #   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(), 
+#         panel.grid.minor = element_blank(),
 #         panel.border = element_blank(),
 #         axis.line = element_line(color = 'black'))
 
-rm(workshop, workshop_cases)
+rm(workshop_cases)
 #______________________________________________________________________________________________________________________________________
 
 
@@ -282,7 +282,10 @@ if (NPI_toggle == 'stringency'){
 NPI_estimates <- workshop[,c('date','NPI')] %>%
   mutate(date =as.Date(workshop$date, "%d%b%Y"))
 NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
-#ggplot(NPI_estimates) + geom_line(aes(date,NPI))
+
+# NPI_estimates = NPI_estimates %>% mutate(NPI = (NPI + lag(NPI,default=0) + lag(NPI,n=2,default=0)+lag(NPI,n=3,default=0) +
+#                                                     lead(NPI,default=0)+lead(NPI,n=2,default=0)+lead(NPI,n=3,default=0))/7)
+#ggplot(NPI_estimates) + geom_point(aes(date,NPI)) + geom_line(aes(date,NPI_ave))
 
 rm(workshop,NPI_toggle)
 #______________________________________________________________________________________________________________________________________
