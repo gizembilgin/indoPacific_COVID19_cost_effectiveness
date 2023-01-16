@@ -12,7 +12,7 @@ if (outbreak_timing == "after"){
   num_time_steps = model_weeks *7 + as.numeric(max(covid19_waves$date)-date_start) -7
 }
 D_primary = max(vaccination_history_FINAL$dose[vaccination_history_FINAL$schedule == "primary"])
-if (exists("fitting_beta") == FALSE & fitting == "off"){fitting_beta = rep(1,nrow(covid19_waves))}
+if (exists("fitting_beta") == FALSE){fitting_beta = rep(1,nrow(covid19_waves))}
 while(length(fitting_beta) != nrow(covid19_waves) & fitting == "off"){fitting_beta = c(fitting_beta,1)}
 
 for (increments_number in 1:num_time_steps){
@@ -283,13 +283,8 @@ for (increments_number in 1:num_time_steps){
 
       
         if (date_now %in% covid19_waves$date){
-            if (date_now == min(covid19_waves$date[covid19_waves$strain == "delta"])){
-              strain_now = 'delta'
-            } else if (date_now == min(covid19_waves$date[covid19_waves$strain == "omicron"])){
-              strain_now = 'omicron'
-              #parameters$lambda = 1/2.22 #COMEBACK - hard coded :(
-              #parameters$delta = 1/9.87
-            }
+          strain_now = covid19_waves$strain[covid19_waves$date == date_now]
+            
             prev_beta = rep(parameters$beta1,J)
             parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)*
               fitting_beta[which(covid19_waves$date == date_now)]
@@ -328,8 +323,10 @@ for (increments_number in 1:num_time_steps){
 
           parameters$beta = this_beta*omicron_shift$percentage[omicron_shift$date == date_now] + prev_beta * (1-omicron_shift$percentage[omicron_shift$date == date_now])
           
-
         }
+      if (date_now %in% delta_shift$date){
+        parameters$beta = this_beta*delta_shift$percentage[delta_shift$date == date_now] + prev_beta * (1-delta_shift$percentage[delta_shift$date == date_now])
+      }
         # if (fitting == "off"){
         #   if (date_now>=seed_date){
         #     parameters$VE$VE = parameters$VE$VE * 0.9
