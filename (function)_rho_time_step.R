@@ -108,6 +108,8 @@ if ("delta" %in% unique(covid19_waves$strain) & !(covid19_waves$strain[1] == "de
     mutate(date = days + min(covid19_waves$date[covid19_waves$strain == "delta"])) %>%
     select(-days)
   delta_shift$date = as.Date(delta_shift$date, format =  '%Y-%m-%d')
+} else{
+  delta_shift = data.frame()
 }
 
 
