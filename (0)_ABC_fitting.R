@@ -30,7 +30,7 @@ if (this_setting == "FJI"){
   strain_inital = strain_now = 'WT' 
   
   baseline_covid19_waves = data.frame(date = #c(as.Date('2021-06-06'),as.Date('2021-10-21'),as.Date('2022-01-15')), # initial best guess!
-                             c(as.Date('2021-06-06'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
+                             c(as.Date('2021-06-08'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
                      strain = c('delta','omicron','omicron'))
 } else if (this_setting == "PNG"){
 
@@ -284,6 +284,67 @@ ggplot() +
   plot_standard
 
 save(second_wave_fit, file = paste('1_inputs/fit/second_wave_fit',this_setting,'.Rdata',sep=''))
+#______________________________________________________________________________________________________________
+
+
+
+#FIT THIRD WAVE_______________________________
+if (exists("fitting_beta")){rm(fitting_beta)}
+if (exists("under_reporting_est")){rm(under_reporting_est)}
+if (exists("covid19_waves")){rm(covid19_waves)}
+rm(par)
+
+fit_daily_reported <- function(par){
+  
+  load(file = paste('1_inputs/fit/first_wave_fit',this_setting,'.Rdata',sep=''))
+  load(file = paste('1_inputs/fit/second_wave_fit',this_setting,'.Rdata',sep=''))
+  
+  strain_inital = strain_now = 'WT' 
+  model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
+  covid19_waves = data.frame(date = c(as.Date('2021-06-09') + round(first_wave_fit$par[1]),
+                                      as.Date('2021-10-15') + round(second_wave_fit$par[1]),
+                                      as.Date('2022-02-01') + round(par[1])),
+                             strain = c('delta','omicron','omicron'))
+  under_reporting_est = par[2]
+  fitting_beta= c(first_wave_fit$par[3],
+                  second_wave_fit$par[3],
+                  par[3])
+  
+  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+  
+  workshop = case_history %>%
+    select(date,rolling_average) %>%
+    mutate(
+      rolling_average = case_when(
+        date > fit_cutoff_dates[2] ~ rolling_average * under_reporting_est,
+        date > fit_cutoff_dates[1] ~ rolling_average * second_wave_fit$par[2],
+        date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
+    rename(adjusted_reported = rolling_average) %>%
+    left_join(incidence_log, by = "date") %>%
+    mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
+  
+  fit_statistic = sum(workshop$fit_statistic[workshop$date > fit_cutoff_dates[2]], #fit only after first wave
+                      na.rm=TRUE)
+  
+  return(fit_statistic)
+}
+
+system.time({third_wave_fit = optim(c(45,200,1.5),
+                                     fit_daily_reported,
+                                     method = "Nelder-Mead")})
+
+# system.time({first_wave_fit = optim(c(45,200,1.5),
+#                        fit_daily_reported,
+#                        method = "L-BFGS-B",
+#                        lower = c(-7,10,0.8), upper = c(7,20,1.2))})
+
+to_plot = workshop %>% filter(date>date_start & date<=(date_start+model_weeks*7))
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  plot_standard
+
+save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
 
 
