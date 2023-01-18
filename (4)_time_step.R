@@ -182,7 +182,9 @@ for (increments_number in 1:num_time_steps){
         
       ### Include today's primary doses
         for (this_risk_group in unique(vaccination_history_FINAL$risk_group)){
-          for (this_vax in unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$schedule == "primary"])){  #iterating over vaccine types
+          for (this_vax in unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$schedule == "primary" & 
+                                                                         !(vaccination_history_FINAL$vdose == 2 
+                                                                           & vaccination_history_FINAL$vaccine_type != vaccination_history_FINAL$FROM_vaccine_type)])){  #iterating over vaccine types
 
             this_vax_history = vaccination_history_FINAL %>%
               filter(schedule == "primary" & 
@@ -232,8 +234,8 @@ for (increments_number in 1:num_time_steps){
 
 
 
-        ### Include today's booster doses
-      todays_boosters = vaccination_history_FINAL %>% filter(schedule == "booster" & doses_delivered_this_date >0 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2])
+        ### Include today's booster doses and heterogeneous primary doses
+      todays_boosters = vaccination_history_FINAL %>% filter((schedule == "booster" | (dose == 2 & vaccine_type != FROM_vaccine_type))  & doses_delivered_this_date >0 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2])
         if (nrow(todays_boosters)>0){
           for (this_risk_group in unique(todays_boosters$risk_group)){
             for (this_vax in unique(todays_boosters$vaccine_type)){
