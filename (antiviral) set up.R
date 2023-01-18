@@ -5,7 +5,7 @@
 rm(list=ls())
 
 
-setting = "FJI"
+setting = "PNG"
 
 
 
