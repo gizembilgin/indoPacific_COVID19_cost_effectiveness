@@ -1,10 +1,29 @@
 ### SETUP ______________________________________________________________________
 strain_inital = strain_now = 'WT' 
-model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
-covid19_waves = data.frame(date = c(as.Date('2021-01-01'),
+baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-01-01'),
                                     as.Date('2021-07-05')-28, #first sequenced date - 4 weeks
                                     as.Date('2021-12-20')-28),#first sequenced date - 4 weeks
                            strain = c('WT','delta','omicron'))
+date_start = covid19_waves$date[1] - 2
+model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
+
+#general toggles
+fitting = "on"
+plotting = "off"; ticket = 0
+outbreak_timing = "off" #i.e., no new outbreak if =="after" than new VOC after last vaccine delivery date, if == 'during" new VOC introduced one week from now
+vax_strategy_toggle = "off" #no additional vax, use real vax data only
+vax_risk_strategy_toggle = "off"
+sensitivity_analysis_toggles = list()
+waning_toggle_acqusition = TRUE
+waning_toggle_severe_outcome = FALSE #let's save some time, this is not used in the modelling scenarios
+waning_toggle_rho_acqusition = TRUE
+
+#risk group toggles
+risk_group_prioritisation_to_date = NA
+risk_group_lower_cov_ratio = NA
+risk_group_toggle = "on"
+risk_group_name = 'adults_with_comorbidities'
+RR_estimate = 1.95
 #_______________________________________________________________________________
 
 
@@ -19,8 +38,7 @@ for (this_param in c(0.9,1,1.05,1.1,1.2,1.3,1.4,1.5,2)){
   fitting_beta = rep(this_param,3)
   covid19_waves = baseline_covid19_waves %>%
     mutate(date = date + this_shift)
-  
-   date_start = covid19_waves$date[1] - 2
+  date_start = covid19_waves$date[1] - 2
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
@@ -32,13 +50,13 @@ for (this_param in c(0.9,1,1.05,1.1,1.2,1.3,1.4,1.5,2)){
     mutate(beta_mod = this_param,
            shift = this_shift)
   
-  
   final_state_tracker = rbind(final_state_tracker,final_state)
   workshop_incidence_log_tracker = rbind(workshop_incidence_log_tracker,incidence_log)
 }
 #}
 
-to_plot = workshop_incidence_log_tracker
+to_plot = workshop_incidence_log_tracker %>%
+  filter(!(beta_mod %in% c(1.05,2)))
 coeff <- 1/150
 ggplot() +
   geom_point(data=case_history[case_history$date>min(workshop_incidence_log_tracker$date) & case_history$date<max(workshop_incidence_log_tracker$date),],
@@ -49,7 +67,8 @@ ggplot() +
     sec.axis = sec_axis(~.*coeff, name="Reported cases")
   )+ 
   plot_standard + 
-  facet_grid(shift ~ .) 
+  labs(color='beta modifier') + 
+  xlab('')
 
 final_state_tracker %>%
   filter(shift == 0) %>%
@@ -57,9 +76,11 @@ final_state_tracker %>%
   filter(class == 'R') %>%
   group_by(beta_mod,shift) %>%
   summarise(pop = sum(pop)) %>%
-  mutate(seroprev= pop/sum(pop_setting$pop))
+  mutate(seroprev= pop/sum(pop_setting$pop)) %>%
+  select(beta_mod,seroprev)
 
 age_dn = final_state_tracker %>%
+  filter(!(beta_mod %in% c(0.9,1.05,2)))%>%
   filter(shift == 0) %>%
   group_by(beta_mod,shift) %>%
   filter(class == 'R') %>%
@@ -69,7 +90,12 @@ age_dn = final_state_tracker %>%
   left_join(pop_setting,by='age_group') %>%
   mutate(seroprev= recovered/pop) %>%
   select(beta_mod,age_group,seroprev)
-ggplot(age_dn) + geom_point(aes(x=age_group,y=seroprev,color=as.factor(beta_mod)))
+ggplot(age_dn) + geom_point(aes(x=age_group,y=seroprev*100,color=as.factor(beta_mod))) + 
+  plot_standard+ 
+  labs(color='beta modifier') +
+  xlab('age group') +
+  ylab('seroprevalence (%)') +
+  ylim(0,50)
 
 PNG_ensemble = list(
   final_state_tracker = final_state_tracker,
@@ -82,9 +108,11 @@ save(PNG_ensemble, file = paste("1_inputs/PNG_ensemble_",Sys.Date(),".Rdata"))
 
 ### CREATE FITTED RESULTS FOR 'LOW' AND 'HIGH' PNG
 scenarios = data.frame(name = c("low_PNG_beta","high_PNG_beta"),
-                       beta = c(1.05,1.5))
+                       beta = c(1.1,1.5))
 
 for (this_scenario in 1:nrow(scenarios)){
+  
+  model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
   
   fitting_beta = rep(scenarios$beta[this_scenario],3)
   covid19_waves = baseline_covid19_waves 
@@ -95,17 +123,20 @@ for (this_scenario in 1:nrow(scenarios)){
     FR_parameters = parameters,
     FR_next_state = next_state,
     FR_incidence_log_tidy = incidence_log_tidy,
-    FR_incidence_log = incidence_log
+    FR_incidence_log = incidence_log,
+    FR_covid19_waves = covid19_waves,
+    FR_fitting_beta = fitting_beta
   )
   
-  save(fitted_results, file = paste("1_inputs/fitted_results_",scenarios$name[this_scenario],Sys.Date(),".Rdata"))
+  save(fitted_results, file = paste("1_inputs/fit/fitted_results_",scenarios$name[this_scenario],Sys.Date(),".Rdata",sep=""))
 }
 #_______________________________________________________________________________
 
 
 
 ### CHECK 2023
-plot_list = list()
+ensemble_plot_list = list()
+ensemble_plot_log = data.frame()
 for (this_scenario in 1:nrow(scenarios)){
   model_weeks = as.numeric(ceiling((as.Date('2024-01-01') - date_start)/7)) 
   
@@ -114,14 +145,25 @@ for (this_scenario in 1:nrow(scenarios)){
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
-  plot_list[this_scenario] <- ggplot() + 
+  ensemble_plot_list[[this_scenario]] <- ggplot() + 
     geom_line(data=incidence_log,aes(x=date,y=rolling_average),na.rm=TRUE) +
     xlab("") + 
-    scale_x_date(date_breaks="1 month", date_labels="%b") +
+    #scale_x_date(date_breaks="3 month", date_labels="%b") +
     ylab("daily cases") +
     plot_standard
   
+  incidence_log = incidence_log %>%
+    mutate(label = scenarios$name[this_scenario])
+  ensemble_plot_log = rbind(ensemble_plot_logincidence_log)
   
 }
-plot_list
+ensemble_plot_list
 
+ggplot() + 
+  geom_line(data=ensemble_plot_log,aes(x=date,y=rolling_average,linetype=as.factor(label)),na.rm=TRUE) +
+  xlab("") + 
+  #scale_x_date(date_breaks="3 month", date_labels="%b") +
+  ylab("daily cases") +
+  plot_standard +
+  labs(linetype="")#+ 
+  #facet_grid(label ~ .) 
