@@ -1,4 +1,48 @@
 
+#1) CHECKED: plot of coverage by age_group by dose
+to_plot = vaccination_history_TRUE %>%
+  group_by(date,age_group,dose) %>%
+  summarise(doses_delivered_this_date = sum(doses_delivered_this_date))%>%
+  left_join(pop_setting, by = c("age_group")) %>%
+  group_by(age_group,dose) %>%
+  mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
+                                        TRUE ~ 0))
+ggplot(to_plot) + geom_point(aes(x=date,y=coverage_this_date,color=as.factor(age_group)))+
+  plot_standard +
+  facet_grid(dose ~ .)
+
+#subplot by dose
+vaccination_history_TRUE %>%
+  group_by(age_group,vaccine_type) %>%
+  summarise(sum = sum(doses_delivered_this_date))
+
+#2) CHECKED: plot of doses delivered by vaccine type over time
+to_plot = vaccination_history_TRUE %>%
+  group_by(date,vaccine_type,dose) %>%
+  summarise(doses_delivered_this_date = sum(doses_delivered_this_date)) %>%
+  group_by(vaccine_type,dose) %>%
+  mutate(cum_doses = cumsum(doses_delivered_this_date))
+ggplot(to_plot) + geom_line(aes(x=date,y=doses_delivered_this_date,color=as.factor(vaccine_type)))+
+  plot_standard +
+  facet_grid(dose ~ .)
+ggplot(to_plot) + geom_point(aes(x=date,y=cum_doses,color=as.factor(vaccine_type)))+
+  plot_standard +
+  facet_grid(dose ~ .)
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+####OUTDATED
 ### Part One: we are trying to project the expected vaccine roll out in FJI
 #(A/B) Childhood vaccination program
 check = vaccine_coverage_end_history %>% filter(dose == 1 & coverage_this_date>0) %>% arrange(age_group)
