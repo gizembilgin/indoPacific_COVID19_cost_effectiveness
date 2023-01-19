@@ -298,7 +298,7 @@ if(antiviral_setup == "on"){
       mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
                                             TRUE ~ 0)) %>%
       select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group,FROM_vaccine_type,FROM_dose)
-
+   rm(primary_program_proj)
   }
 }
 
