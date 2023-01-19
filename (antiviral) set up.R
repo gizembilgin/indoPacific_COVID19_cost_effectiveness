@@ -5,8 +5,10 @@
 rm(list=ls())
 
 
-setting = "PNG"
-
+setting = "PNG" #options: "FJI", "PNG", "SLE"
+if (setting == "PNG"){ #NB: other settings will automatically make setting_beta = setting
+  setting_beta = "high_PNG_beta" #ensemble options of : high_PNG_beta, low_PNG_beta
+} 
 
 
 ### SET UP MODEL RUN ################################################################
@@ -16,14 +18,17 @@ time.start.AntiviralSetUp=proc.time()[[3]]
 fitting = "off";plotting = "off"
 
 #find latest model run in known dates
-list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting,"*",sep=""))
-list_poss_Rdata_details = double()
-for (i in 1:length(list_poss_Rdata)){
-  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                  file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
-}
-latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-date_start = as.Date(file.info(paste("1_inputs/fit/",latest_file,sep=''))$mtime) 
+# list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
+# list_poss_Rdata_details = double()
+# for (i in 1:length(list_poss_Rdata)){
+#   list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+#                                   file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+# }
+# latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+#date_start = as.Date(file.info(paste("1_inputs/fit/",latest_file,sep=''))$mtime) 
+
+###KATIE DISCUSSION
+date_start = as.Date('2022-12-31')
 
 #initialise length of model run and circulating strain
 strain_inital = strain_now = 'omicron' 
@@ -36,6 +41,7 @@ waning_toggle_severe_outcome = TRUE
 waning_toggle_rho_acqusition = TRUE
 
 #turn off risk groups to start with
+risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
 antiviral_setup = "on"
 risk_group_toggle = "off"
 vax_strategy_toggle = "on"
@@ -48,27 +54,33 @@ sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb
 
 
 ### SET UP SETTING ################################################################
+generic_booster_toggles = 
+  list(
+    function_name = "booster_strategy_informed_prior",
+    start_date = as.Date('2023-03-01'),
+    dose_supply = 9999999999,
+    rollout_months = 3,
+    
+    delivery_risk_group = c(risk_group_name,'general_public'),
+    prev_dose_floor = 2,
+    age_groups = c("18 to 29",  "30 to 44",  "45 to 59", "60 to 69",  "70 to 100"),
+    
+    prioritised_risk = "N",
+    prioritised_age = NA,
+    
+    vaccine_type = "Moderna"
+  )
+vax_strategy_toggles = "off"
+vax_risk_strategy_toggle = "off"
+apply_risk_strategy_toggles = "off"
+
 if (setting == "FJI"){
   #Note: assume vaccine program complete, hypothetical booster roll out only
-  generic_booster_toggles = 
-    list(
-      function_name = "booster_strategy_informed_prior",
-      start_date = as.Date('2023-03-01'),
-      dose_supply = 9999999999,
-      rollout_months = 6,
-
-      delivery_risk_group = c(risk_group_name,'general_public'),
-      prev_dose_floor = 2,
-      age_groups = c("18 to 29",  "30 to 44",  "45 to 59", "60 to 69",  "70 to 100"),
-
-      prioritised_risk = "N",
-      prioritised_age = NA,
-
-      vaccine_type = "Moderna"
-    )
-  vax_strategy_toggles = "off"
-  vax_risk_strategy_toggle = "off"
-  apply_risk_strategy_toggles = "off"
+  
+} else if (setting == "PNG"){
+  #Note: current vaccine program proj in (2)
+  generic_booster_toggles$prev_dose_floor = 1
+  generic_booster_toggles$vaccine_type = "Johnson & Johnson"
   
 } else{
   vax_strategy_toggles_CURRENT_TARGET =
@@ -78,7 +90,7 @@ if (setting == "FJI"){
          vax_delivery_group             = 'universal',
          vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform"
          vax_dose_strategy              = 1,                                # options: 1,2
-         vax_strategy_vaccine_type      = "Johnson & Johnson" ,             # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
+         vax_strategy_vaccine_type      =  ,             # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
          vax_strategy_vaccine_interval  = c(90) ,                           #  (days) interval between doses, you must specify multiple intervals if multiple doses e.g. c(21,90)
          vax_strategy_max_expected_cov  = 0.88                              # value between 0-1 of age group willing to be vaccinated
     )
@@ -114,7 +126,7 @@ queue = list()
 
 ### VACCINATION SCENARIO = PRIMARY ONLY 
 # Adults with comorbidities
-if (setting == "FJI"){
+if (setting %in% c("FJI","PNG")){
   queue[[1]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
                     risk_group_name = 'adults_with_comorbidities',
                     risk_group_toggle = "on",
@@ -142,39 +154,30 @@ if (setting == "FJI"){
 
 # Adults with comorbidities
 generic_booster_toggles$delivery_risk_group = c('adults_with_comorbidities')
+
+generic_booster_toggles$prev_dose_floor = 2
+queue[[length(queue)+1]] = list(
+  vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
+  vax_strategy_description_long = 'assume booster to all adults who have previously recieved a primary schedule',
+  risk_group_name = 'adults_with_comorbidities',
+  risk_group_toggle = "on",
+  booster_toggles = generic_booster_toggles) 
+
+generic_booster_toggles$prev_dose_floor = 3
+queue[[length(queue)+1]] = list(
+  vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
+  vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
+  risk_group_name = 'adults_with_comorbidities',
+  risk_group_toggle = "on",
+  booster_toggles = generic_booster_toggles) 
+
 if (setting == "FJI"){
-  generic_booster_toggles$prev_dose_floor = 2
-  queue[[length(queue)+1]] = list(
-    vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved a primary schedule',
-    risk_group_name = 'adults_with_comorbidities',
-    risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles) 
-  
-  generic_booster_toggles$prev_dose_floor = 3
-  queue[[length(queue)+1]] = list(
-    vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
-    risk_group_name = 'adults_with_comorbidities',
-    risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles) 
-  
   generic_booster_toggles$prev_dose_floor = 4
   queue[[length(queue)+1]] = list(
     vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
     vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
     risk_group_name = 'adults_with_comorbidities',
     risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles) 
-  
-} else{
-  queue[[length(queue)+1]] = list(
-    vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
-    risk_group_name = 'adults_with_comorbidities',
-    risk_group_toggle = "on",
-    vax_risk_strategy_toggle = "on",
-    apply_risk_strategy_toggles = primary_only_toggles,
-    vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
     booster_toggles = generic_booster_toggles) 
 }
 #______________________________________________________________________________________________________________
@@ -188,23 +191,23 @@ if (setting == "FJI"){
 #Adults with comorbidities
 generic_booster_toggles$delivery_risk_group = c('general_public','adults_with_comorbidities')
 
+generic_booster_toggles$prev_dose_floor = 2
+queue[[length(queue)+1]] = list(
+  vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
+  vax_strategy_description_long = 'assume booster to all adults who have previously recieved a primary schedule',
+  risk_group_name = 'adults_with_comorbidities',
+  risk_group_toggle = "on",
+  booster_toggles = generic_booster_toggles) 
+
+generic_booster_toggles$prev_dose_floor = 3
+queue[[length(queue)+1]] = list(
+  vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
+  vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
+  risk_group_name = 'adults_with_comorbidities',
+  risk_group_toggle = "on",
+  booster_toggles = generic_booster_toggles) 
+
 if (setting == "FJI"){
-  generic_booster_toggles$prev_dose_floor = 2
-  queue[[length(queue)+1]] = list(
-    vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved a primary schedule',
-    risk_group_name = 'adults_with_comorbidities',
-    risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles) 
-  
-  generic_booster_toggles$prev_dose_floor = 3
-  queue[[length(queue)+1]] = list(
-    vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
-    risk_group_name = 'adults_with_comorbidities',
-    risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles) 
-  
   generic_booster_toggles$prev_dose_floor = 4
   queue[[length(queue)+1]] = list(
     vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
@@ -212,15 +215,6 @@ if (setting == "FJI"){
     risk_group_name = 'adults_with_comorbidities',
     risk_group_toggle = "on",
     booster_toggles = generic_booster_toggles) 
-  
-} else{
-  queue[[length(queue)+1]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-                                  risk_group_name = 'adults_with_comorbidities',
-                                  risk_group_toggle = "on",
-                                  vax_risk_strategy_toggle = "on",
-                                  apply_risk_strategy_toggles = primary_only_toggles,
-                                  vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
-                                  booster_toggles = generic_booster_toggles)
 }
 #______________________________________________________________________________________________________________
 
@@ -352,8 +346,8 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               vaccination_history_FINAL = RECORD_vaccination_history_FINAL)
 
 
-save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting,Sys.Date(),".Rdata",sep=''))
-save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting,Sys.Date(),".Rdata",sep=''))
+save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,Sys.Date(),".Rdata",sep=''))
+save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting_beta,Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
