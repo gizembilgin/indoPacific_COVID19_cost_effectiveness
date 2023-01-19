@@ -3,7 +3,7 @@
 
 
 
-#       (1/4) Setup                 
+#       (1/2) Setup                 
 ####################################################################
 #load libraries
 library(readr)
@@ -19,6 +19,9 @@ debug_type = "partial" #options: "full", "partial"
 
 
 ### set default values of toggles if debug is on
+rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") #Note: x_results not stored within GitHub repository
+complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
+if (exists("setting_beta") == FALSE){setting_beta = setting}
 if (exists("fitting") == FALSE){fitting = "off"}
 if (exists("fitting_details") == FALSE){fitting_details = "off"}# Reff tracking, VE tracking, rho tracking
 if (fitting == "on"){debug = "off"} # can not debug while fitting the model
@@ -33,7 +36,7 @@ if ( debug == "on"){
   strain_inital = strain_now = 'omicron'             
   model_weeks = 5          
   #find latest model run in known dates
-  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting,"*",sep=""))
+  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
@@ -90,14 +93,14 @@ if (fitting == "on"){
 } else if ( ! 'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
 
     #load latest model run in known dates
-    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting,"*",sep=""))
+    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
     list_poss_Rdata_details = double()
     for (i in 1:length(list_poss_Rdata)){
       list_poss_Rdata_details = rbind(list_poss_Rdata_details,
                                       file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
     }
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-    load(paste(rootpath,'x_results/',latest_file,sep=''))
+    load(paste('1_inputs/fit/',latest_file,sep=''))
     #___________________________________
     
     if('additional_doses' %in% names(sensitivity_analysis_toggles)){
@@ -112,14 +115,11 @@ if (fitting == "on"){
       this_risk_group_scenario = risk_group_name
     }
 
-    parameters = fitted_results[[1]] %>% 
-      filter(fitted_risk_group_scenario == this_risk_group_scenario)
-    fitted_next_state = fitted_results[[2]] %>% 
-      filter(fitted_risk_group_scenario == this_risk_group_scenario)
-    fitted_incidence_log_tidy = fitted_results[[3]] %>% 
-      filter(fitted_risk_group_scenario == this_risk_group_scenario)
-    fitted_incidence_log = fitted_results[[4]] %>% 
-      filter(fitted_risk_group_scenario == this_risk_group_scenario)
+    parameters = fitted_results[[1]] 
+    fitted_next_state = fitted_results[[2]] 
+    fitted_incidence_log_tidy = fitted_results[[3]] 
+    fitted_incidence_log = fitted_results[[4]] 
+    covid19_waves =  fitted_results[[5]] 
     rm(fitted_results)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) 
@@ -155,15 +155,7 @@ if ( debug == "on" | fitting_details == "on"){
 
 
 
-#       (2/4) User choice / Model toggles              
-####################################################################
-rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") #Note: x_results not stored within GitHub repository
-complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
-#__________________________________________________________________
-
-
-
-#       (3/4) Run model            
+#       (2/2) Run model            
 #####################################################################
 ##(A) Initialise setting 
 if (complete_model_runs == 1){run_type="point"
