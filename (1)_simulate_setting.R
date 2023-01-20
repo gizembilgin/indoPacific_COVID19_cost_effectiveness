@@ -249,6 +249,7 @@ if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep
 source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
 
 #project forward expected continuation of existing program
+if (exists("antiviral_setup") == FALSE){antiviral_setup ="off"}
 if(antiviral_setup == "on"){
   # to_plot = vaccination_history_TRUE %>%
   #   group_by(date,age_group,dose) %>%
