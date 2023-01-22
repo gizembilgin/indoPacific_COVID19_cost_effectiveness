@@ -7,7 +7,7 @@ rm(list=ls())
 
 setting = "PNG" #options: "FJI", "PNG", "SLE"
 if (setting == "PNG"){ #NB: other settings will automatically make setting_beta = setting
-  setting_beta = "high_PNG_beta" #ensemble options of : high_PNG_beta, low_PNG_beta
+  setting_beta = "low_PNG_beta" #ensemble options of : high_PNG_beta, low_PNG_beta
 } 
 
 
@@ -44,7 +44,7 @@ waning_toggle_rho_acqusition = TRUE
 risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
 antiviral_setup = "on"
 risk_group_toggle = "off"
-vax_strategy_toggle = "on"
+vax_strategy_toggle = "off"
 vax_risk_strategy_toggle = "off"
 risk_group_lower_cov_ratio = NA
 risk_group_prioritisation_to_date = NA
@@ -357,5 +357,5 @@ time.end.AntiviralSetUp - time.start.AntiviralSetUp
 
 
 ### VISUALLY SENSE CHECK MODEL RUNS ############################################################################
-# RECORD_outcomes_without_antivirals = RECORD_outcomes_without_antivirals %>% arrange(outcome)
-# View(RECORD_outcomes_without_antivirals)
+RECORD_outcomes_without_antivirals = RECORD_outcomes_without_antivirals %>% arrange(outcome)
+View(RECORD_outcomes_without_antivirals)
