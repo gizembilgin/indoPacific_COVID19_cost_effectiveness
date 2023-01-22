@@ -199,25 +199,12 @@ vaxCovDelay = vaxCovDelay %>%
 #_________________________________________________
 
 
-#extract other attributes
-if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booster",])>0){
-  booster_type = unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$dose %in% c(3,4,8)])
-  if (booster_type == 'Johnson & Johnson'){booster_dose_number = 2
-  } else{booster_dose_number = 3}
-}
-
-
 #load covid19_waves with variables: fitted_setting, fitted_date, date ,strain
 if (fitting == "off"){
   if (setting == "SLE"){
     covid19_waves =  data.frame(date = c(as.Date('2021-04-25'),as.Date('2021-09-01')),
                                strain = c('delta','omicron'))
-  } else{
-    load(file = '1_inputs/fit/fitted_covid19_waves.Rdata')
-    covid19_waves = fitted_covid19_waves %>% filter(fitted_setting == setting)
-    covid19_waves = covid19_waves %>% filter(fitted_date == max(covid19_waves$fitted_date))
-  }
-  
+  } 
   if (outbreak_timing != "off"){ #if additional outbreak
     if (outbreak_timing == "after"){ new_seed_date = max(vaccination_history_FINAL$date)  #outbreak after vaccine rollout
     } else if(outbreak_timing == "during"){ new_seed_date = date_start + 7                #outbreak during vaccine rollout
