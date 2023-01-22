@@ -119,6 +119,8 @@ for (this_scenario in 1:nrow(scenarios)){
   
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
+  incidence_log = incidence_log %>% select(date, daily_cases)
+  
   fitted_results = list(
     FR_parameters = parameters,
     FR_next_state = next_state,
