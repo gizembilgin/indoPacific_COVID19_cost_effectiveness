@@ -119,7 +119,8 @@ if (fitting == "on"){
     fitted_next_state = fitted_results[[2]] 
     fitted_incidence_log_tidy = fitted_results[[3]] 
     fitted_incidence_log = fitted_results[[4]] 
-    covid19_waves =  fitted_results[[5]] 
+    covid19_waves = fitted_results[[5]] 
+    fitting_beta = fitted_results[[6]] 
     rm(fitted_results)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) 
