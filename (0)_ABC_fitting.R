@@ -476,6 +476,8 @@ fitted_results = list(
   FR_parameters = parameters,
   FR_next_state = next_state,
   FR_incidence_log_tidy = incidence_log_tidy,
-  FR_incidence_log = incidence_log
+  FR_incidence_log = incidence_log,
+  FR_covid19_waves = covid19_waves,
+  FR_fitting_beta = fitting_beta
 )
 save(fitted_results, file = paste("1_inputs/fitted_results_",this_setting,Sys.Date(),".Rdata"))
