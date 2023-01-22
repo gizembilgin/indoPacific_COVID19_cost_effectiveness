@@ -45,7 +45,7 @@ booster_strategy_informed_prior <- function(
 ){
   
   ##### SETUP ###################################################################
-  if (booster_strategy_start_date <= max(vaccination_history_TRUE$date)){ 
+  if (booster_strategy_start_date <= min(max(vaccination_history_TRUE$date),Sys.Date())){ 
     warning ('Your hypothetical vaccine campaign start date needs to be in the future!')
   }
   if (!(booster_strategy_vaccine_type %in% c("Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"))){
@@ -79,7 +79,7 @@ booster_strategy_informed_prior <- function(
         left_join(remove, by = c('age_group','vaccine_type','risk_group')) %>%
         mutate(eligible_individuals = case_when(
           dose == (d-1) & complete_vax > eligible_individuals ~ 0, #this shouldn't be triggered
-          dose == (d-1) ~ eligible_individuals - complete_vax,
+          dose == (d-1) &  is.na(complete_vax) == FALSE~ eligible_individuals - complete_vax,
           TRUE ~ eligible_individuals,
         )) %>%
         select(-complete_vax)
@@ -122,13 +122,23 @@ booster_strategy_informed_prior <- function(
     warning('no one is eligible for this additional booster')
     return()
   }
-  if (sum(eligible_pop$eligible_individuals) != 
-      sum(vaccination_history_FINAL$doses_delivered_this_date[(vaccination_history_FINAL$dose == booster_prev_dose_floor |
-                                                               (vaccination_history_FINAL$dose == booster_prev_dose_floor -1 & vaccination_history_FINAL$vaccine_type == "Johnson & Johnson")) &
-                                                              vaccination_history_FINAL$age_group %in% booster_age_groups &
-                                                              vaccination_history_FINAL$risk_group %in% booster_delivery_risk_group])){
-    warning('eligible pop not lining up')
+  if (booster_prev_dose_floor>1){
+    if (sum(eligible_pop$eligible_individuals) != 
+        sum(vaccination_history_FINAL$doses_delivered_this_date[((vaccination_history_FINAL$dose == booster_prev_dose_floor & vaccination_history_FINAL$vaccine_type != "Johnson & Johnson") |
+                                                                 (vaccination_history_FINAL$dose == booster_prev_dose_floor -1 & vaccination_history_FINAL$vaccine_type == "Johnson & Johnson")) &
+                                                                vaccination_history_FINAL$age_group %in% booster_age_groups &
+                                                                vaccination_history_FINAL$risk_group %in% booster_delivery_risk_group])){
+      warning('eligible pop not lining up')
+    }
+  } else{
+    if (sum(eligible_pop$eligible_individuals) != 
+        sum(vaccination_history_FINAL$doses_delivered_this_date[(vaccination_history_FINAL$dose == booster_prev_dose_floor) &
+                                                                vaccination_history_FINAL$age_group %in% booster_age_groups &
+                                                                vaccination_history_FINAL$risk_group %in% booster_delivery_risk_group])){
+      warning('eligible pop not lining up')
+    }
   }
+
   #_______________________________________________________________________________
   
   
