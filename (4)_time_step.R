@@ -183,7 +183,7 @@ for (increments_number in 1:num_time_steps){
       ### Include today's primary doses
         for (this_risk_group in unique(vaccination_history_FINAL$risk_group)){
           for (this_vax in unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$schedule == "primary" & 
-                                                                         !(vaccination_history_FINAL$vdose == 2 
+                                                                         !(vaccination_history_FINAL$dose == 2 
                                                                            & vaccination_history_FINAL$vaccine_type != vaccination_history_FINAL$FROM_vaccine_type)])){  #iterating over vaccine types
 
             this_vax_history = vaccination_history_FINAL %>%
@@ -251,7 +251,10 @@ for (increments_number in 1:num_time_steps){
                                vaccine_type == this_vax &
                                dose == this_dose &
                                date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == this_dose])
-                    if (this_dose == 8){this_dose = booster_dose_number}
+                    if (this_dose == 8){
+                      if(this_vax == "Johnson & Johnson"){this_dose = 2
+                      } else{this_dose = 3}
+                    }
 
                     if (nrow(this_vax_history)>0){
 
