@@ -7,7 +7,7 @@
 # VE_loop set to 0 when no sensitivity analysis of reduced VE in older adults or adults with comorbidities is conducted
 if (exists("VE_loop") == FALSE){ VE_loop = 0} 
 if (exists("antiviral_setup") == FALSE){ antiviral_setup = "off"} 
-if (VE_loop == 0 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles) & antiviral_setup == "off"){VE_loop = 1}
+if (VE_loop == 0 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles)){VE_loop = 1}
 
 #Step One: load  relevant file
 if (VE_loop == 0){
@@ -28,12 +28,14 @@ if (VE_loop == 0){
 #Step Two: select estimates with relevant primary + booster combinations
 if (VE_loop %in% c(0,1)){
   VE_waning_distribution_SO = VE_waning_distribution_SO %>% 
-    filter(waning == waning_toggle_severe_outcome)%>%
+    filter(waning == waning_toggle_severe_outcome &
+             strain == "omicron") %>% #we are only projecting SO in the omicron era
     mutate(schedule = case_when(
       dose > 2 ~ 'booster',
       dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
       TRUE ~ 'primary'
-    ))
+    )) %>%
+    filter(is.na(VE_days) == FALSE)
   
   #average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
   workshop = data.frame()
@@ -48,7 +50,16 @@ if (VE_loop %in% c(0,1)){
                    primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
                    vaccine_type == this_vax) %>%
           group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_days),.groups = "keep") 
+          summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+        #small edit for J&J
+        if (this_vax == "Johnson & Johnson" & nrow(this_combo) == 0){
+          this_combo = VE_waning_distribution_SO %>% 
+            filter(schedule == "booster" & 
+                     dose == this_dose & 
+                     vaccine_type == this_vax) %>%
+            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+        }
         
         # Second Choice = same primary schedule + booster of same vaccine mode
         if (nrow(this_combo) == 0){
@@ -58,7 +69,7 @@ if (VE_loop %in% c(0,1)){
                      primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
                      vaccine_mode == this_vax_mode) %>%
             group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days),.groups = "keep") 
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
         }
         
         # Third Choice = same primary schedule + any booster
@@ -67,7 +78,7 @@ if (VE_loop %in% c(0,1)){
             filter(schedule == "booster" & dose == this_dose & 
                      primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax])) %>%
             group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days),.groups = "keep") 
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
         }
         
         # Otherwise... rethink!
@@ -86,7 +97,7 @@ if (VE_loop %in% c(0,1)){
   VE_waning_distribution = bind_rows(VE_waning_distribution,VE_waning_distribution_SO)
   
   if (VE_loop == 1 & 'VE_older_adults' %in% names(sensitivity_analysis_toggles)){
-    VE_waning_distribution = bind_rows(save_VE_waning_distribution,VE_waning_distribution_SO)
+    VE_waning_distribution = bind_rows(VE_waning_distribution[VE_waning_distribution$outcome == 'any_infection',],VE_waning_distribution_SO)
     rm(SA_VE_older_muted_SO)
   }
   rm(VE_waning_distribution_SO)
@@ -97,7 +108,7 @@ if (VE_loop %in% c(0,1)){
 
 #(A/C) calculate VE against severe outcomes by day
 if (waning_toggle_severe_outcome == TRUE){
-  if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
+  #if (ticket == 1 | vax_strategy_toggle == "on"){ #only have to run when vax strategy changing
     VE_tracker = data.frame()
     for (outcome in c('death','severe_disease')){
       for (day in 0:num_time_steps){
@@ -108,7 +119,7 @@ if (waning_toggle_severe_outcome == TRUE){
       }
     }
     VE_tracker$date = date_start + VE_tracker$date
-  }
+  #}
 } else{
   VE_tracker= crossing(risk_group = risk_group_labels,
                        dose = seq(1,D),
