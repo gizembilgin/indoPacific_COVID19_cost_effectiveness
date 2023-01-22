@@ -151,7 +151,8 @@ for (this_setting in c("FJI")){
       
       workshop_fitted_incidence_log_tidy = incidence_log_tidy %>% 
         mutate(country = setting, fitted_risk_group_scenario = risk_group_name)
-      workshop_fitted_incidence_log = incidence_log %>% select(date, daily_cases) %>% 
+      workshop_fitted_incidence_log = incidence_log %>% 
+        select(date, daily_cases) %>% 
         mutate(country = setting, fitted_risk_group_scenario = risk_group_name)
       workshop_parameters = parameters %>% 
         mutate(country = setting, fitted_risk_group_scenario = risk_group_name)
