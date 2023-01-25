@@ -87,7 +87,7 @@ for (increments_number in 1:num_time_steps){
               select(-delta_VE)
           }
         }
-      } else if (fitting == "on"){
+      } else if (fitting %in% c("on","wave_three","wave_two")){
         #load latest VE saved in known dates
         list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("VE_real_range_",setting,"*",sep=""))
         list_poss_Rdata_details = double()
@@ -192,7 +192,8 @@ for (increments_number in 1:num_time_steps){
                        vaccine_type == this_vax & 
                        risk_group == this_risk_group &
                        (dose == 1 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 1]|
-                          dose == 2 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2]))
+                          dose == 2 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2]) &
+                       !(dose == 2 & vaccine_type != FROM_vaccine_type)) #i.e., not hetero primary dose combination
 
             if(nrow(this_vax_history)>0){
               for (this_age_group in unique(this_vax_history$age_group)){
@@ -331,6 +332,14 @@ for (increments_number in 1:num_time_steps){
         }
       if (date_now %in% delta_shift$date){
         parameters$beta = this_beta*delta_shift$percentage[delta_shift$date == date_now] + prev_beta * (1-delta_shift$percentage[delta_shift$date == date_now])
+        parameters$beta1 = parameters$beta[1]
+        parameters$beta2 = parameters$beta[2]
+        parameters$beta3 = parameters$beta[3]
+        parameters$beta4 = parameters$beta[4]
+        parameters$beta5 = parameters$beta[5]
+        parameters$beta6 = parameters$beta[6]
+        parameters$beta7 = parameters$beta[7]
+        parameters$beta8 = parameters$beta[8]
       }
         # if (fitting == "off"){
         #   if (date_now>=seed_date){
@@ -400,7 +409,7 @@ for (increments_number in 1:num_time_steps){
     incidence_log_unedited$daily_cases  <- rowSums(incidence_log_unedited[,2:(A+1)])
     
     incidence_log <- incidence_log_unedited %>% select(date,daily_cases) 
-    if (! fitting == "on"){incidence_log = rbind(fitted_incidence_log,incidence_log)}
+    if (! fitting == "on"){incidence_log = rbind(fitted_incidence_log[,c("date","daily_cases")],incidence_log)}
     
     incidence_log = incidence_log %>%
       mutate(rolling_average = (daily_cases + lag(daily_cases) + lag(daily_cases,n=2)+lag(daily_cases,n=3)
