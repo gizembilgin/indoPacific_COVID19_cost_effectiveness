@@ -2,74 +2,53 @@
 
 
 ## Introduction of three waves _________________________________________________________________________________________________
-num_1 = 7
-num_2 = 3
-num_3 = 7
-attempts = data.frame(first_date = c(covid19_waves$date[1],
-                                    covid19_waves$date[1]-num_1,covid19_waves$date[1]+num_1,
-                                    covid19_waves$date[1],covid19_waves$date[1],
-                                    covid19_waves$date[1],covid19_waves$date[1]),
-
-                     second_date = c(covid19_waves$date[2],
-                                     covid19_waves$date[2],covid19_waves$date[2],
-                                     covid19_waves$date[2]-num_2,covid19_waves$date[2]+num_2,
-                                     covid19_waves$date[2],covid19_waves$date[2]),
-
-                     third_date = c(covid19_waves$date[3],
-                                    covid19_waves$date[3],covid19_waves$date[3],
-                                    covid19_waves$date[3],covid19_waves$date[3],
-                                    covid19_waves$date[3]-num_3,covid19_waves$date[3]+num_3))
-
-search_tracker = data.frame()
-for (attempt_num in 1:nrow(attempts)){
-
-  covid19_waves = data.frame(date = c(attempts$first_date[attempt_num],attempts$second_date[attempt_num],attempts$third_date[attempt_num]),
-                             strain = c('delta','omicron','omicron'))
-
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
-
-  incidence_log = incidence_log %>% mutate(first_date = attempts$first_date[attempt_num],
-                                           second_date = attempts$second_date[attempt_num],
-                                           third_date = attempts$third_date[attempt_num])
-  search_tracker = rbind(search_tracker,incidence_log)
-
+#initial search range of seed dates
+if (this_setting == "FJI"){
+  date_start = as.Date('2021-04-30')
+  strain_inital = strain_now = 'WT' 
+  
+  covid19_waves = baseline_covid19_waves = data.frame(date = #c(as.Date('2021-06-06'),as.Date('2021-10-21'),as.Date('2022-01-15')), # initial best guess!
+                                                        c(as.Date('2021-06-09'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
+                                                      strain = c('delta','omicron','omicron'))
+} else if (this_setting == "PNG"){
+  
+  strain_inital = strain_now = 'WT'
+  
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-01-15'),as.Date('2021-09-01'),as.Date('2021-12-01')),
+                                                      strain = c('WT','delta','omicron'))
+  
+  date_start = covid19_waves$date[1] - 2
+} else if (this_setting == "TLS"){
+  
+  strain_inital = strain_now = 'WT'
+  
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2022-01-01')),
+                                                      strain = c('WT','delta','omicron'))
+  
+  date_start = covid19_waves$date[1] - 2
 }
+model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
 
+#risk group toggles
+risk_group_prioritisation_to_date = NA
+risk_group_lower_cov_ratio = NA
+risk_group_toggle = "on"
 
+risk_group_name = 'adults_with_comorbidities'
+RR_estimate = 1.95
 
-coeff <- 1/20
+#run once!
+system.time(source(paste(getwd(),"/CommandDeck.R",sep="")))
 
-this_plot = search_tracker %>% filter(second_date == covid19_waves$date[2]  & third_date == covid19_waves$date[3])
+coeff <- 1/45
 ggplot() +
   geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
              aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
-  geom_line(data=this_plot,aes(x=date,y=rolling_average,color = as.factor(first_date))) +
+  geom_line(data=incidence_log,aes(x=date,y=rolling_average)) + 
   scale_y_continuous(
     name = "Model projections",
     sec.axis = sec_axis(~.*coeff, name="Reported cases")
-  )+
-  plot_standard
-
-this_plot = search_tracker %>% filter(second_date == covid19_waves$date[2]  & first_date == covid19_waves$date[1])
-ggplot() +
-  geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
-             aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
-  geom_line(data=this_plot,aes(x=date,y=rolling_average,color = as.factor(third_date))) +
-  scale_y_continuous(
-    name = "Model projections",
-    sec.axis = sec_axis(~.*coeff, name="Reported cases")
-  )+
-  plot_standard
-
-this_plot = search_tracker %>% filter(first_date == covid19_waves$date[1] & third_date == covid19_waves$date[3])
-ggplot() +
-  geom_point(data=case_history[case_history$date>date_start & case_history$date <max(incidence_log$date),],
-             aes(x=date,y=rolling_average/coeff),na.rm=TRUE) +
-  geom_line(data=this_plot,aes(x=date,y=rolling_average,color = as.factor(second_date))) +
-  scale_y_continuous(
-    name = "Model projections",
-    sec.axis = sec_axis(~.*coeff, name="Reported cases")
-  )+
+  )+ 
   plot_standard
 #______________________________________________________________________________________________________________
 
@@ -482,3 +461,106 @@ ggplot() +
 
 #better fit with higher under reporting due to entry too early
 #_______________________________________________________________________________
+
+
+
+
+### TLS - need to fit first two waves together!
+setting = this_setting = "TLS"
+
+baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2022-01-01')),
+                                                      strain = c('WT','delta','omicron'))
+date_start = covid19_waves$date[1] - 2
+fitting_beta = c(1,1,1)
+model_weeks = as.numeric((as.Date('2022-01-01')-date_start)/7)
+under_reporting_est = 45
+
+plot_tracker = data.frame()
+fit_tracker = data.frame()
+workshop_incidence_log_tracker = data.frame()
+
+# for (this_beta_mod in c(0.9, 1, 1.2, 1.5)) {
+#   for (this_shift in c(0, 30, 60, 90, 180, -30)) {
+
+for (this_beta1 in c(0.5,0.75,1)) {
+  for (this_beta2 in c(1)) {
+    for (this_shift1 in c(-30,0)) {
+      for (this_shift2 in c(0,30,60,90)) {
+        if (nrow(plot_tracker[plot_tracker$beta1 == this_beta1 &
+                              plot_tracker$beta2 == this_beta2 &
+                              plot_tracker$shift1 == this_shift1 &
+                              plot_tracker$shift2 == this_shift2, ]) > 0) {
+          #skip
+        } else{
+          strain_inital = strain_now = 'WT'
+          
+          fitting_beta = c(this_beta1,
+                           this_beta2,
+                           1)
+          
+          covid19_waves = baseline_covid19_waves
+          covid19_waves$date[1] = covid19_waves$date[1] + this_shift1
+          covid19_waves$date[2] = covid19_waves$date[2] + this_shift2
+          date_start = covid19_waves$date[1] - 2
+          
+          source(paste(getwd(), "/CommandDeck.R", sep = ""))
+          
+          workshop = case_history %>%
+            select(date, rolling_average) %>%
+            mutate(rolling_average =  rolling_average * under_reporting_est) %>%
+            rename(adjusted_reported = rolling_average) %>%
+            left_join(incidence_log, by = "date") %>%
+            mutate(
+              fit_statistic = abs(rolling_average - adjusted_reported) ^ 2 ,
+              beta1 = this_beta1,
+              beta2 = this_beta2,
+              shift1 = this_shift1,
+              shift2 = this_shift2
+            )
+          
+          fit_statistic = data.frame(
+            fit = sum(workshop$fit_statistic[workshop$date > fit_cutoff_dates[2]], #fit only after first wave
+                      na.rm = TRUE),
+            beta1 = this_beta1,
+            beta2 = this_beta2,
+            shift1 = this_shift1,
+            shift2 = this_shift2
+          )
+          
+          incidence_log = incidence_log %>%
+            mutate(
+                   beta1 = this_beta1,
+                   beta2 = this_beta2,
+                   shift1 = this_shift1,
+                   shift2 = this_shift2
+            )
+          
+          plot_tracker = rbind(plot_tracker, workshop)
+          fit_tracker = rbind(fit_tracker, fit_statistic)
+          
+          workshop_incidence_log_tracker = rbind(workshop_incidence_log_tracker, incidence_log)
+        }
+      }
+    }
+  }
+}
+TLS_fit_tracker = fit_tracker; TLS_fit_tracker
+TLS_tracker = plot_tracker %>%
+  filter(date<=(date_start+model_weeks*7) & date>=date_start) #%>%
+  #filter(beta_mod %in% c(1, 1.1,1.2,1.35,1.5) & shift %in% c(0,15,30,45))
+
+to_plot = TLS_tracker %>% filter(shift1 == 0)
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average,color=as.factor(beta1),linetype = as.factor(beta2)),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  plot_standard + 
+  labs(color = 'beta1',linetype = 'beta2')+ 
+  facet_grid(shift2 ~ .) 
+to_plot = TLS_tracker %>% filter(shift1 == -30)
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average,color=as.factor(beta1),linetype = as.factor(beta2)),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  plot_standard + 
+  labs(color = 'beta1',linetype = 'beta2')+ 
+  facet_grid(shift2 ~ .) 
+save(TLS_tracker, file = paste('1_inputs/fit/TLS_tracker.Rdata',sep=''))
