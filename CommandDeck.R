@@ -24,7 +24,7 @@ complete_model_runs = 1   # when >1 samples randomly from distribution of parame
 if (exists("setting_beta") == FALSE){setting_beta = setting}
 if (exists("fitting") == FALSE){fitting = "off"}
 if (exists("fitting_details") == FALSE){fitting_details = "off"}# Reff tracking, VE tracking, rho tracking
-if (fitting == "on"){debug = "off"} # can not debug while fitting the model
+if (! fitting == "off"){debug = "off"} # can not debug while fitting the model
 if ( debug == "on"){
   
   warning('Debugging is on')
@@ -91,17 +91,21 @@ if ( debug == "on"){
 if (fitting == "on"){
   warning('Fitting is on')
 } else if ( ! 'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
-
-    #load latest model run in known dates
+  
+  #load latest model run in known dates
+  if (fitting == "wave_three"){
+    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("start_point_wave_three_",setting_beta,"*",sep=""))
+  } else{
     list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
-    list_poss_Rdata_details = double()
-    for (i in 1:length(list_poss_Rdata)){
-      list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
-    }
-    latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-    load(paste('1_inputs/fit/',latest_file,sep=''))
-    #___________________________________
+  }
+  list_poss_Rdata_details = double()
+  for (i in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  load(paste('1_inputs/fit/',latest_file,sep=''))
+  #___________________________________
     
     if('additional_doses' %in% names(sensitivity_analysis_toggles)){
       if (sensitivity_analysis_toggles$additional_doses == 'start_2022'){
@@ -119,8 +123,10 @@ if (fitting == "on"){
     fitted_next_state = fitted_results[[2]] 
     fitted_incidence_log_tidy = fitted_results[[3]] 
     fitted_incidence_log = fitted_results[[4]] 
-    covid19_waves = fitted_results[[5]] 
-    fitting_beta = fitted_results[[6]] 
+    if (fitting != "wave_three"){
+      covid19_waves = fitted_results[[5]] 
+      fitting_beta = fitted_results[[6]] 
+    }
     rm(fitted_results)
     
     fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) 
