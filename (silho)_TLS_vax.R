@@ -226,9 +226,26 @@ if(round(sum(workshop$doses_delivered_this_date)) != round(sum(vaccination_histo
 check = workshop %>%
   group_by(age_group,dose) %>%
   summarise(total = sum(doses_delivered_this_date), .groups = "keep") %>%
-  left_join(pop_setting) %>%
+  left_join(pop_setting, by = "age_group") %>%
   filter(pop<total)
 if (nrow(check)>0){stop('more delivered than people exist!')}
+
+#Step Eight: Split booster doses across vaccine types
+workshop_booster_pool =  workshop %>% 
+  filter(dose == 2) %>%
+  group_by(age_group,vaccine_type) %>%
+  summarise(total = sum(doses_delivered_this_date), .groups = "keep") %>%
+  group_by(age_group) %>%
+  mutate(prop = total/sum(total)) %>%
+  select(-total) %>%
+  rename(FROM_vaccine_type = vaccine_type)
+  
+workshop_booster = workshop %>% 
+  filter(dose == 3) %>%
+  left_join(workshop_booster_pool,by=c("age_group")) %>%
+  mutate(doses_delivered_this_date = doses_delivered_this_date*prop)
+
+workshop = rbind(workshop[workshop$dose != 3,],workshop_booster); rm(workshop_booster,workshop_booster_pool)
 #_______________________________________________________________________________
 
 
@@ -240,10 +257,9 @@ vaccination_history_TRUE = workshop %>%
     dose > 2 ~ "booster",
     dose == 2 & vaccine_type == "Johnson & Johnson" ~ "booster",
     TRUE ~ "primary"
-  )) %>%
-  mutate(
-    dose = as.numeric(dose),
-    vaccine_mode = case_when(
+  ),
+  dose = as.numeric(dose),
+  vaccine_mode = case_when(
       vaccine_type == 'Pfizer' ~ 'mRNA',
       vaccine_type == 'Moderna' ~ 'mRNA',
       vaccine_type == 'AstraZeneca' ~ 'viral_vector',
@@ -251,7 +267,6 @@ vaccination_history_TRUE = workshop %>%
       vaccine_type == 'Sinovac' ~ 'viral_inactivated',
       vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
     ),
-    FROM_vaccine_type = vaccine_type,
     FROM_dose = dose - 1
   ) %>%
   left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
@@ -259,6 +274,7 @@ vaccination_history_TRUE = workshop %>%
   mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
                                         TRUE ~ 0)) %>%
   select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group,FROM_vaccine_type,FROM_dose)
+vaccination_history_TRUE$FROM_vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)] <- vaccination_history_TRUE$vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)]
 #_______________________________________________________________________________
 
 rm(vaccination_history_DOSE_NUMBER,workshop,setting_vaccine_dn,setting_vaccine_dn_INCREMENTAL,check,this_dn)
@@ -378,3 +394,4 @@ vaccination_history_TRUE = vaccination_history_TRUE %>%
                                         TRUE ~ 0)) %>%
   select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group,FROM_vaccine_type,FROM_dose)
 
+#vaccination_history_TRUE %>% group_by(dose,vaccine_type,FROM_vaccine_type) %>% summarise(sum=sum(doses_delivered_this_date))
