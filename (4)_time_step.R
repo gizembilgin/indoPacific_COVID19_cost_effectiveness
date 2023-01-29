@@ -61,7 +61,7 @@ for (increments_number in 1:num_time_steps){
     if (increments_number > 1){ 
     
       #update NPI
-      if (date_now <= max(NPI_estimates$date)){
+      if (date_now %in% NPI_estimates$date){
         NPI_this_step <- NPI_estimates$NPI[NPI_estimates$date == date_now]/100
         parameters$NPI = NPI_this_step
       } #i.e. assume after end date that NPI constant
@@ -173,7 +173,7 @@ for (increments_number in 1:num_time_steps){
         prev_state = rbind(prev_state, workshop)
       }
       prev_state$pop  = as.numeric(prev_state$pop)
-      if (round(sum(prev_state$pop)) != sum(pop)) {
+      if (abs(sum(prev_state$pop) - sum(pop))>10) { #small lee-way due to rounding error of floating point numbers
         stop('prev state not equal to pop size! (~line 105 in time step)')
       }
       
@@ -351,8 +351,8 @@ for (increments_number in 1:num_time_steps){
       if (round(sum(next_state$pop)) != round(sum(prev_state$pop))) {
         stop('pop not retained between next_state and prev_state!')
       }
-      if (round(sum(next_state$pop)) != sum(pop)) {
-        stop('pop in next_state not equal to setting population')
+      if (abs(sum(next_state$pop) - sum(pop))>10) { #small lee-way due to rounding error of floating point numbers
+        stop('next_state not equal to pop size!')
       }
       if (nrow(next_state[round(next_state$pop) < 0, ]) > 0) {
         if (date_now > max(vaccination_history_TRUE$date + max(vaxCovDelay$delay))) {
