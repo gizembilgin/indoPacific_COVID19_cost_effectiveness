@@ -347,8 +347,8 @@ rm(vaccination_history_DOSE_NUMBER,workshop,setting_vaccine_dn,setting_vaccine_d
 # check = workshop_prev_dose %>%
 #   left_join(workshop_next_dose, by = c("date", "vaccine_type", "age_group", "risk_group")) %>%
 #   filter(prev_avaliable < next_delivered)
-#
-#dose 2 for Pfizer provided to AstraZeneca dose 1 recipients (18+)
+# 
+# #dose 2 for Pfizer provided to AstraZeneca dose 1 recipients (18+)
 # vaccination_history_TRUE %>%
 #   filter(vaccine_type %in% c("Pfizer","AstraZeneca")) %>%
 #     mutate(age_floor = case_when(
