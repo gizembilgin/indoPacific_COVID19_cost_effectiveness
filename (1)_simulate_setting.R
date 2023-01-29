@@ -301,6 +301,55 @@ if(antiviral_setup == "on"){
       select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group,FROM_vaccine_type,FROM_dose)
    rm(primary_program_proj)
   }
+  # } else if (setting == "IDN"){
+  #   interval_previous = 3*52/12 * 7     #average behaviour over last three months
+  #   
+  #   primary_program_proj = vaccination_history_TRUE %>%
+  #     group_by(date, dose, age_group,risk_group) %>%
+  #     summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = "keep") %>%
+  #     filter(date > (max(vaccination_history_TRUE$date) - interval_previous)) %>%
+  #     group_by(age_group,dose,risk_group) %>%
+  #     summarise(doses_delivered_this_date = sum(doses_delivered_this_date)/interval_previous, .groups = "keep") %>%
+  #     left_join(proj_dates,by='age_group') %>%
+  #     mutate(vaccine_type = "Johnson & Johnson")
+  #   
+  #   to_plot = primary_program_proj %>% group_by(dose,date) %>% summarise(sum=sum(doses_delivered_this_date)) %>% group_by(dose) %>% mutate(cumsum = cumsum(sum))
+  #   ggplot(to_plot) + geom_point(aes(x=date,y=cumsum))+
+  #          plot_standard +
+  #          facet_grid(dose ~ .)
+  #   
+  #   vaccination_history_TRUE = bind_rows(vaccination_history_TRUE,primary_program_proj) %>%
+  #     mutate(
+  #       dose = as.numeric(dose),
+  #       vaccine_mode = case_when(
+  #         vaccine_type == 'Pfizer' ~ 'mRNA',
+  #         vaccine_type == 'Moderna' ~ 'mRNA',
+  #         vaccine_type == 'AstraZeneca' ~ 'viral_vector',
+  #         vaccine_type == 'Sinopharm' ~ 'viral_inactivated',
+  #         vaccine_type == 'Sinovac' ~ 'viral_inactivated',
+  #         vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
+  #       ),
+  #       FROM_vaccine_type = vaccine_type,
+  #       FROM_dose = dose - 1
+  #     ) %>%
+  #     left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
+  #     group_by(risk_group, age_group, vaccine_type, dose) %>%
+  #     mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
+  #                                           TRUE ~ 0)) %>%
+  #     select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group,FROM_vaccine_type,FROM_dose)
+  #   
+  #   to_plot = vaccination_history_TRUE %>%
+  #     group_by(date,age_group,dose) %>%
+  #     summarise(doses_delivered_this_date = sum(doses_delivered_this_date))%>%
+  #     left_join(pop_setting, by = c("age_group")) %>%
+  #     group_by(age_group,dose) %>%
+  #     mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
+  #                                           TRUE ~ 0))
+  #   ggplot(to_plot) + geom_point(aes(x=date,y=coverage_this_date,color=as.factor(age_group)))+
+  #     plot_standard +
+  #     facet_grid(dose ~ .)
+  #   rm(primary_program_proj)
+  # }
 }
 
 #______________________________________________________________________________________________________________________________________
