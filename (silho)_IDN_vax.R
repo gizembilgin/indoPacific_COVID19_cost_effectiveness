@@ -334,51 +334,143 @@ supply = supply %>%
 # ggplot(supply) + geom_line(aes(x=delivery_month,y=cumulative_doses))+ facet_grid(vaccine_type ~ .)
 # NB: primarily Pfizer doses in the last few months
 
-workshop = data.frame()
-list_dates = unique(supply$delivery_month)
-prev_date = as.Date('1900-01-01')
-for (this_interval in 1:length(unique(supply$delivery_month))){
-  
-  cutoff = list_dates[this_interval] + 30
-  slice = vaccination_history_WORKSHOP %>%
-    filter(date>= prev_date & date <cutoff)
-  
-  if(nrow(slice)>0){
-    this_supply = supply %>%
-      filter(delivery_month<=cutoff) %>%
-      group_by(vaccine_type) %>%
-      summarise(doses = sum(doses))
-    
-    if(nrow(workshop)>0){
-      previously_delivered =  workshop %>%
-        group_by(vaccine_type) %>%
-        summarise(delivered = sum(doses_delivered_this_date))
-      
-      this_supply = this_supply %>% left_join(previously_delivered, by = "vaccine_type") 
-      this_supply$delivered[is.na(this_supply$delivered)] <- 0
-      this_supply = this_supply %>% mutate(doses = doses-delivered)
+primary_type_dn = supply %>%
+  filter(delivery_month < min(vaccination_history_WORKSHOP$date[vaccination_history_WORKSHOP$dose == 3])) %>%
+  group_by(vaccine_type) %>%
+  summarise(doses = sum(doses)) %>%
+  ungroup() %>%
+  mutate(prop = doses/sum(doses))
+primary_type_dn = crossing(dose = c(1,2),
+                           primary_type_dn)
+booster_type_dn = supply %>%
+  filter(delivery_month >= min(vaccination_history_WORKSHOP$date[vaccination_history_WORKSHOP$dose == 3])) %>%
+  group_by(vaccine_type) %>%
+  summarise(doses = sum(doses)) %>%
+  ungroup() %>%
+  mutate(prop = doses/sum(doses))
+booster_type_dn = crossing(dose = c(3,4),
+                           booster_type_dn)
+this_dn = rbind(primary_type_dn,booster_type_dn) %>% select(-doses)
+
+workshop = vaccination_history_WORKSHOP %>%
+  left_join(this_dn, by = "dose") %>%
+  mutate(doses_delivered_this_date = doses_delivered_this_date * prop) %>%
+  select(-prop)
+
+# workshop = data.frame()
+# list_dates = unique(supply$delivery_month)
+# prev_date = as.Date('1900-01-01')
+# for (this_interval in 1:length(unique(supply$delivery_month))){
+#   
+#   cutoff = list_dates[this_interval] + 30
+#   slice = vaccination_history_WORKSHOP %>%
+#     filter(date>= prev_date & date <cutoff)
+#   
+#   if(nrow(slice)>0){
+#     this_supply = supply %>%
+#       filter(delivery_month<=cutoff) %>%
+#       group_by(vaccine_type) %>%
+#       summarise(doses = sum(doses))
+#     
+#     if(nrow(workshop)>0){
+#       previously_delivered =  workshop %>%
+#         group_by(vaccine_type) %>%
+#         summarise(delivered = sum(doses_delivered_this_date))
+#       
+#       this_supply = this_supply %>% left_join(previously_delivered, by = "vaccine_type") 
+#       this_supply$delivered[is.na(this_supply$delivered)] <- 0
+#       this_supply = this_supply %>% mutate(doses = doses-delivered)
+#     }
+#     if(this_interval == length(unique(supply$delivery_month))){
+#       slice = vaccination_history_WORKSHOP %>%
+#         filter(date>= prev_date)
+#       this_supply = supply %>%
+#         filter(delivery_month==list_dates[this_interval])
+#     }    
+#     
+#     for(this_vax in unique(this_supply$vaccine_type)){
+#       slice_component = slice %>%
+#         mutate(vaccine_type = this_vax,
+#                doses_delivered_this_date = doses_delivered_this_date*
+#                  (this_supply$doses[this_supply$vaccine_type == this_vax])/sum(this_supply$doses))
+#       workshop = rbind(workshop,slice_component)
+#     }
+#   }
+#   prev_date = cutoff
+# }
+vaccination_history_WORKSHOP = workshop 
+
+
+#CHECKED dose 2 not delivered before dose 1
+d=2
+workshop_prev_dose = vaccination_history_WORKSHOP %>%
+  filter(dose == d - 1) %>% ungroup() %>%
+  select(date,vaccine_type,age_group,doses_delivered_this_date)%>%
+  group_by(vaccine_type,age_group) %>%
+  mutate(prev_avaliable = cumsum(doses_delivered_this_date))
+workshop_next_dose = vaccination_history_WORKSHOP %>%
+  filter(dose == d) %>% ungroup() %>%
+  select(date,vaccine_type,age_group,doses_delivered_this_date)%>%
+  group_by(vaccine_type,age_group) %>%
+  mutate(next_delivered = cumsum(doses_delivered_this_date),
+         date = date-vaxCovDelay$delay[vaxCovDelay$dose == (d-1)])  %>%
+  select(-doses_delivered_this_date)
+check = workshop_prev_dose %>%
+  left_join(workshop_next_dose, by = c("date", "vaccine_type", "age_group")) %>%
+  filter(prev_avaliable < next_delivered) %>%
+  mutate(diff = next_delivered - prev_avaliable)
+#push back one week
+while(nrow(check)>0){
+  this_date = check$date[1]
+  this_vax = check$vaccine_type[1]
+  this_age_group = check$age_group[1]
+  this_diff = check$diff[1]
+  vaccination_history_WORKSHOP$doses_delivered_this_date[vaccination_history_WORKSHOP$dose == d-1 &
+                                                           vaccination_history_WORKSHOP$date == this_date &
+                                                           vaccination_history_WORKSHOP$vaccine_type == this_vax &
+                                                           vaccination_history_WORKSHOP$age_group == this_age_group] =
+    vaccination_history_WORKSHOP$doses_delivered_this_date[vaccination_history_WORKSHOP$dose == d-1 &
+                                                             vaccination_history_WORKSHOP$date == this_date &
+                                                             vaccination_history_WORKSHOP$vaccine_type == this_vax &
+                                                             vaccination_history_WORKSHOP$age_group == this_age_group] + this_diff
+  trigger = 0
+  search = 7
+  while(trigger == 0){
+    window = sum(vaccination_history_WORKSHOP$doses_delivered_this_date[vaccination_history_WORKSHOP$dose == d-1 &
+                                                                 vaccination_history_WORKSHOP$date > this_date &
+                                                                 vaccination_history_WORKSHOP$date <= this_date + search &
+                                                               vaccination_history_WORKSHOP$vaccine_type == this_vax &
+                                                                 vaccination_history_WORKSHOP$age_group == this_age_group])
+    if (window >= this_diff){
+      vaccination_history_WORKSHOP$doses_delivered_this_date[vaccination_history_WORKSHOP$dose == d-1 &
+                                                               vaccination_history_WORKSHOP$date > this_date &
+                                                               vaccination_history_WORKSHOP$date <= this_date + search &
+                                                               vaccination_history_WORKSHOP$vaccine_type == this_vax &
+                                                               vaccination_history_WORKSHOP$age_group == this_age_group] = (window-this_diff)/search
+      trigger = 1
     }
-    if(this_interval == length(unique(supply$delivery_month))){
-      slice = vaccination_history_WORKSHOP %>%
-        filter(date>= prev_date)
-      this_supply = supply %>%
-        filter(delivery_month==list_dates[this_interval])
-    }    
-    
-    for(this_vax in unique(this_supply$vaccine_type)){
-      slice_component = slice %>%
-        mutate(vaccine_type = this_vax,
-               doses_delivered_this_date = doses_delivered_this_date*
-                 (this_supply$doses[this_supply$vaccine_type == this_vax])/sum(this_supply$doses))
-      workshop = rbind(workshop,slice_component)
-    }
+    search = search + 7
   }
-  prev_date = cutoff
+  
+  workshop_prev_dose = vaccination_history_WORKSHOP %>%
+    filter(dose == d - 1) %>% ungroup() %>%
+    select(date,vaccine_type,age_group,doses_delivered_this_date)%>%
+    group_by(vaccine_type,age_group) %>%
+    mutate(prev_avaliable = cumsum(doses_delivered_this_date))
+  workshop_next_dose = vaccination_history_WORKSHOP %>%
+    filter(dose == d) %>% ungroup() %>%
+    select(date,vaccine_type,age_group,doses_delivered_this_date)%>%
+    group_by(vaccine_type,age_group) %>%
+    mutate(next_delivered = cumsum(doses_delivered_this_date),
+           date = date-vaxCovDelay$delay[vaxCovDelay$dose == (d-1)])  %>%
+    select(-doses_delivered_this_date)
+  check = workshop_prev_dose %>%
+    left_join(workshop_next_dose, by = c("date", "vaccine_type", "age_group")) %>%
+    filter(prev_avaliable < next_delivered) %>%
+    mutate(diff = next_delivered - prev_avaliable)
 }
-# workshop %>% group_by(vaccine_type,dose) %>% summarise(sum = sum(doses_delivered_this_date))
-# workshop %>% ungroup() %>% summarise(sum = sum(doses_delivered_this_date))/expected
-# ggplot(workshop) + geom_line(aes(x=date,y=cumsum(doses_delivered_this_date)))+ facet_grid(vaccine_type ~ .)
-vaccination_history_WORKSHOP = workshop
+
+
 
 #Split booster doses across vaccine types
 workshop = vaccination_history_WORKSHOP %>% filter(dose<3)
@@ -440,8 +532,26 @@ vaccination_history_TRUE = vaccination_history_WORKSHOP %>%
 vaccination_history_TRUE$FROM_vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)] <- vaccination_history_TRUE$vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)]
 #_______________________________________________________________________________
 
-rm(vaccination_history_DOSE_NUMBER,vaccination_history_WORKSHOP,workshop,expected,this_dn)
+#rm(vaccination_history_DOSE_NUMBER,vaccination_history_WORKSHOP,workshop,expected,this_dn)
 
 
 
 
+#view = vaccination_history_TRUE %>% group_by(vaccine_type,dose,FROM_vaccine_type,age_group) %>% summarise(sum = sum(doses_delivered_this_date))
+#5) CORRECTED: dose 2 not delivered before dose 1, and dose 3 not before dose 2
+# d=2
+# workshop_prev_dose = vaccination_history_TRUE %>%
+#   filter(dose == d - 1) %>% ungroup() %>%
+#   select(date,vaccine_type,age_group,risk_group,doses_delivered_this_date)%>%
+#   group_by(vaccine_type,age_group,risk_group) %>%
+#   mutate(prev_avaliable = cumsum(doses_delivered_this_date))
+# workshop_next_dose = vaccination_history_TRUE %>%
+#   filter(dose == d) %>% ungroup() %>%
+#   select(date,vaccine_type,age_group,risk_group,doses_delivered_this_date)%>%
+#   group_by(vaccine_type,age_group,risk_group) %>%
+#   mutate(next_delivered = cumsum(doses_delivered_this_date),
+#          date = date-vaxCovDelay$delay[vaxCovDelay$dose == (d-1)])  %>%
+#   select(-doses_delivered_this_date)
+# check = workshop_prev_dose %>%
+#   left_join(workshop_next_dose, by = c("date", "vaccine_type", "age_group", "risk_group")) %>%
+#   filter(round(prev_avaliable) < round(next_delivered))
