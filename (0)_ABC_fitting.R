@@ -40,6 +40,22 @@ if (this_setting == "FJI"){
                              strain = c('WT','delta','omicron'))
   
   date_start = covid19_waves$date[1] - 2
+} else if (this_setting == "TLS") {
+  strain_inital = strain_now = 'WT'
+  baseline_covid19_waves = covid19_waves = data.frame(
+    date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2022-01-01')),
+    strain = c('WT', 'delta', 'omicron'))
+  
+  date_start = covid19_waves$date[1] - 2
+  
+} else if (this_setting == "IDN") {
+  strain_inital = strain_now = 'WT'
+  
+  baseline_covid19_waves = covid19_waves = data.frame(
+    date = c( as.Date('2020-12-01'), as.Date('2021-06-01'), as.Date('2022-02-01')),
+    strain = c('WT', 'delta', 'omicron'))
+  
+  date_start = covid19_waves$date[1] - 2
 }
 model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
 
@@ -322,6 +338,7 @@ load(file = paste('1_inputs/fit/',latest_file,sep=''))
 
 #configure scenario
 strain_inital = strain_now = 'WT' 
+baseline_date_start = date_start = as.Date('2021-04-30')
 model_weeks = as.numeric(((baseline_covid19_waves$date[3]-28)-date_start)/7)
 
 covid19_waves = data.frame(date = c(baseline_covid19_waves$date[1] + round(first_wave_fit$par[1]),
@@ -380,7 +397,7 @@ fit_daily_reported_3 <- function(par){
   #configure scenario
   fitting = "wave_three"
   
-  date_start = baseline_covid19_waves$date[3]-28
+  date_start = baseline_covid19_waves$date[3]-28-1
   model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
   covid19_waves = data.frame(date = c(baseline_covid19_waves$date[1] + round(first_wave_fit$par[1]),
                                       baseline_covid19_waves$date[2] + round(second_wave_fit$par[1]),
@@ -409,8 +426,8 @@ fit_daily_reported_3 <- function(par){
   
   return(fit_statistic)
 }
-
 .optim <- NULL
+#system.time({fit = fit_daily_reported_3(c(0,120,1.2))})
 system.time({third_wave_fit = optim(c(0,120,1.2),
                                     fit_daily_reported_3,
                                      method = "Nelder-Mead", 
@@ -421,7 +438,9 @@ system.time({third_wave_fit = optim(c(0,120,1.2),
 #                        method = "L-BFGS-B",
 #                        lower = c(0,50,1), upper = c(60,250,2))})
 
-to_plot = workshop %>% filter(date>date_start & date<=(date_start+model_weeks*7))
+to_plot = workshop %>% 
+  filter(date>baseline_date_start) %>%
+  filter(date>date_start & date<=(date_start+model_weeks*7))
 ggplot() +
   geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
