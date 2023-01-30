@@ -593,6 +593,80 @@ stochastic_VE <- function(
            dose = as.numeric(dose))
   point_estimates = bind_rows(point_estimates,point_estimates_booster)
   
+  #check dose 1 <= dose 2 <= dose 3 <= dose 4
+  issues = point_estimates%>%
+    pivot_wider(names_from = dose,
+                names_prefix = "dose_",
+                values_from = VE) %>%
+    filter((is.na(dose_2) == FALSE & dose_2<dose_1)|(is.na(dose_3) == FALSE & dose_3<dose_2)|(is.na(dose_4) == FALSE & dose_4<dose_3))
+  
+  while(nrow(issues)>0){
+    row = issues[1,]
+    row$dose_1[is.na(row$dose_1)] <- 0
+    row$dose_2[is.na(row$dose_2)] <- 0
+    row$dose_3[is.na(row$dose_3)] <- 0
+    
+    this_strain = issues$strain[1]
+    this_vax = issues$vaccine_type[1]
+    this_outcome = issues$outcome[1]
+    this_primary_if_booster = issues$primary_if_booster[1]
+    
+    if (row$dose_2 < row$dose_1) {
+      point_estimates$VE[point_estimates$dose == 2 &
+                           point_estimates$vaccine_type == this_vax &
+                           point_estimates$strain == this_strain &
+                           point_estimates$outcome == this_outcome] =
+        point_estimates$VE[point_estimates$dose == 1 &
+                             point_estimates$vaccine_type == this_vax &
+                             point_estimates$strain == this_strain &
+                             point_estimates$outcome == this_outcome]
+    } else if (row$dose_3 < row$dose_2) {
+      point_estimates$VE[point_estimates$dose == 3 &
+                           point_estimates$vaccine_type == this_vax &
+                           point_estimates$strain == this_strain &
+                           point_estimates$outcome == this_outcome] =
+        point_estimates$VE[point_estimates$dose == 2 &
+                             point_estimates$vaccine_type == this_vax &
+                             point_estimates$strain == this_strain &
+                             point_estimates$outcome == this_outcome]
+    } else if (row$dose_4 < row$dose_3) {
+      if(nrow(point_estimates[point_estimates$dose == 3 &
+                                 point_estimates$vaccine_type == this_vax &
+                                 point_estimates$strain == this_strain &
+                                 point_estimates$outcome == this_outcome &
+                              point_estimates$primary_if_booster == this_primary_if_booster,])>0){
+        point_estimates$VE[point_estimates$dose == 4 &
+                             point_estimates$vaccine_type == this_vax &
+                             point_estimates$strain == this_strain &
+                             point_estimates$outcome == this_outcome &
+                             point_estimates$primary_if_booster == this_primary_if_booster] =
+          point_estimates$VE[point_estimates$dose == 3 &
+                               point_estimates$vaccine_type == this_vax &
+                               point_estimates$strain == this_strain &
+                               point_estimates$outcome == this_outcome&
+                               point_estimates$primary_if_booster == this_primary_if_booster]
+      } else{
+        point_estimates$VE[point_estimates$dose == 4 &
+                             point_estimates$vaccine_type == this_vax &
+                             point_estimates$strain == this_strain &
+                             point_estimates$outcome == this_outcome &
+                             point_estimates$primary_if_booster == this_primary_if_booster] =
+          mean(point_estimates$VE[point_estimates$dose == 3 &
+                                    point_estimates$vaccine_type == this_vax &
+                                    point_estimates$strain == this_strain &
+                                    point_estimates$outcome == this_outcome])
+      }
+    }
+    
+    issues = point_estimates%>%
+      pivot_wider(names_from = dose,
+                  names_prefix = "dose_",
+                  values_from = VE) %>%
+      filter((is.na(dose_2) == FALSE & dose_2<dose_1)|(is.na(dose_3) == FALSE & dose_3<dose_2)|(is.na(dose_4) == FALSE & dose_4<dose_3))
+  }
+  
+  
+  
   together = point_estimates %>% 
     left_join(apply_ratio_MODEL,by='schedule') %>%
     left_join(apply_distribution_MODEL, by = c('schedule','age_group')) %>%
@@ -656,7 +730,16 @@ stochastic_VE <- function(
                    primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax]) &
                    vaccine_type == this_vax) %>%
           group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_days),.groups = "keep") 
+          summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+        #small edit for J&J
+        if (this_vax == "Johnson & Johnson" & nrow(this_combo) == 0){
+          this_combo = VE_waning_distribution_SO %>% 
+            filter(schedule == "booster" & 
+                     dose == this_dose & 
+                     vaccine_type == this_vax) %>%
+            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+        }
         
         # Second Choice = same primary schedule + booster of same vaccine mode
         if (nrow(this_combo) == 0){
@@ -666,7 +749,7 @@ stochastic_VE <- function(
                      primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax]) &
                      vaccine_mode == this_vax_mode) %>%
             group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days),.groups = "keep") 
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
         }
         
         # Third Choice = same primary schedule + any booster
@@ -675,7 +758,7 @@ stochastic_VE <- function(
             filter(schedule == "booster" & dose == this_dose & 
                      primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax])) %>%
             group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days),.groups = "keep") 
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
         }
         
         # Otherwise... rethink!
@@ -684,6 +767,57 @@ stochastic_VE <- function(
         workshop = rbind(workshop,this_combo)
       }
     }
+  }
+  
+  #check dose 2 <= dose 3 <= dose 4
+  issues = rbind(VE_waning_distribution_SO[VE_waning_distribution_SO$dose == 2 & VE_waning_distribution_SO$schedule == "primary",],workshop) %>%
+    select(-schedule,-primary_if_booster,-vaccine_mode) %>%
+    ungroup() %>% group_by(strain,vaccine_type,outcome,age_group,days) %>% 
+    pivot_wider(names_from = dose,
+                names_prefix = "dose_",
+                values_from = VE_days ) %>%
+    filter((is.na(dose_3) == FALSE & dose_3<dose_2)|(is.na(dose_4) == FALSE & dose_4<dose_3))
+  
+  while(nrow(issues)>0){
+    row = issues[1,]
+    row$dose_2[is.na(row$dose_2)] <- 0
+    row$dose_3[is.na(row$dose_3)] <- 0
+    
+    this_strain = issues$strain[1]
+    this_vax = issues$vaccine_type[1]
+    this_outcome = issues$outcome[1]
+    
+    if (row$dose_3 < row$dose_2) {
+      correction = workshop[workshop$dose == 2 &
+                                 workshop$vaccine_type == this_vax &
+                                 workshop$strain == this_strain &
+                                 workshop$outcome == this_outcome,] %>%
+        mutate(dose = 3)
+      
+      workshop = workshop %>%
+        filter(!(dose == 3 & vaccine_type == this_vax & strain == this_strain & outcome == this_outcome))
+      workshop = rbind(workshop,correction)
+
+        
+    } else if (row$dose_4 < row$dose_3) {
+      correction = workshop[workshop$dose == 3 &
+                              workshop$vaccine_type == this_vax &
+                              workshop$strain == this_strain &
+                              workshop$outcome == this_outcome,] %>%
+        mutate(dose = 4)
+      
+      workshop = workshop %>%
+        filter(!(dose == 4 & vaccine_type == this_vax & strain == this_strain & outcome == this_outcome))
+      workshop = rbind(workshop,correction)
+    }
+    
+    issues = rbind(VE_waning_distribution_SO[VE_waning_distribution_SO$dose == 2 & VE_waning_distribution_SO$schedule == "primary",],workshop) %>%
+      select(-schedule,-primary_if_booster,-vaccine_mode) %>%
+      ungroup() %>% group_by(strain,vaccine_type,outcome,age_group,days) %>% 
+      pivot_wider(names_from = dose,
+                  names_prefix = "dose_",
+                  values_from = VE_days ) %>%
+      filter((is.na(dose_3) == FALSE & dose_3<dose_2)|(is.na(dose_4) == FALSE & dose_4<dose_3))
   }
   
   VE_waning_distribution_SO = VE_waning_distribution_SO %>% 
