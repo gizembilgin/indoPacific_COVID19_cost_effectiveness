@@ -33,7 +33,7 @@ antiviral_model_manger <- function(
                                 vax_scenario = LIST_vax_scenario,
                                 vax_scenario_risk_group = toggle_high_risk_group
                                 )
-  booster_start_date = min(RECORD_antiviral_setup$vaccination_history_FINAL$date[RECORD_antiviral_setup$vaccination_history_FINAL$dose == 8])
+  booster_start_date = RECORD_antiviral_setup$generic_booster_toggles$start_date
 
   #load functions to be copied into clusters
   load(file = '1_inputs/antiviral_effectiveness.Rdata' )
