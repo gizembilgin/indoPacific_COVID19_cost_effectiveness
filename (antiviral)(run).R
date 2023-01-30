@@ -1,0 +1,87 @@
+
+### SETUP  ################################################################
+#load libraries
+library(readr)
+library(ggplot2)
+library(gridExtra)
+library(ggpubr)
+library(tidyverse)
+library(doParallel)
+library(parallel)
+library(foreach)
+
+#dependencies -> nil!
+rm(list=ls())
+rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
+
+source(paste(getwd(),"/(antiviral)(function) antiviral_model_manger.R",sep=""))
+source(paste(getwd(),"/(antiviral)(function) antiviral_model_worker.R",sep=""))
+source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
+source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
+copy_function_into_cluster = antiviral_model_worker
+RECORD_antiviral_model_simulations = data.frame()
+#____________________________________________________________________________
+
+
+
+### ANTIVIRAL SIMULATIONS ##################################################
+time.start.AntiviralSimulations=proc.time()[[3]]
+
+#for (setting in c("PNG","TLS","IDN","FJI","SLB","PHL")){
+#for (setting_beta in c("PNG_high_beta")){ #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
+  
+  setting = substr(setting_beta,1,3)
+  
+  #load latest antiviralSetUp_* (transmission model run for 1 year)
+  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",setting_beta,"*",sep=""))
+  list_poss_Rdata_details = double()
+  for (i in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste(rootpath,'x_results/',list_poss_Rdata[[i]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+  
+  RECORD_antiviral_model_simulations_0 <- antiviral_model_manger(
+    
+    LIST_antiviral_start_date = c(as.Date('2023-01-01'),as.Date('2023-07-01')), 
+    LIST_vax_scenario = unique(RECORD_antiviral_setup$outcomes_without_antivirals$vax_scenario),
+    LIST_antiviral_target_group = list('adults_with_comorbidities', #baseline
+                                       'unvaccinated_adults',
+                                       'unvaccinated_adults_AND_adults_with_comorbidities',
+                                       'all_adults'),
+    LIST_antiviral_type = list("nirmatrelvir_ritonavir","molunipiravir"), #options:nirmatrelvir_ritonavir,molunipiravir 
+    toggle_high_risk_group = "adults_with_comorbidities",
+    
+    
+    RECORD_antiviral_setup = RECORD_antiviral_setup,
+    setting = setting,
+    
+    toggle_number_of_runs = 100, #DEFAULT 100
+    toggle_cluster_number = 4,
+    
+    toggle_stochastic_SO = "on", # DEFAULT "on"
+    toggle_compare_to_vaccine_effect = "on",
+    
+    toggle_sensitivity_analysis = list(),
+    pathway_to_care = "fixed",
+    toggle_fixed_antiviral_coverage = 0.2,
+    manager_stochastic_VE_sampling = "uniform" # options: "normal" or "uniform"
+  )
+  
+  RECORD_antiviral_model_simulations_0 = RECORD_antiviral_model_simulations_0 %>% mutate(country = setting)
+  RECORD_antiviral_model_simulations = rbind(RECORD_antiviral_model_simulations,RECORD_antiviral_model_simulations_0)
+#}
+
+time.end.AntiviralSimulations=proc.time()[[3]]
+(time.end.AntiviralSimulations - time.start.AntiviralSimulations)/60 # roughly 8 hours stochastically
+
+temp_name = ''
+time = Sys.time()
+time = gsub(':','-',time)
+time = paste(temp_name,time,sep='')
+#____________________________________________________________________________
+
+
+### SAVE ####################################################################
+save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/AntiviralRun_",setting_beta,time,".Rdata",sep=''))
