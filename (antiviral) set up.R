@@ -4,12 +4,8 @@
 ### DEPENDENCIES: nil!
 rm(list=ls())
 
-
-setting = "PNG" #options: "FJI", "PNG", "SLE"
-if (setting == "PNG"){ #NB: other settings will automatically make setting_beta = setting
-  setting_beta = "low_PNG_beta" #ensemble options of : high_PNG_beta, low_PNG_beta
-} 
-
+setting_beta = "PNG_low_beta" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
+setting = substr(setting_beta,1,3)
 
 ### SET UP MODEL RUN ################################################################
 #start timing
@@ -117,6 +113,7 @@ if (setting == "FJI"){
       vaccine_interval = 90
     )
 }
+RECORD_generic_booster_toggles = generic_booster_toggles
 #______________________________________________________________________________________________________________
   
   
@@ -272,16 +269,14 @@ for (ticket in 1:length(queue)){
      filter(risk_group == risk_group_name) %>%
      group_by(outcome) %>%
      summarise(high_risk = sum(proj))
-   append_booster_doses = vaccination_history_FINAL %>%
-     ungroup() %>%
-     filter(dose == 8) %>%
-     summarise(overall = sum(doses_delivered_this_date)) %>%
+   append_booster_doses = booster_doses_delivered %>%
+     summarise(overall = sum(doses_delivered)) %>%
      mutate(outcome = 'booster_doses_delivered')
-   append_booster_doses_risk = vaccination_history_FINAL %>%
-     ungroup() %>%
-     filter(risk_group == risk_group_name & dose == 8) %>%
-     summarise(high_risk = sum(doses_delivered_this_date)) %>%
-     mutate(outcome = 'booster_doses_delivered')
+   append_booster_doses_risk = booster_doses_delivered %>%
+     filter(risk_group == risk_group_name) %>%
+     rename(high_risk = doses_delivered) %>%
+     mutate(outcome = 'booster_doses_delivered') %>%
+     select(-risk_group)
    
    outcomes_without_antivirals = rbind(outcomes_without_antivirals,append_booster_doses)
    append_risk = rbind(append_high_risk,append_booster_doses_risk)
@@ -343,7 +338,8 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               incidence_log_tidy = RECORD_incidence_log_tidy,
                               exposed_log = RECORD_exposed_log,
                               incidence_log = RECORD_incidence_log,
-                              vaccination_history_FINAL = RECORD_vaccination_history_FINAL)
+                              vaccination_history_FINAL = RECORD_vaccination_history_FINAL,
+                              generic_booster_toggles = RECORD_generic_booster_toggles)
 
 
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,Sys.Date(),".Rdata",sep=''))
@@ -351,11 +347,12 @@ save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",s
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
+#23/01/23 7 hours for PNG
 ###############################################################################################################
 
 
 
 
 ### VISUALLY SENSE CHECK MODEL RUNS ############################################################################
-RECORD_outcomes_without_antivirals = RECORD_outcomes_without_antivirals %>% arrange(outcome)
-View(RECORD_outcomes_without_antivirals)
+#RECORD_outcomes_without_antivirals = RECORD_outcomes_without_antivirals %>% arrange(outcome)
+#View(RECORD_outcomes_without_antivirals)
