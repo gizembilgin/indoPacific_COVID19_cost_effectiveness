@@ -107,7 +107,7 @@ save(PNG_ensemble, file = paste("1_inputs/PNG_ensemble_",Sys.Date(),".Rdata"))
 
 
 ### CREATE FITTED RESULTS FOR 'LOW' AND 'HIGH' PNG
-scenarios = data.frame(name = c("low_PNG_beta","high_PNG_beta"),
+scenarios = data.frame(name = c("PNG_low_beta","PNG_high_beta"),
                        beta = c(1.1,1.5))
 
 for (this_scenario in 1:nrow(scenarios)){
