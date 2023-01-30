@@ -55,7 +55,7 @@ antiviral_model_worker <- function(
   # Sample parameters related to severe outcome projections
   if (local_stochastic_SO == "on"){
     input_vaccine_type_list = unique(RECORD_antiviral_setup$vaccination_history_FINAL$vaccine_type)
-    booster_combinations = unique(RECORD_antiviral_setup$vaccination_history_FINAL[vaccination_history_FINAL$schedule == 'booster',c('vaccine_type','dose','FROM_vaccine_type','vaccine_mode')])
+    booster_combinations = unique(RECORD_antiviral_setup$vaccination_history_FINAL[RECORD_antiviral_setup$vaccination_history_FINAL$schedule == 'booster',c('vaccine_type','dose','FROM_vaccine_type','vaccine_mode')])
     
     SO_sample = stochastic_severe_outcomes_sampling( booster_combinations = booster_combinations,
                                                      setting = setting,
