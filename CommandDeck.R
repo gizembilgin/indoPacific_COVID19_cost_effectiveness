@@ -126,6 +126,9 @@ if (fitting == "on"){
     if (fitting != "wave_three"){
       covid19_waves = fitted_results[[5]] 
       fitting_beta = fitted_results[[6]] 
+    } else if (fitting == "wave_three"){
+      prev_beta = fitted_results[[7]]
+      this_beta = fitted_results[[8]]
     }
     rm(fitted_results)
     
