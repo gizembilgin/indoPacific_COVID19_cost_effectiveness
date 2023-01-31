@@ -88,6 +88,7 @@ VE_real_range = data.frame()
 date_list = seq(max(date_start,min(vaccination_history_TRUE$date)+ min(vaxCovDelay$delay)),
                 Sys.Date()+1,
                 by="days")
+#COMEBACK - update to run only dates not yet filled
 
 for (i in 1:length(date_list)) {
   #date_now
@@ -358,7 +359,9 @@ fitted_results = list(
   FR_incidence_log_tidy = incidence_log_tidy,
   FR_incidence_log = incidence_log,
   FR_covid19_waves = covid19_waves,
-  FR_fitting_beta = fitting_beta
+  FR_fitting_beta = fitting_beta,
+  FR_prev_beta = prev_beta,
+  FR_this_beta = this_beta
 )
 save(fitted_results, file = paste("1_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=''))
 #______________________________________________
@@ -433,11 +436,14 @@ system.time({third_wave_fit = optim(c(0,120,1.2),
                                      method = "Nelder-Mead", 
                                     control = list(trace = TRUE))})
 
-# system.time({third_wave_fit = optim(c(15,120,1.2),
-#                                     fit_daily_reported_3,
-#                        method = "L-BFGS-B",
-#                        lower = c(0,50,1), upper = c(60,250,2))})
+system.time({third_wave_fit = optim(c(0,120,1.2),
+                                    fit_daily_reported_3,
+                       method = "L-BFGS-B",
+                       lower = c(0,50,1), upper = c(60,250,2))})
 
+
+
+baseline_date_start = as.Date('2021-04-30')
 to_plot = workshop %>% 
   filter(date>baseline_date_start) %>%
   filter(date>date_start & date<=(date_start+model_weeks*7))
@@ -446,7 +452,7 @@ ggplot() +
   geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
   plot_standard
 
-save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,'.Rdata',sep=''))
+save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
 
 
