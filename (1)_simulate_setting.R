@@ -245,8 +245,16 @@ vaxCovDelay = vaxCovDelay %>%
 
 
 ##(i/iii) Load and clean data _________________________________________________
-if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep=""))}
-source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
+if (fitting %in% c("on","wave_three") & file.exists(paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
+} else {
+  if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep=""))}
+  source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
+  
+  if (fitting %in% c("on","wave_three")){
+    save(vaccination_history_TRUE, file = paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
+  }
+}
 
 #project forward expected continuation of existing program
 if (exists("antiviral_setup") == FALSE){antiviral_setup ="off"}
