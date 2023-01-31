@@ -138,7 +138,7 @@ risk_group_labels = unique(pop_risk_group_dn$risk_group)
 ### (2/5) Contact patterns of population
 #CONFIRMATION FROM MARK JIT: .Rdata files are more up to date on GitHub (Prem et al. 2021 paper)
 #(A/C) load contact matrix
-load(file = paste(rootpath,"inputs/contact_all.Rdata",sep=''))
+load(file = "1_inputs/contact_all.Rdata")
 contact_matrix_setting <- contact_all[[setting]]
 Prem_et_al_age_list <- c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75)
 colnames(contact_matrix_setting) <- Prem_et_al_age_list; rownames(contact_matrix_setting) <- Prem_et_al_age_list
