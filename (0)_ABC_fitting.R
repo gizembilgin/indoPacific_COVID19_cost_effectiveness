@@ -62,8 +62,7 @@ model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
 #plot standard
 plot_standard = theme_bw() + 
   theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(color = 'black'))
+        panel.grid.minor = element_blank())
 
 #risk group toggles
 risk_group_prioritisation_to_date = NA
@@ -430,7 +429,7 @@ fit_daily_reported_3 <- function(par){
   return(fit_statistic)
 }
 .optim <- NULL
-#system.time({fit = fit_daily_reported_3(c(0,120,1.2))})
+
 system.time({third_wave_fit = optim(c(0,120,1.2),
                                     fit_daily_reported_3,
                                      method = "Nelder-Mead", 
@@ -450,7 +449,8 @@ to_plot = workshop %>%
 ggplot() +
   geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
-  plot_standard
+  plot_standard +
+  xlab("")
 
 save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
@@ -458,11 +458,13 @@ save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,Sys
 
 
 
-#NEED TO CREATE FITTED_COVID19_WAVES & FR_parameters,FR_next_state,FR_fitted_incidence_log,FR_fitted_incidence_log
 ### Save ___________________________________________________________________________________________
 #fitted_covid19_waves columns: fitted_setting, fitted_date, strain, date
 load(file = '1_inputs/fit/fitted_covid19_waves.Rdata')
-fitted_covid19_waves = fitted_covid19_waves %>% 
+
+this_fit_covid19_waves = cbind(covid19_waves,
+                               fitting_beta = fitting_beta,
+                               under_reporting_est = c(first_wave_fit$par[2],second_wave_fit$par[2],third_wave_fit$par[2])) %>% 
   mutate(fitted_setting = this_setting,
          fitted_date = Sys.Date())
 fitted_covid19_waves = rbind(fitted_covid19_waves,this_fit_covid19_waves)
@@ -471,29 +473,25 @@ save(fitted_covid19_waves, file = '1_inputs/fit/fitted_covid19_waves.Rdata')
 
 
 #fitted_results = run with best estimates
-load(file = paste('1_inputs/fit/first_wave_fit',this_setting,'.Rdata',sep=''))
-load(file = paste('1_inputs/fit/second_wave_fit',this_setting,'.Rdata',sep=''))
-load(file = paste('1_inputs/fit/third_wave_fit',this_setting,'.Rdata',sep=''))
+this_setting_best_fit = fitted_covid19_waves %>% 
+  filter(fitted_setting == this_setting)
 
+fitting = "on"
 strain_inital = strain_now = 'WT' 
-model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
-covid19_waves = data.frame(date = c(as.Date('2021-06-09')+round(first_wave_fit$par[1]),
-                                    as.Date('2021-10-15')+round(par[1]),
-                                    as.Date('2022-02-01')),
-                           strain = c('delta','omicron','omicron'))
-fitting_beta= c(first_wave_fit$par[3],
-                par[3],
-                1)
+model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
+covid19_waves = this_setting_best_fit %>% select(date,strain)
+fitting_beta= as.numeric(this_setting_best_fit$fitting_beta)
 
 source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+beep()
 
 workshop = case_history %>%
   select(date,rolling_average) %>%
-  mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
+  mutate(
     rolling_average = case_when(
-      #COMEBACK - need third wave here
-      date > fit_cutoff_dates[1] ~ rolling_average * second_wave_fit$par[2],
-      date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
+      date > fit_cutoff_dates[2] ~ rolling_average * this_setting_best_fit$under_reporting_est[3],
+      date > fit_cutoff_dates[1] ~ rolling_average * this_setting_best_fit$under_reporting_est[2],
+      date <= fit_cutoff_dates[1] ~ rolling_average *  this_setting_best_fit$under_reporting_est[1])) %>%
   rename(adjusted_reported = rolling_average) %>%
   left_join(incidence_log, by = "date") %>%
   mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
@@ -502,9 +500,12 @@ to_plot = workshop %>% filter(date>date_start)
 ggplot() +
   geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
-  plot_standard
-sum(workshop$fit_statistic,na.rm=TRUE)
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  xlab("")
 
+incidence_log = incidence_log %>% select(date,daily_cases)
 
 fitted_results = list(
   FR_parameters = parameters,
@@ -514,4 +515,38 @@ fitted_results = list(
   FR_covid19_waves = covid19_waves,
   FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fitted_results_",this_setting,Sys.Date(),".Rdata"))
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata"))
+#___________________________________________________________________________
+
+
+#Check 2023
+fitting = "on"
+strain_inital = strain_now = 'WT' 
+model_weeks = as.numeric(ceiling((as.Date('2024-01-01') - date_start)/7)) 
+covid19_waves = this_setting_best_fit %>% select(date,strain)
+fitting_beta= as.numeric(this_setting_best_fit$fitting_beta)
+
+source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+beep()
+workshop = case_history %>%
+  select(date,rolling_average) %>%
+  mutate(
+    rolling_average = case_when(
+      date > fit_cutoff_dates[2] ~ rolling_average * this_setting_best_fit$under_reporting_est[3],
+      date > fit_cutoff_dates[1] ~ rolling_average * this_setting_best_fit$under_reporting_est[2],
+      date <= fit_cutoff_dates[1] ~ rolling_average *  this_setting_best_fit$under_reporting_est[1])) %>%
+  rename(adjusted_reported = rolling_average) 
+workshop = incidence_log %>%
+  left_join(workshop, by = "date") %>%
+  mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
+
+to_plot = workshop %>% filter(date>date_start)
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  xlab("")
+#______________________________________________________________________________________________________________
+  

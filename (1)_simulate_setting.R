@@ -202,33 +202,40 @@ rm(contact_all, contact_matrix_setting, sum_1, sum_2,
 
 
 ###(3/5) Live updates of cases
-workshop_cases <- readr::read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
-workshop_cases = workshop_cases[workshop_cases$'Country/Region' == setting_long,]
-workshop_cases <- workshop_cases %>%
-  pivot_longer(
-    cols = 5:ncol(workshop_cases) ,
-    names_to = 'date',
-    values_to = 'cases'
-  )
-workshop_cases$date = as.Date(workshop_cases$date, "%m/%d/%y")
+if (file.exists(paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
+} else {
+  workshop_cases <- readr::read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+  workshop_cases = workshop_cases[workshop_cases$'Country/Region' == setting_long,]
+  workshop_cases <- workshop_cases %>%
+    pivot_longer(
+      cols = 5:ncol(workshop_cases) ,
+      names_to = 'date',
+      values_to = 'cases'
+    )
+  workshop_cases$date = as.Date(workshop_cases$date, "%m/%d/%y")
+  
+  case_history <- workshop_cases %>%
+    mutate(new = cases - lag(cases),
+           rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
+                              +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
+  
+  # ggplot() +
+  #   geom_point(data=case_history,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  #   xlab("") +
+  #   scale_x_date(date_breaks="1 month", date_labels="%b") +
+  #   ylab("daily cases") +
+  #   theme_bw() +
+  #   theme(panel.grid.major = element_blank(),
+  #         panel.grid.minor = element_blank(),
+  #         panel.border = element_blank(),
+  #         axis.line = element_line(color = 'black'))
+  
+  rm(workshop_cases)
+  
+  save(case_history, file = paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
 
-case_history <- workshop_cases %>%
-  mutate(new = cases - lag(cases),
-         rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
-                            +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
-
-# ggplot() +
-#   geom_point(data=case_history,aes(x=date,y=rolling_average),na.rm=TRUE) +
-#   xlab("") +
-#   scale_x_date(date_breaks="1 month", date_labels="%b") +
-#   ylab("daily cases") +
-#   theme_bw() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.border = element_blank(),
-#         axis.line = element_line(color = 'black'))
-
-rm(workshop_cases)
+}
 #______________________________________________________________________________________________________________________________________
 
 
@@ -374,33 +381,34 @@ if(antiviral_setup == "on"){
 ### Static toggles
 NPI_toggle = 'contain_health'   #choice of NPI metric: contain_health, stringency
 
-if (NPI_toggle == 'stringency'){
-  workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index_avg.csv")
-  workshop <- workshop[workshop$country_code == setting,]%>%
-    pivot_longer(
-      cols = 7:ncol(workshop) ,
-      names_to = 'date',
-      values_to = 'NPI'
-    ) 
-} else if (NPI_toggle == 'contain_health'){
-  workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/containment_health_index_avg.csv")
-  workshop <- workshop[workshop$country_code == setting,]%>%
-    pivot_longer(
-      cols = 7:ncol(workshop) ,
-      names_to = 'date',
-      values_to = 'NPI'
-    ) 
-
+if (file.exists(paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
+} else {
+  if (NPI_toggle == 'stringency'){
+    workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index_avg.csv")
+    workshop <- workshop[workshop$country_code == setting,]%>%
+      pivot_longer(
+        cols = 7:ncol(workshop) ,
+        names_to = 'date',
+        values_to = 'NPI'
+      ) 
+  } else if (NPI_toggle == 'contain_health'){
+    workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/containment_health_index_avg.csv")
+    workshop <- workshop[workshop$country_code == setting,]%>%
+      pivot_longer(
+        cols = 7:ncol(workshop) ,
+        names_to = 'date',
+        values_to = 'NPI'
+      ) 
+  }
+  
+  NPI_estimates <- workshop[,c('date','NPI')] %>%
+    mutate(date =as.Date(workshop$date, "%d%b%Y"))
+  NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
+  rm(workshop,NPI_toggle)
+  
+  save(NPI_estimates, file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
 }
-NPI_estimates <- workshop[,c('date','NPI')] %>%
-  mutate(date =as.Date(workshop$date, "%d%b%Y"))
-NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
-
-# NPI_estimates = NPI_estimates %>% mutate(NPI = (NPI + lag(NPI,default=0) + lag(NPI,n=2,default=0)+lag(NPI,n=3,default=0) +
-#                                                     lead(NPI,default=0)+lead(NPI,n=2,default=0)+lead(NPI,n=3,default=0))/7)
-#ggplot(NPI_estimates) + geom_point(aes(date,NPI)) + geom_line(aes(date,NPI_ave))
-
-rm(workshop,NPI_toggle)
 #______________________________________________________________________________________________________________________________________
 
 
