@@ -469,7 +469,9 @@ while(nrow(check)>0){
     filter(prev_avaliable < next_delivered) %>%
     mutate(diff = next_delivered - prev_avaliable)
 }
-
+vaccination_history_WORKSHOP = vaccination_history_WORKSHOP %>%
+  group_by(date,dose,age_group,vaccine_type) %>%
+  summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = "keep")
 
 
 #Split booster doses across vaccine types
@@ -532,7 +534,7 @@ vaccination_history_TRUE = vaccination_history_WORKSHOP %>%
 vaccination_history_TRUE$FROM_vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)] <- vaccination_history_TRUE$vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)]
 #_______________________________________________________________________________
 
-#rm(vaccination_history_DOSE_NUMBER,vaccination_history_WORKSHOP,workshop,expected,this_dn)
+rm(vaccination_history_DOSE_NUMBER,vaccination_history_WORKSHOP,workshop,expected,this_dn)
 
 
 
