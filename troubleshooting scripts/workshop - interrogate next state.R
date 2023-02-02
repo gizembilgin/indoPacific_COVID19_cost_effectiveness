@@ -2,24 +2,14 @@ options(scipen = 100)
 
 prev_state[prev_state$pop<0,] #row = 0
 next_state[next_state$pop<0,]
-# pop class temp age_group dose vaccine_type     risk_group
-# pop class temp age_group dose      vaccine_type                risk_group
-# 93  -41.065975661780392158562     S   21  30 to 44    1 Johnson & Johnson adults_with_comorbidities
-# 94  -25.210151035029735311355     S   22  45 to 59    1 Johnson & Johnson adults_with_comorbidities
-# 95  -90.192674680754237215297     S   23  60 to 69    1 Johnson & Johnson adults_with_comorbidities
-# 96  -76.080692087072080198595     S   24 70 to 100    1 Johnson & Johnson adults_with_comorbidities
-# 237  -0.916733173465666739688     E   21  30 to 44    1 Johnson & Johnson adults_with_comorbidities
-# 238  -0.421021411209816620591     E   22  45 to 59    1 Johnson & Johnson adults_with_comorbidities
-# 239  -1.282288358556517016140     E   23  60 to 69    1 Johnson & Johnson adults_with_comorbidities
-# 240  -0.404457441801764794320     E   24 70 to 100    1 Johnson & Johnson adults_with_comorbidities
-# 381  -4.117631064775431504188     I   21  30 to 44    1 Johnson & Johnson adults_with_comorbidities
-# 382  -1.887509751856510042956     I   22  45 to 59    1 Johnson & Johnson adults_with_comorbidities
-# 383  -5.740969119742308279797     I   23  60 to 69    1 Johnson & Johnson adults_with_comorbidities
-# 384  -1.801921541664784909287     I   24 70 to 100    1 Johnson & Johnson adults_with_comorbidities
-# 525 -62.095187864843595093589     R   21  30 to 44    1 Johnson & Johnson adults_with_comorbidities
-# 526 -28.715895210979560658870     R   22  45 to 59    1 Johnson & Johnson adults_with_comorbidities
-# 527 -87.709298371528404913988     R   23  60 to 69    1 Johnson & Johnson adults_with_comorbidities
-# 528 -28.255358100616994931897     R   24 70 to 100    1 Johnson & Johnson adults_with_comorbidities
+# 19   -173519.037155     S   19  10 to 17    1      Moderna            general_public
+# 27   -224552.923760     S   27  10 to 17    1       Pfizer            general_public
+# 35  -1597613.376225     S   35  10 to 17    1      Sinovac            general_public
+# 147     -743.877745     S   11  10 to 17    1  AstraZeneca adults_with_comorbidities
+# 155     -293.664330     S   19  10 to 17    1      Moderna adults_with_comorbidities
+# 163     -380.030467     S   27  10 to 17    1       Pfizer adults_with_comorbidities
+# 171    -2703.553445     S   35  10 to 17    1      Sinovac adults_with_comorbidities
+
 
 
 aggregate(next_state$pop, by=list(next_state$age_group), FUN=sum)
@@ -28,7 +18,7 @@ sum(pop); sum(next_state$pop)#CHECKED: pop remains constant
 
 
 #pick an age to trouble shoot off
-this_age = '18 to 29'
+this_age = '10 to 17'
 dataset = fitted_next_state
 dataset = next_state
   
@@ -37,36 +27,34 @@ workshop = aggregate(workshop$pop, by=list(workshop$age_group,workshop$risk_grou
 colnames(workshop) = c('age_group','risk_group','dose','vaccine_type','state')
 workshop = workshop %>% left_join(pop_risk_group_dn) %>% mutate(cov = round(state/pop,digits=3)) %>% select(-pop) %>% arrange(risk_group,dose)
 print(workshop, row.names = FALSE)
-# age_group     risk_group dose      vaccine_type          state   cov
-# 30 to 44 general_public    0      unvaccinated  129925.351195 0.094
-# 30 to 44 general_public    1       AstraZeneca    -225.575229 0.000
-# 30 to 44 general_public    1 Johnson & Johnson   43814.495992 0.032
-# 30 to 44 general_public    1            Pfizer    -262.914138 0.000
-# 30 to 44 general_public    1         Sinopharm     -75.881576 0.000
-# 30 to 44 general_public    2       AstraZeneca    1088.240442 0.001
-# 30 to 44 general_public    2 Johnson & Johnson 1213002.834362 0.873
-# 30 to 44 general_public    2            Pfizer    1268.374186 0.001
-# 30 to 44 general_public    2         Sinopharm     366.074766 0.000
-# 30 to 44 pregnant_women    0      unvaccinated    7895.047804 0.094
-# 30 to 44 pregnant_women    1       AstraZeneca     -13.707311 0.000
-# 30 to 44 pregnant_women    1 Johnson & Johnson    2662.432983 0.032
-# 30 to 44 pregnant_women    1            Pfizer     -15.976248 0.000
-# 30 to 44 pregnant_women    1         Sinopharm      -4.611022 0.000
-# 30 to 44 pregnant_women    2       AstraZeneca      66.128051 0.001
-# 30 to 44 pregnant_women    2 Johnson & Johnson   73709.366769 0.873
-# 30 to 44 pregnant_women    2            Pfizer      77.074064 0.001
-# 30 to 44 pregnant_women    2         Sinopharm      22.244910 0.000
+# 10 to 17            general_public    0 unvaccinated 13794517.804862  0.369
+# 10 to 17            general_public    1  AstraZeneca  -850296.567653 -0.023
+# 10 to 17            general_public    1      Moderna  -328885.095314 -0.009
+# 10 to 17            general_public    1       Pfizer  -430989.763679 -0.012
+# 10 to 17            general_public    1      Sinovac -3084100.352360 -0.082
+# 10 to 17            general_public    2  AstraZeneca  4863919.332036  0.130
+# 10 to 17            general_public    2      Moderna  1881308.985561  0.050
+# 10 to 17            general_public    2       Pfizer  2465374.462531  0.066
+# 10 to 17            general_public    2      Sinovac 17641862.729362  0.471
+# 10 to 17            general_public    3  AstraZeneca   270408.892652  0.007
+# 10 to 17            general_public    3      Moderna        0.000000  0.000
+# 10 to 17            general_public    3       Pfizer  1200435.410859  0.032
+# 10 to 17            general_public    3      Sinovac      400.161143  0.000
+# 10 to 17            general_public    4  AstraZeneca        0.000000  0.000
+# 10 to 17            general_public    4      Moderna        0.000000  0.000
+# 10 to 17            general_public    4       Pfizer        0.000000  0.000
+# 10 to 17            general_public    4      Sinovac        0.000000  0.000
+#same for adults_with_comorbidities
 
 workshop %>% group_by(age_group,risk_group,dose) %>%
   summarise(cov = sum(cov))
-# age_group risk_group      dose   cov
-# <chr>     <chr>          <dbl> <dbl>
-#   1 30 to 44  general_public     0 0.094
-# 2 30 to 44  general_public     1 0.032
-# 3 30 to 44  general_public     2 0.875
-# 4 30 to 44  pregnant_women     0 0.094
-# 5 30 to 44  pregnant_women     1 0.032
-# 6 30 to 44  pregnant_women     2 0.875
+# age_group risk_group                 dose    cov
+#   1 10 to 17  adults_with_comorbidities     0  0.369
+# 2 10 to 17  adults_with_comorbidities     1 -0.126
+# 3 10 to 17  adults_with_comorbidities     2  0.717
+# 4 10 to 17  adults_with_comorbidities     3  0.039
+# 5 10 to 17  adults_with_comorbidities     4  0    
+  
 
 vaccination_history_FINAL %>% ungroup() %>%
   filter(date <= date_now & age_group == this_age & risk_group == 'general_public') %>%
@@ -74,24 +62,36 @@ vaccination_history_FINAL %>% ungroup() %>%
   group_by(age_group,risk_group,dose,vaccine_type,FROM_vaccine_type,FROM_dose) %>%
   summarise(doses_delivered = sum(doses_delivered_this_date)) %>% 
   left_join(pop_risk_group_dn) %>% mutate(cov = round(doses_delivered/pop,digits=3)) %>% select(-pop)
-# age_group risk_group      dose vaccine_type      FROM_vaccine_type FROM_dose doses_delivered   cov
-# 1 30 to 44  general_public     1 AstraZeneca       NA                       NA         266434. 0.192
-# 2 30 to 44  general_public     1 Johnson & Johnson NA                       NA         555636. 0.4  
-# 3 30 to 44  general_public     1 Pfizer            NA                       NA         310537. 0.224
-# 4 30 to 44  general_public     1 Sinopharm         NA                       NA          89626. 0.065
-# 5 30 to 44  general_public     2 AstraZeneca       NA                       NA         144104. 0.104
-# 6 30 to 44  general_public     2 Johnson & Johnson NA                       NA              0  0    
-# 7 30 to 44  general_public     2 Pfizer            NA                       NA         167957. 0.121
-# 8 30 to 44  general_public     2 Sinopharm         NA                       NA          48475. 0.035
-# 9 30 to 44  general_public     8 Johnson & Johnson AstraZeneca               1         122331. 0.088
-# 10 30 to 44  general_public     8 Johnson & Johnson AstraZeneca               2         144104. 0.104
-# 11 30 to 44  general_public     8 Johnson & Johnson Johnson & Johnson         1         555636. 0.4  
-# 12 30 to 44  general_public     8 Johnson & Johnson Johnson & Johnson         2              0  0    
-# 13 30 to 44  general_public     8 Johnson & Johnson Pfizer                    1         142580. 0.103
-# 14 30 to 44  general_public     8 Johnson & Johnson Pfizer                    2         167957. 0.121
-# 15 30 to 44  general_public     8 Johnson & Johnson Sinopharm                 1          41151. 0.03 
-# 16 30 to 44  general_public     8 Johnson & Johnson Sinopharm                 2          48475. 0.035
+# age_group risk_group      dose vaccine_type FROM_vaccine_type FROM_dose doses_delivered   cov
+# <fct>     <chr>          <dbl> <chr>        <chr>                 <dbl>           <dbl> <dbl>
+#   1 10 to 17  general_public     1 AstraZeneca  AstraZeneca               0       5914613.  0.158
+# 2 10 to 17  general_public     1 Moderna      Moderna                   0       2287705.  0.061
+# 3 10 to 17  general_public     1 Pfizer       Pfizer                    0       2997939.  0.08 
+# 4 10 to 17  general_public     1 Sinovac      Sinovac                   0      21452821.  0.573
+# 5 10 to 17  general_public     2 AstraZeneca  AstraZeneca               1       5130413.  0.137
+# 6 10 to 17  general_public     2 Moderna      Moderna                   1       1984386.  0.053
+# 7 10 to 17  general_public     2 Pfizer       Pfizer                    1       2600452.  0.069
+# 8 10 to 17  general_public     2 Sinovac      Sinovac                   1      18608459.  0.497
+# 9 10 to 17  general_public     3 AstraZeneca  AstraZeneca               2         48999.  0.001
+# 10 10 to 17  general_public     3 AstraZeneca  Moderna                   2         18952.  0.001
+# 11 10 to 17  general_public     3 AstraZeneca  Pfizer                    2         24836.  0.001
+# 12 10 to 17  general_public     3 AstraZeneca  Sinovac                   2        177725.  0.005
+# 13 10 to 17  general_public     3 Pfizer       AstraZeneca               2        217525.  0.006
+# 14 10 to 17  general_public     3 Pfizer       Moderna                   2         84136.  0.002
+# 15 10 to 17  general_public     3 Pfizer       Pfizer                    2        110257.  0.003
+# 16 10 to 17  general_public     3 Pfizer       Sinovac                   2        788982.  0.021
+# 17 10 to 17  general_public     3 Sinovac      AstraZeneca               2            72.5 0    
+# 18 10 to 17  general_public     3 Sinovac      Moderna                   2            28.0 0    
+# 19 10 to 17  general_public     3 Sinovac      Pfizer                    2            36.8 0    
+# 20 10 to 17  general_public     3 Sinovac      Sinovac                   2           263.  0    
 
+
+vaccination_history_FINAL %>% ungroup() %>%
+  filter(date <= date_now & age_group == this_age & risk_group == 'general_public') %>%
+  #mutate(dose = case_when(dose == 8 ~ 2, TRUE ~ dose)) %>%
+  group_by(age_group,risk_group,dose) %>%
+  summarise(doses_delivered = sum(doses_delivered_this_date)) %>% 
+  left_join(pop_risk_group_dn) %>% mutate(cov = round(doses_delivered/pop,digits=3)) %>% select(-pop)
 
 
 workshop = aggregate(next_state$pop, by=list(next_state$age_group,next_state$dose,next_state$risk_group), FUN=sum)
