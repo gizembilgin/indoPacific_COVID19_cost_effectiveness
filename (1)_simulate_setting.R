@@ -284,14 +284,18 @@ if(antiviral_setup == "on"){
   
   if(setting == "PNG"){
     future_vaccine_type = "Johnson & Johnson"
+    dose_projection_floor = 1
   } else if (setting == "IDN"){
     future_vaccine_type = "Pfizer"
+    dose_projection_floor = 3
   } else if (setting == "FJI"){
     future_vaccine_type = "Moderna"
+    dose_projection_floor = 3
   }
     interval_previous = 3*52/12 * 7     #average behaviour over last three months
 
     primary_program_proj = vaccination_history_TRUE %>%
+      filter(dose>= dose_projection_floor) %>%
       group_by(date, dose, age_group,risk_group) %>%
       summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = "keep") %>%
       filter(date > (max(vaccination_history_TRUE$date) - interval_previous)) %>%
@@ -305,11 +309,11 @@ if(antiviral_setup == "on"){
     #        plot_standard +
     #        facet_grid(dose ~ .)
 
-    #split booster doses over primary vaccine types
-    workshop = primary_program_proj %>% filter(dose<3)
-    for (this_booster in unique(primary_program_proj$dose[primary_program_proj$dose>2])){
-      workshop_booster_pool =  vaccination_history_TRUE %>% 
-        filter(dose == this_booster - 1) %>%
+    #split proj doses over prev dose type
+    workshop = primary_program_proj 
+    for (this_dose in unique(primary_program_proj$dose[primary_program_proj$dose>min(primary_program_proj$dose)])){
+      workshop_this_dose_pool =  vaccination_history_TRUE %>% 
+        filter(dose == this_dose - 1) %>%
         group_by(age_group,vaccine_type) %>%
         summarise(total = sum(doses_delivered_this_date), .groups = "keep") %>%
         group_by(age_group) %>%
@@ -317,12 +321,12 @@ if(antiviral_setup == "on"){
         select(-total) %>%
         rename(FROM_vaccine_type = vaccine_type)
       
-      workshop_booster = primary_program_proj %>% 
-        filter(dose == this_booster) %>%
-        left_join(workshop_booster_pool,by=c("age_group")) %>%
+      workshop_this_dose = primary_program_proj %>% 
+        filter(dose == this_dose) %>%
+        left_join(workshop_this_dose_pool,by=c("age_group")) %>%
         mutate(doses_delivered_this_date = doses_delivered_this_date*prop)
       
-      workshop = rbind(workshop,workshop_booster); rm(workshop_booster,workshop_booster_pool)
+      workshop = rbind(workshop,workshop_this_dose); rm(workshop_this_dose,workshop_this_dose_pool)
     }
     primary_program_proj = workshop
     
