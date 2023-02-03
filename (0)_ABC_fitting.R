@@ -476,8 +476,8 @@ save(fitted_covid19_waves, file = '1_inputs/fit/fitted_covid19_waves.Rdata')
 this_setting_best_fit = fitted_covid19_waves %>% 
   filter(fitted_setting == this_setting)
 
-fitting = "on"
-strain_inital = strain_now = 'WT' 
+fitting = "wave_three"
+date_start = baseline_covid19_waves$date[3]-28-1
 model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
 covid19_waves = this_setting_best_fit %>% select(date,strain)
 fitting_beta= as.numeric(this_setting_best_fit$fitting_beta)
@@ -515,7 +515,7 @@ fitted_results = list(
   FR_covid19_waves = covid19_waves,
   FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata"))
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata"),sep="")
 #___________________________________________________________________________
 
 
@@ -547,6 +547,6 @@ ggplot() +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  xlab("")
+  xlab("") 
 #______________________________________________________________________________________________________________
   
