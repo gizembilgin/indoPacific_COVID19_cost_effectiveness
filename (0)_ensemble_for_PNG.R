@@ -5,7 +5,7 @@ baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-01-01
                                     as.Date('2021-12-20')-28),#first sequenced date - 4 weeks
                            strain = c('WT','delta','omicron'))
 date_start = covid19_waves$date[1] - 2
-model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
+model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
 
 #general toggles
 fitting = "on"
