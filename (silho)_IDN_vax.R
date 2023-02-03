@@ -534,7 +534,7 @@ vaccination_history_TRUE = vaccination_history_WORKSHOP %>%
 vaccination_history_TRUE$FROM_vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)] <- vaccination_history_TRUE$vaccine_type[is.na(vaccination_history_TRUE$FROM_vaccine_type)]
 #_______________________________________________________________________________
 
-rm(vaccination_history_DOSE_NUMBER,vaccination_history_WORKSHOP,workshop,expected,this_dn)
+#rm(vaccination_history_DOSE_NUMBER,vaccination_history_WORKSHOP,workshop,expected,this_dn)
 
 
 
