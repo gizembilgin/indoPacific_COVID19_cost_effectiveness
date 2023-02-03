@@ -134,13 +134,12 @@ antiviral_model_worker <- function(
     
     ### ESTIMATE IMPACT OF ANTIVIRALS ##########################################
     prevented_by_antivirals = data.frame()
-    for (a in 1:length(local_LIST_antiviral_type)){
-      this_antiviral_effectiveness = toggle_antiviral_effectiveness %>% filter(antiviral_type == local_LIST_antiviral_type[[a]])
-    for (b in 1:length(local_LIST_antiviral_start_date)){
-      toggle_antiviral_start_date = local_LIST_antiviral_start_date[[b]]
+
+    for (a in 1:length(local_LIST_antiviral_start_date)){
+      toggle_antiviral_start_date = local_LIST_antiviral_start_date[[a]]
       
-      for (c in 1:length(local_LIST_antiviral_target_group)){
-        toggle_antiviral_target = local_LIST_antiviral_target_group[[c]]
+      for (b in 1:length(local_LIST_antiviral_target_group)){
+        toggle_antiviral_target = local_LIST_antiviral_target_group[[b]]
         #CHECK
         if (toggle_antiviral_target %in% c('adults_with_comorbidities', 'pregnant_women')) {
           if (!toggle_antiviral_target %in% unique(this_incidence_log_tidy$risk_group)) {
@@ -369,27 +368,30 @@ antiviral_model_worker <- function(
           
           
         ### PATHWAY TO CARE STEP FOUR: How many cases of severe disease are prevented?#######
-        workshop = antiviral_target_individuals_run %>%
-          left_join(
-            likelihood_severe_outcome,
-            by = c("date", "risk_group", "age_group", "dose", "vaccine_type")
-          ) %>%
-          left_join(this_antiviral_effectiveness, by = 'outcome') %>%
-          mutate(percentage = percentage * AE)
-        workshop = na.omit(workshop)
-        
-        prevented_by_antivirals_this_date = workshop %>%
-          group_by(outcome) %>%
-          summarise(n = sum(percentage)) %>%
-          mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
-          mutate(antiviral_type = local_LIST_antiviral_type[[a]],
-                 antiviral_target_group = toggle_antiviral_target,
-                 intervention = paste('antiviral',toggle_antiviral_start_date), 
-                 evaluation_group = 'overall',
-                 intervention_doses_delivered = length_antiviral_delivery_tracker)
-        #____________________________________________________________________________
-        
-        prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_this_date)
+        for (c in 1:length(local_LIST_antiviral_type)){
+          this_antiviral_effectiveness = toggle_antiviral_effectiveness %>% filter(antiviral_type == local_LIST_antiviral_type[[c]])
+          
+          workshop = antiviral_target_individuals_run %>%
+            left_join(
+              likelihood_severe_outcome,
+              by = c("date", "risk_group", "age_group", "dose", "vaccine_type")
+            ) %>%
+            left_join(this_antiviral_effectiveness, by = 'outcome') %>%
+            mutate(percentage = percentage * AE)
+          workshop = na.omit(workshop)
+          
+          prevented_by_antivirals_this_date = workshop %>%
+            group_by(outcome) %>%
+            summarise(n = sum(percentage)) %>%
+            mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
+            mutate(antiviral_type = local_LIST_antiviral_type[[a]],
+                   antiviral_target_group = toggle_antiviral_target,
+                   intervention = paste('antiviral',toggle_antiviral_start_date), 
+                   evaluation_group = 'overall',
+                   intervention_doses_delivered = length_antiviral_delivery_tracker)
+          #____________________________________________________________________________
+          
+          prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_this_date)
       }
       }
     } #end loop over different antiviral start dates, antiviral types, and antiviral target groups
