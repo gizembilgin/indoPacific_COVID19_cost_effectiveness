@@ -62,7 +62,7 @@ booster_strategy_informed_prior <- function(
       summarise(eligible_individuals = sum(doses_delivered_this_date) , .groups = 'keep')
   } else{
     eligible_pop =  vaccination_history_FINAL_local %>% 
-      group_by(dose,vaccine_type,risk_group,age_group) %>%
+      group_by(dose,vaccine_type,risk_group,age_group,FROM_vaccine_type ) %>%
       summarise(eligible_individuals = sum(doses_delivered_this_date), .groups = 'keep')
   }
   
@@ -72,10 +72,11 @@ booster_strategy_informed_prior <- function(
       ungroup() %>%
       filter(dose == d) %>%
       rename(complete_vax = eligible_individuals) %>%
-      select(vaccine_type,risk_group,age_group,complete_vax)
+      mutate(vaccine_type = FROM_vaccine_type) %>%
+      select(vaccine_type,risk_group,age_group,complete_vax) 
     
     if (nrow(remove)>0){
-      eligible_pop = eligible_pop %>% 
+      eligible_pop = eligible_pop %>%
         left_join(remove, by = c('age_group','vaccine_type','risk_group')) %>%
         mutate(eligible_individuals = case_when(
           dose == (d-1) & complete_vax > eligible_individuals ~ 0, #this shouldn't be triggered
