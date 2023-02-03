@@ -5,7 +5,7 @@
 rm(list=ls())
 
 
-setting = "PNG" #options: "FJI", "PNG", "SLE"
+setting = this_setting = "FJI" #options: "FJI", "PNG", "SLE"
 if (setting == "PNG"){ #NB: other settings will automatically make setting_beta = setting
   setting_beta = "low_PNG_beta" #ensemble options of : high_PNG_beta, low_PNG_beta
 } 
@@ -75,7 +75,6 @@ vax_risk_strategy_toggle = "off"
 apply_risk_strategy_toggles = "off"
 
 if (setting == "FJI"){
-  #Note: assume vaccine program complete, hypothetical booster roll out only
   
 } else if (setting == "PNG"){
   #Note: current vaccine program proj in (2)
