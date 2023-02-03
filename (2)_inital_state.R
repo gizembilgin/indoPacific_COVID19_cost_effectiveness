@@ -347,7 +347,7 @@ if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booste
                  primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
                  vaccine_type == this_vax) %>%
         group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-        summarise(VE_days = mean(VE_days),.groups = "keep") 
+        summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
       #small edit for J&J
       if (this_vax == "Johnson & Johnson" & nrow(this_combo) == 0){
         this_combo = VE_waning_distribution %>% 
@@ -355,7 +355,7 @@ if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booste
                    dose == this_dose & 
                    vaccine_type == this_vax) %>%
           group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_days),.groups = "keep") 
+          summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
       }
       
       # Second Choice = same primary schedule + booster of same vaccine mode
@@ -366,7 +366,7 @@ if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booste
                    primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
                    vaccine_mode == this_vax_mode) %>%
           group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_days),.groups = "keep") 
+          summarise(VE_days = mean(VE_day,na.rm=TRUEs),.groups = "keep") 
       }
       
       # Third Choice = same primary schedule + any booster
@@ -375,7 +375,7 @@ if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booste
           filter(schedule == "booster" & dose == this_dose & 
                    primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax])) %>%
           group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_days),.groups = "keep") 
+          summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
       }
       
       # Otherwise... rethink!
