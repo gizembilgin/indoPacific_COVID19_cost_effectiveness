@@ -61,7 +61,7 @@ for (increments_number in 1:num_time_steps){
     if (increments_number > 1){ 
     
       #update NPI
-      if (date_now <= max(NPI_estimates$date)){
+      if (date_now %in% NPI_estimates$date){
         NPI_this_step <- NPI_estimates$NPI[NPI_estimates$date == date_now]/100
         parameters$NPI = NPI_this_step
       } #i.e. assume after end date that NPI constant
@@ -87,7 +87,7 @@ for (increments_number in 1:num_time_steps){
               select(-delta_VE)
           }
         }
-      } else if (fitting == "on"){
+      } else if (fitting %in% c("on","wave_three","wave_two")){
         #load latest VE saved in known dates
         list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("VE_real_range_",setting,"*",sep=""))
         list_poss_Rdata_details = double()
@@ -173,7 +173,7 @@ for (increments_number in 1:num_time_steps){
         prev_state = rbind(prev_state, workshop)
       }
       prev_state$pop  = as.numeric(prev_state$pop)
-      if (round(sum(prev_state$pop)) != sum(pop)) {
+      if (abs(sum(prev_state$pop) - sum(pop))>10) { #small lee-way due to rounding error of floating point numbers
         stop('prev state not equal to pop size! (~line 105 in time step)')
       }
       
@@ -192,7 +192,8 @@ for (increments_number in 1:num_time_steps){
                        vaccine_type == this_vax & 
                        risk_group == this_risk_group &
                        (dose == 1 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 1]|
-                          dose == 2 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2]))
+                          dose == 2 & date == as.Date(date_now) - vaxCovDelay$delay[vaxCovDelay$dose == 2]) &
+                       !(dose == 2 & vaccine_type != FROM_vaccine_type)) #i.e., not hetero primary dose combination
 
             if(nrow(this_vax_history)>0){
               for (this_age_group in unique(this_vax_history$age_group)){
@@ -331,6 +332,14 @@ for (increments_number in 1:num_time_steps){
         }
       if (date_now %in% delta_shift$date){
         parameters$beta = this_beta*delta_shift$percentage[delta_shift$date == date_now] + prev_beta * (1-delta_shift$percentage[delta_shift$date == date_now])
+        parameters$beta1 = parameters$beta[1]
+        parameters$beta2 = parameters$beta[2]
+        parameters$beta3 = parameters$beta[3]
+        parameters$beta4 = parameters$beta[4]
+        parameters$beta5 = parameters$beta[5]
+        parameters$beta6 = parameters$beta[6]
+        parameters$beta7 = parameters$beta[7]
+        parameters$beta8 = parameters$beta[8]
       }
         # if (fitting == "off"){
         #   if (date_now>=seed_date){
@@ -342,8 +351,8 @@ for (increments_number in 1:num_time_steps){
       if (round(sum(next_state$pop)) != round(sum(prev_state$pop))) {
         stop('pop not retained between next_state and prev_state!')
       }
-      if (round(sum(next_state$pop)) != sum(pop)) {
-        stop('pop in next_state not equal to setting population')
+      if (abs(sum(next_state$pop) - sum(pop))>10) { #small lee-way due to rounding error of floating point numbers
+        stop('next_state not equal to pop size!')
       }
       if (nrow(next_state[round(next_state$pop) < 0, ]) > 0) {
         if (date_now > max(vaccination_history_TRUE$date + max(vaxCovDelay$delay))) {
@@ -400,7 +409,7 @@ for (increments_number in 1:num_time_steps){
     incidence_log_unedited$daily_cases  <- rowSums(incidence_log_unedited[,2:(A+1)])
     
     incidence_log <- incidence_log_unedited %>% select(date,daily_cases) 
-    if (! fitting == "on"){incidence_log = rbind(fitted_incidence_log,incidence_log)}
+    if (! fitting == "on"){incidence_log = rbind(fitted_incidence_log[,c("date","daily_cases")],incidence_log)}
     
     incidence_log = incidence_log %>%
       mutate(rolling_average = (daily_cases + lag(daily_cases) + lag(daily_cases,n=2)+lag(daily_cases,n=3)
