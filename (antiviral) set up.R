@@ -7,6 +7,7 @@ rm(list=ls())
 setting_beta = "PNG_low_beta" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
 setting = substr(setting_beta,1,3)
 
+
 ### SET UP MODEL RUN ################################################################
 #start timing
 time.start.AntiviralSetUp=proc.time()[[3]]
@@ -71,7 +72,6 @@ vax_risk_strategy_toggle = "off"
 apply_risk_strategy_toggles = "off"
 
 if (setting == "FJI"){
-  #Note: assume vaccine program complete, hypothetical booster roll out only
   
 } else if (setting == "PNG"){
   #Note: current vaccine program proj in (2)
