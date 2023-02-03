@@ -91,15 +91,19 @@ for (i in 1:length(unique(intro_raw$strain))){
 #grid.arrange(plot_list[[1]],plot_list[[2]])
 
 if ("omicron" %in% unique(covid19_waves$strain)){
+  omicron_shift = data.frame()
   for (this_wave in 1:nrow(covid19_waves[covid19_waves$strain == 'omicron',])){
     #ASSUMPTION: all subsequent waves of omicron out compete at same rates as omicron out competed delta
-    omicron_shift =  synthetic_strain_shift %>% 
+    workshop =  synthetic_strain_shift %>% 
       filter(strain == "omicron") %>% 
       select(days,percentage) %>%
       mutate(date = days + covid19_waves$date[covid19_waves$strain == "omicron"][this_wave],
              wave = this_wave) %>%
       select(-days)
-    omicron_shift$date = as.Date(omicron_shift$date, format =  '%Y-%m-%d')
+    workshop$date = as.Date(workshop$date, format =  '%Y-%m-%d')
+    
+    if(this_wave>1){omicron_shift = omicron_shift %>% filter(date<min(workshop$date))}
+    omicron_shift = rbind(omicron_shift,workshop)
   }
 }
 if ("delta" %in% unique(covid19_waves$strain) & !(covid19_waves$strain[1] == "delta")){
