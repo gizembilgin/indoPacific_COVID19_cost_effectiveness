@@ -138,7 +138,7 @@ risk_group_labels = unique(pop_risk_group_dn$risk_group)
 ### (2/5) Contact patterns of population
 #CONFIRMATION FROM MARK JIT: .Rdata files are more up to date on GitHub (Prem et al. 2021 paper)
 #(A/C) load contact matrix
-load(file = paste(rootpath,"inputs/contact_all.Rdata",sep=''))
+load(file = "1_inputs/contact_all.Rdata")
 contact_matrix_setting <- contact_all[[setting]]
 Prem_et_al_age_list <- c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75)
 colnames(contact_matrix_setting) <- Prem_et_al_age_list; rownames(contact_matrix_setting) <- Prem_et_al_age_list
@@ -202,33 +202,40 @@ rm(contact_all, contact_matrix_setting, sum_1, sum_2,
 
 
 ###(3/5) Live updates of cases
-workshop_cases <- readr::read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
-workshop_cases = workshop_cases[workshop_cases$'Country/Region' == setting_long,]
-workshop_cases <- workshop_cases %>%
-  pivot_longer(
-    cols = 5:ncol(workshop_cases) ,
-    names_to = 'date',
-    values_to = 'cases'
-  )
-workshop_cases$date = as.Date(workshop_cases$date, "%m/%d/%y")
+if (file.exists(paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
+} else {
+  workshop_cases <- readr::read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+  workshop_cases = workshop_cases[workshop_cases$'Country/Region' == setting_long,]
+  workshop_cases <- workshop_cases %>%
+    pivot_longer(
+      cols = 5:ncol(workshop_cases) ,
+      names_to = 'date',
+      values_to = 'cases'
+    )
+  workshop_cases$date = as.Date(workshop_cases$date, "%m/%d/%y")
+  
+  case_history <- workshop_cases %>%
+    mutate(new = cases - lag(cases),
+           rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
+                              +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
+  
+  # ggplot() +
+  #   geom_point(data=case_history,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  #   xlab("") +
+  #   scale_x_date(date_breaks="1 month", date_labels="%b") +
+  #   ylab("daily cases") +
+  #   theme_bw() +
+  #   theme(panel.grid.major = element_blank(),
+  #         panel.grid.minor = element_blank(),
+  #         panel.border = element_blank(),
+  #         axis.line = element_line(color = 'black'))
+  
+  rm(workshop_cases)
+  
+  save(case_history, file = paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
 
-case_history <- workshop_cases %>%
-  mutate(new = cases - lag(cases),
-         rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
-                            +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
-
-# ggplot() +
-#   geom_point(data=case_history,aes(x=date,y=rolling_average),na.rm=TRUE) +
-#   xlab("") +
-#   scale_x_date(date_breaks="1 month", date_labels="%b") +
-#   ylab("daily cases") +
-#   theme_bw() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.border = element_blank(),
-#         axis.line = element_line(color = 'black'))
-
-rm(workshop_cases)
+}
 #______________________________________________________________________________________________________________________________________
 
 
@@ -245,8 +252,16 @@ vaxCovDelay = vaxCovDelay %>%
 
 
 ##(i/iii) Load and clean data _________________________________________________
-if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep=""))}
-source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
+if (fitting %in% c("on","wave_three") & file.exists(paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
+} else {
+  if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep=""))}
+  source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
+  
+  if (fitting %in% c("on","wave_three")){
+    save(vaccination_history_TRUE, file = paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
+  }
+}
 
 #project forward expected continuation of existing program
 if (exists("antiviral_setup") == FALSE){antiviral_setup ="off"}
@@ -268,17 +283,52 @@ if(antiviral_setup == "on"){
   #proj_dates = seq(max(vaccination_history_TRUE$date) + 1, date_start + 7*model_weeks,by="days")
   
   if(setting == "PNG"){
+    future_vaccine_type = "Johnson & Johnson"
+    dose_projection_floor = 1
+  } else if (setting == "IDN"){
+    future_vaccine_type = "Pfizer"
+    dose_projection_floor = 1
+  } else if (setting == "FJI"){
+    future_vaccine_type = "Moderna"
+    dose_projection_floor = 3
+  }
     interval_previous = 3*52/12 * 7     #average behaviour over last three months
-    
+
     primary_program_proj = vaccination_history_TRUE %>%
-      filter(dose == 1) %>%
+      filter(dose>= dose_projection_floor) %>%
       group_by(date, dose, age_group,risk_group) %>%
       summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = "keep") %>%
       filter(date > (max(vaccination_history_TRUE$date) - interval_previous)) %>%
       group_by(age_group,dose,risk_group) %>%
       summarise(doses_delivered_this_date = sum(doses_delivered_this_date)/interval_previous, .groups = "keep") %>%
       left_join(proj_dates,by='age_group') %>%
-      mutate(vaccine_type = "Johnson & Johnson")
+      mutate(vaccine_type = future_vaccine_type)
+
+    to_plot = primary_program_proj %>% group_by(dose,date) %>% summarise(sum=sum(doses_delivered_this_date)) %>% group_by(dose) %>% mutate(cumsum = cumsum(sum))
+    # ggplot(to_plot) + geom_point(aes(x=date,y=cumsum))+
+    #        plot_standard +
+    #        facet_grid(dose ~ .)
+
+    #split proj doses over prev dose type
+    workshop = data.frame() 
+    for (this_dose in unique(primary_program_proj$dose)){
+      workshop_this_dose_pool =  vaccination_history_TRUE %>% 
+        filter(dose == this_dose - 1) %>%
+        group_by(age_group,risk_group,vaccine_type) %>%
+        summarise(total = sum(doses_delivered_this_date), .groups = "keep") %>%
+        group_by(age_group,risk_group) %>%
+        mutate(prop = total/sum(total)) %>%
+        select(-total) %>%
+        rename(FROM_vaccine_type = vaccine_type)
+      
+      workshop_this_dose = primary_program_proj %>% 
+        filter(dose == this_dose) %>%
+        left_join(workshop_this_dose_pool,by=c("age_group","risk_group")) %>%
+        mutate(doses_delivered_this_date = doses_delivered_this_date*prop)
+      
+      workshop = rbind(workshop,workshop_this_dose); rm(workshop_this_dose,workshop_this_dose_pool)
+    }
+    primary_program_proj = workshop
     
     vaccination_history_TRUE = bind_rows(vaccination_history_TRUE,primary_program_proj) %>%
       mutate(
@@ -291,16 +341,31 @@ if(antiviral_setup == "on"){
           vaccine_type == 'Sinovac' ~ 'viral_inactivated',
           vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
         ),
-        FROM_vaccine_type = vaccine_type,
+        FROM_vaccine_type = case_when(
+          is.na(FROM_vaccine_type) ~ vaccine_type,
+          TRUE ~ FROM_vaccine_type),
         FROM_dose = dose - 1
       ) %>%
+      group_by(date,vaccine_type,vaccine_mode,dose,age_group,risk_group,FROM_vaccine_type,FROM_dose) %>%
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = "keep") %>%
       left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
       group_by(risk_group, age_group, vaccine_type, dose) %>%
       mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
                                             TRUE ~ 0)) %>%
       select(date,vaccine_type,vaccine_mode,dose,coverage_this_date,doses_delivered_this_date,age_group,risk_group,FROM_vaccine_type,FROM_dose)
-   rm(primary_program_proj)
-  }
+
+    to_plot = vaccination_history_TRUE %>%
+      group_by(date,age_group,dose) %>%
+      summarise(doses_delivered_this_date = sum(doses_delivered_this_date), .groups = "keep")%>%
+      left_join(pop_setting, by = c("age_group")) %>%
+      group_by(age_group,dose) %>%
+      mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
+                                            TRUE ~ 0))
+    # ggplot(to_plot) + geom_point(aes(x=date,y=coverage_this_date,color=as.factor(age_group)))+
+    #   plot_standard +
+    #   facet_grid(dose ~ .)
+    rm(primary_program_proj)
+  
 }
 
 #______________________________________________________________________________________________________________________________________
@@ -317,33 +382,34 @@ if(antiviral_setup == "on"){
 ### Static toggles
 NPI_toggle = 'contain_health'   #choice of NPI metric: contain_health, stringency
 
-if (NPI_toggle == 'stringency'){
-  workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index_avg.csv")
-  workshop <- workshop[workshop$country_code == setting,]%>%
-    pivot_longer(
-      cols = 7:ncol(workshop) ,
-      names_to = 'date',
-      values_to = 'NPI'
-    ) 
-} else if (NPI_toggle == 'contain_health'){
-  workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/containment_health_index_avg.csv")
-  workshop <- workshop[workshop$country_code == setting,]%>%
-    pivot_longer(
-      cols = 7:ncol(workshop) ,
-      names_to = 'date',
-      values_to = 'NPI'
-    ) 
-
+if (file.exists(paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
+} else {
+  if (NPI_toggle == 'stringency'){
+    workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index_avg.csv")
+    workshop <- workshop[workshop$country_code == setting,]%>%
+      pivot_longer(
+        cols = 7:ncol(workshop) ,
+        names_to = 'date',
+        values_to = 'NPI'
+      ) 
+  } else if (NPI_toggle == 'contain_health'){
+    workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/containment_health_index_avg.csv")
+    workshop <- workshop[workshop$country_code == setting,]%>%
+      pivot_longer(
+        cols = 7:ncol(workshop) ,
+        names_to = 'date',
+        values_to = 'NPI'
+      ) 
+  }
+  
+  NPI_estimates <- workshop[,c('date','NPI')] %>%
+    mutate(date =as.Date(workshop$date, "%d%b%Y"))
+  NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
+  rm(workshop,NPI_toggle)
+  
+  save(NPI_estimates, file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
 }
-NPI_estimates <- workshop[,c('date','NPI')] %>%
-  mutate(date =as.Date(workshop$date, "%d%b%Y"))
-NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
-
-# NPI_estimates = NPI_estimates %>% mutate(NPI = (NPI + lag(NPI,default=0) + lag(NPI,n=2,default=0)+lag(NPI,n=3,default=0) +
-#                                                     lead(NPI,default=0)+lead(NPI,n=2,default=0)+lead(NPI,n=3,default=0))/7)
-#ggplot(NPI_estimates) + geom_point(aes(date,NPI)) + geom_line(aes(date,NPI_ave))
-
-rm(workshop,NPI_toggle)
 #______________________________________________________________________________________________________________________________________
 
 
