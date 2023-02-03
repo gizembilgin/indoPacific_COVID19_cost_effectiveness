@@ -287,7 +287,7 @@ if(antiviral_setup == "on"){
     dose_projection_floor = 1
   } else if (setting == "IDN"){
     future_vaccine_type = "Pfizer"
-    dose_projection_floor = 3
+    dose_projection_floor = 1
   } else if (setting == "FJI"){
     future_vaccine_type = "Moderna"
     dose_projection_floor = 3
@@ -314,16 +314,16 @@ if(antiviral_setup == "on"){
     for (this_dose in unique(primary_program_proj$dose)){
       workshop_this_dose_pool =  vaccination_history_TRUE %>% 
         filter(dose == this_dose - 1) %>%
-        group_by(age_group,vaccine_type) %>%
+        group_by(age_group,risk_group,vaccine_type) %>%
         summarise(total = sum(doses_delivered_this_date), .groups = "keep") %>%
-        group_by(age_group) %>%
+        group_by(age_group,risk_group) %>%
         mutate(prop = total/sum(total)) %>%
         select(-total) %>%
         rename(FROM_vaccine_type = vaccine_type)
       
       workshop_this_dose = primary_program_proj %>% 
         filter(dose == this_dose) %>%
-        left_join(workshop_this_dose_pool,by=c("age_group")) %>%
+        left_join(workshop_this_dose_pool,by=c("age_group","risk_group")) %>%
         mutate(doses_delivered_this_date = doses_delivered_this_date*prop)
       
       workshop = rbind(workshop,workshop_this_dose); rm(workshop_this_dose,workshop_this_dose_pool)
