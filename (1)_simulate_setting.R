@@ -310,8 +310,8 @@ if(antiviral_setup == "on"){
     #        facet_grid(dose ~ .)
 
     #split proj doses over prev dose type
-    workshop = primary_program_proj 
-    for (this_dose in unique(primary_program_proj$dose[primary_program_proj$dose>min(primary_program_proj$dose)])){
+    workshop = data.frame() 
+    for (this_dose in unique(primary_program_proj$dose)){
       workshop_this_dose_pool =  vaccination_history_TRUE %>% 
         filter(dose == this_dose - 1) %>%
         group_by(age_group,vaccine_type) %>%
