@@ -72,8 +72,9 @@ if (VE_loop %in% c(0,1)){
             filter(schedule == "booster" & dose == this_dose & 
                      primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
                      vaccine_mode == this_vax_mode) %>%
-            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+            group_by(schedule,vaccine_mode,strain,outcome,dose,days,waning,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") %>%
+            mutate(vaccine_type = this_vax)
         }
         
         # Third Choice = same primary schedule + any booster
@@ -81,8 +82,9 @@ if (VE_loop %in% c(0,1)){
           this_combo = VE_waning_distribution_SO %>% 
             filter(schedule == "booster" & dose == this_dose & 
                      primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax])) %>%
-            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+            group_by(schedule,vaccine_mode,strain,outcome,dose,days,waning,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep")  %>%
+            mutate(vaccine_type = this_vax) 
         }
         
         # Otherwise... rethink!
