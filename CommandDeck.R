@@ -36,7 +36,12 @@ if ( debug == "on"){
   strain_inital = strain_now = 'omicron'             
   model_weeks = 5          
   #find latest model run in known dates
-  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
+  if (risk_group_name == "pregnant_women"){
+    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_pregnant_women_",setting_beta,"*",sep=""))
+  } else{
+    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
+  }
+
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
