@@ -384,7 +384,7 @@ antiviral_model_worker <- function(
             group_by(outcome) %>%
             summarise(n = sum(percentage)) %>%
             mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
-            mutate(antiviral_type = local_LIST_antiviral_type[[a]],
+            mutate(antiviral_type = local_LIST_antiviral_type[[c]],
                    antiviral_target_group = toggle_antiviral_target,
                    intervention = paste('antiviral',toggle_antiviral_start_date), 
                    evaluation_group = 'overall',
