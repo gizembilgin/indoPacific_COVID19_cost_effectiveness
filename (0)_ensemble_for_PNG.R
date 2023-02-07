@@ -169,3 +169,52 @@ ggplot() +
   plot_standard +
   labs(linetype="")#+ 
   #facet_grid(label ~ .) 
+#_______________________________________________________________________________
+
+
+
+### CHECK fit with pregnant women
+risk_group_name = 'pregnant_women'
+RR_estimate =  2.4
+
+scenarios = data.frame(name = c("PNG_low_beta","PNG_high_beta"),
+                       beta = c(1.1,1.5))
+
+for (this_scenario in 1:nrow(scenarios)){
+  
+  model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
+  
+  fitting_beta = rep(scenarios$beta[this_scenario],3)
+  covid19_waves = baseline_covid19_waves 
+  
+  source(paste(getwd(),"/CommandDeck.R",sep=""))
+  
+  incidence_log = incidence_log %>% select(date, daily_cases)
+  
+  fitted_results = list(
+    FR_parameters = parameters,
+    FR_next_state = next_state,
+    FR_incidence_log_tidy = incidence_log_tidy,
+    FR_incidence_log = incidence_log,
+    FR_covid19_waves = covid19_waves,
+    FR_fitting_beta = fitting_beta
+  )
+  
+  save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",scenarios$name[this_scenario],Sys.Date(),".Rdata",sep=""))
+}
+
+# load("1_inputs/fit/fitted_results_pregnant_women_PNG_high_beta2023-02-06.Rdata")
+# preg_high_beta = fitted_results$FR_incidence_log %>% mutate(risk_group = 'pregnant_women', setting_beta = "high_beta")
+# load("1_inputs/fit/fitted_results_pregnant_women_PNG_low_beta2023-02-06.Rdata")
+# preg_low_beta = fitted_results$FR_incidence_log  %>% mutate(risk_group = 'pregnant_women', setting_beta = "low_beta")
+# 
+# load("1_inputs/fit/fitted_results_PNG_high_beta2023-01-19.Rdata")
+# comorb_high_beta = fitted_results$FR_incidence_log %>% mutate(risk_group = 'adults_with_comorbidities', setting_beta = "high_beta")
+# load("1_inputs/fit/fitted_results_PNG_low_beta2023-01-19.Rdata")
+# comorb_low_beta = fitted_results$FR_incidence_log  %>% mutate(risk_group = 'adults_with_comorbidities', setting_beta = "low_beta")
+# 
+# to_plot = rbind(preg_high_beta,preg_low_beta,comorb_high_beta,comorb_low_beta)
+# ggplot(to_plot) + geom_line(aes(x=date,y=daily_cases,color=as.factor(risk_group))) + facet_grid(setting_beta ~ .)
+# ggplot(to_plot) + geom_line(aes(x=date,y=daily_cases,color=as.factor(setting_beta))) + facet_grid(risk_group ~ .)
+#aligns!
+#_______________________________________________________________________________
