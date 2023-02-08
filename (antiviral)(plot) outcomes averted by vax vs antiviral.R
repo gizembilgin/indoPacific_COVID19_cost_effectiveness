@@ -1,3 +1,22 @@
+
+MASTER_RECORD_antiviral_model_simulations = data.frame()
+settings_to_plot = c("PNG_high_beta","PNG_low_beta")
+for (i in c(1:length(settings_to_plot))){
+  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",settings_to_plot[i],"*",sep=""))
+  list_poss_Rdata_details = double()
+  for (j in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste(rootpath,'x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+  
+  
+  this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = settings_to_plot[i])
+  MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
+}
+RECORD_antiviral_model_simulations = MASTER_RECORD_antiviral_model_simulations
+
 ### PLOT (1/2) Vax vs. antivirals ##############################################
 RECORD_antiviral_model_simulations = RECORD_antiviral_model_simulations %>%
   mutate(vax_scenario_short = case_when(
@@ -29,10 +48,12 @@ workshop = RECORD_antiviral_model_simulations %>%
   filter(result %in% c("doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
    # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
-    intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
+    intervention == 'vaccine' ~ paste('booster starting 2023-03-01'),
     TRUE ~ intervention
-  )) #%>% filter(value>0)
-  #filter(intervention != "booster dose starting 2023-01-01")
+  )) %>% 
+  filter(value>0) %>%
+  #filter(vax_scenario_short != "booster to high-risk prev first booster") %>%
+  filter(intervention == 'booster starting 2023-03-01')
 
 #option 2: median and IQR plot
 workshop = RECORD_antiviral_model_simulations %>% 
@@ -41,9 +62,9 @@ workshop = RECORD_antiviral_model_simulations %>%
   filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
   filter(result %in% c("doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
-    intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
+    intervention == 'vaccine' ~ paste('booster dose starting 2023-03-01'),
     TRUE ~ intervention
-  )) %>% group_by(intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
+  )) %>% group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
   summarise(median = median(value), LQ = quantile(value,probs=0.25), UQ = quantile(value,probs=0.75))
 
 options(warn = -1)
@@ -52,19 +73,31 @@ for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
   #option 1: boxplot
-  # plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-  #   geom_boxplot(aes(x=value,y=vax_scenario_short,color=as.factor(intervention)))  +
-  #   labs(title = paste(this_outcome), color = 'intervention') +
-  #   ylab('')+
-  #   xlab('doses to avert an outcome')
-  
-  #option 2: IQR and median
-  plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=median,y=vax_scenario_short,color=as.factor(intervention),xmin=LQ,xmax=UQ))  +
+  plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome ,]) +
+    geom_boxplot(aes(x=value,y=vax_scenario_short,color=as.factor(setting_beta)))  +
     labs(title = paste(this_outcome), color = 'intervention') +
     ylab('')+
+    xlab('doses to avert an outcome') #+ 
+    #facet_grid(intervention ~ .)
+  
+  # #option 2: IQR and median
+  plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
+    geom_pointrange(aes(x=median,y=vax_scenario_short,
+                        xmin=LQ,xmax=UQ,
+                        color=as.factor(intervention),
+                        shape = as.factor(setting_beta)
+                        ))  +
+    labs(title = paste(this_outcome),
+         color = 'intervention',
+         shape = "setting") +
+    ylab('')+
     xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) +
-    xlab('doses to avert an outcome')
+    xlab('doses to avert an outcome') +
+    theme_bw()+
+    theme(panel.grid.major = element_blank(),
+           panel.grid.minor = element_blank(),
+          legend.position = "bottom",
+          legend.box = "vertical")
   
 }
 ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
@@ -102,7 +135,7 @@ workshop = RECORD_antiviral_model_simulations %>%
   mutate(intervention = case_when(
     intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
     TRUE ~ intervention
-  )) %>% group_by(intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
+  )) %>% group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
   summarise(median = median(value), LQ = quantile(value,probs=0.25), UQ = quantile(value,probs=0.75)) %>% 
   filter(intervention != "booster dose starting 2023-01-01")
 
@@ -120,11 +153,18 @@ for (a in 1:length(LIST_outcomes)) {
   
   #option 2: IQR and median
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=median,y=vax_scenario_short,color=as.factor(intervention),xmin=LQ,xmax=UQ))  +
-    labs(title = paste(this_outcome), color = 'intervention') +
+    geom_pointrange(aes(x=median,y=vax_scenario_short,color=as.factor(intervention),shape = as.factor(setting_beta),xmin=LQ,xmax=UQ))  +
+    labs(title = paste(this_outcome), 
+         color = 'intervention',
+         shape = "setting") +
     ylab('')+
     xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) +
-    xlab('doses to avert an outcome')
+    xlab('doses to avert an outcome') + 
+    theme_bw()+ 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "bottom",
+          legend.box = "vertical")
   
 }
 ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
@@ -216,7 +256,7 @@ workshop = RECORD_antiviral_model_simulations  %>%
   mutate(intervention = case_when(
     intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
     TRUE ~ intervention
-  )) %>% group_by(intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
+  )) %>% group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
   summarise(median = median(value), LQ = quantile(value,probs=0.25), UQ = quantile(value,probs=0.75))
 
 
@@ -243,11 +283,18 @@ for (a in 1:length(LIST_outcomes)) {
   
   #option 2: IQR and median
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-    geom_pointrange(aes(x=median,y=vax_scenario_short,color=as.factor(antiviral_target_group),xmin=LQ,xmax=UQ))  +
-    labs(title = paste(this_outcome), color = 'intervention') +
+    geom_pointrange(aes(x=median,y=vax_scenario_short,color=as.factor(antiviral_target_group),shape = as.factor(setting_beta),xmin=LQ,xmax=UQ))  +
+    labs(title = paste(this_outcome), 
+         color = 'antiviral eligible group',
+         shape = "setting") +
     ylab('')+
     xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) +
-    xlab('doses to avert an outcome')
+    xlab('doses to avert an outcome') + 
+    theme_bw()+ 
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "bottom",
+          legend.box = "vertical")
   
 }
 ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
