@@ -166,7 +166,7 @@ if (length(booster_toggles)>1){
     source(paste(getwd(),"/(function)_booster_strategy_informed_prior.R",sep=""))
     workshop = booster_strategy_informed_prior(booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
                                      booster_dose_supply        = booster_toggles$dose_supply,      # num of doses avaliable
-                                     booster_rollout_months     = booster_toggles$rollout_months,   # number of months to complete booster program
+                                     #booster_rollout_months     = booster_toggles$rollout_months,   # number of months to complete booster program
                                      
                                      booster_delivery_risk_group = booster_toggles$delivery_risk_group,
                                      booster_prev_dose_floor     = booster_toggles$prev_dose_floor, #down to what dose is willing to be vaccinated?
