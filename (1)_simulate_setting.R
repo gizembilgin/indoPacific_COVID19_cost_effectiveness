@@ -252,14 +252,14 @@ vaxCovDelay = vaxCovDelay %>%
 
 
 ##(i/iii) Load and clean data _________________________________________________
-if (fitting %in% c("on","wave_three") & file.exists(paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
-  load(file = paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
+if (fitting %in% c("on","wave_three") & file.exists(paste("1_inputs/fit/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
 } else {
   if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep=""))}
   source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
   
   if (fitting %in% c("on","wave_three")){
-    save(vaccination_history_TRUE, file = paste("1_inputs/fit/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
+    save(vaccination_history_TRUE, file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
   }
 }
 
@@ -306,20 +306,27 @@ if(antiviral_setup == "on"){
 
     to_plot = primary_program_proj %>% group_by(dose,date) %>% summarise(sum=sum(doses_delivered_this_date)) %>% group_by(dose) %>% mutate(cumsum = cumsum(sum))
     # ggplot(to_plot) + geom_point(aes(x=date,y=cumsum))+
-    #        plot_standard +
+    #        #plot_standard +
     #        facet_grid(dose ~ .)
 
     #split proj doses over prev dose type
     workshop = data.frame() 
     for (this_dose in unique(primary_program_proj$dose)){
-      workshop_this_dose_pool =  vaccination_history_TRUE %>% 
-        filter(dose == this_dose - 1) %>%
-        group_by(age_group,risk_group,vaccine_type) %>%
-        summarise(total = sum(doses_delivered_this_date), .groups = "keep") %>%
-        group_by(age_group,risk_group) %>%
-        mutate(prop = total/sum(total)) %>%
-        select(-total) %>%
-        rename(FROM_vaccine_type = vaccine_type)
+      if (this_dose == 1){
+        workshop_this_dose_pool = crossing(age_group = age_group_labels,
+                                           risk_group = risk_group_labels,
+                                           FROM_vaccine_type = future_vaccine_type,
+                                           prop = 1)
+      } else{
+        workshop_this_dose_pool =  vaccination_history_TRUE %>% 
+          filter(dose == this_dose - 1) %>%
+          group_by(age_group,risk_group,vaccine_type) %>%
+          summarise(total = sum(doses_delivered_this_date), .groups = "keep") %>%
+          group_by(age_group,risk_group) %>%
+          mutate(prop = total/sum(total)) %>%
+          select(-total) %>%
+          rename(FROM_vaccine_type = vaccine_type)
+      }
       
       workshop_this_dose = primary_program_proj %>% 
         filter(dose == this_dose) %>%
