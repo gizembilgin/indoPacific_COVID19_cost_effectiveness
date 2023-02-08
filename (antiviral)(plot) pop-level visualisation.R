@@ -49,7 +49,7 @@ if (risk_group_name %in% c('adults_with_comorbidities')) {
     risk_dn = pop_RAW %>% 
         left_join(workshop, by = c("country", "agegroup_RAW")) %>% 
         mutate(value = case_when(
-          age_group_num >= toggle_upper_cut_off ~ 1,
+          #age_group_num >= toggle_upper_cut_off ~ 1,
           age_group_num < toggle_lower_cut_off ~ 0,
           TRUE ~ value
         )) %>%
@@ -75,7 +75,9 @@ pop_high_risk = pop_orig %>%
 
 pop_general_public   = pop_orig %>%
   left_join(risk_dn, by = c("age_group","country")) %>%
-  mutate(risk_group = 'general_public',
+  mutate(risk_group = case_when(
+    age_group %in% c("60 to 69","70 to 100") ~ 'adults aged 60+',
+    TRUE ~ 'general_public'),
          pop = round(pop * (1 - prop))) %>%
   select(country,risk_group, age_group, pop)
 
@@ -86,5 +88,78 @@ pop_risk_group = pop_risk_group_dn %>%
   summarise(pop = sum(pop)) %>%
   group_by(country) %>%
   mutate(prop = pop/sum(pop)) %>%
-  filter(risk_group == risk_group_name)
+  filter(risk_group != 'general_public')
+
+ggplot(pop_risk_group) + 
+  geom_col(aes(x=country,y=prop*100,fill=as.factor(risk_group))) +
+  xlab("") +
+  ylab("% of total population")
+
+
+pop_orig %>% 
+  group_by(country) %>%
+  mutate(prop = pop/sum(pop)) %>%
+  filter(age_group %in% c('60 to 69','70 to 100')) %>%
+  summarise(prop_aged_over_60 = sum(prop))
 #_____________________________________________________________
+
+
+
+
+### impact by coverage
+MASTER_RECORD_antiviral_model_simulations = data.frame()
+MASTER_outcomes_without_antivirals = data.frame()
+settings_to_plot = c("PNG_high_beta","PNG_low_beta")
+for (i in c(1:length(settings_to_plot))){
+  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",settings_to_plot[i],"*",sep=""))
+  list_poss_Rdata_details = double()
+  for (j in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste(rootpath,'x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+  
+  #load latest antiviralSetUp_* (transmission model run for 1 year)
+  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",settings_to_plot[i],"_",this_risk_group_name,"_*",sep=""))
+  list_poss_Rdata_details = double()
+  for (k in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste(rootpath,'x_results/',list_poss_Rdata[[k]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+  
+  
+  this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = settings_to_plot[i])
+  MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
+  
+  this_setting = RECORD_antiviral_setup$outcomes_without_antivirals %>% mutate(setting_beta = settings_to_plot[i])
+  MASTER_outcomes_without_antivirals = rbind(MASTER_outcomes_without_antivirals,this_setting)
+}
+
+test_in_time_pt_est = 0.5
+
+MASTER_outcomes_without_antivirals = MASTER_outcomes_without_antivirals %>%
+  mutate(vax_scenario_short = case_when(
+    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~
+      "booster to all prev primary",
+    vax_scenario ==  "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a first booster dose" ~
+      "booster to all first booster",
+    vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~
+      "booster to high-risk prev primary",
+    vax_scenario ==  "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a first booster dose" ~
+      "booster to high-risk prev first booster",
+    vax_scenario == "all willing adults vaccinated with a primary schedule" ~ 
+      "no booster"
+  )) %>%
+  filter(vax_scenario_short == "no booster" & outcome != "booster_doses_delivered") %>%
+  mutate(prop = high_risk/overall,
+         detected_by_RAT = prop * test_in_time_pt_est)
+
+poss_effect = data.frame()
+for (cov in seq(0.2,1,by=0.2)){
+  this_effect = MASTER_outcomes_without_antivirals %>% mutate(effect = detected_by_RAT*cov, cov = cov)
+  poss_effect = rbind(poss_effect,this_effect)
+}
+
