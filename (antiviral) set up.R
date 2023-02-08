@@ -2,11 +2,15 @@
 ### The incidence log and other antiviral model dependencies are then saved.
 
 ### DEPENDENCIES: nil!
-rm(list=ls())
-
-setting_beta = "PNG_low_beta" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
-setting = substr(setting_beta,1,3)
-
+if (exists("master_toggles")){
+  this_risk_group_name = risk_group_name = master_toggles$risk_group_name
+  setting_beta = master_toggles$setting_beta
+} else{
+  rm(list=ls())
+  this_risk_group_name = risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
+  setting_beta = "PNG_high_beta" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
+}
+setting = this_setting = substr(setting_beta,1,3)
 
 ### SET UP MODEL RUN ################################################################
 #start timing
@@ -30,7 +34,7 @@ date_start = as.Date('2022-12-31')
 #initialise length of model run and circulating strain
 strain_inital = strain_now = 'omicron' 
 outbreak_timing = "off" #roll-out during steady state
-model_weeks = as.numeric(ceiling((as.Date('2024-01-01') - date_start)/7)) #ensure model runs for entire 2023
+model_weeks = as.numeric((as.Date('2024-01-01') - date_start)/7) #ensure model runs for entire 2023
 
 #turn on waning of all immunity
 waning_toggle_acqusition = TRUE
@@ -38,14 +42,18 @@ waning_toggle_severe_outcome = TRUE
 waning_toggle_rho_acqusition = TRUE
 
 #turn off risk groups to start with
-risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
 antiviral_setup = "on"
 risk_group_toggle = "off"
 vax_strategy_toggle = "off"
 vax_risk_strategy_toggle = "off"
 risk_group_lower_cov_ratio = NA
 risk_group_prioritisation_to_date = NA
-sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)
+if(this_risk_group_name == "adults_with_comorbidities"){
+  sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9)
+} else{
+  sensitivity_analysis_toggles = list(VE_older_adults = "reduced")
+}
+
 #______________________________________________________________________________________________________________
 
 
@@ -56,7 +64,7 @@ generic_booster_toggles =
     function_name = "booster_strategy_informed_prior",
     start_date = as.Date('2023-03-01'),
     dose_supply = 9999999999,
-    rollout_months = 3,
+    #rollout_months = 3, #used fixed % pop rollout per day 07/02/2023
     
     delivery_risk_group = c(risk_group_name,'general_public'),
     prev_dose_floor = 2,
@@ -125,7 +133,7 @@ queue = list()
 # Adults with comorbidities
 if (setting %in% c("FJI","PNG")){
   queue[[1]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
-                    risk_group_name = 'adults_with_comorbidities',
+                    risk_group_name = this_risk_group_name,
                     risk_group_toggle = "on",
                     vax_risk_strategy_toggle = "off",
                     apply_risk_strategy_toggles = NA,
@@ -133,7 +141,7 @@ if (setting %in% c("FJI","PNG")){
                     booster_toggles = "no")
 } else{
   queue[[1]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
-                    risk_group_name = 'adults_with_comorbidities',
+                    risk_group_name = this_risk_group_name,
                     risk_group_toggle = "on",
                     vax_risk_strategy_toggle = "on",
                     apply_risk_strategy_toggles = primary_only_toggles,
@@ -150,13 +158,13 @@ if (setting %in% c("FJI","PNG")){
 #booster_highRisk_toggles$vax_doses_risk = booster_highRisk_toggles$vax_doses_risk + 1
 
 # Adults with comorbidities
-generic_booster_toggles$delivery_risk_group = c('adults_with_comorbidities')
+generic_booster_toggles$delivery_risk_group = c(this_risk_group_name)
 
 generic_booster_toggles$prev_dose_floor = 2
 queue[[length(queue)+1]] = list(
   vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
   vax_strategy_description_long = 'assume booster to all adults who have previously recieved a primary schedule',
-  risk_group_name = 'adults_with_comorbidities',
+  risk_group_name = this_risk_group_name,
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
@@ -164,7 +172,7 @@ generic_booster_toggles$prev_dose_floor = 3
 queue[[length(queue)+1]] = list(
   vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
   vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
-  risk_group_name = 'adults_with_comorbidities',
+  risk_group_name = this_risk_group_name,
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
@@ -173,7 +181,7 @@ if (setting == "FJI"){
   queue[[length(queue)+1]] = list(
     vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
     vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
-    risk_group_name = 'adults_with_comorbidities',
+    risk_group_name = this_risk_group_name,
     risk_group_toggle = "on",
     booster_toggles = generic_booster_toggles) 
 }
@@ -186,13 +194,13 @@ if (setting == "FJI"){
 # booster_all_toggles$vax_doses_general = booster_highRisk_toggles$vax_doses_risk
 
 #Adults with comorbidities
-generic_booster_toggles$delivery_risk_group = c('general_public','adults_with_comorbidities')
+generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
 
 generic_booster_toggles$prev_dose_floor = 2
 queue[[length(queue)+1]] = list(
   vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
   vax_strategy_description_long = 'assume booster to all adults who have previously recieved a primary schedule',
-  risk_group_name = 'adults_with_comorbidities',
+  risk_group_name = this_risk_group_name,
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
@@ -200,7 +208,7 @@ generic_booster_toggles$prev_dose_floor = 3
 queue[[length(queue)+1]] = list(
   vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
   vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
-  risk_group_name = 'adults_with_comorbidities',
+  risk_group_name = this_risk_group_name,
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
@@ -209,7 +217,7 @@ if (setting == "FJI"){
   queue[[length(queue)+1]] = list(
     vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
     vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
-    risk_group_name = 'adults_with_comorbidities',
+    risk_group_name = this_risk_group_name,
     risk_group_toggle = "on",
     booster_toggles = generic_booster_toggles) 
 }
@@ -247,7 +255,7 @@ for (ticket in 1:length(queue)){
      RR_estimate  = RR_default = 1.95
    }
  
-   source(paste(getwd(),"/CommandDeck.R",sep=""))
+   source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
    
    ### CREATE DEPENDENCIES OF ANTIVIRAL FUNCTION (n=4)  #################################################################
    # Recall, dependencies of antiviral function from transmission model (n=5): incidence_log_tidy, severe_outcome_log_tidy, severe_outcome_this_run, reinfection_protection, param_age 
@@ -342,8 +350,8 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               generic_booster_toggles = RECORD_generic_booster_toggles)
 
 
-save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,Sys.Date(),".Rdata",sep=''))
-save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting_beta,Sys.Date(),".Rdata",sep=''))
+save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,this_risk_group_name,Sys.Date(),".Rdata",sep=''))
+save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting_beta,this_risk_group_name,Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
