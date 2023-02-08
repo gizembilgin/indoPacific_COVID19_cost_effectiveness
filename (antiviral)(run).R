@@ -11,7 +11,7 @@ library(parallel)
 library(foreach)
 
 #dependencies -> nil!
-rm(list=ls())
+#rm(list=ls())
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
 
 source(paste(getwd(),"/(antiviral)(function) antiviral_model_manger.R",sep=""))
@@ -31,9 +31,10 @@ time.start.AntiviralSimulations=proc.time()[[3]]
 #for (setting_beta in c("PNG_high_beta")){ #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
   
   setting = substr(setting_beta,1,3)
+  this_risk_group_name = "adults_with_comorbidities"
   
   #load latest antiviralSetUp_* (transmission model run for 1 year)
-  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",setting_beta,"*",sep=""))
+  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
@@ -58,9 +59,9 @@ time.start.AntiviralSimulations=proc.time()[[3]]
     setting = setting,
     
     toggle_number_of_runs = 100, #DEFAULT 100
-    toggle_cluster_number = 4,
+    toggle_cluster_number = 2,
     
-    toggle_stochastic_SO = "on", # DEFAULT "on"
+    toggle_stochastic_SO = "off", # DEFAULT "on"
     toggle_compare_to_vaccine_effect = "on",
     
     toggle_sensitivity_analysis = list(),
@@ -69,8 +70,8 @@ time.start.AntiviralSimulations=proc.time()[[3]]
     manager_stochastic_VE_sampling = "uniform" # options: "normal" or "uniform"
   )
   
-  RECORD_antiviral_model_simulations_0 = RECORD_antiviral_model_simulations_0 %>% mutate(country = setting)
-  RECORD_antiviral_model_simulations = rbind(RECORD_antiviral_model_simulations,RECORD_antiviral_model_simulations_0)
+  RECORD_antiviral_model_simulations_0 = RECORD_antiviral_model_simulations_0 %>% mutate(country = setting, setting_beta = setting_beta)
+  RECORD_antiviral_model_simulations = bind_rows(RECORD_antiviral_model_simulations,RECORD_antiviral_model_simulations_0)
 #}
 
 time.end.AntiviralSimulations=proc.time()[[3]]
@@ -84,4 +85,4 @@ time = paste(temp_name,time,sep='')
 
 
 ### SAVE ####################################################################
-save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/AntiviralRun_",setting_beta,time,".Rdata",sep=''))
+save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/AntiviralRun_",setting_beta,"_",this_risk_group_name,"_",time,".Rdata",sep=''))
