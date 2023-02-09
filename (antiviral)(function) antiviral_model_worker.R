@@ -362,6 +362,8 @@ antiviral_model_worker <- function(
             
             antiviral_target_individuals_run = antiviral_recipients %>%
               left_join(antiviral_target_individuals, by = 'ID') #remove all not selected for antivirals
+          } else{
+            antiviral_target_individuals_run = antiviral_target_individuals
           }
           
           ### do they test positive on the RAT test?
