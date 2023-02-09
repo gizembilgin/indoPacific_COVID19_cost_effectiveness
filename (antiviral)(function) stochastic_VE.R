@@ -715,6 +715,10 @@ stochastic_VE <- function(
     )) %>% 
     group_by(age_group) %>%
     filter(strain == strain_now)
+  if (max(booster_combinations$dose) == 5){
+    workshop = VE_waning_distribution_SO %>% filter(dose == 4) %>% mutate(dose == 5)
+    VE_waning_distribution_SO = rbind(VE_waning_distribution_SO,workshop)
+  }
   
   #average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
   workshop = data.frame()
@@ -748,8 +752,9 @@ stochastic_VE <- function(
             filter(schedule == "booster" & dose == this_dose & 
                      primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax]) &
                      vaccine_mode == this_vax_mode) %>%
-            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+            group_by(schedule,vaccine_mode,strain,outcome,dose,days,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") %>%
+            mutate(vaccine_type = this_vax)
         }
         
         # Third Choice = same primary schedule + any booster
@@ -757,8 +762,9 @@ stochastic_VE <- function(
           this_combo = VE_waning_distribution_SO %>% 
             filter(schedule == "booster" & dose == this_dose & 
                      primary_if_booster %in% unique(booster_combinations$FROM_vaccine_type[booster_combinations$dose == this_dose & booster_combinations$vaccine_type == this_vax])) %>%
-            group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,.add = TRUE) %>%
-            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
+            group_by(schedule,vaccine_mode,strain,outcome,dose,days,.add = TRUE) %>%
+            summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") %>%
+            mutate(vaccine_type = this_vax)
         }
         
         # Otherwise... rethink!
