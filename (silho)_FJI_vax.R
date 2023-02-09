@@ -67,23 +67,43 @@ for(pt in 1:nrow(time_points)){
     #can use pop_risk_group_dn, since our age groups cut off at 18 and 60 AND first cab off the rank
     high_risk_priority = 0.8
     
-    #calculate age- and risk- dn of eligible individuals
-    prioritisation = pop_risk_group_dn %>%
-      filter((risk_group == "general_public" & age_group %in% c("18 to 29",  "30 to 44",  "45 to 59",  "60 to 69",  "70 to 100")) | 
-               (risk_group == risk_group_name & age_group %in% c("60 to 69",  "70 to 100")) ) %>%
-      mutate(prop_risk = case_when(
-        risk_group == risk_group_name ~ high_risk_priority,
-        TRUE ~ (1-high_risk_priority)
-      )) %>%
-      group_by(risk_group) %>%
-      mutate(prop_age = pop/sum(pop),
-             prop = prop_age * prop_risk) %>%
-      select(risk_group,age_group,prop)
-    
-    slice = slice %>% 
-      left_join(prioritisation, by = c('risk_group')) %>%
-      mutate(doses_delivered_this_date = doses_delivered_this_date * prop)
-    
+    if (risk_group_name == "adults_with_comorbidities"){
+      #calculate age- and risk- dn of eligible individuals
+      prioritisation = pop_risk_group_dn %>%
+        filter((risk_group == "general_public" & age_group %in% c("18 to 29",  "30 to 44",  "45 to 59",  "60 to 69",  "70 to 100")) | 
+                 (risk_group == risk_group_name & age_group %in% c("60 to 69",  "70 to 100")) ) %>%
+        mutate(prop_risk = case_when(
+          risk_group == risk_group_name ~ high_risk_priority,
+          TRUE ~ (1-high_risk_priority)
+        )) %>%
+        group_by(risk_group) %>%
+        mutate(prop_age = pop/sum(pop),
+               prop = prop_age * prop_risk) %>%
+        select(risk_group,age_group,prop)
+      
+      slice = slice %>% 
+        left_join(prioritisation, by = c('risk_group')) %>%
+        mutate(doses_delivered_this_date = doses_delivered_this_date * prop)
+    } else if (risk_group_name == "pregnant_women"){
+      
+      prioritisation = pop_risk_group_dn %>%
+        mutate(prop_risk = case_when(
+          age_group %in% c("0 to 4","5 to 9","10 to 17") ~ 0,
+          risk_group == risk_group_name ~ 0,
+          age_group %in% c("18 to 29",  "30 to 44",  "45 to 59") ~ high_risk_priority,
+          age_group %in% c("60 to 69",  "70 to 100") ~ (1-high_risk_priority)
+        )) %>%
+        mutate(prop_age = pop/sum(pop),
+               prop = prop_age * prop_risk) %>%
+        group_by(prop_risk) %>%
+        mutate(prop = prop_age * prop_risk/sum(prop_age))%>%
+        ungroup() %>%
+        select(risk_group,age_group,prop)
+      
+      slice = slice %>% 
+        left_join(prioritisation, by = c('risk_group')) %>%
+        mutate(doses_delivered_this_date = doses_delivered_this_date * prop)
+    }
   } else{ # uniform priority with eligible age groups
     this_floor = time_points$age_floor[pt] #youngest age group from which uniform priority
     
