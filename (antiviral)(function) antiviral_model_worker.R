@@ -246,6 +246,7 @@ antiviral_model_worker <- function(
         #____________________________________________________________________________
         
         
+        if (nrow(antiviral_target_individuals) == 0){} else{
         ### CREATE DATASET WITH INDIVIDUALS ############################################
         workshop = as.data.frame(
           lapply(
@@ -426,7 +427,7 @@ antiviral_model_worker <- function(
           prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_this_date)
       }
       }
-    } #end loop over different antiviral start dates, antiviral types, and antiviral target groups
+    }} #end loop over different antiviral start dates, antiviral types, and antiviral target groups
 
     
     
