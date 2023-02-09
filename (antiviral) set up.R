@@ -176,15 +176,15 @@ queue[[length(queue)+1]] = list(
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
-if (setting == "FJI"){
-  generic_booster_toggles$prev_dose_floor = 4
-  queue[[length(queue)+1]] = list(
-    vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
-    risk_group_name = this_risk_group_name,
-    risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles) 
-}
+# if (setting == "FJI"){
+#   generic_booster_toggles$prev_dose_floor = 4
+#   queue[[length(queue)+1]] = list(
+#     vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
+#     vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
+#     risk_group_name = this_risk_group_name,
+#     risk_group_toggle = "on",
+#     booster_toggles = generic_booster_toggles) 
+# }
 #______________________________________________________________________________________________________________
 
 
@@ -212,15 +212,15 @@ queue[[length(queue)+1]] = list(
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
-if (setting == "FJI"){
-  generic_booster_toggles$prev_dose_floor = 4
-  queue[[length(queue)+1]] = list(
-    vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
-    risk_group_name = this_risk_group_name,
-    risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles) 
-}
+# if (setting == "FJI"){
+#   generic_booster_toggles$prev_dose_floor = 4
+#   queue[[length(queue)+1]] = list(
+#     vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
+#     vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
+#     risk_group_name = this_risk_group_name,
+#     risk_group_toggle = "on",
+#     booster_toggles = generic_booster_toggles) 
+# }
 #______________________________________________________________________________________________________________
 
 
@@ -350,8 +350,8 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               generic_booster_toggles = RECORD_generic_booster_toggles)
 
 
-save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,this_risk_group_name,Sys.Date(),".Rdata",sep=''))
-save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting_beta,this_risk_group_name,Sys.Date(),".Rdata",sep=''))
+save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
