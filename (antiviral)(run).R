@@ -59,14 +59,14 @@ time.start.AntiviralSimulations=proc.time()[[3]]
     setting = setting,
     
     toggle_number_of_runs = 100, #DEFAULT 100
-    toggle_cluster_number = 2,
+    toggle_cluster_number = 4,
     
     toggle_stochastic_SO = "off", # DEFAULT "on"
     toggle_compare_to_vaccine_effect = "on",
     
     toggle_sensitivity_analysis = list(),
-    pathway_to_care = "fixed",
-    toggle_fixed_antiviral_coverage = 0.2,
+    pathway_to_care = "fixed_RAT", #options: gold_standard (require data on healthcare seeking/access), fixed_RAT (probability of testing positive to a RAT within 5 days), fixed_direct (samples fixed proportion)
+    toggle_fixed_antiviral_coverage = 1, #% of people with access to antivirals OR access to RAT tests -> antiviral
     manager_stochastic_VE_sampling = "uniform" # options: "normal" or "uniform"
   )
   
