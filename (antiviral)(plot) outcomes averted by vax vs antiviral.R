@@ -46,10 +46,11 @@ RECORD_antiviral_model_simulations = RECORD_antiviral_model_simulations %>%
       "no booster"
   ))
 
-LIST_outcomes = list('severe_disease', 
+LIST_outcomes = list(#'severe_disease', 
                      'hosp', 
-                     'death', 
-                     'YLL')
+                     'death' 
+                     #'YLL'
+                     )
 
 ### PLOT dose-impact of nirmatrelvir_ritonavir and booster doses
 #option 1: boxplot
@@ -71,6 +72,7 @@ workshop = RECORD_antiviral_model_simulations %>%
 
 #option 2: median and IQR plot
 workshop = RECORD_antiviral_model_simulations %>% 
+  filter(vax_scenario_risk_group == "adults_with_comorbidities") %>%
   filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
   filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
@@ -114,11 +116,11 @@ for (a in 1:length(LIST_outcomes)) {
           legend.box = "vertical")
   
 }
-ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
+ggarrange(plot_list[[1]],plot_list[[2]],#plot_list[[3]], plot_list[[4]],
           common.legend = TRUE,
           legend="bottom",
           ncol = 1,
-          nrow = 4) 
+          nrow = length(LIST_outcomes)) 
 #ggsave(paste(rootpath,"x_results/plot_VaxVsAntivirals_",time,".png",sep=''), width = 9.6, height = 5.7)
 options(warn = 0)
 
@@ -142,6 +144,7 @@ workshop = RECORD_antiviral_model_simulations %>%
 
 #option 2: median and IQR plot
 workshop = RECORD_antiviral_model_simulations %>% 
+  filter(vax_scenario_risk_group == "adults_with_comorbidities") %>%
   filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
   filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
@@ -181,11 +184,11 @@ for (a in 1:length(LIST_outcomes)) {
           legend.box = "vertical")
   
 }
-ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
+ggarrange(plot_list[[1]],plot_list[[2]],#plot_list[[3]], plot_list[[4]],
           common.legend = TRUE,
           legend="bottom",
           ncol = 1,
-          nrow = 4) 
+          nrow = length(LIST_outcomes)) 
 #ggsave(paste(rootpath,"x_results/plot_VaxVsAntivirals_",time,".png",sep=''), width = 9.6, height = 5.7)
 options(warn = 0)
 
@@ -298,11 +301,11 @@ for (a in 1:length(LIST_outcomes)) {
           legend.box = "vertical")
   
 }
-ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
+ggarrange(plot_list[[1]],plot_list[[2]],#plot_list[[3]], plot_list[[4]],
           common.legend = TRUE,
           legend="bottom",
           ncol = 1,
-          nrow = 4) 
+          nrow = length(LIST_outcomes)) 
 #ggsave(paste(rootpath,"x_results/plot_targetGroups_",time,".png",sep=''), width = 9.6, height = 5.7)
 options(warn = 0)
 #____________________________________________________________________________
