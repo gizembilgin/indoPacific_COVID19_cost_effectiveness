@@ -1,20 +1,34 @@
 
+
+
 MASTER_RECORD_antiviral_model_simulations = data.frame()
-settings_to_plot = c("PNG_high_beta","PNG_low_beta")
-for (i in c(1:length(settings_to_plot))){
-  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",settings_to_plot[i],"*",sep=""))
-  list_poss_Rdata_details = double()
-  for (j in 1:length(list_poss_Rdata)){
-    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste(rootpath,'x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
+settings_to_plot = c("PNG_low_beta")
+risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
+
+for (r in 1:length(risk_groups_to_plot)){
+  this_risk_group = risk_groups_to_plot[r]
+  for (i in c(1:length(settings_to_plot))){
+    this_setting = settings_to_plot[i]
+    
+    list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
+    if (length(list_poss_Rdata)>0){
+      list_poss_Rdata_details = double()
+      for (j in 1:length(list_poss_Rdata)){
+        list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                        file.info(paste(rootpath,'x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
+      }
+      latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+      load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+      #load(file = paste(rootpath,'x_results/',"AntiviralRun_PNG_low_beta2023-02-04 11-50-47.Rdata",sep = ''))
+    }
+    
+    if ("PNG_low_beta" %in% settings_to_plot & !("PNG_high_beta") %in% settings_to_plot){this_setting = "PNG"}
+    
+    this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = this_setting)
+    MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
   }
-  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(file = paste(rootpath,"x_results/",latest_file,sep=''))
-  
-  
-  this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = settings_to_plot[i])
-  MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
 }
+
 RECORD_antiviral_model_simulations = MASTER_RECORD_antiviral_model_simulations
 
 ### PLOT (1/2) Vax vs. antivirals ##############################################
@@ -234,9 +248,10 @@ options(warn = 0)
 
 
 ### PLOT (2/2) Varying target groups ###########################################
-LIST_target_group = list('adults_with_comorbidities', 
+LIST_target_group = list('adults_with_comorbidities',
+                         'pregnant_women',
                          'unvaccinated_adults',
-                         'unvaccinated_adults_AND_adults_with_comorbidities',
+                         #'unvaccinated_adults_AND_adults_with_comorbidities',
                          'all_adults')
 
 ### Calculate # of antivirals per outcome averted
@@ -244,19 +259,14 @@ LIST_target_group = list('adults_with_comorbidities',
 workshop = RECORD_antiviral_model_simulations  %>% 
   filter(antiviral_type == "nirmatrelvir_ritonavir" & intervention == "antiviral 2023-01-01") %>% 
   filter(result %in% c("doses_per_outcome_averted")) %>%
-  mutate(intervention = case_when(
-    intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
-    TRUE ~ intervention
-  )) 
+  filter(antiviral_target_group %in% LIST_target_group)
 
 #option 2: median + IQR
 workshop = RECORD_antiviral_model_simulations  %>% 
   filter(antiviral_type == "nirmatrelvir_ritonavir" & intervention == "antiviral 2023-01-01") %>% 
-  filter(result %in% c("doses_per_outcome_averted")) %>%
-  mutate(intervention = case_when(
-    intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
-    TRUE ~ intervention
-  )) %>% group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
+  filter(result %in% c("doses_per_outcome_averted")) %>% 
+  filter(antiviral_target_group %in% LIST_target_group)%>%
+  group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
   summarise(median = median(value), LQ = quantile(value,probs=0.25), UQ = quantile(value,probs=0.75))
 
 
@@ -264,15 +274,6 @@ options(warn = -1)
 plot_list = list()
 for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
-  
-  # plot_list[[a]] = ggplot(data = workshop[workshop$outcome == this_outcome,]) +
-  #   geom_pointrange(aes(x=average_doses_per_outcome_averted,y=vax_scenario,color=as.factor(antiviral_target_group),xmin=LCI_doses_per_outcome_averted,xmax=UCI_doses_per_outcome_averted))  + 
-  #   labs(title = paste(this_outcome), color = 'intervention') +
-  #   ylab('')+
-  #   xlim(0,max(workshop$UCI_doses_per_outcome_averted[workshop$outcome == this_outcome])) +
-  #   xlab('antiviral doses to avert an outcome')
-  
-
   
   #option 1: boxplot
   # plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
