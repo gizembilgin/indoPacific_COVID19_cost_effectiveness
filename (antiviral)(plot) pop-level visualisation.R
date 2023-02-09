@@ -69,7 +69,9 @@ if (risk_group_name %in% c('adults_with_comorbidities')) {
   
 pop_high_risk = pop_orig %>%
   left_join(risk_dn, by = c("age_group","country")) %>%
-  mutate(risk_group = risk_group_name,
+  mutate(risk_group = case_when(
+    age_group %in% c("60 to 69","70 to 100") ~ 'adults aged 60+ with comorbidities',
+    TRUE ~ risk_group_name),
          pop = round(pop * prop)) %>%
   select(country,risk_group, age_group, pop)
 
