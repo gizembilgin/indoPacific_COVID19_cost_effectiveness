@@ -274,9 +274,9 @@ if(antiviral_setup == "on"){
   #   mutate(coverage_this_date = case_when(pop > 0 ~ cumsum(doses_delivered_this_date) /pop,
   #                                         TRUE ~ 0))
   # ggplot(to_plot) + geom_point(aes(x=date,y=coverage_this_date,color=as.factor(age_group)))+
-  #   plot_standard +
-  #   facet_grid(dose ~ .)
-  
+  #   facet_grid(dose ~ .) +
+  #   plot_standard
+
   proj_dates = seq(max(vaccination_history_TRUE$date) + 1, as.Date('2024-01-01'),by="days")
   proj_dates = crossing(date = proj_dates,
                         age_group = age_group_labels)
