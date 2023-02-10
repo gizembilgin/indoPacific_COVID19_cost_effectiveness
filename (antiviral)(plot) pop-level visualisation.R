@@ -95,14 +95,18 @@ pop_risk_group = pop_risk_group_dn %>%
 ggplot(pop_risk_group) + 
   geom_col(aes(x=country,y=prop*100,fill=as.factor(risk_group))) +
   xlab("") +
-  ylab("% of total population")
+  ylab("% of total population") + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
+  labs(fill="")
 
 
 pop_orig %>% 
   group_by(country) %>%
   mutate(prop = pop/sum(pop)) %>%
   filter(age_group %in% c('60 to 69','70 to 100')) %>%
-  summarise(prop_aged_over_60 = sum(prop))
+  summarise(prop_aged_over_60 = sum(prop)) 
 #_____________________________________________________________
 
 
