@@ -48,21 +48,21 @@ RECORD_antiviral_model_simulations_0 <- antiviral_model_manger(
   LIST_vax_scenario = unique(RECORD_antiviral_setup$outcomes_without_antivirals$vax_scenario),
   LIST_antiviral_target_group = list('pregnant_women'),
   LIST_antiviral_type = list("nirmatrelvir_ritonavir","molunipiravir"), #options:nirmatrelvir_ritonavir,molunipiravir 
-  toggle_high_risk_group = "pregnant_women",
+  toggle_high_risk_group = this_risk_group_name,
   
   
   RECORD_antiviral_setup = RECORD_antiviral_setup,
   setting = setting,
   
   toggle_number_of_runs = 100, #DEFAULT 100
-  toggle_cluster_number = 2,
+  toggle_cluster_number = 4,
   
   toggle_stochastic_SO = "off", # DEFAULT "on"
   toggle_compare_to_vaccine_effect = "on",
   
   toggle_sensitivity_analysis = list(),
-  pathway_to_care = "fixed",
-  toggle_fixed_antiviral_coverage = 0.2,
+  pathway_to_care = "fixed_RAT",
+  toggle_fixed_antiviral_coverage = 1,
   manager_stochastic_VE_sampling = "uniform" # options: "normal" or "uniform"
 )
 
