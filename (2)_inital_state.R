@@ -10,20 +10,21 @@ num_vax_doses = D = length(unique(vaccination_history_TRUE$dose))
 vax_type_list = sort(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_types = T = length(unique(vaccination_history_TRUE$vaccine_type))
 num_vax_classes = num_vax_doses*num_vax_types + 1 # + 1 for unvaccinated
+booster_doses_delivered = crossing(doses_delivered = 0, #Booster doses delivered tracker (Step 1/3)
+                                   risk_group = risk_group_labels)
 
 
-#(A/B) Coverage 
-#(i/iii) Vaccine coverage at end of known history
+#1(A/B) Coverage 
+#1A(i/iii) Vaccine coverage at end of known history
 vaccine_coverage_end_history = vaccination_history_TRUE %>% 
   group_by(dose,vaccine_type,age_group,risk_group) %>%
   summarise(coverage_this_date = sum(doses_delivered_this_date),.groups='keep') %>%
   left_join(pop_risk_group_dn, by = c('age_group','risk_group')) %>%
   mutate(coverage_this_date = coverage_this_date/pop) %>%
   select(-pop)
-  
 #_________________________________________________
 
-#(ii/iii) Add hypothetical campaign (if 'on') ____
+#1A(ii/iii) Add hypothetical campaign (if 'on') ____
 if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
   vaccination_history_FINAL = 
     vax_strategy(vax_strategy_start_date        = vax_strategy_toggles$vax_strategy_start_date,
@@ -69,8 +70,6 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
                        risk_group_accessibility = apply_risk_strategy_toggles$risk_group_accessibility,
                        risk_group_age_broaden   = apply_risk_strategy_toggles$risk_group_age_broaden
    )
-
-  
   #update attributes!
   list_doses = unique(vaccination_history_FINAL$dose)
   list_doses = list_doses[! list_doses %in% c(8,9)]
@@ -108,11 +107,34 @@ if (vax_strategy_toggle == "on" & vax_risk_strategy_toggle == "off"){
 } else {
   vaccination_history_FINAL = vaccination_history_TRUE
 }
+vaccination_history_FINAL = vaccination_history_FINAL %>%
+  mutate(schedule = case_when(
+    dose > 2 ~ 'booster',
+    dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
+    TRUE ~ 'primary'
+  ))
+#_________________________________________________
+
+#Booster doses delivered tracker (2/3)
+workshop = vaccination_history_FINAL %>%
+  ungroup() %>% group_by(risk_group) %>%
+  filter(dose == 8) %>%
+  summarise(total = sum(doses_delivered_this_date))
+if (nrow(workshop)>0){
+  booster_doses_delivered = booster_doses_delivered %>%
+    left_join(workshop, by = 'risk_group') %>%
+    mutate(doses_delivered = doses_delivered + total) %>%
+    select(-total)
+}
+workshop_boosters_baseline = vaccination_history_FINAL %>%
+  ungroup() %>% group_by(risk_group) %>%
+  filter(schedule == "booster") %>%
+  summarise(baseline = sum(doses_delivered_this_date))
+#____________________________________
 
 
 
-
-### sensitivity analysis - booster doses in 2023
+### additional booster doses in 2023
 if (exists("booster_toggles") == FALSE){booster_toggles = "no"}
 if (length(booster_toggles)>1){
   
@@ -144,7 +166,7 @@ if (length(booster_toggles)>1){
     source(paste(getwd(),"/(function)_booster_strategy_informed_prior.R",sep=""))
     workshop = booster_strategy_informed_prior(booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
                                      booster_dose_supply        = booster_toggles$dose_supply,      # num of doses avaliable
-                                     booster_rollout_months     = booster_toggles$rollout_months,   # number of months to complete booster program
+                                     #booster_rollout_months     = booster_toggles$rollout_months,   # number of months to complete booster program
                                      
                                      booster_delivery_risk_group = booster_toggles$delivery_risk_group,
                                      booster_prev_dose_floor     = booster_toggles$prev_dose_floor, #down to what dose is willing to be vaccinated?
@@ -186,9 +208,6 @@ vaccination_history_FINAL = vaccination_history_FINAL %>%
     dose == 2 & vaccine_type == "Johnson & Johnson" ~ 'booster',
     TRUE ~ 'primary'
   ))
-
-
-
 #UPDATE: Delay & Interval 
 vaxCovDelay = crossing(dose = seq(1,num_vax_doses),delay = 0)
 vaxCovDelay = vaxCovDelay %>%
@@ -196,31 +215,41 @@ vaxCovDelay = vaxCovDelay %>%
     dose == 1 ~ 21,
     TRUE ~ 14 #all other doses
   ))
-#_________________________________________________
-
-
-#load covid19_waves with variables: fitted_setting, fitted_date, date ,strain
+#UPDATE start date and covid19_waves
 if (fitting == "off"){
   if (setting == "SLE"){
     covid19_waves =  data.frame(date = c(as.Date('2021-04-25'),as.Date('2021-09-01')),
-                               strain = c('delta','omicron'))
+                                strain = c('delta','omicron'))
   } 
   if (outbreak_timing != "off"){ #if additional outbreak
     if (outbreak_timing == "after"){ new_seed_date = max(vaccination_history_FINAL$date)  #outbreak after vaccine rollout
-    } else if(outbreak_timing == "during"){ new_seed_date = date_start + 7                #outbreak during vaccine rollout
-    }
+    } else if(outbreak_timing == "during"){ new_seed_date = date_start + 7}                #outbreak during vaccine rollout
     covid19_waves = c(covid19_waves,new_seed_date)
   }
-
 }
-
-
 date_now = date_start
 #_________________________________________________
 
 
+#Booster doses delivered tracker (3/3)
+workshop = vaccination_history_FINAL %>%
+  ungroup() %>% group_by(risk_group) %>%
+  filter(schedule == "booster") %>%
+  summarise(final = sum(doses_delivered_this_date)) %>%
+  left_join(workshop_boosters_baseline, by = 'risk_group') %>%
+  mutate(final = final - baseline)
+if (nrow(workshop)>0){
+  booster_doses_delivered = booster_doses_delivered %>%
+    left_join(workshop, by = 'risk_group') %>%
+    mutate(doses_delivered = doses_delivered + final) %>%
+    select(-final,-baseline)
+}
+#____________________________________
 
-#(iii/iii)  Initial coverage _______________________
+
+
+
+#1A(iii/iii)  Initial coverage _______________________
 #Including coverage_this_date for projected doses
 vaccination_history_FINAL = vaccination_history_FINAL %>% 
   left_join(pop_risk_group_dn, by = c("age_group", "risk_group")) %>%
@@ -285,9 +314,12 @@ vaccine_coverage$cov[is.na(vaccine_coverage$cov)] = 0
 #CHECK
 check =  vaccine_coverage %>% group_by(dose,age_group,risk_group) %>% summarise(check = sum(cov),.groups = "keep") %>% filter(check>1)
 if(nrow(check)>1){stop('inital vaccine coverage > 100%')}
+#_________________________________________________
 
 
-#(B/B) Vaccine Effectiveness (VE)
+
+
+#1(B/B) Vaccine Effectiveness (VE)
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution %>%
   filter(waning == waning_toggle_acqusition) %>%
@@ -348,7 +380,7 @@ if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booste
       
       # Otherwise... rethink!
       if (nrow(this_combo) == 0){stop('Need a VE for this booster!')}
-      
+  
       workshop = rbind(workshop,this_combo)
     }
   }

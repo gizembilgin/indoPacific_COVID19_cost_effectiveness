@@ -12,6 +12,7 @@
 # booster_strategy_start_date = as.Date('2023-03-01')
 # booster_dose_supply = 9999999999
 # booster_rollout_months = 6
+# booster_rollout_percentage_pop =  0.163
 # 
 # booster_delivery_risk_group = c(risk_group_name,'general_public')
 # booster_prev_dose_floor = 3
@@ -30,7 +31,8 @@
 booster_strategy_informed_prior <- function(
     booster_strategy_start_date,       # start of hypothetical vaccination program
     booster_dose_supply,           # num of doses avaliable
-    booster_rollout_months,            # number of months to complete booster program
+    #booster_rollout_months,            # number of months to complete booster program
+    booster_rollout_percentage_pop =  0.163, #average across Oceania in 2022 (see `(mech shop) expected daily rollout rate`)
     
     booster_delivery_risk_group = c(risk_group_name,'general_public'),
     booster_prev_dose_floor = max(vaccination_history_FINAL$dose), #down to what dose is willing to be vaccinated?
@@ -41,7 +43,8 @@ booster_strategy_informed_prior <- function(
     
     booster_strategy_vaccine_type,     # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"  
     
-    vaccination_history_FINAL_local = vaccination_history_FINAL
+    vaccination_history_FINAL_local = vaccination_history_FINAL,
+    pop_setting_LOCAL = pop_setting
 ){
   
   ##### SETUP ###################################################################
@@ -56,6 +59,7 @@ booster_strategy_informed_prior <- function(
   
   
   #####(1/4) Calculate the eligible population ###################################
+  #sum all doses delivered by dose, type, risk/age group
   if (8 %in% unique(vaccination_history_FINAL_local$dose)){
     eligible_pop =  vaccination_history_FINAL_local %>% 
       group_by(dose,vaccine_type,risk_group,age_group,FROM_vaccine_type,FROM_dose) %>%
@@ -66,26 +70,34 @@ booster_strategy_informed_prior <- function(
       summarise(eligible_individuals = sum(doses_delivered_this_date), .groups = 'keep')
   }
   
-  #remove double counted tidy
-  for (d in 2:num_vax_doses){
+  #remove double counted, i.e., don't count first doses if they have recieved a second dose
+  workshop_eligible_pop = eligible_pop %>% filter(dose == max(eligible_pop$dose))
+  for (d in 2:max(eligible_pop$dose)){
     remove = eligible_pop %>% 
       ungroup() %>%
       filter(dose == d) %>%
       rename(complete_vax = eligible_individuals) %>%
       mutate(vaccine_type = FROM_vaccine_type) %>%
-      select(vaccine_type,risk_group,age_group,complete_vax) 
+     # select(vaccine_type,risk_group,age_group,complete_vax) %>%
+      group_by(vaccine_type,risk_group,age_group) %>%
+      summarise(complete_vax = sum(complete_vax), .groups = "keep")
     
     if (nrow(remove)>0){
-      eligible_pop = eligible_pop %>%
+      this_dose = eligible_pop %>%
+        filter(dose == (d-1)) %>%
+        group_by(dose,vaccine_type,risk_group,age_group) %>%
+        summarise(eligible_individuals = sum(eligible_individuals), .groups = 'keep') %>%
         left_join(remove, by = c('age_group','vaccine_type','risk_group')) %>%
         mutate(eligible_individuals = case_when(
-          dose == (d-1) & complete_vax > eligible_individuals ~ 0, #this shouldn't be triggered
-          dose == (d-1) &  is.na(complete_vax) == FALSE~ eligible_individuals - complete_vax,
+          is.na(complete_vax) == FALSE~ eligible_individuals - complete_vax,
           TRUE ~ eligible_individuals,
         )) %>%
         select(-complete_vax)
     }
+    workshop_eligible_pop = rbind(workshop_eligible_pop,this_dose)
   }
+  eligible_pop = workshop_eligible_pop
+  
   if (nrow(eligible_pop[eligible_pop$dose == 8,])>0){
     remove = eligible_pop  %>%
       ungroup() %>%
@@ -124,18 +136,20 @@ booster_strategy_informed_prior <- function(
     return()
   }
   if (booster_prev_dose_floor>1){
-    if (sum(eligible_pop$eligible_individuals) != 
-        sum(vaccination_history_FINAL$doses_delivered_this_date[((vaccination_history_FINAL$dose == booster_prev_dose_floor & vaccination_history_FINAL$vaccine_type != "Johnson & Johnson") |
-                                                                 (vaccination_history_FINAL$dose == booster_prev_dose_floor -1 & vaccination_history_FINAL$vaccine_type == "Johnson & Johnson")) &
-                                                                vaccination_history_FINAL$age_group %in% booster_age_groups &
-                                                                vaccination_history_FINAL$risk_group %in% booster_delivery_risk_group])){
+    if (round(sum(eligible_pop$eligible_individuals)) != 
+        round(sum(vaccination_history_FINAL_local$doses_delivered_this_date[((vaccination_history_FINAL_local$dose == booster_prev_dose_floor & vaccination_history_FINAL_local$vaccine_type != "Johnson & Johnson") |
+                                                                       (vaccination_history_FINAL_local$dose == booster_prev_dose_floor & vaccination_history_FINAL_local$vaccine_type == "Johnson & Johnson" & 
+                                                                        vaccination_history_FINAL_local$vaccine_type != vaccination_history_FINAL_local$FROM_vaccine_type) |
+                                                                       (vaccination_history_FINAL_local$dose == booster_prev_dose_floor - 1 & vaccination_history_FINAL_local$vaccine_type == "Johnson & Johnson")) &
+                                                                      vaccination_history_FINAL_local$age_group %in% booster_age_groups &
+                                                                      vaccination_history_FINAL_local$risk_group %in% booster_delivery_risk_group]))){
       warning('eligible pop not lining up')
     }
   } else{
     if (sum(eligible_pop$eligible_individuals) != 
-        sum(vaccination_history_FINAL$doses_delivered_this_date[(vaccination_history_FINAL$dose == booster_prev_dose_floor) &
-                                                                vaccination_history_FINAL$age_group %in% booster_age_groups &
-                                                                vaccination_history_FINAL$risk_group %in% booster_delivery_risk_group])){
+        sum(vaccination_history_FINAL_local$doses_delivered_this_date[(vaccination_history_FINAL_local$dose == booster_prev_dose_floor) &
+                                                                vaccination_history_FINAL_local$age_group %in% booster_age_groups &
+                                                                vaccination_history_FINAL_local$risk_group %in% booster_delivery_risk_group])){
       warning('eligible pop not lining up')
     }
   }
@@ -157,8 +171,8 @@ booster_strategy_informed_prior <- function(
   
 
   #####(3/4) Distribute between days #############################################
-  rollout_days = round(365/12*booster_rollout_months)
-  rollout_doses_per_day = min(sum(eligible_pop$eligible_individuals),booster_dose_supply)/rollout_days
+  rollout_doses_per_day = booster_rollout_percentage_pop/100 * sum(pop_setting_LOCAL$pop)
+  rollout_days = ceiling(min(sum(eligible_pop$eligible_individuals),booster_dose_supply)/rollout_doses_per_day)
   #booster_strategy_start_date
  
   VA =  eligible_pop %>% mutate(doses_left = eligible_individuals)
@@ -170,6 +184,7 @@ booster_strategy_informed_prior <- function(
   for (day in 1:rollout_days){
     
     avaliable = rollout_doses_per_day
+    if (day == rollout_days){avaliable = sum(eligible_pop$eligible_individuals)- sum(booster_delivery_outline$doses_delivered_this_date)}
 
     while(avaliable>0 & priority_num <= highest_priority){
       

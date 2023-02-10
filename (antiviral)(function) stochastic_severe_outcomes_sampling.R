@@ -207,7 +207,7 @@ stochastic_severe_outcomes_sampling <- function(
       mutate(outcome = 'YLL') %>%
       left_join(YLL_FINAL, by = "age_group") %>%
       mutate(percentage = percentage*YLL) %>%
-      select(-YLL)
+      select(-YLL,-ISO3_code)
     
     severe_outcome_country_level = rbind(severe_outcome_country_level,YLL_row)
     

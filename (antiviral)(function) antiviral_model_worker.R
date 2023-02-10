@@ -55,7 +55,7 @@ antiviral_model_worker <- function(
   # Sample parameters related to severe outcome projections
   if (local_stochastic_SO == "on"){
     input_vaccine_type_list = unique(RECORD_antiviral_setup$vaccination_history_FINAL$vaccine_type)
-    booster_combinations = unique(RECORD_antiviral_setup$vaccination_history_FINAL[vaccination_history_FINAL$schedule == 'booster',c('vaccine_type','dose','FROM_vaccine_type','vaccine_mode')])
+    booster_combinations = unique(RECORD_antiviral_setup$vaccination_history_FINAL[RECORD_antiviral_setup$vaccination_history_FINAL$schedule == 'booster',c('vaccine_type','dose','FROM_vaccine_type','vaccine_mode')])
     
     SO_sample = stochastic_severe_outcomes_sampling( booster_combinations = booster_combinations,
                                                      setting = setting,
@@ -246,6 +246,7 @@ antiviral_model_worker <- function(
         #____________________________________________________________________________
         
         
+        if (nrow(antiviral_target_individuals) == 0){} else{
         ### CREATE DATASET WITH INDIVIDUALS ############################################
         workshop = as.data.frame(
           lapply(
@@ -267,7 +268,7 @@ antiviral_model_worker <- function(
         
         
   
-        if (local_pathway_to_care == 'realistic') {
+        if (local_pathway_to_care == 'gold_standard') {
           ### PATHWAY TO CARE STEP ONE: Does this individual seek care? ################
           healthcare_seeking = function(age_group) {
             #COMEBACK: need real data to estimate
@@ -352,7 +353,41 @@ antiviral_model_worker <- function(
           rm(antiviral_delivery_tracker)
           #____________________________________________________________________________
           
-        } else if (local_pathway_to_care == 'fixed') {
+        } else if (local_pathway_to_care == 'fixed_RAT') {
+          
+          ### randomly sample the fixed proportion from the target population who have access to care
+          if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
+            num_to_sample = total_target * local_fixed_antiviral_coverage
+            antiviral_recipients = data.frame(ID = sample(antiviral_target_individuals$ID, num_to_sample, replace = FALSE))
+            
+            antiviral_target_individuals_run = antiviral_recipients %>%
+              left_join(antiviral_target_individuals, by = 'ID') #remove all not selected for antivirals
+          } else{
+            antiviral_target_individuals_run = antiviral_target_individuals
+          }
+          
+          ### do they test positive on the RAT test?
+          RAT_test = function(age_group) {
+            sample = rbinom(1, 1, 0.537) #rbinom(number of observations,number of trials,probability of success on each trial)
+            return(sample)
+          }
+          
+          workshop <-
+            as.data.frame(sapply(
+              antiviral_target_individuals_run$age_group,
+              RAT_test
+            ))
+          colnames(workshop) = c('RAT_test')
+          workshop = cbind(antiviral_target_individuals_run, workshop)
+          
+          antiviral_target_individuals_run = workshop %>%
+            filter(RAT_test == 1) %>% #retain those who tested positive on the RAT test
+            select(-RAT_test)
+          
+          rm(workshop)
+          #____________________________________________________________________________
+          
+        } else if (local_pathway_to_care == 'fixed_direct') {
           #randomly sample the fixed proportion from the target population
           num_to_sample = total_target * local_fixed_antiviral_coverage
           antiviral_recipients = data.frame(ID = sample(antiviral_target_individuals$ID, num_to_sample, replace = FALSE))
@@ -384,7 +419,7 @@ antiviral_model_worker <- function(
             group_by(outcome) %>%
             summarise(n = sum(percentage)) %>%
             mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
-            mutate(antiviral_type = local_LIST_antiviral_type[[a]],
+            mutate(antiviral_type = local_LIST_antiviral_type[[c]],
                    antiviral_target_group = toggle_antiviral_target,
                    intervention = paste('antiviral',toggle_antiviral_start_date), 
                    evaluation_group = 'overall',
@@ -394,7 +429,7 @@ antiviral_model_worker <- function(
           prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_this_date)
       }
       }
-    } #end loop over different antiviral start dates, antiviral types, and antiviral target groups
+    }} #end loop over different antiviral start dates, antiviral types, and antiviral target groups
 
     
     
