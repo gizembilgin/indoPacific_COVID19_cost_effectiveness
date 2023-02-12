@@ -2,12 +2,12 @@
 
 
 MASTER_RECORD_antiviral_model_simulations = data.frame()
-settings_to_plot = c("PNG_low_beta")
+settings_to_plot = c("FJI","PNG_low_beta")
 risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
 
 for (r in 1:length(risk_groups_to_plot)){
   this_risk_group = risk_groups_to_plot[r]
-  for (i in c(1:length(settings_to_plot))){
+  for (i in 1:length(settings_to_plot)){
     this_setting = settings_to_plot[i]
     
     list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
@@ -22,7 +22,7 @@ for (r in 1:length(risk_groups_to_plot)){
       #load(file = paste(rootpath,'x_results/',"AntiviralRun_PNG_low_beta2023-02-04 11-50-47.Rdata",sep = ''))
     }
     
-    if ("PNG_low_beta" %in% settings_to_plot & !("PNG_high_beta") %in% settings_to_plot){this_setting = "PNG"}
+    if (this_setting == "PNG_low_beta" & !("PNG_high_beta") %in% settings_to_plot){this_setting = "PNG"}
     
     this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = this_setting)
     MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
@@ -252,7 +252,7 @@ options(warn = 0)
 
 ### PLOT (2/2) Varying target groups ###########################################
 LIST_target_group = list('adults_with_comorbidities',
-                         'pregnant_women',
+                         #'pregnant_women',
                          'unvaccinated_adults',
                          #'unvaccinated_adults_AND_adults_with_comorbidities',
                          'all_adults')
