@@ -51,9 +51,8 @@ if (this_setting == "FJI"){
 } else if (this_setting == "IDN") {
   strain_inital = strain_now = 'WT'
   
-  baseline_covid19_waves = covid19_waves = data.frame(
-    date = c( as.Date('2020-12-01'), as.Date('2021-06-01'), as.Date('2022-02-01')),
-    strain = c('WT', 'delta', 'omicron'))
+  baseline_covid19_waves = data.frame(date = c(as.Date('2020-04-01'),as.Date('2021-04-01'),as.Date('2021-12-01')),
+                                      strain = c('WT','delta','omicron'))
   
   date_start = covid19_waves$date[1] - 2
 }
@@ -174,6 +173,8 @@ if (this_setting == "FJI"){
                        reported_peaks[2] + as.numeric(reported_peaks[3] - reported_peaks[2])/2)  
 } else if (this_setting == "PNG"){
   fit_cutoff_dates = c(as.Date('2021-07-05')) #first good introduction of Delta in PNG
+} else if (this_setting == "IDN"){
+  fit_cutoff_dates =(sort(reported_peaks)[2]-sort(reported_peaks)[1])/2+sort(reported_peaks)[1] #first good introduction of Delta in PNG
 }
 #_____________________________________________
 
@@ -186,10 +187,14 @@ if (exists("covid19_waves")){rm(covid19_waves)}
 
 fit_daily_reported_1 <- function(par){
   
+  on.exit(.optim <<- list(par = par, obj = print(returnValue())))
+  
   strain_inital = strain_now = 'WT' 
-  model_weeks = as.numeric((fit_cutoff_dates[1]-date_start-1)/7)
-  covid19_waves = data.frame(date = baseline_covid19_waves$date[1]+round(par[1]),
-                             strain = 'delta')
+
+  covid19_waves = baseline_covid19_waves 
+  covid19_waves$date[1] = covid19_waves$date[1] + round(par[1])
+  if (this_setting == "IDN"){date_start = covid19_waves$date[1] - 7}
+  model_weeks = as.numeric((fit_cutoff_dates[1]-date_start)/7)
   
   under_reporting_est = par[2]
   fitting_beta= par[3]
@@ -198,8 +203,7 @@ fit_daily_reported_1 <- function(par){
   
   workshop = case_history %>% 
     select(date,rolling_average) %>%
-    mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
-            rolling_average = rolling_average * under_reporting_est) %>%
+    mutate(rolling_average = rolling_average * under_reporting_est) %>%
     rename(adjusted_reported = rolling_average) %>%
     left_join(incidence_log, by = "date") %>%
     mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
@@ -208,23 +212,31 @@ fit_daily_reported_1 <- function(par){
   
   return(fit_statistic)
 }
+.optim <- NULL
 
 #Attempt One: fit with no bounds
-system.time({first_wave_fit = optim(c(3.3917404 , 16.8874017  , 0.9308657),
-                                    fit_daily_reported_1,
-                       method = "Nelder-Mead")})
-# $par
-# [1] -3.3917404 16.8874017  0.9308657
-# 
-# $value
-# [1] 239881507
-# 
-# $counts
-# function gradient 
-# 156       NA 
-# 
-# $convergence
-# [1] 0
+if (this_setting == "FJI"){
+  system.time({first_wave_fit = optim(c(3.3917404 , 16.8874017  , 0.9308657),
+                                      fit_daily_reported_1,
+                                      method = "Nelder-Mead")})
+  # $par
+  # [1] -3.3917404 16.8874017  0.9308657
+  # 
+  # $value
+  # [1] 239881507
+  # 
+  # $counts
+  # function gradient 
+  # 156       NA 
+  # 
+  # $convergence
+  # [1] 0
+} else if (this_setting == "IDN"){
+  system.time({first_wave_fit = optim(c(135 , 150  , 1.05),
+                                      fit_daily_reported_1,
+                                      method = "Nelder-Mead")})
+}
+
 fit_daily_reported_1(first_wave_fit$par)
 
 #Attempt Two: fit bounded
@@ -251,6 +263,74 @@ ggplot() +
 save(first_wave_fit, file = paste('1_inputs/fit/first_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
 
+
+
+#FIT FIRST WAVE - special case: TLS_______________________________
+if (exists("fitting_beta")){rm(fitting_beta)}
+if (exists("under_reporting_est")){rm(under_reporting_est)}
+if (exists("covid19_waves")){rm(covid19_waves)}
+
+fit_daily_reported_1_TLS <- function(par){
+  
+  on.exit(.optim <<- list(par = par, obj = print(returnValue())))
+  
+  strain_inital = strain_now = 'WT' 
+  
+  covid19_waves = baseline_covid19_waves 
+  covid19_waves$date[1] = covid19_waves$date[1] + round(par[1])
+  covid19_waves$date[2] = covid19_waves$date[2] + round(par[2])
+  date_start = covid19_waves$date[1] - 2
+  model_weeks = as.numeric((covid19_waves$date[3] - date_start)/7)
+  
+  under_reporting_est = par[3]
+  fitting_beta= c(par[4],par[5],1)
+  
+  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+  
+  workshop = case_history %>% 
+    select(date,rolling_average) %>%
+    mutate(rolling_average = rolling_average * under_reporting_est) %>%
+    rename(adjusted_reported = rolling_average) %>%
+    left_join(incidence_log, by = "date") %>%
+    mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
+  
+  fit_statistic = sum(workshop$fit_statistic,na.rm=TRUE)
+  
+  return(fit_statistic)
+}
+.optim <- NULL
+
+system.time({first_wave_fit = optim(c(-15,15,
+                                      1.1,2,
+                                      70),
+                                    fit_daily_reported_1_TLS,
+                                      method = "Nelder-Mead")})
+
+fit_daily_reported_1_TLS(first_wave_fit$par)
+
+#Attempt Two: fit bounded
+# system.time({first_wave_fit = optim(c(0, 17,1),
+#                        fit_daily_reported_1,
+#                        method = "L-BFGS-B",
+#                        lower = c(-7,10,0.8), upper = c(7,20,1.2))})
+# 
+# #Attempt Three: fit with different optimisation function
+# system.time({first_wave_fit = nlm(fit_daily_reported_1,c(0, 17.9976092,1),
+#                      fscale = 278192872, #estimate of the function at the minimum
+#                      print.level = 1, #inital and final details are printed
+#                      iterlim = 100
+#                      )})
+#
+# Attempt Four: change tol of optim function
+
+
+to_plot = workshop %>% filter(date>date_start & date<=(date_start+model_weeks*7))
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  plot_standard
+save(first_wave_fit, file = paste('1_inputs/fit/first_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+#______________________________________________________________________________________________________________
 
 
 #FIT SECOND WAVE_______________________________
