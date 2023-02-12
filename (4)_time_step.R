@@ -13,7 +13,7 @@ if (outbreak_timing == "after"){
 }
 D_primary = max(vaccination_history_FINAL$dose[vaccination_history_FINAL$schedule == "primary"])
 if (exists("fitting_beta") == FALSE){fitting_beta = rep(1,nrow(covid19_waves))}
-while(length(fitting_beta) != nrow(covid19_waves) & fitting == "off"){fitting_beta = c(fitting_beta,1)}
+while(length(fitting_beta) != nrow(covid19_waves)){fitting_beta = c(fitting_beta,1)}
 
 for (increments_number in 1:num_time_steps){
 #for (increments_number in 1:167){
