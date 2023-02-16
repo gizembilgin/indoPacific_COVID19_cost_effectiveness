@@ -12,9 +12,10 @@ source(paste(getwd(),"/(antiviral)(run) special case pregnant women .R",sep=""),
 # setting_beta = "PNG_low_beta"
 # source(paste(getwd(),"/(antiviral)(run).R",sep=""),local=TRUE)
 # source(paste(getwd(),"/(antiviral)(run) special case pregnant women .R",sep=""),local=TRUE)
-setting_beta = "PNG_high_beta"
-source(paste(getwd(),"/(antiviral)(run).R",sep=""),local=TRUE)
-source(paste(getwd(),"/(antiviral)(run) special case pregnant women .R",sep=""),local=TRUE)
+# setting_beta = "PNG_high_beta"
+
+# source(paste(getwd(),"/(antiviral)(run).R",sep=""),local=TRUE)
+# source(paste(getwd(),"/(antiviral)(run) special case pregnant women .R",sep=""),local=TRUE)
 
 
 ### FJI - with second booster dose
