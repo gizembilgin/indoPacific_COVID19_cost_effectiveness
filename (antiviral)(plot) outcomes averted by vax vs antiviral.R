@@ -22,8 +22,9 @@ for (r in 1:length(risk_groups_to_plot)){
       #load(file = paste(rootpath,'x_results/',"AntiviralRun_PNG_low_beta2023-02-04 11-50-47.Rdata",sep = ''))
     }
     
-    if (this_setting == "PNG_low_beta" & !("PNG_high_beta") %in% settings_to_plot){this_setting = "PNG"}
-    
+
+    if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
+
     this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = this_setting)
     MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
   }
@@ -34,6 +35,10 @@ RECORD_antiviral_model_simulations = MASTER_RECORD_antiviral_model_simulations
 ### PLOT (1/2) Vax vs. antivirals ##############################################
 RECORD_antiviral_model_simulations = RECORD_antiviral_model_simulations %>%
   mutate(vax_scenario_short = case_when(
+    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved two booster doses"  ~
+      "booster to all second booster",
+    vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved two booster doses" ~
+      "booster to high-risk prev second booster",
     vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~
       "booster to all prev primary",
     vax_scenario ==  "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a first booster dose" ~
