@@ -333,63 +333,10 @@ if (D == 5){
   workshop = VE_waning_distribution %>% filter(dose == 4) %>% mutate(dose = 5)
   VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 }
+VE_waning_distribution <- VE_waning_distribution_expander(VE_waning_distribution,
+                                                          "any_infection")
 
-#average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
-workshop = data.frame()
-if (nrow(vaccination_history_FINAL[vaccination_history_FINAL$schedule == "booster",])>0){ #if booster dose exists
-  for (this_dose in unique(vaccination_history_FINAL$dose[vaccination_history_FINAL$schedule == "booster"])){ # for each booster dose
-    for (this_vax in unique(vaccination_history_FINAL$vaccine_type[vaccination_history_FINAL$schedule == "booster" & vaccination_history_FINAL$dose == this_dose])){ # for each booster type
-      
-      # First Choice = exact primary dose + booster dose combination
-      this_combo = VE_waning_distribution %>% 
-        filter(schedule == "booster" & 
-                 dose == this_dose & 
-                 primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
-                 vaccine_type == this_vax) %>%
-        group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-        summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
-      #small edit for J&J
-      if (this_vax == "Johnson & Johnson" & nrow(this_combo) == 0){
-        this_combo = VE_waning_distribution %>% 
-          filter(schedule == "booster" & 
-                   dose == this_dose & 
-                   vaccine_type == this_vax) %>%
-          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
-      }
-      
-      # Second Choice = same primary schedule + booster of same vaccine mode
-      if (nrow(this_combo) == 0){
-        this_vax_mode = unique(vaccination_history_FINAL$vaccine_mode[vaccination_history_FINAL$vaccine_type == this_vax])
-        this_combo = VE_waning_distribution %>% 
-          filter(schedule == "booster" & dose == this_dose & 
-                   primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax]) &
-                   vaccine_mode == this_vax_mode) %>%
-          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_day,na.rm=TRUEs),.groups = "keep") 
-      }
-      
-      # Third Choice = same primary schedule + any booster
-      if (nrow(this_combo) == 0){ 
-        this_combo = VE_waning_distribution %>% 
-          filter(schedule == "booster" & dose == this_dose & 
-                   primary_if_booster %in% unique(vaccination_history_FINAL$FROM_vaccine_type[vaccination_history_FINAL$dose == this_dose & vaccination_history_FINAL$vaccine_type == this_vax])) %>%
-          group_by(schedule,vaccine_mode,strain,outcome,vaccine_type,dose,days,waning,.add = TRUE) %>%
-          summarise(VE_days = mean(VE_days,na.rm=TRUE),.groups = "keep") 
-      }
-      
-      # Otherwise... rethink!
-      if (nrow(this_combo) == 0){stop('Need a VE for this booster!')}
-  
-      workshop = rbind(workshop,this_combo)
-    }
-  }
-}
 
-VE_waning_distribution = VE_waning_distribution %>% 
-  filter(schedule == "primary") %>%
-  select(-primary_if_booster)
-VE_waning_distribution = rbind(VE_waning_distribution,workshop)
 
 if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_TRUE$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
