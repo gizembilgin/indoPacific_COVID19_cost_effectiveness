@@ -320,6 +320,7 @@ if(nrow(check)>1){stop('inital vaccine coverage > 100%')}
 
 
 #1(B/B) Vaccine Effectiveness (VE)
+source(paste(getwd(),"/(function)_VE_waning_distribution.R",sep=""),local=TRUE)
 load( file = '1_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution %>%
   filter(waning == waning_toggle_acqusition) %>%
