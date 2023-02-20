@@ -51,7 +51,7 @@ if (this_setting == "FJI"){
 } else if (this_setting == "IDN") {
   strain_inital = strain_now = 'WT'
   
-  baseline_covid19_waves = data.frame(date = c(as.Date('2020-04-01'),as.Date('2021-04-01'),as.Date('2021-12-01')),
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2020-04-01'),as.Date('2021-04-01'),as.Date('2021-12-01')),
                                       strain = c('WT','delta','omicron'))
   
   date_start = covid19_waves$date[1] - 2
@@ -82,11 +82,25 @@ source(paste(getwd(),"/(1)_simulate_setting.R",sep=""))
 source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
 source(paste(getwd(),"/(2)_inital_state.R",sep=""))
 
-VE_real_range = data.frame()
-date_list = seq(max(date_start,min(vaccination_history_TRUE$date)+ min(vaxCovDelay$delay)),
-                Sys.Date()+1,
-                by="days")
-#COMEBACK - update to run only dates not yet filled
+list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("VE_real_range_",this_setting,"*",sep=''))
+if (length(list_poss_Rdata)>0){
+  list_poss_Rdata_details = double()
+  for (i in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  load(file = paste("1_inputs/fit/",latest_file,sep=''))
+  
+  date_list = seq(max(max(VE_real_range$date)+1), # run only dates not yet filled
+                  Sys.Date()+1,
+                  by="days")
+} else{
+  VE_real_range = data.frame()
+  date_list = seq(max(date_start,min(vaccination_history_TRUE$date)+ min(vaxCovDelay$delay)),
+                  Sys.Date()+1,
+                  by="days")
+}
 
 for (i in 1:length(date_list)) {
   #date_now
