@@ -4,7 +4,7 @@ check = RECORD_antiviral_setup$vaccination_history_FINAL %>%
   filter(schedule == "booster") %>%
   group_by(date,vax_scenario,risk_group) %>%
   summarise(doses = sum(doses_delivered_this_date)) %>%
-  left_join(this_pop_risk) %>%
+  left_join(pop_risk_group) %>%
   group_by(vax_scenario,risk_group) %>%
   mutate(coverage = cumsum(doses)/pop*100)
 
@@ -23,7 +23,7 @@ plot_list
 check = RECORD_antiviral_setup$incidence_log_tidy %>% 
   group_by(date,vax_scenario,risk_group) %>%
   summarise(incidence = sum(incidence)) %>%
-  left_join(this_pop_risk) %>%
+  left_join(pop_risk_group) %>%
   group_by(vax_scenario,risk_group) %>%
   mutate(previously_infected = cumsum(incidence)/pop*100)
 
