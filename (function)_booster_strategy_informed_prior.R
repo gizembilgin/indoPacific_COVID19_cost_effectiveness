@@ -186,7 +186,7 @@ booster_strategy_informed_prior <- function(
     avaliable = rollout_doses_per_day
     if (day == rollout_days){avaliable = sum(eligible_pop$eligible_individuals)- sum(booster_delivery_outline$doses_delivered_this_date)}
 
-    while(avaliable>0 & priority_num <= highest_priority){
+    while(round(avaliable,digits=2)>0 & priority_num <= highest_priority){
       
       if(sum(VA$doses_left[VA$priority == priority_num])>0){ 
         #i.e., while we still have doses to deliver in this priority group
@@ -231,7 +231,9 @@ booster_strategy_informed_prior <- function(
         priority_num = priority_num+1
         priority_group = as.character(unique(VA$age_group[VA$priority == priority_num]))
       } else{
-        stop('negative doses left, reconsider!')
+        if (round(sum(VA$doses_left[VA$priority == priority_num]),digits=2)<0){
+          stop('negative doses left, reconsider!')
+        }
       }
     } #<end while loop>
   }
