@@ -8,7 +8,7 @@
 #clear the field!
 rm(list=ls())
 
-this_setting = setting = "FJI"
+this_setting = setting = "IDN"
 
 
 
@@ -43,7 +43,7 @@ if (this_setting == "FJI"){
 } else if (this_setting == "TLS") {
   strain_inital = strain_now = 'WT'
   baseline_covid19_waves = covid19_waves = data.frame(
-    date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2022-01-01')),
+    date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2021-12-01')),
     strain = c('WT', 'delta', 'omicron'))
   
   date_start = covid19_waves$date[1] - 2
@@ -290,20 +290,25 @@ fit_daily_reported_1_TLS <- function(par){
   
   strain_inital = strain_now = 'WT' 
   
-  covid19_waves = baseline_covid19_waves 
-  covid19_waves$date[1] = covid19_waves$date[1] + round(par[1])
-  covid19_waves$date[2] = covid19_waves$date[2] + round(par[2])
+  TOGGLE_delta_truncation_factor = par[1]
+  fitting_beta = c(par[4],
+                   par[5],
+                   1)
+  
+  covid19_waves = baseline_covid19_waves
+  covid19_waves$date[1] = covid19_waves$date[1] + round(par[2])
+  covid19_waves$date[2] = covid19_waves$date[2] + round(par[3])
   date_start = covid19_waves$date[1] - 2
   model_weeks = as.numeric((covid19_waves$date[3] - date_start)/7)
-  
-  under_reporting_est = par[3]
-  fitting_beta= c(par[4],par[5],1)
   
   source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
   
   workshop = case_history %>% 
     select(date,rolling_average) %>%
-    mutate(rolling_average = rolling_average * under_reporting_est) %>%
+    mutate(rolling_average  = case_when(
+      date<as.Date('2021-08-01') ~ rolling_average * par[6],
+      TRUE ~ rolling_average * par[7]
+    )) %>%
     rename(adjusted_reported = rolling_average) %>%
     left_join(incidence_log, by = "date") %>%
     mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
@@ -314,9 +319,10 @@ fit_daily_reported_1_TLS <- function(par){
 }
 .optim <- NULL
 
-system.time({first_wave_fit = optim(c(-15,15,
-                                      1.1,2,
-                                      70),
+system.time({first_wave_fit = optim(c(0.3,
+                                      -60,60,
+                                      0.975,1.2,
+                                      65,28),
                                     fit_daily_reported_1_TLS,
                                       method = "Nelder-Mead")})
 
@@ -328,14 +334,6 @@ fit_daily_reported_1_TLS(first_wave_fit$par)
 #                        method = "L-BFGS-B",
 #                        lower = c(-7,10,0.8), upper = c(7,20,1.2))})
 # 
-# #Attempt Three: fit with different optimisation function
-# system.time({first_wave_fit = nlm(fit_daily_reported_1,c(0, 17.9976092,1),
-#                      fscale = 278192872, #estimate of the function at the minimum
-#                      print.level = 1, #inital and final details are printed
-#                      iterlim = 100
-#                      )})
-#
-# Attempt Four: change tol of optim function
 
 
 to_plot = workshop %>% filter(date>date_start & date<=(date_start+model_weeks*7))
