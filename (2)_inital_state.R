@@ -170,6 +170,7 @@ if (length(booster_toggles)>1){
                                      
                                      booster_delivery_risk_group = booster_toggles$delivery_risk_group,
                                      booster_prev_dose_floor     = booster_toggles$prev_dose_floor, #down to what dose is willing to be vaccinated?
+                                     booster_prev_dose_ceiling   = booster_toggles$prev_dose_ceiling, #up to what dose are we targetting?
                                      booster_age_groups          = booster_toggles$age_groups,      #what model age groups are willing to be vaccinated?
                                      
                                      booster_prioritised_risk   = booster_toggles$prioritised_risk,
@@ -375,12 +376,11 @@ if (fitting == "off"){
 
 
 ###### (2/5) Seroprevalence
-load(file = "1_inputs/seroprev.Rdata")
-this_setting = setting
-seroprev = seroprev %>%
-  filter(setting == this_setting & 
-           year == max(as.numeric(format(date_start, format="%Y")),2022))
-if (nrow(seroprev) == 0){ #e.g., for FJI
+if (file.exists(paste("1_inputs/seroprev_",this_setting,".Rdata",sep='')) == TRUE){
+  load(paste("1_inputs/seroprev_",this_setting,".Rdata",sep=''))
+  seroprev = seroprev %>%
+    select(age_group,seroprev)
+} else{
   seroprev = crossing(age_group = age_group_labels,
                       seroprev = 0)
 }
@@ -410,19 +410,33 @@ count=J*(T*D+1)*RISK # +1 is unvax
 
 seed = 0.001*sum(pop) #seed of outbreak at covid19_waves$date 
 
+initialRecovered = seroprev %>% 
+  left_join(pop_setting, by = "age_group") %>% 
+  mutate(R = seroprev*pop) %>%
+  select(age_group,R)
+
+#uniform
+if (this_setting == "IDN"){
+  hist_cases = case_history %>%
+    filter(date < date_start & date>= date_start - lengthInfectionDerivedImmunity) %>%
+    mutate(prop = rolling_average/sum(rolling_average),
+           daily_cases = prop * sum(initialRecovered$R)) %>%
+    select(date,daily_cases)
+} else{
+  date = seq(1,lengthInfectionDerivedImmunity)
+  date = date_start - date
+  workshop = as.data.frame(date)
+  workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
+  hist_cases = workshop
+}
+#ggplot(hist_cases) + geom_point(aes(x=date,y=daily_cases))
+
+if(seed<hist_cases$daily_cases[hist_cases$date == max(hist_cases$date)]){seed = hist_cases$daily_cases[hist_cases$date == max(hist_cases$date)]}
 
 initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
-initialRecovered = seroprev %>% 
-  left_join(pop_setting, by = "age_group") %>% 
-  mutate(R = seroprev*pop/100) %>%
-  select(age_group,R)
 
-date = seq(1,lengthInfectionDerivedImmunity)
-date = date_start - date
-workshop = as.data.frame(date)
-workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
-hist_cases = workshop
+
 
 if (fitting == "on"){
   #NOTE: this will not work if heterogeneous booster dose combinations exist in the inital state
