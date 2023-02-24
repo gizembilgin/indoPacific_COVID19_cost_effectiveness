@@ -70,6 +70,7 @@ generic_booster_toggles =
     
     delivery_risk_group = c(risk_group_name,'general_public'),
     prev_dose_floor = 2,
+    prev_dose_ceiling = 5,
     age_groups = c("18 to 29",  "30 to 44",  "45 to 59", "60 to 69",  "70 to 100"),
     
     prioritised_risk = "N",
@@ -227,6 +228,47 @@ if (setting == "FJI" & TOGGLE_include_second_booster_elig == TRUE){
 
 
 
+### VACCINATION SCENARIO = BOOSTER ALL but prioritise risk-group (unrealistic but good for SM)
+generic_booster_toggles$prioritised_risk = "Y"
+
+generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
+queue[[length(queue)+1]] = list(
+  vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
+  vax_strategy_description_long = 'prioritise delivery to high-risk adults',
+  risk_group_name = this_risk_group_name,
+  risk_group_toggle = "on",
+  booster_toggles = generic_booster_toggles) 
+
+generic_booster_toggles$prioritised_risk = "N"
+#______________________________________________________________________________________________________________
+
+
+
+### VACCINATION SCENARIO = CATCHUP CAMPIGN TO BOOSTER ALL PREV PRIMARY SCHEDULE
+#NB: only those who completed their primary schedule
+generic_booster_toggles$prev_dose_floor = generic_booster_toggles$prev_dose_ceiling = 2
+
+#high-risk adults
+generic_booster_toggles$delivery_risk_group = c(this_risk_group_name)
+queue[[length(queue)+1]] = list(
+  vax_strategy_description = 'catchup campaign for high-risk adults',
+  vax_strategy_description_long = 'assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster',
+  risk_group_name = this_risk_group_name,
+  risk_group_toggle = "on",
+  booster_toggles = generic_booster_toggles) 
+
+#all adults
+generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
+queue[[length(queue)+1]] = list(
+  vax_strategy_description = 'catchup campaign for all adults',
+  vax_strategy_description_long = 'assume booster to all adults who have previously completed their primary schedule but have not recieved a booster',
+  risk_group_name = this_risk_group_name,
+  risk_group_toggle = "on",
+  booster_toggles = generic_booster_toggles) 
+#______________________________________________________________________________________________________________
+
+
+
 ### RUN MODEL #################################################################################################
 RECORD_outcomes_without_antivirals = data.frame()
 RECORD_likelihood_severe_outcome = data.frame()
@@ -234,6 +276,7 @@ RECORD_vaccination_history_FINAL = data.frame()
 RECORD_incidence_log_tidy = data.frame()
 RECORD_incidence_log = data.frame()
 RECORD_exposed_log = data.frame()
+
 
 for (ticket in 1:length(queue)){
   
