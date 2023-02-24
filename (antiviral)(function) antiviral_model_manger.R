@@ -168,7 +168,6 @@ antiviral_model_manger <- function(
            value = intervention_doses_delivered/value) 
   
   RECORD_antiviral_model_simulations_tidy = rbind(RECORD_antiviral_model_simulations_tidy,workshop) %>%
-    select(-intervention_doses_delivered) %>%
     mutate(evaluation_group = case_when(evaluation_group == 'overall' ~ 'pop_level', TRUE ~ evaluation_group))
   
   
