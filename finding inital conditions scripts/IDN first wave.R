@@ -97,14 +97,14 @@ strain_inital = strain_now = 'WT'
 baseline_covid19_waves = data.frame(date = c(as.Date('2021-04-01'),as.Date('2021-12-01')),
                                     strain = c('delta','omicron'))
 fitting_beta= rep(1,nrow(baseline_covid19_waves))
-under_reporting_est = 150
+under_reporting_est = 70
 
 plot_tracker = data.frame()
 fit_tracker = data.frame()
 workshop_incidence_log_tracker = data.frame()
 
 for (this_beta_mod in  c(0.9,0.95,1,1.05,1.1,1.15)) {
-  for (this_shift in c(0,15,30,45,60,75,90)){#c(135,142,150,157,165)) {
+  for (this_shift in c(30,35,40,45)){#c(135,142,150,157,165)) {
     if(nrow(plot_tracker[plot_tracker$shift == this_shift & plot_tracker$beta_mod == this_beta_mod,])>0){
       #skip
     } else{
@@ -144,9 +144,9 @@ for (this_beta_mod in  c(0.9,0.95,1,1.05,1.1,1.15)) {
 beta_fit_tracker = fit_tracker; beta_fit_tracker
 beta_tracker = plot_tracker %>%
   filter(date<= max(plot_tracker$date[is.na(plot_tracker$rolling_average) == FALSE]) & 
-           date>= min(plot_tracker$date[is.na(plot_tracker$rolling_average) == FALSE])) 
-
-under_reporting_est = 70
+           date>= min(plot_tracker$date[is.na(plot_tracker$rolling_average) == FALSE]) &
+           shift %in% c(35,40) &
+           beta_mod %in% c(0.95,1,1.05)) 
 
 ggplot() +
   geom_line(data=beta_tracker,aes(x=date,y=rolling_average,color=as.factor(beta_mod)),na.rm=TRUE) +
@@ -155,3 +155,4 @@ ggplot() +
   labs(color = 'beta modifier')+ 
   facet_grid(shift ~ .) 
 save(plot_tracker, file = paste('1_inputs/fit/IDN_tracker_v2.Rdata',sep=''))
+
