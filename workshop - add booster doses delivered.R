@@ -1,6 +1,6 @@
-setting = "PNG"
+setting = "FJI"
 
-risk_group_name = "pregnant_women" #options: pregnant_women, adults_with_comorbidities
+risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
 
 source(paste(getwd(),"/(1)_simulate_setting.R",sep="")) #load setting stats if new setting
 

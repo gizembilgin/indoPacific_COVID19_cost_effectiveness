@@ -113,59 +113,135 @@ pop_orig %>%
 
 
 ### impact by coverage
-MASTER_RECORD_antiviral_model_simulations = data.frame()
-MASTER_outcomes_without_antivirals = data.frame()
-settings_to_plot = c("PNG_high_beta","PNG_low_beta")
-for (i in c(1:length(settings_to_plot))){
-  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",settings_to_plot[i],"*",sep=""))
-  list_poss_Rdata_details = double()
-  for (j in 1:length(list_poss_Rdata)){
-    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste(rootpath,'x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
-  }
-  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+workshop = RECORD_antiviral_model_simulations %>% 
+  filter(vax_scenario_risk_group == "adults_with_comorbidities") %>%
+  filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
+  filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
+  filter( evaluation_group == 'pop_level') %>% #change eval group here to change from high-risk to pop-level plot
+  filter(result %in% c("percentage")) %>%
+  mutate(intervention = case_when(
+    intervention == 'vaccine' ~ paste('booster dose starting 2023-03-01'),
+    TRUE ~ intervention
+  )) %>% group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
+  summarise(median = median(value), LQ = quantile(value,probs=0.25), UQ = quantile(value,probs=0.75))
+
+options(warn = -1)
+plot_list = list()
+for (a in 1:length(LIST_outcomes)) {
+  this_outcome = LIST_outcomes[[a]]
+
+  plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
+    geom_pointrange(aes(x=median,y=vax_scenario_short,
+                        xmin=LQ,xmax=UQ,
+                        color=as.factor(intervention),
+                        shape = as.factor(setting_beta)
+    ))  +
+    labs(title = paste(this_outcome),
+         color = 'intervention',
+         shape = "setting") +
+    ylab('')+
+    xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) +
+    xlab('pop-level % outcomes prevented') +
+    theme_bw()+
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "bottom",
+          legend.box = "vertical")
   
-  #load latest antiviralSetUp_* (transmission model run for 1 year)
-  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",settings_to_plot[i],"_",this_risk_group_name,"_*",sep=""))
-  list_poss_Rdata_details = double()
-  for (k in 1:length(list_poss_Rdata)){
-    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste(rootpath,'x_results/',list_poss_Rdata[[k]],sep=''))$mtime)
-  }
-  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(file = paste(rootpath,"x_results/",latest_file,sep=''))
-  
-  
-  this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = settings_to_plot[i])
-  MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
-  
-  this_setting = RECORD_antiviral_setup$outcomes_without_antivirals %>% mutate(setting_beta = settings_to_plot[i])
-  MASTER_outcomes_without_antivirals = rbind(MASTER_outcomes_without_antivirals,this_setting)
 }
+ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
+          common.legend = TRUE,
+          legend="bottom",
+          ncol = 1,
+          nrow = length(LIST_outcomes)) 
+#ggsave(paste(rootpath,"x_results/plot_VaxVsAntivirals_",time,".png",sep=''), width = 9.6, height = 5.7)
+options(warn = 0)
 
-test_in_time_pt_est = 0.5
 
-MASTER_outcomes_without_antivirals = MASTER_outcomes_without_antivirals %>%
-  mutate(vax_scenario_short = case_when(
-    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~
-      "booster to all prev primary",
-    vax_scenario ==  "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a first booster dose" ~
-      "booster to all first booster",
-    vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~
-      "booster to high-risk prev primary",
-    vax_scenario ==  "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a first booster dose" ~
-      "booster to high-risk prev first booster",
-    vax_scenario == "all willing adults vaccinated with a primary schedule" ~ 
-      "no booster"
-  )) %>%
-  filter(vax_scenario_short == "no booster" & outcome != "booster_doses_delivered") %>%
-  mutate(prop = high_risk/overall,
-         detected_by_RAT = prop * test_in_time_pt_est)
+#remove booster doses and include other antiviral eligiblity groups
+workshop = RECORD_antiviral_model_simulations %>% 
+  filter(intervention == "antiviral 2023-01-01") %>%
+  filter(antiviral_target_group != "unvaccinated_adults_AND_adults_with_comorbidities") %>%
+  filter(vax_scenario_risk_group == "adults_with_comorbidities") %>%
+  filter(antiviral_type == "nirmatrelvir_ritonavir") %>%
+  filter(evaluation_group == 'pop_level') %>% #change eval group here to change from high-risk to pop-level plot
+  filter(result %in% c("percentage")) %>% 
+  group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
+  summarise(median = median(value), LQ = quantile(value,probs=0.25), UQ = quantile(value,probs=0.75))
 
-poss_effect = data.frame()
-for (cov in seq(0.2,1,by=0.2)){
-  this_effect = MASTER_outcomes_without_antivirals %>% mutate(effect = detected_by_RAT*cov, cov = cov)
-  poss_effect = rbind(poss_effect,this_effect)
+options(warn = -1)
+plot_list = list()
+for (a in 1:length(LIST_outcomes)) {
+  this_outcome = LIST_outcomes[[a]]
+  
+  plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
+    geom_pointrange(aes(x=median,y=vax_scenario_short,
+                        xmin=LQ,xmax=UQ,
+                        color=as.factor(antiviral_target_group),
+                        shape = as.factor(setting_beta)
+    ))  +
+    labs(title = paste(this_outcome),
+         color = 'eligiblity group',
+         shape = "setting") +
+    ylab('')+
+    xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) +
+    xlab('pop-level % outcomes prevented') +
+    theme_bw()+
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "bottom",
+          legend.box = "vertical")
+  
 }
+ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
+          common.legend = TRUE,
+          legend="bottom",
+          ncol = 1,
+          nrow = length(LIST_outcomes)) 
+#ggsave(paste(rootpath,"x_results/plot_VaxVsAntivirals_",time,".png",sep=''), width = 9.6, height = 5.7)
+options(warn = 0)
+
+
+#subset to no booster dose and look at comparing countries
+
+workshop = RECORD_antiviral_model_simulations %>% 
+  filter(intervention == "antiviral 2023-01-01") %>%
+  filter(vax_scenario_short == 'no booster') %>%
+  filter(antiviral_target_group != "unvaccinated_adults_AND_adults_with_comorbidities") %>%
+  filter(vax_scenario_risk_group == "adults_with_comorbidities") %>%
+  filter(antiviral_type == "nirmatrelvir_ritonavir") %>%
+  filter(evaluation_group == 'pop_level') %>% #change eval group here to change from high-risk to pop-level plot
+  filter(result %in% c("percentage")) %>% 
+  group_by(setting_beta,intervention,outcome,antiviral_type,antiviral_target_group,evaluation_group,vax_scenario,vax_scenario_risk_group,result,vax_scenario_short) %>%
+  summarise(median = median(value), LQ = quantile(value,probs=0.25), UQ = quantile(value,probs=0.75))
+
+options(warn = -1)
+plot_list = list()
+for (a in 1:length(LIST_outcomes)) {
+  this_outcome = LIST_outcomes[[a]]
+  
+  plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
+    geom_pointrange(aes(x=median,y=setting_beta,
+                        xmin=LQ,xmax=UQ,
+                        color=as.factor(antiviral_target_group)
+    ))  +
+    labs(title = paste(this_outcome),
+         color = 'eligiblity group') +
+    ylab('')+
+    xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) +
+    xlab('pop-level % outcomes prevented') +
+    theme_bw()+
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "bottom",
+          legend.box = "vertical")
+  
+}
+ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
+          common.legend = TRUE,
+          legend="bottom",
+          ncol = 1,
+          nrow = length(LIST_outcomes)) 
+#ggsave(paste(rootpath,"x_results/plot_VaxVsAntivirals_",time,".png",sep=''), width = 9.6, height = 5.7)
+options(warn = 0)
 

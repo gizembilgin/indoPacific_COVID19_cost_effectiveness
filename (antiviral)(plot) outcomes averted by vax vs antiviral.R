@@ -2,8 +2,8 @@
 
 
 MASTER_RECORD_antiviral_model_simulations = data.frame()
-settings_to_plot = c("FJI","PNG_low_beta")
-risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
+settings_to_plot = c("FJI")
+risk_groups_to_plot = c("adults_with_comorbidities")
 
 for (r in 1:length(risk_groups_to_plot)){
   this_risk_group = risk_groups_to_plot[r]
@@ -20,13 +20,12 @@ for (r in 1:length(risk_groups_to_plot)){
       latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
       load(file = paste(rootpath,"x_results/",latest_file,sep=''))
       #load(file = paste(rootpath,'x_results/',"AntiviralRun_PNG_low_beta2023-02-04 11-50-47.Rdata",sep = ''))
+      
+      if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
+      
+      df_this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = this_setting)
+      MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,df_this_setting)
     }
-    
-
-    if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
-
-    this_setting = RECORD_antiviral_model_simulations %>% mutate(setting_beta = this_setting)
-    MASTER_RECORD_antiviral_model_simulations = rbind(MASTER_RECORD_antiviral_model_simulations,this_setting)
   }
 }
 
@@ -36,51 +35,51 @@ RECORD_antiviral_model_simulations = MASTER_RECORD_antiviral_model_simulations
 RECORD_antiviral_model_simulations = RECORD_antiviral_model_simulations %>%
   mutate(vax_scenario_short = case_when(
     vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved two booster doses"  ~
-      "booster to all second booster",
+      "booster to all 2nd booster",
     vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved two booster doses" ~
-      "booster to high-risk prev second booster",
+      "booster to high-risk prev 2nd booster",
     vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~
       "booster to all prev primary",
     vax_scenario ==  "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a first booster dose" ~
-      "booster to all first booster",
+      "booster to all 1st booster",
     vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~
       "booster to high-risk prev primary",
     vax_scenario ==  "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a first booster dose" ~
-      "booster to high-risk prev first booster",
+      "booster to high-risk prev 1st booster",
     vax_scenario == "all willing adults vaccinated with a primary schedule" ~ 
       "no booster"
   ))
 
-LIST_outcomes = list(#'severe_disease', 
+LIST_outcomes = list('severe_disease', 
                      'hosp', 
-                     'death' 
-                     #'YLL'
+                     'death', 
+                     'YLL'
                      )
 
 ### PLOT dose-impact of nirmatrelvir_ritonavir and booster doses
 #option 1: boxplot
-workshop = RECORD_antiviral_model_simulations %>% 
-  filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
-  filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
-  filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
-  #filter(!(intervention == 'vaccine' & vax_scenario == 'all willing adults vaccinated with a primary schedule plus booster dose')) %>%
-  #filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
-  filter(result %in% c("doses_per_outcome_averted")) %>%
-  mutate(intervention = case_when(
-   # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
-    intervention == 'vaccine' ~ paste('booster starting 2023-03-01'),
-    TRUE ~ intervention
-  )) %>% 
-  filter(value>0) %>%
-  #filter(vax_scenario_short != "booster to high-risk prev first booster") %>%
-  filter(intervention == 'booster starting 2023-03-01')
+# workshop = RECORD_antiviral_model_simulations %>% 
+#   filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
+#   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
+#   filter( !(intervention == 'vaccine' & evaluation_group == 'high_risk')) %>% #change eval group here to change from high-risk to pop-level plot
+#   #filter(!(intervention == 'vaccine' & vax_scenario == 'all willing adults vaccinated with a primary schedule plus booster dose')) %>%
+#   #filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+#   filter(result %in% c("doses_per_outcome_averted")) %>%
+#   mutate(intervention = case_when(
+#    # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
+#     intervention == 'vaccine' ~ paste('booster starting 2023-03-01'),
+#     TRUE ~ intervention
+#   )) %>% 
+#   filter(value>0) %>%
+#   #filter(vax_scenario_short != "booster to high-risk prev first booster") %>%
+#   filter(intervention == 'booster starting 2023-03-01')
 
 #option 2: median and IQR plot
 workshop = RECORD_antiviral_model_simulations %>% 
   filter(vax_scenario_risk_group == "adults_with_comorbidities") %>%
   filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
-  filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
+  filter( evaluation_group == 'pop_level') %>% #change eval group here to change from high-risk to pop-level plot
   filter(result %in% c("doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
     intervention == 'vaccine' ~ paste('booster dose starting 2023-03-01'),
@@ -94,12 +93,12 @@ for (a in 1:length(LIST_outcomes)) {
   this_outcome = LIST_outcomes[[a]]
   
   #option 1: boxplot
-  plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome ,]) +
-    geom_boxplot(aes(x=value,y=vax_scenario_short,color=as.factor(setting_beta)))  +
-    labs(title = paste(this_outcome), color = 'intervention') +
-    ylab('')+
-    xlab('doses to avert an outcome') #+ 
-    #facet_grid(intervention ~ .)
+  # plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome ,]) +
+  #   geom_boxplot(aes(x=value,y=vax_scenario_short,color=as.factor(setting_beta)))  +
+  #   labs(title = paste(this_outcome), color = 'intervention') +
+  #   ylab('')+
+  #   xlab('doses to avert an outcome') #+ 
+  #   #facet_grid(intervention ~ .)
   
   # #option 2: IQR and median
   plot_list[[a]] =ggplot(data = workshop[workshop$outcome == this_outcome,]) +
@@ -121,7 +120,7 @@ for (a in 1:length(LIST_outcomes)) {
           legend.box = "vertical")
   
 }
-ggarrange(plot_list[[1]],plot_list[[2]],#plot_list[[3]], plot_list[[4]],
+ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           common.legend = TRUE,
           legend="bottom",
           ncol = 1,
@@ -131,28 +130,28 @@ options(warn = 0)
 
 
 ### PLOT dose-impact of nirmatrelvir_ritonavir without booster doses
-#option 1: boxplot
-workshop = RECORD_antiviral_model_simulations %>% 
-  filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
-  filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
-  filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
-  #filter(!(intervention == 'vaccine' & vax_scenario == 'all willing adults vaccinated with a primary schedule plus booster dose')) %>%
-  #filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
-  filter(result %in% c("doses_per_outcome_averted")) %>%
-  mutate(intervention = case_when(
-    # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
-    intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
-    TRUE ~ intervention
-  )) %>% 
-  filter(value>0) %>% 
-  filter(intervention != "booster dose starting 2023-01-01")
+# #option 1: boxplot
+# workshop = RECORD_antiviral_model_simulations %>% 
+#   filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
+#   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
+#   filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
+#   #filter(!(intervention == 'vaccine' & vax_scenario == 'all willing adults vaccinated with a primary schedule plus booster dose')) %>%
+#   #filter(result %in% c("average_doses_per_outcome_averted","UCI_doses_per_outcome_averted","LCI_doses_per_outcome_averted")) %>%
+#   filter(result %in% c("doses_per_outcome_averted")) %>%
+#   mutate(intervention = case_when(
+#     # intervention == 'antiviral' ~ paste('antiviral starting',antiviral_start_date),
+#     intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
+#     TRUE ~ intervention
+#   )) %>% 
+#   filter(value>0) %>% 
+#   filter(intervention != "booster dose starting 2023-01-01")
 
 #option 2: median and IQR plot
 workshop = RECORD_antiviral_model_simulations %>% 
   filter(vax_scenario_risk_group == "adults_with_comorbidities") %>%
   filter(antiviral_type == "nirmatrelvir_ritonavir" | intervention == 'vaccine') %>%
   filter(antiviral_target_group == 'adults_with_comorbidities' | intervention == 'vaccine') %>%
-  filter( !(intervention == 'vaccine' & evaluation_group == 'pop_level')) %>% #change eval group here to change from high-risk to pop-level plot
+  filter(  evaluation_group == 'pop_level') %>% #change eval group here to change from high-risk to pop-level plot
   filter(result %in% c("doses_per_outcome_averted")) %>%
   mutate(intervention = case_when(
     intervention == 'vaccine' ~ paste('booster dose starting 2023-01-01'),
@@ -189,7 +188,7 @@ for (a in 1:length(LIST_outcomes)) {
           legend.box = "vertical")
   
 }
-ggarrange(plot_list[[1]],plot_list[[2]],#plot_list[[3]], plot_list[[4]],
+ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           common.legend = TRUE,
           legend="bottom",
           ncol = 1,
@@ -257,17 +256,17 @@ options(warn = 0)
 
 ### PLOT (2/2) Varying target groups ###########################################
 LIST_target_group = list('adults_with_comorbidities',
-                         #'pregnant_women',
+                         'pregnant_women',
                          'unvaccinated_adults',
                          #'unvaccinated_adults_AND_adults_with_comorbidities',
                          'all_adults')
 
 ### Calculate # of antivirals per outcome averted
 #option 1: box plot
-workshop = RECORD_antiviral_model_simulations  %>% 
-  filter(antiviral_type == "nirmatrelvir_ritonavir" & intervention == "antiviral 2023-01-01") %>% 
-  filter(result %in% c("doses_per_outcome_averted")) %>%
-  filter(antiviral_target_group %in% LIST_target_group)
+# workshop = RECORD_antiviral_model_simulations  %>% 
+#   filter(antiviral_type == "nirmatrelvir_ritonavir" & intervention == "antiviral 2023-01-01") %>% 
+#   filter(result %in% c("doses_per_outcome_averted")) %>%
+#   filter(antiviral_target_group %in% LIST_target_group)
 
 #option 2: median + IQR
 workshop = RECORD_antiviral_model_simulations  %>% 
@@ -306,7 +305,7 @@ for (a in 1:length(LIST_outcomes)) {
           legend.box = "vertical")
   
 }
-ggarrange(plot_list[[1]],plot_list[[2]],#plot_list[[3]], plot_list[[4]],
+ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], plot_list[[4]],
           common.legend = TRUE,
           legend="bottom",
           ncol = 1,

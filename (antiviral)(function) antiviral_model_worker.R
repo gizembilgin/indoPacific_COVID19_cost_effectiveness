@@ -400,7 +400,8 @@ antiviral_model_worker <- function(
           
         }
         length_antiviral_delivery_tracker = nrow(antiviral_target_individuals_run)
-          
+        antivirals_delivered_prior_to_booster = nrow(antiviral_target_individuals_run[antiviral_target_individuals_run$date < local_booster_start_date,]) 
+        antivirals_delivered_after_booster    = nrow(antiviral_target_individuals_run[antiviral_target_individuals_run$date >= local_booster_start_date,])  
           
         ### PATHWAY TO CARE STEP FOUR: How many cases of severe disease are prevented?#######
         for (c in 1:length(local_LIST_antiviral_type)){
@@ -424,12 +425,43 @@ antiviral_model_worker <- function(
                    intervention = paste('antiviral',toggle_antiviral_start_date), 
                    evaluation_group = 'overall',
                    intervention_doses_delivered = length_antiviral_delivery_tracker)
+          prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_this_date)
           #____________________________________________________________________________
           
-          prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_this_date)
-      }
-      }
-    }} #end loop over different antiviral start dates, antiviral types, and antiviral target groups
+          
+          if (toggle_antiviral_start_date<local_booster_start_date & 
+              toggle_vax_scenario != 'all willing adults vaccinated with a primary schedule'){
+            
+            prevented_by_antivirals_prior_booster = workshop %>%
+              filter(date < local_booster_start_date) %>%
+              group_by(outcome) %>%
+              summarise(n = sum(percentage)) %>%
+              mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
+              mutate(antiviral_type = local_LIST_antiviral_type[[c]],
+                     antiviral_target_group = toggle_antiviral_target,
+                     intervention = paste('antiviral prior to booster',toggle_antiviral_start_date), 
+                     evaluation_group = 'overall',
+                     intervention_doses_delivered = antivirals_delivered_prior_to_booster)
+            
+            prevented_by_antivirals_post_booster = workshop %>%
+              filter(date >= local_booster_start_date) %>%
+              group_by(outcome) %>%
+              summarise(n = sum(percentage)) %>%
+              mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
+              mutate(antiviral_type = local_LIST_antiviral_type[[c]],
+                     antiviral_target_group = toggle_antiviral_target,
+                     intervention = paste('antiviral after booster',toggle_antiviral_start_date), 
+                     evaluation_group = 'overall',
+                     intervention_doses_delivered = antivirals_delivered_after_booster)
+            
+            prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_prior_booster,prevented_by_antivirals_post_booster)
+            
+            
+          }
+
+        }
+        }
+      }} #end loop over different antiviral start dates, antiviral types, and antiviral target groups
 
     
     
