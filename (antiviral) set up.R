@@ -230,6 +230,7 @@ if (setting == "FJI" & TOGGLE_include_second_booster_elig == TRUE){
 
 ### VACCINATION SCENARIO = BOOSTER ALL but prioritise risk-group (unrealistic but good for SM)
 generic_booster_toggles$prioritised_risk = "Y"
+generic_booster_toggles$prev_dose_floor = 2
 
 generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
 queue[[length(queue)+1]] = list(
