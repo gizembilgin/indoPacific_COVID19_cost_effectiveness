@@ -51,8 +51,8 @@ if (this_setting == "FJI"){
 } else if (this_setting == "IDN") {
   strain_inital = strain_now = 'WT'
   
-  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2020-04-01'),as.Date('2021-04-01'),as.Date('2021-12-01')),
-                                      strain = c('WT','delta','omicron'))
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-04-01'),as.Date('2021-12-01')),
+                                      strain = c('delta','omicron'))
   
   date_start = covid19_waves$date[1] - 2
 }
@@ -199,7 +199,7 @@ if (exists("fitting_beta")){rm(fitting_beta)}
 if (exists("under_reporting_est")){rm(under_reporting_est)}
 if (exists("covid19_waves")){rm(covid19_waves)}
 
-fit_daily_reported_1 <- function(par){
+fit_daily_reported_1 <- function(par){ #c(shift,under reporting, beta1)
   
   on.exit(.optim <<- list(par = par, obj = print(returnValue())))
   
@@ -246,9 +246,10 @@ if (this_setting == "FJI"){
   # $convergence
   # [1] 0
 } else if (this_setting == "IDN"){
-  system.time({first_wave_fit = optim(c(135 , 150  , 1.05),
+  system.time({first_wave_fit = optim(c(40,70,1),
                                       fit_daily_reported_1,
                                       method = "Nelder-Mead")})
+  #starting fit value = 23233357498944
 }
 
 fit_daily_reported_1(first_wave_fit$par)
