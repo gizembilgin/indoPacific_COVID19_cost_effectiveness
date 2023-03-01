@@ -326,6 +326,22 @@ system.time({first_wave_fit = optim(c(0.3,
                                       65,28),
                                     fit_daily_reported_1_TLS,
                                       method = "Nelder-Mead")})
+require(DEoptim)
+#system.time CommandDeck = 11.7 minutes, therefore (4*24*60)/11.7 ~ 500 runs before Sunday
+#Hence, NP = 25, itermax = 20
+first_wave_fit = DEoptim(fn = fit_daily_reported_1_TLS,
+                         lower = c(0.2,
+                                   -75,45,
+                                   0.9,0.95,
+                                   40,20),
+                         upper = c(0.4,
+                                   -45,75,
+                                   1,1.25,
+                                   80,40),
+                         control = list(NP = 25,
+                                        itermax = 20)) 
+#Warning in DEoptim(fn = fit_daily_reported_1_TLS, lower = c(0.2, -75, 45,  :
+#For many problems it is best to set 'NP' (in 'control') to be at least ten times the length of the parameter vector.
 
 fit_daily_reported_1_TLS(first_wave_fit$par)
 
