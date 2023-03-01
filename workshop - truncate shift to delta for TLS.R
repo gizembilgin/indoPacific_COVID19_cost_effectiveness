@@ -133,8 +133,8 @@ ggplot() +
   facet_grid(beta2 ~. )
 
 beep()
-save(plot_tracker, file = paste('1_inputs/fit/TLS_tracker.Rdata',sep=''))
-
+#save(plot_tracker, file = paste('1_inputs/fit/TLS_tracker.Rdata',sep=''))
+#load(file = paste('1_inputs/fit/TLS_tracker.Rdata',sep=''))
 
 
 
