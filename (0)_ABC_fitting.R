@@ -8,7 +8,7 @@
 #clear the field!
 rm(list=ls())
 
-this_setting = setting = "IDN"
+this_setting = setting = "TLS"
 
 
 
@@ -255,6 +255,14 @@ if (this_setting == "FJI"){
 fit_daily_reported_1(first_wave_fit$par)
 
 #Attempt Two: fit bounded
+require(DEoptim)
+#system.time CommandDeck = ~21.7 minutes, therefore (3*24*60)/21.7 ~ 200 runs before Sunday
+first_wave_fit = DEoptim(fn = fit_daily_reported_1,
+                         lower = c(30,50,0.9),
+                         upper = c(50,90,1.2),
+                         control = list(NP = 20,
+                                        itermax = 10)) 
+
 # system.time({first_wave_fit = optim(c(0, 17,1),
 #                        fit_daily_reported_1,
 #                        method = "L-BFGS-B",
