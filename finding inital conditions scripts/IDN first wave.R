@@ -145,8 +145,10 @@ beta_fit_tracker = fit_tracker; beta_fit_tracker
 beta_tracker = plot_tracker %>%
   filter(date<= max(plot_tracker$date[is.na(plot_tracker$rolling_average) == FALSE]) & 
            date>= min(plot_tracker$date[is.na(plot_tracker$rolling_average) == FALSE]) &
-           shift %in% c(35,40) &
-           beta_mod %in% c(0.95,1,1.05)) 
+           shift %in% c(30,40,45) &
+           beta_mod %in% c(0.9,1,1.15)) 
+
+under_reporting_est = 90
 
 ggplot() +
   geom_line(data=beta_tracker,aes(x=date,y=rolling_average,color=as.factor(beta_mod)),na.rm=TRUE) +
@@ -154,5 +156,5 @@ ggplot() +
   plot_standard + 
   labs(color = 'beta modifier')+ 
   facet_grid(shift ~ .) 
-save(plot_tracker, file = paste('1_inputs/fit/IDN_tracker_v2.Rdata',sep=''))
-
+#save(plot_tracker, file = paste('1_inputs/fit/IDN_tracker_v2.Rdata',sep=''))
+load(file = paste('1_inputs/fit/IDN_tracker_v2.Rdata',sep=''))
