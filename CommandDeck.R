@@ -100,6 +100,8 @@ if (fitting == "on"){
   #load latest model run in known dates
   if (fitting == "wave_three"){
     list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("start_point_wave_three_",setting_beta,"*",sep=""))
+  } else if (fitting == "wave_two"){
+    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("start_point_wave_two_",setting_beta,"*",sep=""))
   } else{
     list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
   }
@@ -128,10 +130,10 @@ if (fitting == "on"){
     fitted_next_state = fitted_results[[2]] 
     fitted_incidence_log_tidy = fitted_results[[3]] 
     fitted_incidence_log = fitted_results[[4]] 
-    if (fitting != "wave_three"){
+    if (!(fitting %in% c("wave_two","wave_three"))){
       covid19_waves = fitted_results[[5]] 
       fitting_beta = fitted_results[[6]] 
-    } else if (fitting == "wave_three"){
+    } else if (fitting %in% c("wave_two","wave_three")){
       prev_beta = fitted_results[[7]]
       this_beta = fitted_results[[8]]
     }
