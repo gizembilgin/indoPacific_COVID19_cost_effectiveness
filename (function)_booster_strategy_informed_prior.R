@@ -246,7 +246,7 @@ booster_strategy_informed_prior <- function(
         avaliable = avaliable - workshop_doses
         
         
-      } else if (sum(VA$doses_left[VA$priority == priority_num])==0){
+      } else if (round(sum(VA$doses_left[VA$priority == priority_num]),digits=2)==0){
         priority_num = priority_num+1
         priority_group = as.character(unique(VA$age_group[VA$priority == priority_num]))
       } else{

@@ -63,5 +63,3 @@ options(warn = 0)
 #copy plot 500 x 700 for paper, 500 x 900 for additional two outcomes
 #_______________________________________________________________________________
 
-
-antiviral_setup$

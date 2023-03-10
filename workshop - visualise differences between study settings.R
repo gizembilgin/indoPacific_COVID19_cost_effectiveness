@@ -1,8 +1,8 @@
 
 
 #### CONTACT MATRICES
-WPR_settings = c("PNG","TLS","IDN","FJI","SLB","PHL")
-WPR_settings_long = c("Fiji","Indonesia","Philippines","Papua New Guinea","Solomon Islands","Timor-Leste")
+WPR_settings = c("PNG","TLS","IDN","FJI")
+WPR_settings_long = c("Fiji","Indonesia","Papua New Guinea","Timor-Leste")
 
 plot_list = list()
 for (i in 1:length(WPR_settings)){

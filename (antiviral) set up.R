@@ -9,7 +9,7 @@ if (exists("master_toggles")){
 } else{
   rm(list=ls())
   this_risk_group_name = risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
-  setting_beta = "PNG_high_beta" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
+  setting_beta = "PNG_low_beta" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
   TOGGLE_include_second_booster_elig = FALSE
 }
 setting = this_setting = substr(setting_beta,1,3)
