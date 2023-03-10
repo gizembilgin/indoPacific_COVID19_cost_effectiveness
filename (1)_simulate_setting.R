@@ -223,7 +223,7 @@ if (file.exists(paste("1_inputs/live_updates/case_history",this_setting,Sys.Date
   # ggplot() +
   #   geom_point(data=case_history,aes(x=date,y=rolling_average),na.rm=TRUE) +
   #   xlab("") +
-  #   scale_x_date(date_breaks="1 month", date_labels="%b") +
+  #   scale_x_date(date_breaks="6 month", date_labels="%b") +
   #   ylab("daily cases") +
   #   theme_bw() +
   #   theme(panel.grid.major = element_blank(),
@@ -252,15 +252,15 @@ vaxCovDelay = vaxCovDelay %>%
 
 
 ##(i/iii) Load and clean data _________________________________________________
-if (fitting %in% c("on","wave_three") & file.exists(paste("1_inputs/fit/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep='')) == TRUE){
-  load(file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,Sys.Date(),".Rdata",sep=''))
+if (file.exists(paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
 } else {
   if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep=""))}
   source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
   
-  if (fitting %in% c("on","wave_three")){
-    save(vaccination_history_TRUE, file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
-  }
+
+  save(vaccination_history_TRUE, file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
+
 }
 
 #project forward expected continuation of existing program
