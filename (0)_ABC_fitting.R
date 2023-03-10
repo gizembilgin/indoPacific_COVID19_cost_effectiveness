@@ -51,7 +51,7 @@ if (this_setting == "FJI"){
 } else if (this_setting == "IDN") {
   strain_inital = strain_now = 'WT'
   
-  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-04-01'),as.Date('2021-12-01')),
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-04-01'),as.Date('2021-10-15')),
                                       strain = c('delta','omicron'))
   
   date_start = covid19_waves$date[1] - 2
@@ -188,7 +188,8 @@ if (this_setting == "FJI"){
 } else if (this_setting == "PNG"){
   fit_cutoff_dates = c(as.Date('2021-07-05')) #first good introduction of Delta in PNG
 } else if (this_setting == "IDN"){
-  fit_cutoff_dates =(sort(reported_peaks)[2]-sort(reported_peaks)[1])/2+sort(reported_peaks)[1] #first good introduction of Delta in PNG
+  fit_cutoff_dates =c((sort(reported_peaks)[2]-sort(reported_peaks)[1])/2+sort(reported_peaks)[1],
+                      sort(reported_peaks)[2]+90) #first good introduction of Delta in PNG
 }
 #_____________________________________________
 
@@ -425,6 +426,88 @@ ggplot() +
   plot_standard
 
 save(second_wave_fit, file = paste('1_inputs/fit/second_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+#______________________________________________________________________________________________________________
+
+
+
+#FIT SECOND WAVE (from start point) _______________________________
+if (exists("fitting_beta")){rm(fitting_beta)}
+if (exists("under_reporting_est")){rm(under_reporting_est)}
+if (exists("covid19_waves")){rm(covid19_waves)}
+rm(par)
+
+fit_daily_reported_2 <- function(par){
+  
+  #Load first wave
+  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit*",sep=""))
+  list_poss_Rdata_details = double()
+  for (i in 1:length(list_poss_Rdata)){
+    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+  }
+  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+  load(file = paste('1_inputs/fit/',latest_file,sep=''))
+  
+  
+  date_start = baseline_covid19_waves$date[2]-28-1
+  model_weeks = as.numeric((fit_cutoff_dates[2]-date_start)/7)
+  
+  strain_inital = strain_now = baseline_covid19_waves$strain[1] 
+  fitting_beta= c(first_wave_fit$par[3],par[3])
+  
+  covid19_waves = baseline_covid19_waves
+  covid19_waves$date[1] = covid19_waves$date[1] + round(first_wave_fit$par[1])
+  covid19_waves$date[2] = covid19_waves$date[2] + round(par[1])
+  
+  under_reporting_est = par[2]
+  
+  
+  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+  
+  workshop = case_history %>%
+    select(date,rolling_average) %>%
+    mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
+      rolling_average = case_when(
+        date > fit_cutoff_dates[1] ~ rolling_average * under_reporting_est,
+        date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
+    rename(adjusted_reported = rolling_average) %>%
+    left_join(incidence_log, by = "date") %>%
+    mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
+  
+  fit_statistic = sum(workshop$fit_statistic[workshop$date> fit_cutoff_dates[1]], #fit only after first wave
+                      na.rm=TRUE)
+  
+  return(fit_statistic)
+}
+
+###Method One - Nelder Mead
+if (setting == "FJI"){
+  system.time({second_wave_fit = optim(c(-11,47,1.04),
+                                       fit_daily_reported_2,
+                                       method = "Nelder-Mead")})
+} else if (setting == "IDN"){
+  system.time({second_wave_fit = optim(c(7,79,1.05),
+                                       fit_daily_reported_2,
+                                       method = "Nelder-Mead")})
+}
+save(second_wave_fit, file = paste('1_inputs/fit/second_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+
+###Method Two - Differential Evolution
+require(DEoptim)
+#system.time CommandDeck = ~21.7 minutes, therefore (3*24*60)/21.7 ~ 200 runs before Sunday
+second_wave_fit = DEoptim(fn = fit_daily_reported_2,
+                         lower = c(-14,59,0.9),
+                         upper = c(14,99,1.15),
+                         control = list(NP = 20,
+                                        itermax = 10)) 
+save(second_wave_fit, file = paste('1_inputs/fit/second_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+
+
+to_plot = workshop %>% filter(date>date_start & date<=(date_start+model_weeks*7))
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
+  plot_standard
 #______________________________________________________________________________________________________________
 
 
