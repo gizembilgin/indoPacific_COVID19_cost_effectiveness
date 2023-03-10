@@ -59,7 +59,12 @@ for (i in 1:length(unique(intro_raw$strain))){
   this_raw = this_raw %>% 
     mutate(days = as.numeric(date - min(this_raw$date)),
            percentage = percentage/100)
-  if(exists("TOGGLE_delta_truncation_factor")){this_raw$days = this_raw$days * TOGGLE_delta_truncation_factor}
+  if(exists("TOGGLE_delta_truncation_factor") & this_strain == "delta"){
+    this_raw$days = this_raw$days * TOGGLE_delta_truncation_factor
+  }
+  if(exists("TOGGLE_omicron_truncation_factor") & this_strain == "omicron"){
+    this_raw$days = this_raw$days * TOGGLE_omicron_truncation_factor
+  }
   
   ggplot(this_raw) + geom_point(aes(x=days,y=percentage))
   
