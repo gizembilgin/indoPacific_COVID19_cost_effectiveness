@@ -448,7 +448,7 @@ fit_daily_reported_2 <- function(par){
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
   load(file = paste('1_inputs/fit/',latest_file,sep=''))
   
-  
+  fitting = "wave_two"
   date_start = baseline_covid19_waves$date[2]-28-1
   model_weeks = as.numeric((fit_cutoff_dates[2]-date_start)/7)
   
@@ -490,7 +490,7 @@ if (setting == "FJI"){
                                        fit_daily_reported_2,
                                        method = "Nelder-Mead")})
 }
-save(second_wave_fit, file = paste('1_inputs/fit/second_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+save(second_wave_fit, file = paste('1_inputs/fit/second_wave_fit',this_setting,Sys.Date(),'NM_.Rdata',sep=''))
 
 ###Method Two - Differential Evolution
 require(DEoptim)
