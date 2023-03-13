@@ -380,7 +380,7 @@ rm(par)
 fit_daily_reported_2 <- function(par){
   
   #Load first wave
-  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit*",sep=""))
+  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit",this_setting,"*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
@@ -438,8 +438,10 @@ rm(par)
 
 fit_daily_reported_2 <- function(par){
   
+  on.exit(.optim <<- list(par = par, obj = print(returnValue())))
+  
   #Load first wave
-  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit*",sep=""))
+  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit",this_setting,"*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
@@ -479,6 +481,7 @@ fit_daily_reported_2 <- function(par){
   
   return(fit_statistic)
 }
+.optim <- NULL
 
 ###Method One - Nelder Mead
 if (setting == "FJI"){
