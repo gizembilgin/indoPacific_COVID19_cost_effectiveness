@@ -85,7 +85,7 @@ plot_tracker = data.frame()
 fit_tracker = data.frame()
 workshop_incidence_log_tracker = data.frame()
 
-for (TOGGLE_omicron_truncation_factor in c(1,0.9)){
+for (TOGGLE_omicron_truncation_factor in c(1,0.9,0.8,0.7,0.6)){
   for (this_shift in c(0, 7, -7, 14, -14, 21, -21)){ #7
     for (this_beta_mod in  c(1,0.95,1.05,0.9,1.1,1.15)) { #6
       if(nrow(plot_tracker[plot_tracker$shift == this_shift & 
@@ -160,7 +160,7 @@ ggplot() +
 #find range under reporting
 find_underreporting = data.frame()
 best_this_combo = data.frame()
-for (TOGGLE_omicron_truncation_factor in c(1,0.9)){
+for (TOGGLE_omicron_truncation_factor in c(1,0.9,0.8,0.7,0.6)){
   for (this_shift in c(0, 7, -7, 14, -14, 21, -21)){ #7
     for (this_beta_mod in  c(0.9, 0.95, 1, 1.05, 1.1, 1.15)) {
       
