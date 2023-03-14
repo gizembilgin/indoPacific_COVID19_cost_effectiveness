@@ -43,7 +43,7 @@ if (this_setting == "FJI"){
 } else if (this_setting == "TLS") {
   strain_inital = strain_now = 'WT'
   baseline_covid19_waves = covid19_waves = data.frame(
-    date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2021-12-01')),
+    date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2021-11-01')),
     strain = c('WT', 'delta', 'omicron'))
   
   date_start = covid19_waves$date[1] - 2
@@ -489,7 +489,9 @@ if (setting == "FJI"){
                                        fit_daily_reported_2,
                                        method = "Nelder-Mead")})
 } else if (setting == "IDN"){
-  system.time({second_wave_fit = optim(c(7,79,1.05),
+  system.time({second_wave_fit = optim(c(-7,
+                                         65,
+                                         0.95),
                                        fit_daily_reported_2,
                                        method = "Nelder-Mead")})
 }
