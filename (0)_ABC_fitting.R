@@ -263,7 +263,15 @@ first_wave_fit = DEoptim(fn = fit_daily_reported_1,
                          upper = c(50,90,1.2),
                          control = list(NP = 20,
                                         itermax = 10)) 
-
+# summary(first_wave_fit)
+# plot(first_wave_fit, plot.type = "bestvalit")
+# plot(first_wave_fit, plot.type ="bestmemit")
+# to_plot = as.data.frame(first_wave_fit$member$pop)
+# colnames(to_plot) <- c('seed_date','under_reporting','beta_modifier')
+# ggplot(to_plot) + geom_histogram(aes(x=seed_date),bins=10)
+# ggplot(to_plot) + geom_histogram(aes(x=under_reporting),bins=10)
+# ggplot(to_plot) + geom_histogram(aes(x=beta_modifier),bins=10)
+# ggplot(to_plot) + geom_point(aes(x=beta_modifier,y=under_reporting))
 # system.time({first_wave_fit = optim(c(0, 17,1),
 #                        fit_daily_reported_1,
 #                        method = "L-BFGS-B",
