@@ -587,10 +587,13 @@ rm(par)
 
 fit_daily_reported_3 <- function(par){
   
+  fitting = "wave_three"
+  date_start = baseline_covid19_waves$date[3]-28-1
+  under_reporting_est = par[2]
   on.exit(.optim <<- list(par = par, obj = print(returnValue())))
   
   #Load first wave
-  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit*",sep=""))
+  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit",this_setting,"*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
@@ -599,43 +602,69 @@ fit_daily_reported_3 <- function(par){
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
   load(file = paste('1_inputs/fit/',latest_file,sep=''))
   
-  #Load second wave
-  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("second_wave_fit*",sep=""))
-  list_poss_Rdata_details = double()
-  for (i in 1:length(list_poss_Rdata)){
-    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+  if (this_setting != "TLS"){
+    #Load second wave
+    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("second_wave_fit",this_setting,"*",sep=""))
+    list_poss_Rdata_details = double()
+    for (i in 1:length(list_poss_Rdata)){
+      list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                      file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+    }
+    latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+    load(file = paste('1_inputs/fit/',latest_file,sep=''))
+    
+    #configure scenario
+    model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
+    covid19_waves = data.frame(date = c(baseline_covid19_waves$date[1] + round(first_wave_fit$par[1]),
+                                        baseline_covid19_waves$date[2] + round(second_wave_fit$par[1]),
+                                        baseline_covid19_waves$date[3] + round(par[1])),
+                               strain = c('delta','omicron','omicron'))
+    
+    fitting_beta= c(first_wave_fit$par[3],
+                    second_wave_fit$par[3],
+                    par[3])
+    
+    source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+    
+    workshop = case_history %>%
+      select(date,rolling_average) %>%
+      mutate(
+        rolling_average = case_when(
+          date > fit_cutoff_dates[2] ~ rolling_average * under_reporting_est,
+          date > fit_cutoff_dates[1] ~ rolling_average * second_wave_fit$par[2],
+          date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
+      rename(adjusted_reported = rolling_average) %>%
+      left_join(incidence_log, by = "date") %>%
+      mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
+  
+  } else if (this_setting == "TLS"){
+      #configure scenario
+      model_weeks = as.numeric((as.Date('2022-07-01')-date_start)/7)
+      strain_inital = strain_now = 'delta' 
+      
+      fitting_beta= c(first_wave_fit$optim$bestmem[4],
+                      first_wave_fit$optim$bestmem[5], 
+                      par[3])
+    
+      covid19_waves = baseline_covid19_waves
+      covid19_waves$date[1] = covid19_waves$date[1] + round(first_wave_fit$optim$bestmem[2])
+      covid19_waves$date[2] = covid19_waves$date[2] + round(first_wave_fit$optim$bestmem[3])
+      covid19_waves$date[3] = covid19_waves$date[3] + round(par[1])
+      
+      source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+      
+      workshop = case_history %>%
+        select(date,rolling_average) %>%
+        mutate(
+          rolling_average = case_when(
+            date>= date_start ~ rolling_average * under_reporting_est,
+            date > as.Date('2021-08-01') & date < date_start ~ rolling_average * first_wave_fit$optim$bestmem[7],
+            date <= as.Date('2021-08-01') ~ rolling_average * first_wave_fit$optim$bestmem[6])) %>%
+        rename(adjusted_reported = rolling_average) %>%
+        left_join(incidence_log, by = "date") %>%
+        mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
   }
-  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(file = paste('1_inputs/fit/',latest_file,sep=''))
-  
-  #configure scenario
-  fitting = "wave_three"
-  
-  date_start = baseline_covid19_waves$date[3]-28-1
-  model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
-  covid19_waves = data.frame(date = c(baseline_covid19_waves$date[1] + round(first_wave_fit$par[1]),
-                                      baseline_covid19_waves$date[2] + round(second_wave_fit$par[1]),
-                                      baseline_covid19_waves$date[3] + round(par[1])),
-                             strain = c('delta','omicron','omicron'))
-  under_reporting_est = par[2]
-  fitting_beta= c(first_wave_fit$par[3],
-                  second_wave_fit$par[3],
-                  par[3])
-  
-  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
-  
-  workshop = case_history %>%
-    select(date,rolling_average) %>%
-    mutate(
-      rolling_average = case_when(
-        date > fit_cutoff_dates[2] ~ rolling_average * under_reporting_est,
-        date > fit_cutoff_dates[1] ~ rolling_average * second_wave_fit$par[2],
-        date <= fit_cutoff_dates[1] ~ rolling_average * first_wave_fit$par[2])) %>%
-    rename(adjusted_reported = rolling_average) %>%
-    left_join(incidence_log, by = "date") %>%
-    mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2)
-  
+
   fit_statistic = sum(workshop$fit_statistic, #fit only after first wave
                       na.rm=TRUE)
   
@@ -643,21 +672,30 @@ fit_daily_reported_3 <- function(par){
 }
 .optim <- NULL
 
-system.time({third_wave_fit = optim(c(0,120,1.2),
-                                    fit_daily_reported_3,
-                                     method = "Nelder-Mead", 
-                                    control = list(trace = TRUE))})
+if (this_setting == "FJI"){
+  system.time({third_wave_fit = optim(c(0,120,1.2),
+                                      fit_daily_reported_3,
+                                      method = "Nelder-Mead", 
+                                      control = list(trace = TRUE))})
+} else if (this_setting == "TLS"){
+  system.time({third_wave_fit = optim(c(-7,70,1.025),
+                                      fit_daily_reported_3,
+                                      method = "Nelder-Mead", 
+                                      control = list(trace = TRUE))})
+}
+save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 
-system.time({third_wave_fit = optim(c(0,120,1.2),
-                                    fit_daily_reported_3,
-                       method = "L-BFGS-B",
-                       lower = c(0,50,1), upper = c(60,250,2))})
+###Method Two - Differential Evolution
+require(DEoptim)
+#third_wave_fit CommandDeck = ~21.7 minutes, therefore (3*24*60)/21.7 ~ 200 runs before Sunday
+third_wave_fit = DEoptim(fn = fit_daily_reported_3,
+                          lower = c(-21,50,0.95),
+                          upper = c(7,90,1.1),
+                          control = list(NP = 20,
+                                         itermax = 10)) 
+save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 
-
-
-baseline_date_start = as.Date('2021-04-30')
 to_plot = workshop %>% 
-  filter(date>baseline_date_start) %>%
   filter(date>date_start & date<=(date_start+model_weeks*7))
 ggplot() +
   geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
@@ -665,7 +703,7 @@ ggplot() +
   plot_standard +
   xlab("")
 
-save(third_wave_fit, file = paste('1_inputs/fit/third_wave_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+
 #______________________________________________________________________________________________________________
 
 
