@@ -208,7 +208,7 @@ fit_all_waves <- function(par){
 
 require(DEoptim)
 #need by next Tuesday (5 days away) (40*10*15)/60/24 ~ 4.2 days
-full_fit <- DEoptim(fn = fit_daily_reported_1_TLS,
+full_fit <- DEoptim(fn = fit_all_waves,
                     lower = c(0.2,
                               0.9, 0.95, 0.95,
                               -75 ,45, -21,
@@ -242,4 +242,5 @@ ggplot() +
   geom_point(data=to_plot,aes(x=date,y=reported_cases)) +
   plot_standard +
   xlab("")
+beep()
 
