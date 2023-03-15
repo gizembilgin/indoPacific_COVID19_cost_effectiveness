@@ -141,12 +141,12 @@ beta_tracker = plot_tracker %>%
   filter(date<= max(plot_tracker$date[is.na(plot_tracker$rolling_average) == FALSE]) & 
            date>= min(plot_tracker$date[is.na(plot_tracker$rolling_average) == FALSE]) & 
            date > date_start &
-           shift %in% c(0, 7, -7, 14, -14, 21, -21) &
-           beta_mod %in% c(0.9, 0.95, 1, 1.05, 1.1, 1.15) &
+           shift %in% c(0, 7, -7, -14, -21) &
+           beta_mod %in% c(0.95, 1, 1.05, 1.1) &
          omicron_truncation == 1
   ) 
 
-under_reporting_est = 50
+under_reporting_est = 70
 
 ggplot() +
   geom_line(data=beta_tracker,aes(x=date,y=rolling_average,color=as.factor(beta_mod),linetype = as.factor(omicron_truncation)),na.rm=TRUE) +
@@ -154,3 +154,93 @@ ggplot() +
   plot_standard + 
   labs(color = 'beta modifier')+ 
   facet_grid(shift ~ .) 
+#______________________________________________
+
+
+
+
+
+### Trial fit of all three TLS waves in one!
+fit_all_waves <- function(par){
+  
+  fitting = "on"
+  strain_inital = strain_now = 'WT' 
+  
+  TOGGLE_delta_truncation_factor = par[1]
+  TOGGLE_omicron_truncation_factor = 1
+  
+  fitting_beta = c(par[2],
+                   par[3],
+                   par[4])
+  
+  covid19_waves = baseline_covid19_waves
+  covid19_waves$date[1] = covid19_waves$date[1] + round(par[5])
+  covid19_waves$date[2] = covid19_waves$date[2] + round(par[6])
+  covid19_waves$date[3] = covid19_waves$date[3] + round(par[7])
+  
+  date_start = covid19_waves$date[1] - 2
+  model_weeks = as.numeric((as.Date('2022-07-01') - date_start)/7)
+
+  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+    
+  workshop = case_history %>%
+    select(date,rolling_average) %>%
+    rename(reported_cases = rolling_average) %>%
+    left_join(incidence_log, by = "date") %>%
+    left_join(delta_shift, by = "date") %>%
+    rename(delta = percentage) %>%
+    left_join(omicron_shift, by = "date") %>%
+    rename(omicron = percentage) %>%
+    mutate(
+      rolling_average = case_when(
+        date>= min(omicron_shift$date) & is.na(omicron) == FALSE ~ rolling_average * (1/par[10]*omicron + 1/par[9]*(1-omicron)),
+        date>= min(omicron_shift$date) ~ rolling_average * 1/par[10],
+        date >= min(delta_shift$date) & date < min(omicron_shift$date) & is.na(delta) == FALSE ~ rolling_average * (1/par[9]*delta + 1/par[8]*(1-delta)),
+        date >= min(delta_shift$date) & date < min(omicron_shift$date)  ~ rolling_average * 1/par[9],
+        date < min(delta_shift$date) ~ rolling_average * 1/par[8])) %>%
+    mutate(fit_statistic = abs(rolling_average - reported_cases)^2)
+
+  fit_statistic = sum(workshop$fit_statistic, #fit only after first wave
+                      na.rm=TRUE)
+  
+  return(fit_statistic)
+}
+
+require(DEoptim)
+#need by next Tuesday (5 days away) (40*10*15)/60/24 ~ 4.2 days
+full_fit <- DEoptim(fn = fit_all_waves,
+                    lower = c(0.2,
+                              0.9, 0.95, 0.95,
+                              -75 ,45, -21,
+                              40, 20, 40
+                              ),
+                    upper = c(0.4,
+                              1.1, 1.1, 1.1,
+                              -45, 75, 7,
+                              80, 40, 80
+                              ),
+                    control = list(NP = 15,
+                                   itermax = 10,
+                                   storepopfrom = 1)) 
+save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+
+
+#for testing
+par = c(0.23,
+        0.99,0.96,1.025,
+        -56,62,-7,
+        77,26,70
+        )
+
+
+
+to_plot = workshop %>% 
+  filter(date>date_start & date<=(date_start+model_weeks*7))
+
+ggplot() +
+  geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=to_plot,aes(x=date,y=reported_cases)) +
+  plot_standard +
+  xlab("")
+beep()
+
