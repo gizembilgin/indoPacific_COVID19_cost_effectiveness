@@ -9,7 +9,7 @@ if (exists("master_toggles")){
 } else{
   rm(list=ls())
   this_risk_group_name = risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
-  setting_beta = "PNG_low_beta" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
+  setting_beta = "TLS" #options: "FJI", "SLE",PNG_high_beta, PNG_low_beta
   TOGGLE_include_second_booster_elig = FALSE
 }
 setting = this_setting = substr(setting_beta,1,3)
@@ -37,6 +37,10 @@ date_start = as.Date('2022-12-31')
 strain_inital = strain_now = 'omicron' 
 outbreak_timing = "off" #roll-out during steady state
 model_weeks = as.numeric((as.Date('2024-01-01') - date_start)/7) #ensure model runs for entire 2023
+if (this_setting == "TLS"){
+  additional_seed_date = data.frame(date = as.Date('2023-01-01'),
+                                    strain = 'omicron')
+}
 
 #turn on waning of all immunity
 waning_toggle_acqusition = TRUE
@@ -55,7 +59,6 @@ if(this_risk_group_name == "adults_with_comorbidities"){
 } else{
   sensitivity_analysis_toggles = list(VE_older_adults = "reduced")
 }
-
 #______________________________________________________________________________________________________________
 
 
@@ -89,7 +92,10 @@ if (setting == "FJI"){
   generic_booster_toggles$prev_dose_floor = 1
   generic_booster_toggles$vaccine_type = "Johnson & Johnson"
   
-} else{
+} else if (setting %in% c("IDN","TLS")){
+  generic_booster_toggles$vaccine_type = "Pfizer"
+  
+}else{
   vax_strategy_toggles_CURRENT_TARGET =
     list(vax_strategy_start_date        = date_start,
          vax_strategy_num_doses         = 99999999, #assume that all adults who are willing have been vaccinated
@@ -134,24 +140,13 @@ queue = list()
 
 ### VACCINATION SCENARIO = PRIMARY ONLY 
 # Adults with comorbidities
-if (setting %in% c("FJI","PNG")){
-  queue[[1]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
-                    risk_group_name = this_risk_group_name,
-                    risk_group_toggle = "on",
-                    vax_risk_strategy_toggle = "off",
-                    apply_risk_strategy_toggles = NA,
-                    vax_strategy_toggles = NA,
-                    booster_toggles = "no")
-} else{
-  queue[[1]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
-                    risk_group_name = this_risk_group_name,
-                    risk_group_toggle = "on",
-                    vax_risk_strategy_toggle = "on",
-                    apply_risk_strategy_toggles = primary_only_toggles,
-                    vax_strategy_toggles = vax_strategy_toggles_CURRENT_TARGET,
-                    booster_toggles = "no")
-}
-
+queue[[1]] = list(vax_strategy_description = 'all willing adults vaccinated with a primary schedule',
+                  risk_group_name = this_risk_group_name,
+                  risk_group_toggle = "on",
+                  vax_risk_strategy_toggle = "off",
+                  apply_risk_strategy_toggles = NA,
+                  vax_strategy_toggles = NA,
+                  booster_toggles = "no")
 #______________________________________________________________________________________________________________
 
 
