@@ -133,6 +133,11 @@ if (fitting == "on"){
     if (!(fitting %in% c("wave_two","wave_three"))){
       covid19_waves = fitted_results[[5]] 
       fitting_beta = fitted_results[[6]] 
+      
+      if (exists("additional_seed_date")){
+        covid19_waves = rbind(covid19_waves,additional_seed_date)
+      }
+      
     } else if (fitting %in% c("wave_two","wave_three")){
       prev_beta = fitted_results[[7]]
       this_beta = fitted_results[[8]]

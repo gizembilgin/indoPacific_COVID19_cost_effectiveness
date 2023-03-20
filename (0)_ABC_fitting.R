@@ -766,7 +766,7 @@ fitted_results = list(
   FR_covid19_waves = covid19_waves,
   FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata"),sep="")
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
 #___________________________________________________________________________
 
 

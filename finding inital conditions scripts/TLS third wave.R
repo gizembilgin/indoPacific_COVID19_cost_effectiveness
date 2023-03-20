@@ -224,16 +224,53 @@ full_fit <- DEoptim(fn = fit_all_waves,
                                    storepopfrom = 1)) 
 save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 
+### Explore fit
+summary(full_fit)
+plot(full_fit, plot.type = "bestvalit")
+#plot(full_fit, plot.type ="bestmemit")
+plot(full_fit, plot.type ="storepop")
+to_plot = as.data.frame(full_fit$member$pop)
+colnames(to_plot) <- c('seed_date','under_reporting','beta_modifier')
+ggplot(to_plot) + geom_histogram(aes(x=seed_date),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=under_reporting),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=beta_modifier),bins=10)
+ggplot(to_plot) + geom_point(aes(x=beta_modifier,y=under_reporting))
+#_________________________________________________
 
-#for testing
-par = c(0.23,
-        0.99,0.96,1.025,
-        -56,62,-7,
-        77,26,70
-        )
+
+### Compare sequential fit to overall fit
+#Option 1: full waves fit
+par = full_fit$optim$bestmem
+
+#Option 2: fit piece-by-piece
+#Load first and second wave
+list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("first_wave_fit",this_setting,"*",sep=""))
+list_poss_Rdata_details = double()
+for (i in 1:length(list_poss_Rdata)){
+  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                  file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+}
+latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+load(file = paste('1_inputs/fit/',latest_file,sep=''))
+#Load third wave
+list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("third_wave_fit",this_setting,"*",sep=""))
+list_poss_Rdata_details = double()
+for (i in 1:length(list_poss_Rdata)){
+  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                  file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+}
+latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+load(file = paste('1_inputs/fit/',latest_file,sep=''))
+
+par = c(first_wave_fit$optim$bestmem[1],
+        first_wave_fit$optim$bestmem[4],first_wave_fit$optim$bestmem[5],third_wave_fit$optim$bestmem[3],
+        first_wave_fit$optim$bestmem[2],first_wave_fit$optim$bestmem[3],third_wave_fit$optim$bestmem[1],
+        first_wave_fit$optim$bestmem[6],first_wave_fit$optim$bestmem[7],third_wave_fit$optim$bestmem[2])
+#___________________________________________________
 
 
-
+### Check transmission until the end of 2023
+#model_weeks = as.numeric((as.Date('2024-01-01') - date_start)/7)
 to_plot = workshop %>% 
   filter(date>date_start & date<=(date_start+model_weeks*7))
 
@@ -242,5 +279,6 @@ ggplot() +
   geom_point(data=to_plot,aes(x=date,y=reported_cases)) +
   plot_standard +
   xlab("")
+require(beepr)
 beep()
 

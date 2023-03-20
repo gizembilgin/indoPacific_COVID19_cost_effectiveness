@@ -291,6 +291,9 @@ if(antiviral_setup == "on"){
   } else if (setting == "FJI"){
     future_vaccine_type = "Moderna"
     dose_projection_floor = 3
+  } else if (setting == "TLS"){
+    future_vaccine_type = "Pfizer"
+    dose_projection_floor = 1
   }
     interval_previous = 3*52/12 * 7     #average behaviour over last three months
 
