@@ -75,7 +75,7 @@ Reff_time_step <- function(parameters,next_state){
   NGM_R0 = NGM_R0_list[[num]]
   
   #(A) NPI  
-  NGM_modified = NGM_R0 * parameters$NPI  
+  NGM_modified = NGM_R0 * (1-parameters$NPI)  
     
   #(B) pre-existing immunity, i.e., vax and recovery
   if (round(sum(next_state$pop) - sum(pop),digits =0 ) == 0) {

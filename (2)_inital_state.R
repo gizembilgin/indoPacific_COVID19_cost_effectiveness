@@ -396,7 +396,7 @@ if(date_start <= max(NPI_estimates$date)){ #if date within known NPI range
     filter(date>(max(NPI_estimates$date)-30))
   NPI_inital = mean(NPI_inital$NPI)
 }
-NPI = NPI_inital = 1 - as.numeric(NPI_inital)/100 #effective NPI is (1-NPI), calculate here so we don't have to repeatedly calculate
+NPI = NPI_inital = as.numeric(NPI_inital)/100
 #________________________________________________________________
 
 
