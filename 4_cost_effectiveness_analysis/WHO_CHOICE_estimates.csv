@@ -1,0 +1,97 @@
+setting,currency,patient_type,patient_type_long,care_setting,model_prediction,mean_value_from_sample,UB,LB,SD
+IDN,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,44.8,46.61,102.61,19.03,21.68
+IDN,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,46.37,48.61,102.41,19.83,20.87
+IDN,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,59.97,62.97,139.86,23.33,28.97
+IDN,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (no beds),6.72,6.85,21.12,1.31,5.49
+IDN,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (with beds),8.3,8.27,25.73,1.66,6.25
+IDN,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Primary hospital ,9.46,6.85,29.2,1.9,7.05
+IDN,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Secondary hospital ,9.86,9.57,28.69,1.99,7.44
+IDN,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Tertiary hospital,9.86,9.52,27.86,1.92,6.77
+IDN,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,151351.8,,,,
+IDN,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,157782.89,,,,
+IDN,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,204059.52,,,,
+IDN,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (no beds),22866.1,,,,
+IDN,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (with beds),28242.4,,,,
+IDN,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Primary hospital ,32189.5,,,,
+IDN,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Secondary hospital ,33550.6,,,,
+IDN,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Tertiary hospital,33550.6,,,,
+IDN,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,16.65,,,,
+IDN,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,17.36,,,,
+IDN,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,22.45,,,,
+IDN,2010 USD,outpatient,Cost per outpatient visit,Health centre (no beds),2.52,,,,
+IDN,2010 USD,outpatient,Cost per outpatient visit,Health centre (with beds),3.11,,,,
+IDN,2010 USD,outpatient,Cost per outpatient visit,Primary hospital ,3.54,,,,
+IDN,2010 USD,outpatient,Cost per outpatient visit,Secondary hospital ,3.69,,,,
+IDN,2010 USD,outpatient,Cost per outpatient visit,Tertiary hospital,3.69,,,,
+TLS,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,12.92,13.74,28.79,5.02,6.21
+TLS,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,13.47,13.79,30.4,5.21,6.44
+TLS,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,17.42,18.24,39.21,6.81,8.49
+TLS,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (no beds),2.74,2.68,8.04,0.56,1.95
+TLS,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (with beds),3.38,3.46,10.9,0.69,2.83
+TLS,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Primary hospital ,21.51,15.64,63.73,4.52,16.39
+TLS,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Secondary hospital ,4.02,4.13,12.41,0.81,3.25
+TLS,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Tertiary hospital,4.02,3.98,12.32,0.77,3.21
+TLS,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,,,,,
+TLS,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,,,,,
+TLS,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,,,,,
+TLS,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (no beds),,,,,
+TLS,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (with beds),,,,,
+TLS,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Primary hospital ,,,,,
+TLS,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Secondary hospital ,,,,,
+TLS,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Tertiary hospital,,,,,
+TLS,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,,,,,
+TLS,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,,,,,
+TLS,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,,,,,
+TLS,2010 USD,outpatient,Cost per outpatient visit,Health centre (no beds),,,,,
+TLS,2010 USD,outpatient,Cost per outpatient visit,Health centre (with beds),,,,,
+TLS,2010 USD,outpatient,Cost per outpatient visit,Primary hospital ,,,,,
+TLS,2010 USD,outpatient,Cost per outpatient visit,Secondary hospital ,,,,,
+TLS,2010 USD,outpatient,Cost per outpatient visit,Tertiary hospital,,,,,
+PNG,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,22.89,24.71,53.35,9.64,11.65
+PNG,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,23.86,24.63,55.26,9.54,11.61
+PNG,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,30.85,32.73,71.48,12.38,15.45
+PNG,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (no beds),4.15,4.09,12.47,0.84,3.17
+PNG,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (with beds),5.12,5.22,16.19,1.04,4.51
+PNG,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Primary hospital ,5.71,18.57,83.46,5.48,20.54
+PNG,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Secondary hospital ,6.08,6.12,19.06,1.22,4.7
+PNG,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Tertiary hospital,6.08,6.37,20.53,1.25,5.14
+PNG,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,41.49,,,,
+PNG,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,43.24,,,,
+PNG,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,55.91,,,,
+PNG,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (no beds),7.5,,,,
+PNG,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (with beds),9.3,,,,
+PNG,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Primary hospital ,10.6,,,,
+PNG,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Secondary hospital ,11,,,,
+PNG,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Tertiary hospital,11,,,,
+PNG,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,15.26,,,,
+PNG,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,15.9,,,,
+PNG,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,20.56,,,,
+PNG,2010 USD,outpatient,Cost per outpatient visit,Health centre (no beds),2.77,,,,
+PNG,2010 USD,outpatient,Cost per outpatient visit,Health centre (with beds),3.41,,,,
+PNG,2010 USD,outpatient,Cost per outpatient visit,Primary hospital ,3.89,,,,
+PNG,2010 USD,outpatient,Cost per outpatient visit,Secondary hospital ,4.05,,,,
+PNG,2010 USD,outpatient,Cost per outpatient visit,Tertiary hospital,4.05,,,,
+FJI,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,48.38,49.93,107.66,20.24,21.95
+FJI,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,50.43,53.78,123.19,21.15,26.33
+FJI,2010 internal dollars (PPP $),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,65.22,68.78,144.25,26.85,31.42
+FJI,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (no beds),7.15,7.02,21.29,1.39,5.54
+FJI,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Health centre (with beds),8.82,8.81,25.41,1.89,6.47
+FJI,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Primary hospital ,10.06,7.02,30.97,2.15,7.99
+FJI,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Secondary hospital ,10.48,10.54,32.29,2.42,8.32
+FJI,2010 internal dollars (PPP $),outpatient,Cost per outpatient visit,Tertiary hospital,10.48,10.15,32.03,2.07,7.92
+FJI,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,48.15,,,,
+FJI,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,50.19,,,,
+FJI,2010 National Currency Unit (NCU),inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,64.9,,,,
+FJI,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (no beds),7.1,,,,
+FJI,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Health centre (with beds),8.8,,,,
+FJI,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Primary hospital ,10,,,,
+FJI,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Secondary hospital ,10.4,,,,
+FJI,2010 National Currency Unit (NCU),outpatient,Cost per outpatient visit,Tertiary hospital,10.4,,,,
+FJI,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Primary hospital ,25.1,,,,
+FJI,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Secondary hospital ,26.16,,,,
+FJI,2010 USD,inpatient,Cost per inpatient bed day by hospital level (without drugs),Tertiary hospital,33.83,,,,
+FJI,2010 USD,outpatient,Cost per outpatient visit,Health centre (no beds),3.71,,,,
+FJI,2010 USD,outpatient,Cost per outpatient visit,Health centre (with beds),4.58,,,,
+FJI,2010 USD,outpatient,Cost per outpatient visit,Primary hospital ,5.22,,,,
+FJI,2010 USD,outpatient,Cost per outpatient visit,Secondary hospital ,5.44,,,,
+FJI,2010 USD,outpatient,Cost per outpatient visit,Tertiary hospital,5.44,,,,
