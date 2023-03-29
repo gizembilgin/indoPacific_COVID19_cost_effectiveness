@@ -13,6 +13,7 @@ library(ggplot2)
 library(gridExtra)
 library(ggpubr)
 library(tidyverse)
+library(beepr)
 
 debug = "off"
 debug_type = "partial" #options: "full", "partial"
