@@ -186,7 +186,7 @@ fit_all_waves <- function(par){
   workshop = case_history %>%
     select(date,rolling_average) %>%
     rename(reported_cases = rolling_average) %>%
-    left_join(incidence_log, by = "date") %>%
+    right_join(incidence_log, by = "date") %>%
     left_join(delta_shift, by = "date") %>%
     rename(delta = percentage) %>%
     left_join(omicron_shift, by = "date") %>%
@@ -240,6 +240,14 @@ ggplot(to_plot) + geom_point(aes(x=beta_modifier,y=under_reporting))
 
 ### Compare sequential fit to overall fit
 #Option 1: full waves fit
+list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("full_fit",this_setting,"*",sep=""))
+list_poss_Rdata_details = double()
+for (i in 1:length(list_poss_Rdata)){
+  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                  file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+}
+latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+load(file = paste('1_inputs/fit/',latest_file,sep=''))
 par = full_fit$optim$bestmem
 
 #Option 2: fit piece-by-piece
@@ -269,15 +277,17 @@ par = c(first_wave_fit$optim$bestmem[1],
 #___________________________________________________
 
 
-### Check transmission until the end of 2023
-#model_weeks = as.numeric((as.Date('2024-01-01') - date_start)/7)
+### Plot!
+model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
 to_plot = workshop %>% 
-  filter(date>date_start & date<=(date_start+model_weeks*7))
+  filter(date>date_start )#& date<=(date_start+model_weeks*7))
 
 ggplot() +
   geom_line(data=to_plot,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=to_plot,aes(x=date,y=reported_cases)) +
-  plot_standard +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
   xlab("")
 require(beepr)
 beep()

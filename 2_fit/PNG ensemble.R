@@ -1,4 +1,8 @@
+
+
+
 ### SETUP ______________________________________________________________________
+this_setting = setting = "PNG"
 strain_inital = strain_now = 'WT' 
 baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-01-01'),
                                     as.Date('2021-07-05')-28, #first sequenced date - 4 weeks
@@ -34,7 +38,8 @@ final_state_tracker = data.frame()
 
 this_shift = 0
 #for (this_shift in c(0,-7,-14,-21,+7,+14)){
-for (this_param in c(0.9,1,1.05,1.1,1.2,1.3,1.4,1.5,2)){  
+#for (this_param in c(0.9,1,1.05,1.1,1.2,1.3,1.4,1.5,2)){  
+for (this_param in  seq(1,2,by=0.2)[!(seq(1,2,by=0.2) %in% unique(workshop_incidence_log_tracker$beta_mod))]){  
   fitting_beta = rep(this_param,3)
   covid19_waves = baseline_covid19_waves %>%
     mutate(date = date + this_shift)
@@ -55,8 +60,7 @@ for (this_param in c(0.9,1,1.05,1.1,1.2,1.3,1.4,1.5,2)){
 }
 #}
 
-to_plot = workshop_incidence_log_tracker %>%
-  filter(!(beta_mod %in% c(1.05,2)))
+to_plot = workshop_incidence_log_tracker
 coeff <- 1/150
 ggplot() +
   geom_point(data=case_history[case_history$date>min(workshop_incidence_log_tracker$date) & case_history$date<max(workshop_incidence_log_tracker$date),],

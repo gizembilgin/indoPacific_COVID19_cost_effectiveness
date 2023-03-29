@@ -5,7 +5,7 @@ seed_dates_list = list(#as.Date('2022-10-01'),
 
 
 
-incidence_log_tracker = data.frame()
+TLS_waves_tracker = data.frame()
 
 #☺for (ticket in 1:2){ 
 for (ticket in 1:length(seed_dates_list)){
@@ -17,8 +17,8 @@ for (ticket in 1:length(seed_dates_list)){
   incidence_log = incidence_log %>%
     mutate(additional_seed_date = seed_dates_list[[ticket]])
   
-  incidence_log_tracker = rbind(incidence_log_tracker,incidence_log)
+  TLS_waves_tracker = rbind(TLS_waves_tracker,incidence_log)
   
 }
 
-ggplot() + geom_line(data=incidence_log_tracker,aes(x=date,y=rolling_average,color=as.factor(additional_seed_date)))
+ggplot() + geom_line(data=TLS_waves_tracker,aes(x=date,y=rolling_average,color=as.factor(additional_seed_date)))
