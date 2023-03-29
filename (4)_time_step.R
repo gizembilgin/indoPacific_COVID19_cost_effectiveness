@@ -40,7 +40,7 @@ for (increments_number in 1:num_time_steps){
       num_disease_classes = num_disease_classes,
       num_vax_types=num_vax_types,
       num_vax_doses=num_vax_doses)
-    rm(rho_inital,NPI_inital,VE_inital)
+    #rm(rho_inital,NPI_inital,VE_inital)
     
     sol = as.data.frame(ode(y=state,times=(seq(0,time_step,by=1)),func=covidODE,parms=parameters))
     
@@ -292,8 +292,18 @@ for (increments_number in 1:num_time_steps){
           strain_now = covid19_waves$strain[covid19_waves$date == date_now]
             
             prev_beta = rep(parameters$beta1,J)
+            
             parameters$beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_now],num_age_groups)*
               fitting_beta[which(covid19_waves$date == date_now)]
+            parameters$beta1 = parameters$beta[1]
+            parameters$beta2 = parameters$beta[2]
+            parameters$beta3 = parameters$beta[3]
+            parameters$beta4 = parameters$beta[4]
+            parameters$beta5 = parameters$beta[5]
+            parameters$beta6 = parameters$beta[6]
+            parameters$beta7 = parameters$beta[7]
+            parameters$beta8 = parameters$beta[8]
+            
             this_beta = parameters$beta
           
             seed.Infected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod)
@@ -325,10 +335,18 @@ for (increments_number in 1:num_time_steps){
             
             parameters$delta = 1/9.87*omicron_shift$percentage[omicron_shift$date == date_now] + 
               1/10.9 * (1-omicron_shift$percentage[omicron_shift$date == date_now])
+            
+            parameters$beta = this_beta*omicron_shift$percentage[omicron_shift$date == date_now] + prev_beta * (1-omicron_shift$percentage[omicron_shift$date == date_now])
+            parameters$beta1 = parameters$beta[1]
+            parameters$beta2 = parameters$beta[2]
+            parameters$beta3 = parameters$beta[3]
+            parameters$beta4 = parameters$beta[4]
+            parameters$beta5 = parameters$beta[5]
+            parameters$beta6 = parameters$beta[6]
+            parameters$beta7 = parameters$beta[7]
+            parameters$beta8 = parameters$beta[8]
           }
 
-          parameters$beta = this_beta*omicron_shift$percentage[omicron_shift$date == date_now] + prev_beta * (1-omicron_shift$percentage[omicron_shift$date == date_now])
-          
         }
       if (date_now %in% delta_shift$date){
         parameters$beta = this_beta*delta_shift$percentage[delta_shift$date == date_now] + prev_beta * (1-delta_shift$percentage[delta_shift$date == date_now])
