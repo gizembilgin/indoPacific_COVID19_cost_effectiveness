@@ -20,11 +20,19 @@ if (outbreak_timing != "off"){
 
 
 ##### infection-derived immunity against severe outcomes
-rho_SO_est = unique(rho_dn$protection[rho_dn$outcome == 'severe_outcome'])
-if (length(rho_SO_est)>1){stop('rho against severe outcome not constant as currently assumed, see (6)_severe_outcome_proj')}
+rho_SO_est = data.frame()
+for (i in 1:length(unique(incidence_log$date))){
+  
+  this_date = unique(incidence_log$date)[i]
+  
+  this_rho = rho_time_step(this_date, outcome = "severe_disease") %>%
+    mutate(date = this_date)
+  rho_SO_est = rbind(rho_SO_est,this_rho)
+}
 
 reinfection_protection = exposed_log %>%
-  mutate(protection = reinfection_ratio * rho_SO_est) %>%
+  left_join(rho_SO_est,by='date') %>%
+  mutate(protection = reinfection_ratio * protection) %>%
   select(date,age_group,protection)
 #ggplot(reinfection_protection) + geom_point(aes(x=date,y=protection,color=as.factor(age_group)))
 
