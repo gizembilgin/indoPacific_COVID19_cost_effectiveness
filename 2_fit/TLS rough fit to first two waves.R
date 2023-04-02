@@ -6,8 +6,7 @@ fit_all_waves <- function(par){
   TOGGLE_delta_truncation_factor = par[1]
   
   fitting_beta = c(par[2],
-                   par[3]
-  )
+                   par[3])
   
   covid19_waves = baseline_covid19_waves
   covid19_waves$date[1] = covid19_waves$date[1] + round(par[4])
@@ -45,7 +44,6 @@ fit_all_waves <- function(par){
         wave2 = under_reporting_wave2)
       
       underreporting_tracker = rbind(underreporting_tracker,fit_statistic)
-      #}
     }
   }
   
@@ -53,7 +51,6 @@ fit_all_waves <- function(par){
   best_so_far = underreporting_tracker[underreporting_tracker$fit== min(underreporting_tracker$fit, na.rm=TRUE),]
   for(under_reporting_wave1 in seq(best_so_far$wave1 -10,best_so_far$wave1 + 10)){
     for(under_reporting_wave2 in seq(best_so_far$wave2 -10,best_so_far$wave2 + 10)){
-      #for(under_reporting_wave3 in seq(best_so_far$wave3 -10,best_so_far$wave3 + 10)){
       
       workshop = case_history %>%
         select(date,rolling_average) %>%
@@ -74,9 +71,6 @@ fit_all_waves <- function(par){
         wave2 = under_reporting_wave2)
       
       underreporting_tracker = rbind(underreporting_tracker,fit_statistic)
-      
-      
-      #}
     }
   }
   
@@ -85,6 +79,7 @@ fit_all_waves <- function(par){
   return(fit_statistic)
 }
 
+#plot to check function
 best_fit = underreporting_tracker[underreporting_tracker$fit == min(underreporting_tracker$fit),]
 under_reporting_wave1 = best_fit$wave1
 under_reporting_wave2 = best_fit$wave2
@@ -93,7 +88,7 @@ ggplot() +
   geom_line(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=workshop,aes(x=date,y=reported_cases)) +
   plot_standard
-
+#____________________
 
 
 require(DEoptim)
