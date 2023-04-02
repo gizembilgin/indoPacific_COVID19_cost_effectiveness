@@ -17,8 +17,8 @@ fit_all_waves <- function(par){
   
   
   #quick search under reporting
-  search_interaval = 10
-  search_list = seq(20,120,by=search_interaval)
+  search_interval = 10
+  search_list = seq(20,120,by=search_interval)
   
   underreporting_tracker = data.frame()
   for(under_reporting_wave1 in search_list){
@@ -53,8 +53,8 @@ fit_all_waves <- function(par){
   
   #detailed search under reporting
   best_so_far = underreporting_tracker[underreporting_tracker$fit == min(underreporting_tracker$fit, na.rm=TRUE),]
-  for(under_reporting_wave1 in seq(best_so_far$wave1 -search_interaval,best_so_far$wave1 + search_interaval)){
-    for(under_reporting_wave2 in seq(best_so_far$wave2 -search_interaval,best_so_far$wave2 + search_interaval)){
+  for(under_reporting_wave1 in seq(best_so_far$wave1 -search_interval,best_so_far$wave1 + search_interval)){
+    for(under_reporting_wave2 in seq(best_so_far$wave2 -search_interval,best_so_far$wave2 + search_interval)){
             
             workshop = case_history %>%
               select(date,rolling_average) %>%
@@ -86,14 +86,12 @@ fit_all_waves <- function(par){
   fit_statistic = min(underreporting_tracker$fit, 
                       na.rm=TRUE)
   
-  these_waves = underreporting_tracker[underreporting_tracker$fit == min(underreporting_tracker$fit),]
-  under_reporting_wave2 = these_waves$wave2
-  under_reporting_wave1 = these_waves$wave1
-  
-  
   return(fit_statistic)
 }
 
+these_waves = underreporting_tracker[underreporting_tracker$fit == min(underreporting_tracker$fit),]
+under_reporting_wave2 = these_waves$wave2
+under_reporting_wave1 = these_waves$wave1
 ggplot() +
   geom_line(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=workshop,aes(x=date,y=reported_cases)) +
@@ -109,7 +107,7 @@ full_fit <- DEoptim(fn = fit_all_waves,
                     upper = c(4,4,
                               45,75
                     ),
-                    control = list(NP = 15,
+                    control = list(NP = 12,
                                    itermax = 8,
                                    storepopfrom = 1)) 
 save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
