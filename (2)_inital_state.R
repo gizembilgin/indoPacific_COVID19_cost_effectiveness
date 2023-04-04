@@ -429,9 +429,16 @@ if (this_setting == "IDN"){
   workshop$daily_cases = sum(initialRecovered$R)/lengthInfectionDerivedImmunity
   hist_cases = workshop
 }
+if (exists("fitted_incidence_log") & fitting != "on"){
+  hist_cases = hist_cases[!(hist_cases$date %in% fitted_incidence_log$date),]
+}
 #ggplot(hist_cases) + geom_point(aes(x=date,y=daily_cases))
 
-if(seed<hist_cases$daily_cases[hist_cases$date == max(hist_cases$date)]){seed = hist_cases$daily_cases[hist_cases$date == max(hist_cases$date)]}
+if (nrow(hist_cases)>0){
+  if(seed<hist_cases$daily_cases[hist_cases$date == max(hist_cases$date)]){
+    seed = hist_cases$daily_cases[hist_cases$date == max(hist_cases$date)]
+    }
+}
 
 initialInfected = seed*AverageSymptomaticPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
 initialExposed  = seed*AverageLatentPeriod/(AverageSymptomaticPeriod+AverageLatentPeriod) 
