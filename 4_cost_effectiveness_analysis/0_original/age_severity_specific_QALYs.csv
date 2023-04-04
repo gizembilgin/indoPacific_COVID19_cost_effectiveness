@@ -1,0 +1,10 @@
+severity,age,QALY
+mild,20,0.01
+mild,40,0.009
+mild,70,0.008
+severe,20,0.02
+severe,40,0.019
+severe,70,0.017
+critical,20,3.94
+critical,40,3.151
+critical,70,1.53
