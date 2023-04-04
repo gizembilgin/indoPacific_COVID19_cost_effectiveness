@@ -7,7 +7,7 @@ risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_w
 for (j in 1:length(settings_to_plot)){
   setting_beta = settings_to_plot[j]
   
-  list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_*",sep=""))
+  list_poss_Rdata = list.files(path=paste("x_results/",sep=''),pattern = paste("antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
