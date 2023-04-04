@@ -110,12 +110,33 @@ save(rough_fit, file = paste('1_inputs/fit/TLS_rough_fit',Sys.Date(),'.Rdata',se
 ### Explore fit
 summary(rough_fit)
 plot(rough_fit, plot.type = "bestvalit")
-#plot(rough_fit, plot.type ="bestmemit")
+plot(rough_fit, plot.type ="bestmemit")
 plot(rough_fit, plot.type ="storepop")
 to_plot = as.data.frame(rough_fit$member$pop)
-colnames(to_plot) <- c('seed_date','under_reporting','beta_modifier')
-ggplot(to_plot) + geom_histogram(aes(x=seed_date),bins=10)
-ggplot(to_plot) + geom_histogram(aes(x=under_reporting),bins=10)
-ggplot(to_plot) + geom_histogram(aes(x=beta_modifier),bins=10)
-ggplot(to_plot) + geom_point(aes(x=beta_modifier,y=under_reporting))
+colnames(to_plot) <- c('delta_trunc','beta1','beta2','shift1','shift2')
+ggplot(to_plot) + geom_histogram(aes(x=delta_trunc),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=beta1),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=beta2),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=shift1),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=shift2),bins=10)
+ggplot(to_plot) + geom_point(aes(x=beta1,y=shift1))
+ggplot(to_plot) + geom_point(aes(x=beta2,y=shift2))
+ggplot(to_plot) + geom_point(aes(x=beta2,y=delta_trunc))
 #_________________________________________________
+
+
+### Save rough fit for search of third wave
+#model_weeks = as.numeric((covid19_waves$date[3]  - date_start)/7)
+incidence_log = incidence_log %>% select(date,daily_cases)
+
+fitted_results = list(
+  FR_parameters = parameters,
+  FR_next_state = next_state,
+  FR_incidence_log_tidy = incidence_log_tidy,
+  FR_incidence_log = incidence_log,
+  FR_covid19_waves = covid19_waves,
+  FR_fitting_beta = fitting_beta,
+  FR_prev_beta = prev_beta,
+  FR_this_beta = this_beta
+)
+save(fitted_results, file = paste("1_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=""))
