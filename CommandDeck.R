@@ -25,73 +25,6 @@ complete_model_runs = 1   # when >1 samples randomly from distribution of parame
 if (exists("setting_beta") == FALSE){setting_beta = setting}
 if (exists("fitting") == FALSE){fitting = "off"}
 if (exists("fitting_details") == FALSE){fitting_details = "off"}# Reff tracking, VE tracking, rho tracking
-if (! fitting == "off"){debug = "off"} # can not debug while fitting the model
-if ( debug == "on"){
-  
-  warning('Debugging is on')
-  if (debug_type == "full"){rm(list=ls());debug = "on"}  # clear global environment
-  plotting = "on"
-  
-  ## options for run from fit with omicron onwards
-  outbreak_timing = "off"
-  strain_inital = strain_now = 'omicron'             
-  model_weeks = 5          
-  #find latest model run in known dates
-  if (risk_group_name == "pregnant_women"){
-    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_pregnant_women_",setting_beta,"*",sep=""))
-  } else{
-    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
-  }
-
-  list_poss_Rdata_details = double()
-  for (i in 1:length(list_poss_Rdata)){
-    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
-  }
-  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  date_start = as.Date(file.info(paste("1_inputs/fit/",latest_file,sep=''))$mtime) 
-  
-  ##options for run from start
-  # date_start = as.Date('2021-03-31')
-  # strain_inital = strain_now = 'WT'            
-  # seed_date = c(as.Date('2021-04-25'),as.Date('2021-11-07'),) #first is seed date for delta, second is omicron
-  # model_weeks = as.numeric((ceiling(Sys.Date()-date_start)/7))+52
-  
-  
-  setting = "SLE"
-  RR_estimate  = 2
-  vax_strategy_toggle = "off"
-  vax_risk_strategy_toggle = "off"
-  risk_group_toggle = "on" 
-  risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
-  risk_group_prioritisation_to_date = NA
-  default_prioritisation_proportion = 0.5
-  risk_group_lower_cov_ratio = NA
-  sensitivity_analysis_toggles = list()
-  
-  vax_strategy_toggles =
-    list(vax_strategy_start_date        = date_start+30,
-         vax_strategy_num_doses         = as.integer(1642011),
-         vax_strategy_roll_out_speed    = 11075 ,                           # doses delivered per day
-         vax_delivery_group             = 'universal',
-         vax_age_strategy               = "uniform_no_children",            # options: "oldest", "youngest","50_down","uniform"
-         vax_dose_strategy              = 1,                                # options: 1,2
-         vax_strategy_vaccine_type      = "Johnson & Johnson" ,             # options: "Moderna","Pfizer","AstraZeneca","Johnson & Johnson","Sinopharm","Sinovac"
-         vax_strategy_vaccine_interval  = c(30*3) ,                         # (days) interval between doses, you must specify multiple intervals if multiple doses e.g. c(21,90)
-         vax_strategy_max_expected_cov  = 0.88                              # value between 0-1 of age group willing to be vaccinated
-    )
-  
-  apply_risk_strategy_toggles = list(
-    vax_risk_strategy = 'Y',             # options: 'Y','N'
-    vax_risk_proportion = 0.8,           # value between 0-1 (equivalent to %) of doses prioritised to the at risk group
-    vax_doses_general = 1,               # number of doses delivered to general pop
-    vax_doses_risk = 2                   # number of doses delivered to risk group
-  )
-  
-  waning_toggle_acqusition = TRUE
-  waning_toggle_severe_outcome = FALSE # save some time, no need to accurate gauge severe outcomes when debugging model
-  waning_toggle_rho_acqusition = TRUE
-}
 
 ### load refit, or refit if not recent enough
 if (fitting == "on"){
@@ -99,12 +32,26 @@ if (fitting == "on"){
 } else if ( ! 'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
   
   #load latest model run in known dates
-  if (fitting == "wave_three"){
-    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("start_point_wave_three_",setting_beta,"*",sep=""))
+  if (fitting == "wave_three" & exists("scenario_MASTER") == TRUE){
+    list_poss_Rdata = list.files(path="1_inputs/fit/",
+                                 pattern = paste("start_point_wave_three_",setting_beta,"_v_",scenario_MASTER,"_*",sep=""))
+  } else if (fitting == "wave_three"){
+    list_poss_Rdata = list.files(path="1_inputs/fit/",
+                                 pattern = paste("start_point_wave_three_",setting_beta,"*",sep=""))
+  
+  } else if (fitting == "wave_two" & exists("scenario_MASTER") == TRUE){
+    list_poss_Rdata = list.files(path="1_inputs/fit/",
+                                 pattern = paste("start_point_wave_two_",setting_beta,"_v_",scenario_MASTER,"_*",sep=""))
   } else if (fitting == "wave_two"){
-    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("start_point_wave_two_",setting_beta,"*",sep=""))
+    list_poss_Rdata = list.files(path="1_inputs/fit/",
+                                 pattern = paste("start_point_wave_two_",setting_beta,"*",sep=""))
+  
   } else{
-    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
+    if (risk_group_name == "pregnant_women"){
+      list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_pregnant_women_",setting_beta,"*",sep=""))
+    } else{
+      list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
+    }
   }
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
@@ -153,23 +100,9 @@ if (fitting == "on"){
         stop('no fitted result avaliable for this risk group characteristic')
       }
     }
-} else if('vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
-    
-    if (! risk_group_name == 'pregnant_women'){stop('havent configured vax hesistance sensitivity analysis for another risk group')}
-    
-    load(file = '1_inputs/SA_vaxHest_fitted_results.Rdata')
-       
-    parameters = SA_vaxHest_fitted_results[[1]] %>% filter(country == setting)
-    fitted_next_state = SA_vaxHest_fitted_results[[2]]  %>% filter(country == setting)
-    fitted_incidence_log_tidy = SA_vaxHest_fitted_results[[3]]  %>% filter(country == setting)
-    fitted_incidence_log = SA_vaxHest_fitted_results[[4]]  %>% filter(country == setting)
-    rm(SA_vaxHest_fitted_results)
-    
-    fitted_incidence_log_tidy = fitted_incidence_log_tidy %>% filter(date <= date_start) # CHECKED last of fitted log = first of new log
-    fitted_incidence_log = fitted_incidence_log %>% filter(date <= date_start)
 } 
 
-if ( debug == "on" | fitting_details == "on"){
+if ( fitting_details == "on"){
   Reff_tracker = data.frame()
   rho_tracker_dataframe = data.frame()
   VE_tracker_dataframe = data.frame()
@@ -243,7 +176,7 @@ rm(incidence_log_tracker)
 plot_standard = theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        panel.border = element_blank(),
+        #panel.border = element_blank(),
         axis.line = element_line(color = 'black'))
 
 if (exists("plotting") == FALSE){plotting = "off"}  
