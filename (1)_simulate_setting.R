@@ -418,6 +418,12 @@ if (file.exists(paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Dat
   NPI_estimates = na.omit(NPI_estimates) #removing last two weeks where hasn't yet been calculated
   rm(workshop,NPI_toggle)
   
+  NPI_estimates = NPI_estimates %>%
+    mutate(NPI = (NPI + lag(NPI,1) + lag(NPI,2) + lag(NPI,3) + lead(NPI,1) + lead(NPI,2) + lead(NPI,3))/7 ) %>%
+    filter(is.na(NPI) == FALSE)
+  
+  #ggplot(NPI_estimates[NPI_estimates$date %in% workshop$date,]) + geom_line(aes(x=date,y=NPI))
+  
   save(NPI_estimates, file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
 }
 #______________________________________________________________________________________________________________________________________
