@@ -25,7 +25,7 @@ for (i in 1:length(unique(incidence_log$date))){
   
   this_date = unique(incidence_log$date)[i]
   
-  this_rho = rho_time_step(this_date, outcome = "severe_disease") %>%
+  this_rho = data.frame(protection = rho_time_step(this_date, outcome = "severe_disease")) %>%
     mutate(date = this_date)
   rho_SO_est = rbind(rho_SO_est,this_rho)
 }
@@ -43,7 +43,9 @@ workshop = severe_outcome_this_run %>%
   left_join(incidence_log_tidy, by = c("date", "age_group", "risk_group", "vaccine_type", "dose")) %>%
   mutate(proj = incidence*percentage) %>%
   left_join(reinfection_protection, by = c("date", "age_group")) %>%
-  mutate(proj = proj*(1-protection))
+  mutate(proj = case_when(
+    is.na(protection) == FALSE ~ proj*(1-protection),
+    TRUE ~ proj))
 if(!nrow(severe_outcome_this_run[severe_outcome_this_run$date <= max(incidence_log_tidy$date),]) == nrow(workshop)){stop('have lost rows in severe outcome proj')} 
 
 severe_outcome_log_tidy = workshop %>% 
@@ -62,12 +64,12 @@ if (age_split_results == "N"){
   workshop_incid =  incidence_log_unedited %>%
     mutate(outcome ='cases',proj = daily_cases) %>%
     select(date,outcome,proj)
-  rm(incidence_log_unedited)
+  #rm(incidence_log_unedited)
   workshop_2 = rbind(workshop_2,workshop_incid)
   
   #(D/D) Calculate cumulative severe outcomes by outcome type
   severe_outcome_log = workshop_2 %>% 
-    filter(date > use_date) %>%
+    filter(date > use_date ) %>%
     group_by(outcome) %>%
     mutate(proj_cum = cumsum(proj))
   
