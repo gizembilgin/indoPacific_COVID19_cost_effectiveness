@@ -14,10 +14,10 @@ library(foreach)
 #rm(list=ls())
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
 
-source(paste(getwd(),"/(antiviral)(function) antiviral_model_manger.R",sep=""))
-source(paste(getwd(),"/(antiviral)(function) antiviral_model_worker.R",sep=""))
-source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
-source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
+source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) antiviral_model_manger.R",sep=""))
+source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) antiviral_model_worker.R",sep=""))
+source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
+source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
 copy_function_into_cluster = antiviral_model_worker
 RECORD_antiviral_model_simulations = data.frame()
 #____________________________________________________________________________

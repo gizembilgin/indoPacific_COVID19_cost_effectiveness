@@ -37,8 +37,8 @@ antiviral_model_manger <- function(
 
   #load functions to be copied into clusters
   load(file = '1_inputs/antiviral_effectiveness.Rdata' )
-  source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
-  source(paste(getwd(),"/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
+  source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
+  source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
   copy_sampling_fx_into_cluster = stochastic_severe_outcomes_sampling
   copy_application_fx_into_cluster = stochastic_severe_outcomes_application
   #____________________________________

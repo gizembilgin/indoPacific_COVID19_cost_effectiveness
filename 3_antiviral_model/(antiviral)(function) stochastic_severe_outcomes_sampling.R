@@ -30,7 +30,7 @@ stochastic_severe_outcomes_sampling <- function(
   load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
   load(file = "1_inputs/severe_outcome_country_level.Rdata")
 
-  source(paste(getwd(),"/(antiviral)(function) stochastic_VE.R",sep=""))
+  source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_VE.R",sep=""))
   source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
   
   risk_group_labels = c('general_public',risk_group_name)
