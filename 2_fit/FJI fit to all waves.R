@@ -24,7 +24,7 @@ fit_all_waves <- function(par){
   
   
   #quick search under reporting
-  increments_list = c(100,50,10,5,1)
+  increments_list = c(100,50,10,5,1,0.25)
   underreporting_tracker = data.frame()
   
   for (repeat_through in 1:length(increments_list)){
@@ -35,6 +35,13 @@ fit_all_waves <- function(par){
       search_list1 = search_list2 = search_list3 = seq(50,1000,by=increments_list[repeat_through])
     } else{
       best_so_far = underreporting_tracker[underreporting_tracker$fit== min(underreporting_tracker$fit, na.rm=TRUE),]
+      best_so_far = unique(best_so_far)
+      
+      # if (nrow(best_so_far)>1){ #pick best_so_far with min under reporting
+      #   best_so_far = best_so_far %>% mutate(under_reporting_mean = (wave1+wave2+wave3)/3)
+      #   best_so_far = best_so_far[best_so_far$under_reporting_mean == min(best_so_far$under_reporting_mean),]
+      # }
+      
       search_list1 = seq(best_so_far$wave1 - increments_list[repeat_through-1],
                          best_so_far$wave1 + increments_list[repeat_through-1],
                          by = increments_list[repeat_through])
@@ -111,7 +118,7 @@ full_fit <- DEoptim(fn = fit_all_waves,
                     upper = c(4,6,4.5,
                               0,15,120
                     ),
-                    control = list(NP = 20,
+                    control = list(NP = 30, #ideally 60, possible rerun depending on how it settles
                                    itermax = 10,
                                    storepopfrom = 1)) 
 save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
