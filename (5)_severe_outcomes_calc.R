@@ -170,7 +170,7 @@ if (risk_group_toggle == "on"){
   
 } else{
   severe_outcome_this_run = severe_outcome_FINAL %>% 
-    left_join(VE_tracker, by = c("age_group", "outcome_VE")) %>%
+    left_join(VE_tracker, by = c("age_group", "outcome_VE","risk_group"),relationship = "many-to-many") %>%
     mutate(percentage = percentage*(1-VE)) %>%
     select(date,outcome,outcome_long,age_group,risk_group,vaccine_type,dose,percentage)
 }
