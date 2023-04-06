@@ -16,7 +16,7 @@ if (exists("fitting_beta") == FALSE){fitting_beta = rep(1,nrow(covid19_waves))}
 while(length(fitting_beta) < nrow(covid19_waves)){fitting_beta = c(fitting_beta,1)}
 
 for (increments_number in 1:num_time_steps){
-#for (increments_number in 1:167){
+#for (increments_number in 1:74){
 
   if (fitting == "on" & increments_number == 1){
     
@@ -373,7 +373,8 @@ for (increments_number in 1:num_time_steps){
         stop('next_state not equal to pop size!')
       }
       if (nrow(next_state[round(next_state$pop) < 0, ]) > 0) {
-        if (date_now > max(vaccination_history_TRUE$date + max(vaxCovDelay$delay))) {
+        #if (date_now > max(vaccination_history_TRUE$date + max(vaxCovDelay$delay))) {
+        if (date_now > Sys.Date() + max(vaxCovDelay$delay)) {  
           stop('(4)_time_step line ~290')
         } else{
           if (nrow(next_state[round(next_state$pop) < -100, ]) > 0) {#Note: some negatives expected here due to recreation of vaccination_history

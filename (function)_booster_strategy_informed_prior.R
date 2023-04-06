@@ -56,6 +56,9 @@ booster_strategy_informed_prior <- function(
     stop('pick a valid vaccine type, or check your spelling!')
   }
   if (booster_prev_dose_ceiling>max(vaccination_history_FINAL_local$dose)){booster_prev_dose_ceiling=max(vaccination_history_FINAL_local$dose)}
+  
+  vaccination_history_FINAL_local = vaccination_history_FINAL_local %>% 
+    filter(date<booster_strategy_start_date)
   #_______________________________________________________________________________
   
   
@@ -72,7 +75,7 @@ booster_strategy_informed_prior <- function(
       summarise(eligible_individuals = sum(doses_delivered_this_date), .groups = 'keep')
   }
   
-  #remove double counted, i.e., don't count first doses if they have recieved a second dose
+  #remove double counted, i.e., don't count first doses if they have received a second dose
   workshop_eligible_pop = eligible_pop %>% filter(dose == max(eligible_pop$dose))
   for (d in 2:max(eligible_pop$dose)){
     remove = eligible_pop %>% 
