@@ -37,10 +37,10 @@ list_poss_Rdata = list.files(path=paste("x_results/",sep=''),pattern = paste("an
 list_poss_Rdata_details = double()
 for (i in 1:length(list_poss_Rdata)){
   list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                  file.info(paste(rootpath,'x_results/',list_poss_Rdata[[i]],sep=''))$mtime)
+                                  file.info(paste('x_results/',list_poss_Rdata[[i]],sep=''))$mtime)
 }
 latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+load(file = paste("x_results/",latest_file,sep=''))
 
 RECORD_antiviral_model_simulations_0 <- antiviral_model_manger(
   
