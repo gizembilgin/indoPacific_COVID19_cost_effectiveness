@@ -3,6 +3,7 @@ options(scipen = 1000)
 
 
 plot_name = "figure_2" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_3","figure_S3_2_1"
+plot_list = list()
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
 LIST_outcomes = list('hosp', 'death')
 LIST_results = list("doses_per_outcome_averted","percentage" )
@@ -11,8 +12,8 @@ TOGGLE_antiviral_type = "nirmatrelvir_ritonavir"
 
 risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
 settings_to_plot = c("PNG_high_beta","PNG_low_beta")
-settings_to_plot = c("FJI","PNG_low_beta")
-
+#settings_to_plot = c("FJI","PNG_low_beta")
+settings_to_plot = c("PNG_low_beta")
 
 if (plot_name ==  "figure_S3_2_3"){
   TOGGLE_antiviral_type = c("nirmatrelvir_ritonavir","molunipiravir")
@@ -343,7 +344,7 @@ if (plot_name %in% c("figure_2",
       }
       
       if(this_result == "percentage"){
-      plot_list[[a]]  = plot_list[[a]]  + xlab('outcomes averted (%)') +xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) 
+      plot_list[[a]]  = plot_list[[a]]  + xlab('outcomes averted (%)') +xlim(0,max(workshop$UQ[workshop$outcome %in% LIST_outcomes])) 
       
       workshop = workshop %>% 
         ungroup()%>%
