@@ -81,5 +81,5 @@ time = paste(temp_name,time,sep='')
 
 
 ### SAVE ####################################################################
-save(RECORD_antiviral_model_simulations, file = paste(rootpath,"x_results/AntiviralRun_",setting_beta,"_",this_risk_group_name,"_",time,".Rdata",sep=''))
+save(RECORD_antiviral_model_simulations, file = paste("x_results/AntiviralRun_",setting_beta,"_",this_risk_group_name,"_",time,".Rdata",sep=''))
 #}
