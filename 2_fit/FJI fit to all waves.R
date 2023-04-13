@@ -35,12 +35,11 @@ fit_all_waves <- function(par){
       search_list1 = search_list2 = search_list3 = seq(50,1000,by=increments_list[repeat_through])
     } else{
       best_so_far = underreporting_tracker[underreporting_tracker$fit== min(underreporting_tracker$fit, na.rm=TRUE),]
+      if (nrow(best_so_far)>1){ #pick best_so_far with min under reporting
+        best_so_far = best_so_far %>% mutate(under_reporting_mean = (wave1+wave2+wave3)/3)
+        best_so_far = best_so_far[best_so_far$under_reporting_mean == min(best_so_far$under_reporting_mean),]
+      }
       best_so_far = unique(best_so_far)
-      
-      # if (nrow(best_so_far)>1){ #pick best_so_far with min under reporting
-      #   best_so_far = best_so_far %>% mutate(under_reporting_mean = (wave1+wave2+wave3)/3)
-      #   best_so_far = best_so_far[best_so_far$under_reporting_mean == min(best_so_far$under_reporting_mean),]
-      # }
       
       search_list1 = seq(best_so_far$wave1 - increments_list[repeat_through-1],
                          best_so_far$wave1 + increments_list[repeat_through-1],
@@ -93,7 +92,7 @@ fit_all_waves <- function(par){
   return(fit_statistic)
 }
 
-
+### Plot under reporting
 these_waves = underreporting_tracker[underreporting_tracker$fit == min(underreporting_tracker$fit),]
 under_reporting_wave3 = these_waves$wave3
 under_reporting_wave2 = these_waves$wave2
@@ -106,9 +105,10 @@ ggplot() +
 ggplot() +
   geom_line(data=incidence_log,aes(x=date,y=rolling_average),na.rm=TRUE) +
   plot_standard
+#_________________________________________________
 
 
-
+### Fit!
 require(DEoptim)
 #need by next Tuesday (5 days away) (40*10*15)/60/24 ~ 4.2 days
 full_fit <- DEoptim(fn = fit_all_waves,
@@ -122,6 +122,9 @@ full_fit <- DEoptim(fn = fit_all_waves,
                                    itermax = 10,
                                    storepopfrom = 1)) 
 save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+load(file = "1_inputs/fit/full_fitFJI2023-04-09.Rdata")
+#_________________________________________________
+
 
 ### Explore fit
 summary(full_fit)
@@ -129,9 +132,54 @@ plot(full_fit, plot.type = "bestvalit")
 #plot(full_fit, plot.type ="bestmemit")
 plot(full_fit, plot.type ="storepop")
 to_plot = as.data.frame(full_fit$member$pop)
-colnames(to_plot) <- c('seed_date','under_reporting','beta_modifier')
-ggplot(to_plot) + geom_histogram(aes(x=seed_date),bins=10)
-ggplot(to_plot) + geom_histogram(aes(x=under_reporting),bins=10)
-ggplot(to_plot) + geom_histogram(aes(x=beta_modifier),bins=10)
-ggplot(to_plot) + geom_point(aes(x=beta_modifier,y=under_reporting))
+colnames(to_plot) <- c('beta1','beta2','beta3','seedDate1','seedDate2','seedDate3')
+ggplot(to_plot) + geom_histogram(aes(x=beta1),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=beta2),bins=10)
+ggplot(to_plot) + geom_histogram(aes(x=beta3),bins=10)
+ggplot(to_plot) + geom_point(aes(x=beta1,y=seedDate1))
+ggplot(to_plot) + geom_point(aes(x=beta2,y=seedDate2))
+ggplot(to_plot) + geom_point(aes(x=beta3,y=seedDate3))
 #_________________________________________________
+
+
+### Save fitted result
+par = full_fit$optim$bestmem
+
+#<run inside of f(x)>
+
+incidence_log = incidence_log %>% select(date,daily_cases)
+
+fitted_results = list(
+  FR_parameters = parameters,
+  FR_next_state = next_state,
+  FR_incidence_log_tidy = incidence_log_tidy,
+  FR_incidence_log = incidence_log,
+  FR_covid19_waves = covid19_waves,
+  FR_fitting_beta = fitting_beta
+)
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
+#_________________________________________________
+
+
+### Save fitted result for pregnant women
+par = full_fit$optim$bestmem
+risk_group_name = 'pregnant_women'
+RR_estimate =  2.4
+
+#<run inside of f(x)>
+
+incidence_log = incidence_log %>% select(date,daily_cases)
+
+fitted_results = list(
+  FR_parameters = parameters,
+  FR_next_state = next_state,
+  FR_incidence_log_tidy = incidence_log_tidy,
+  FR_incidence_log = incidence_log,
+  FR_covid19_waves = covid19_waves,
+  FR_fitting_beta = fitting_beta
+)
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
+#_________________________________________________
+
+
+
