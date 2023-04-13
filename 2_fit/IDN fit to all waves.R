@@ -92,7 +92,7 @@ full_fit <- DEoptim(fn = fit_all_waves,
                     lower = c(2,2,
                               0,45
                     ),
-                    upper = c(4,4,
+                    upper = c(4,6,
                               45,75
                     ),
                     control = list(NP = 20,

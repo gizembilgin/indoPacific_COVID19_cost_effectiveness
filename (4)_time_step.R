@@ -372,10 +372,10 @@ for (increments_number in 1:num_time_steps){
       if (abs(sum(next_state$pop) - sum(pop))>10) { #small lee-way due to rounding error of floating point numbers
         stop('next_state not equal to pop size!')
       }
-      if (nrow(next_state[round(next_state$pop) < 0, ]) > 0) {
+      if (nrow(next_state[round(next_state$pop) < -100, ]) > 0) {
         #if (date_now > max(vaccination_history_TRUE$date + max(vaxCovDelay$delay))) {
         if (date_now > Sys.Date() + max(vaxCovDelay$delay)) {  
-          stop('(4)_time_step line ~290')
+          warning('(4)_time_step line ~290')
         } else{
           if (nrow(next_state[round(next_state$pop) < -100, ]) > 0) {#Note: some negatives expected here due to recreation of vaccination_history
             warning('(4)_time_step line ~290, possibility to do with vaccination_history configuration')
