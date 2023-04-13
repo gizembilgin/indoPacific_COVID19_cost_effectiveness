@@ -29,30 +29,25 @@ workshop_WB = raw %>%
 
 ###import IMF data on GDP deflator (latest October 2022)
 #https://www.imf.org/en/Publications/SPROLLS/world-economic-outlook-databases#sort=%40imfdate%20descending
-raw <- read.csv("IMF_data.csv",header=TRUE)
+raw <- read.csv("2_inputs/IMF_data.csv",header=TRUE)
 
 workshop_IMF = raw %>%
   pivot_longer(
-    cols = 6:(ncol(raw)-1) ,
+    cols = 5:(ncol(raw)-1) ,
     names_to = 'year',
     names_prefix = "X",
     values_to = 'value'
   ) %>%
   mutate(year = as.numeric(substr(year, 1, 4))) %>%
-  select(-Estimates.Start.After,-Scale,-Units,-Country.Series.specific.Notes) %>%
-  mutate(ISO3_code = case_when(
-    Country == "Fiji" ~ "FJI",
-    Country == "Indonesia" ~ "IDN",
-    Country == "Papua New Guinea" ~ "PNG",
-    Country == "Timor-Leste" ~ "TLS"
-  ),
-  variable = case_when(
+  select(ISO,Subject.Descriptor,year,value) %>%
+  rename(ISO3_code = ISO) %>%
+  mutate(variable = case_when(
     Subject.Descriptor == "Gross domestic product, deflator" ~ "GDP_deflator",
     Subject.Descriptor == "Implied PPP conversion rate"   ~ "PPP_conversion"
   )) %>%
-  rename(variable_long = Subject.Descriptor,
-         country_name = Country) %>%
-  select(ISO3_code,country_name,year,variable_long,variable,value) %>%
+  rename(variable_long = Subject.Descriptor) %>%
+  select(ISO3_code,year,variable_long,variable,value) %>%
+  mutate(value = gsub(",","",value)) %>% #4,203 -> 4203
   mutate(value = as.numeric(value))
 #_______________________________________________________________________________
 
@@ -61,7 +56,7 @@ cost_estimates <- read.csv("cost_estimates.csv",header=TRUE)
 #_______________________________________________________________________________
 
 ###import WHO CHOICE estimates
-WHO_CHOICE <- read.csv("WHO_CHOICE_estimates.csv",header=TRUE)  %>%
+WHO_CHOICE_raw <- read.csv("WHO_CHOICE_estimates.csv",header=TRUE)  %>%
   mutate(currency_short = case_when(
     currency == "2010 internal dollars (PPP $)" ~ "PPP",
     currency == "2010 National Currency Unit (NCU)" ~ "NCU",
@@ -83,11 +78,12 @@ exchange_rates = exchange_rates %>%
   group_by(ISO3_code) %>%
   summarise(NCU_to_USD = mean(NCU_to_USD))
 TLS_row = data.frame(ISO3_code = "TLS", NCU_to_USD = 1)
+exchange_rates$NCU_to_USD[exchange_rates$ISO3_code == "IDN"] = 1/exchange_rates$NCU_to_USD[exchange_rates$ISO3_code == "IDN"]
 exchange_rates = rbind(exchange_rates,TLS_row)
 
 ###propagate uncertainty in WHO CHOICE estimates
 #uncertainty provided only for PPP, let's propagate proportionally to NCU and USD
-workshop = WHO_CHOICE %>%
+workshop = WHO_CHOICE_raw %>%
   filter(currency_short == "PPP") %>%
   select(-currency,-currency_short) %>%
   pivot_longer(cols = c("mean_value_from_sample",     "UB",    "LB",    "SD"),
@@ -96,7 +92,7 @@ workshop = WHO_CHOICE %>%
   mutate(proportion = value/model_prediction) %>%
   select(-model_prediction,-value)
 
-workshop = WHO_CHOICE  %>%
+workshop = WHO_CHOICE_raw  %>%
   pivot_longer(cols = c("mean_value_from_sample",     "UB",    "LB",    "SD"),
                names_to = "statistic",
                values_to = "value") %>%
@@ -132,7 +128,7 @@ workshop_TLS$currency = "2010 USD"
 workshop_TLS$currency_short = "USD"
 workshop = rbind(workshop,workshop_TLS)
 
-WHO_CHOICE = workshop
+WHO_CHOICE_2010 = workshop
 #_______________________________________________________________________________
 
 
@@ -149,9 +145,11 @@ hosp_adm$estimate = hosp_adm$estimate * adj_factor
 hosp_adm$sd = hosp_adm$sd  * adj_factor
 
 #convert to USD
-adj_factor = 1/exchange_rates$NCU_to_USD[exchange_rates$ISO3_code == "IDN"] #average exchange rate over 2022 from Indonesian central bank https://www.bi.go.id/id/statistik/informasi-kurs/jisdor/Default.aspx
+adj_factor = exchange_rates$NCU_to_USD[exchange_rates$ISO3_code == "IDN"] #average exchange rate over 2022 from Indonesian central bank https://www.bi.go.id/id/statistik/informasi-kurs/jisdor/Default.aspx
 hosp_adm$estimate = hosp_adm$estimate * adj_factor
 hosp_adm$sd = hosp_adm$sd  * adj_factor
+hosp_adm$currency = "USD"
+hosp_adm$year = "2022"
 #_______________________________________________________________________________
 
 
@@ -165,7 +163,7 @@ adj_factor = workshop_IMF %>%
   mutate(adj = year_2022/year_2010) %>%
   select(ISO3_code,adj)
 
-workshop = WHO_CHOICE %>%
+workshop_NCU = WHO_CHOICE_2010 %>%
   filter(currency_short == "NCU") %>%
   left_join(adj_factor,by= "ISO3_code")  %>%
   pivot_longer(cols = c("model_prediction", "mean_value_from_sample",     "UB",    "LB",    "SD"),
@@ -174,11 +172,44 @@ workshop = WHO_CHOICE %>%
   mutate(value = value * adj) %>%
   select(-currency,-adj)
 
-#adj to USD in 2022
-workshop = workshop %>%
+#adj to NCU to USD in 2022
+workshop_USD = workshop_NCU %>%
   left_join(exchange_rates, by = 'ISO3_code') %>%
-  mutate(value = value / NCU_to_USD) %>%
-  select(-currency_short,-NCU_to_USD)
+  mutate(value = value * NCU_to_USD)  %>%
+  mutate(currency_short = "USD")%>%
+  select(-NCU_to_USD)
 
+#adj to NCU to PPP in 2022
+workshop_PPP = workshop_IMF %>%
+  filter(variable == "PPP_conversion" & year == 2022) %>%
+  rename(PPP_conversion = value) %>%
+  left_join(workshop_NCU, by = "ISO3_code") %>%
+  mutate(value = value * 1/PPP_conversion)  %>%
+  mutate(currency_short = "PPP") %>%
+  select(-PPP_conversion, -variable_long,-variable,-year)
+
+WHO_CHOICE_2022 = rbind(workshop_USD,workshop_PPP,workshop_NCU)
+
+to_plot = WHO_CHOICE_2022 %>%
+  mutate(label = paste(patient_type,care_setting,sep="-")) %>%
+  filter(statistic == "model_prediction" &
+           currency_short == "USD")
+ggplot(to_plot) + geom_col(aes(x=ISO3_code,y=value,fill=as.factor(label)),position="dodge")
+
+# to_plot = WHO_CHOICE_2022 %>%
+#   mutate(label = paste(patient_type,care_setting,sep="-")) %>%
+#   filter(statistic == "model_prediction" &
+#            currency_short == "PPP")
+# ggplot(to_plot) + geom_col(aes(x=ISO3_code,y=value,fill=as.factor(label)),position="dodge")
+# 
+# to_plot = WHO_CHOICE_2010 %>%
+#   mutate(label = paste(patient_type,care_setting,sep="-")) %>%
+#   filter(currency_short == "USD")
+# ggplot(to_plot) + geom_col(aes(x=ISO3_code,y=model_prediction,fill=as.factor(label)),position="dodge")
+# 
+# to_plot = WHO_CHOICE_2010 %>%
+#   mutate(label = paste(patient_type,care_setting,sep="-")) %>%
+#   filter(currency_short == "PPP")
+# ggplot(to_plot) + geom_col(aes(x=ISO3_code,y=model_prediction,fill=as.factor(label)),position="dodge")
 #_______________________________________________________________________________
 

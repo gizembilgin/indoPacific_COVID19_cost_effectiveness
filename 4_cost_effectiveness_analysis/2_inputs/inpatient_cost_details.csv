@@ -1,0 +1,11 @@
+variable,category,percentage
+care_setting,Primary hospital ,0.5278
+care_setting,Secondary hospital ,0.4099
+care_setting,Tertiary hospital,0.0623
+expense_category,medical procedures,0.094328526
+expense_category,healthcare workers fee,0.157194054
+expense_category,tests & examinations,0.12832567
+expense_category,accomodations,0.246604472
+expense_category,medical devices,0.088924323
+expense_category,consumables,0.092267852
+expense_category,drugs,0.192355103
