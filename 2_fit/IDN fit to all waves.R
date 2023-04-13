@@ -13,78 +13,64 @@ fit_all_waves <- function(par){
   date_start = covid19_waves$date[1] - 2
   model_weeks = as.numeric((fit_cutoff_dates[2] - date_start)/7)
   
-  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
-  
+  source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE) #20 minutes
   
   #quick search under reporting
-  search_interval = 10
-  search_list = seq(20,120,by=search_interval)
-  
+  increments_list = c(100,50,10,5,1,0.25)
   underreporting_tracker = data.frame()
-  for(under_reporting_wave1 in search_list){
-    for (under_reporting_wave2 in search_list){
-        
+  
+  for (repeat_through in 1:length(increments_list)){
+    
+    increment = increments_list[repeat_through]
+    
+    if (repeat_through == 1){
+      search_list1 = search_list2 = seq(50,1000,by=increments_list[repeat_through])
+    } else{
+      best_so_far = underreporting_tracker[underreporting_tracker$fit== min(underreporting_tracker$fit, na.rm=TRUE),]
+      best_so_far = unique(best_so_far)
+      
+      if (nrow(best_so_far)>1){ #pick best_so_far with min under reporting
+        best_so_far = best_so_far %>% mutate(under_reporting_mean = (wave1+wave2)/3)
+        best_so_far = best_so_far[best_so_far$under_reporting_mean == min(best_so_far$under_reporting_mean),]
+      }
+      
+      search_list1 = seq(best_so_far$wave1 - increments_list[repeat_through-1],
+                         best_so_far$wave1 + increments_list[repeat_through-1],
+                         by = increments_list[repeat_through])
+      search_list2 = seq(best_so_far$wave2 - increments_list[repeat_through-1],
+                         best_so_far$wave2 + increments_list[repeat_through-1],
+                         by = increments_list[repeat_through])
+    }
+    
+    for(under_reporting_wave1 in search_list1){
+      for (under_reporting_wave2 in search_list2){
+          
         workshop = case_history %>%
           select(date,rolling_average) %>%
           rename(reported_cases = rolling_average) %>%
           right_join(incidence_log, by = "date") %>%
           left_join(omicron_shift, by = "date") %>%
           rename(omicron = percentage) %>%
-          # mutate(
-          #   rolling_average = case_when(
-          #     date>= min(omicron_shift$date) & is.na(omicron) == FALSE ~ rolling_average * (1/under_reporting_wave2*omicron + 1/under_reporting_wave1*(1-omicron)),
-          #     date>= min(omicron_shift$date) ~ rolling_average * 1/under_reporting_wave2,
-          #     date < fit_cutoff_dates[1] ~ rolling_average * 1/under_reporting_wave1)) %>%
-          mutate(
-            rolling_average = case_when(
-              date>= min(omicron_shift$date) & is.na(omicron) == FALSE ~ rolling_average * (1/under_reporting_wave2*omicron + 1/under_reporting_wave1*(1-omicron)),
-              date>= min(omicron_shift$date) ~ rolling_average * 1/under_reporting_wave2,
-              date < min(omicron_shift$date) ~ rolling_average * 1/under_reporting_wave1)) %>%
-          mutate(fit_statistic = abs(rolling_average - reported_cases)^2)
-        
-        fit_statistic = data.frame(
-          fit = sum(workshop$fit_statistic,na.rm=TRUE),
-          wave1 = under_reporting_wave1,
-          wave2 = under_reporting_wave2)
-        
-        underreporting_tracker = rbind(underreporting_tracker,fit_statistic)
+          mutate(rolling_average = case_when(
+            date >= min(omicron_shift$date[omicron_shift$wave == 1])  & is.na(omicron) == FALSE ~ rolling_average * (1/under_reporting_wave2*omicron + 1/under_reporting_wave1*(1-omicron)),
+            date >= min(omicron_shift$date[omicron_shift$wave == 1])  ~ rolling_average * 1/under_reporting_wave2,
+            
+            date < min(omicron_shift$date[omicron_shift$wave == 1]) ~ rolling_average * 1/under_reporting_wave1)) %>%
+          mutate(fit_statistic = abs(rolling_average - reported_cases)^2) 
+          
+          fit_statistic = data.frame(
+            fit = sum(workshop$fit_statistic,
+                      na.rm=TRUE),
+            wave1 = under_reporting_wave1,
+            wave2 = under_reporting_wave2)
+          
+          underreporting_tracker = rbind(underreporting_tracker,fit_statistic)
+      }
     }
+    
   }
-  
-  #detailed search under reporting
-  best_so_far = underreporting_tracker[underreporting_tracker$fit == min(underreporting_tracker$fit, na.rm=TRUE),]
-  for(under_reporting_wave1 in seq(best_so_far$wave1 -search_interval,best_so_far$wave1 + search_interval)){
-    for(under_reporting_wave2 in seq(best_so_far$wave2 -search_interval,best_so_far$wave2 + search_interval)){
-            
-            workshop = case_history %>%
-              select(date,rolling_average) %>%
-              rename(reported_cases = rolling_average) %>%
-              right_join(incidence_log, by = "date") %>%
-              left_join(omicron_shift, by = "date") %>%
-              rename(omicron = percentage) %>%
-              # mutate(
-              #   rolling_average = case_when(
-              #     date>= min(omicron_shift$date) & is.na(omicron) == FALSE ~ rolling_average * (1/under_reporting_wave2*omicron + 1/under_reporting_wave1*(1-omicron)),
-              #     date>= min(omicron_shift$date) ~ rolling_average * 1/under_reporting_wave2,
-              #     date < fit_cutoff_dates[1] ~ rolling_average * 1/under_reporting_wave1)) %>%
-              mutate(
-                rolling_average = case_when(
-                  date>= min(omicron_shift$date) & is.na(omicron) == FALSE ~ rolling_average * (1/under_reporting_wave2*omicron + 1/under_reporting_wave1*(1-omicron)),
-                  date>= min(omicron_shift$date) ~ rolling_average * 1/under_reporting_wave2,
-                  date < min(omicron_shift$date) ~ rolling_average * 1/under_reporting_wave1)) %>%
-              mutate(fit_statistic = abs(rolling_average - reported_cases)^2)
-            
-            fit_statistic = data.frame(
-              fit = sum(workshop$fit_statistic,na.rm=TRUE),
-              wave1 = under_reporting_wave1,
-              wave2 = under_reporting_wave2)
-            
-            underreporting_tracker = rbind(underreporting_tracker,fit_statistic)
-    }
-  }
-  
-  fit_statistic = min(underreporting_tracker$fit, 
-                      na.rm=TRUE)
+
+  fit_statistic = min(underreporting_tracker$fit,na.rm=TRUE)
   
   return(fit_statistic)
 }
@@ -96,19 +82,21 @@ ggplot() +
   geom_line(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=workshop,aes(x=date,y=reported_cases)) +
   plot_standard
+ggplot() + 
+  geom_line(data=incidence_log,aes(x=date,y=rolling_average))
 
 
 require(DEoptim)
 #first round by Monday (4 days away) so roughly 100 runs
 full_fit <- DEoptim(fn = fit_all_waves,
                     lower = c(2,2,
-                              0,30
+                              0,45
                     ),
                     upper = c(4,4,
                               45,75
                     ),
-                    control = list(NP = 12,
-                                   itermax = 8,
+                    control = list(NP = 20,
+                                   itermax = 10,
                                    storepopfrom = 1)) 
 save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 

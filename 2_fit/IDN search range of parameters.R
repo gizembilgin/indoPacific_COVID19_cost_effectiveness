@@ -108,10 +108,10 @@ plot_tracker = data.frame()
 fit_tracker = data.frame()
 workshop_incidence_log_tracker = data.frame()
 
-for (this_beta1 in  c(2,2.25,2.5)){
-  for (this_shift1 in c(14,21,30)){
-    for (this_shift2 in c(30,37,45,53,60,67,75)) {
-      for (this_beta2 in c(3.5,3,2.5,2)) {
+for (this_beta1 in  seq(2,4,by = 1)){
+  for (this_shift1 in seq(0,45,by=15)){
+    for (this_shift2 in seq(30,75,by=15) ) {
+      for (this_beta2 in seq(2,6,by=1)) {
         if(nrow(plot_tracker[
                              plot_tracker$beta1 == this_beta1 &
                              plot_tracker$beta2 == this_beta2 &
@@ -129,7 +129,8 @@ for (this_beta1 in  c(2,2.25,2.5)){
           covid19_waves$date[2] = covid19_waves$date[2] + this_shift2
           
           date_start = covid19_waves$date[1] - 7
-          model_weeks = as.numeric((as.Date('2022-06-01')-date_start)/7)
+          #model_weeks = as.numeric((as.Date('2022-06-01')-date_start)/7)
+          model_weeks = as.numeric((as.Date('2023-01-01')-date_start)/7)
           
           source(paste(getwd(),"/CommandDeck.R",sep=""))
           
@@ -194,6 +195,13 @@ ggplot() +
   plot_standard + 
   labs(color = 'beta modifier')+ 
   facet_grid(shift2 ~ .) 
+
+ggplot() +
+  geom_line(data=workshop_incidence_log_tracker,aes(x=date,y=rolling_average,color=as.factor(beta2)),na.rm=TRUE) +
+  plot_standard + 
+  labs(color = 'beta modifier')+ 
+  facet_grid(shift2 ~ .) 
+
 save(plot_tracker, file = paste('1_inputs/fit/IDN_second_wave_search.Rdata',sep=''))
 #load(file = paste('1_inputs/fit/IDN_second_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
@@ -303,6 +311,7 @@ ggplot() +
   facet_grid(shift ~. )
 
 ggplot(incidence_log) + geom_line(aes(x=date,y=rolling_average))
-
+#DECISION 04/04/2023 with Katie: we don't believe that the wavelets are genuine waves!
 #_______________________________________________________________________________
+
 

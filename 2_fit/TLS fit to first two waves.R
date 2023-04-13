@@ -31,7 +31,7 @@ fit_all_waves <- function(par){
       best_so_far = underreporting_tracker[underreporting_tracker$fit== min(underreporting_tracker$fit, na.rm=TRUE),]
       best_so_far = unique(best_so_far)
       if (nrow(best_so_far)>1){ #pick best_so_far with min under reporting
-        best_so_far = best_so_far %>% mutate(under_reporting_mean = (wave1+wave2)/2)
+        best_so_far = best_so_far %>% mutate(under_reporting_mean = (wave1+wave2)/3)
         best_so_far = best_so_far[best_so_far$under_reporting_mean == min(best_so_far$under_reporting_mean),]
       }
       
