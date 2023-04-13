@@ -1,8 +1,9 @@
 library(RColorBrewer)
 options(scipen = 1000)
 
+plot_name = "figure_S3_2_1" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_3","figure_S3_2_1"
+plot_list = list()
 
-plot_name = "figure_2" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_3","figure_S3_2_1"
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
 LIST_outcomes = list('hosp', 'death')
 LIST_results = list("doses_per_outcome_averted","percentage" )
