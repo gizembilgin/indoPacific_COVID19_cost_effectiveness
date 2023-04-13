@@ -1,7 +1,7 @@
 library(RColorBrewer)
 options(scipen = 1000)
 
-plot_name = "figure_S3_2_1" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_3","figure_S3_2_1"
+plot_name = "figure_2" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_3","figure_S3_2_1"
 plot_list = list()
 
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
@@ -11,8 +11,11 @@ TOGGLE_print = "on"
 TOGGLE_antiviral_type = "nirmatrelvir_ritonavir"
 
 risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
-settings_to_plot = c("PNG_high_beta","PNG_low_beta")
+#risk_groups_to_plot = "adults_with_comorbidities"
+
+#settings_to_plot = c("PNG_high_beta","PNG_low_beta")
 settings_to_plot = c("FJI","PNG_low_beta")
+#settings_to_plot = c("FJI")
 
 
 if (plot_name ==  "figure_S3_2_3"){
@@ -34,16 +37,16 @@ for (r in 1:length(risk_groups_to_plot)){
   for (i in 1:length(settings_to_plot)){
     this_setting = settings_to_plot[i]
     
-    list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
+    list_poss_Rdata = list.files(path=paste("x_results/",sep=''),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
     if (length(list_poss_Rdata)>0){
       list_poss_Rdata_details = double()
       for (j in 1:length(list_poss_Rdata)){
         list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                        file.info(paste(rootpath,'x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
+                                        file.info(paste('x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
       }
       latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-      load(file = paste(rootpath,"x_results/",latest_file,sep=''))
-      #load(file = paste(rootpath,'x_results/',"AntiviralRun_PNG_low_beta2023-02-04 11-50-47.Rdata",sep = ''))
+      load(file = paste("x_results/",latest_file,sep=''))
+      #load(file = paste('x_results/',"AntiviralRun_PNG_low_beta2023-02-04 11-50-47.Rdata",sep = ''))
       
       if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
       
@@ -344,7 +347,7 @@ if (plot_name %in% c("figure_2",
       }
       
       if(this_result == "percentage"){
-      plot_list[[a]]  = plot_list[[a]]  + xlab('outcomes averted (%)') +xlim(0,max(workshop$UQ[workshop$outcome == this_outcome])) 
+      plot_list[[a]]  = plot_list[[a]]  + xlab('outcomes averted (%)') +xlim(0,max(workshop$UQ[workshop$outcome %in% LIST_outcomes])) 
       
       workshop = workshop %>% 
         ungroup()%>%
