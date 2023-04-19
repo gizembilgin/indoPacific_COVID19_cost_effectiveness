@@ -387,8 +387,8 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               generic_booster_toggles = RECORD_generic_booster_toggles)
 
 
-save.image(file = paste("x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
-save(RECORD_antiviral_setup, file = paste("x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
