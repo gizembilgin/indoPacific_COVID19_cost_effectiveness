@@ -59,7 +59,7 @@ time.start.AntiviralSimulations=proc.time()[[3]]
     setting = setting,
     
     toggle_number_of_runs = 100, #DEFAULT 100
-    toggle_cluster_number = 4,
+    toggle_cluster_number = 3,
     
     toggle_stochastic_SO = "off", # DEFAULT "on"
     toggle_compare_to_vaccine_effect = "on",

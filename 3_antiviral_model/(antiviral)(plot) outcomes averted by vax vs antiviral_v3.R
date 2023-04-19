@@ -14,7 +14,7 @@ risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
 #risk_groups_to_plot = "adults_with_comorbidities"
 
 #settings_to_plot = c("PNG_high_beta","PNG_low_beta")
-settings_to_plot = c("FJI","PNG_low_beta")
+settings_to_plot = c("FJI","PNG_low_beta","TLS")
 #settings_to_plot = c("FJI")
 
 

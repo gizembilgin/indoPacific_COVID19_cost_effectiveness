@@ -37,10 +37,6 @@ date_start = as.Date('2022-12-31')
 strain_inital = strain_now = 'omicron' 
 outbreak_timing = "off" #roll-out during steady state
 model_weeks = as.numeric((as.Date('2024-01-01') - date_start)/7) #ensure model runs for entire 2023
-if (this_setting == "TLS"){
-  additional_seed_date = data.frame(date = as.Date('2023-01-01'),
-                                    strain = 'omicron')
-}
 
 #turn on waning of all immunity
 waning_toggle_acqusition = TRUE
