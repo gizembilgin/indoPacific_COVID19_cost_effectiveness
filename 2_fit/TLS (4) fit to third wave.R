@@ -1,4 +1,4 @@
-###load fit of first two waves
+### load fit of first two waves
 list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("TLS_rough_fit*",sep=""))
 list_poss_Rdata_details = double()
 for (i in 1:length(list_poss_Rdata)){
@@ -8,12 +8,16 @@ for (i in 1:length(list_poss_Rdata)){
 latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
 load(file = paste("1_inputs/fit/",latest_file,sep=''))
 firstSecondWaveFit = rough_fit
+#______________________________
 
-fit_third_wave <- function(par){
+
+
+### define fitting function
+fit_thirdWave <- function(par){
   
   fitting = "wave_three"
   date_start = baseline_covid19_waves$date[3]-1
-  model_weeks = as.numeric(as.Date('2022-04-01') - date_start)/7
+  model_weeks = 26
   
   strain_inital = strain_now = 'delta' 
   TOGGLE_delta_truncation_factor = firstSecondWaveFit$optim$bestmem[1]
@@ -28,8 +32,7 @@ fit_third_wave <- function(par){
   
   source(paste(getwd(), "/CommandDeck.R", sep = ""),local=TRUE) #5 minutes
 
-  omicron_effect_date = omicron_shift$date[omicron_shift$date == min(omicron_shift$date[omicron_shift$percentage>0.25])]
-    
+     
   #quick search under reporting
   increments_list = c(100,50,10,5,1,0.25)
   underreporting_tracker = data.frame()
@@ -61,8 +64,6 @@ fit_third_wave <- function(par){
           mutate( rolling_average =  rolling_average * 1/under_reporting_wave3) %>%
           filter(date >= as.Date('2021-12-31') &
                    date <= as.Date('2022-04-01')) %>%
-          # filter(date >= omicron_effect_date &
-          #          date <= omicron_effect_date + 60) %>%
          mutate(fit_statistic = abs(rolling_average - reported_cases)^2)
         
         fit_statistic = data.frame(
@@ -79,9 +80,9 @@ fit_third_wave <- function(par){
   return(fit_statistic)
 }
 
-#plot to check function
+# plot to check function
 best_fit = underreporting_tracker[underreporting_tracker$fit == min(underreporting_tracker$fit),]
-under_reporting_wave3 = best_fit$wave3
+under_reporting_wave3 = unique(best_fit$wave3)
 
 ggplot() +
   geom_line(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) +
@@ -89,18 +90,22 @@ ggplot() +
   plot_standard 
 ggplot() +
   geom_line(data=incidence_log,aes(x=date,y=rolling_average),na.rm=TRUE)
-#____________________
+#__________________________
 
 
+
+### fit!
 require(DEoptim)
-#Run until next Monday ~ 3 days ~ 150 runs
-thirdWaveFit <- DEoptim(fn = fit_third_wave,
+thirdWaveFit <- DEoptim(fn = fit_thirdWave,
                      lower = c(0.5,30),
                      upper = c(2,75),
                      control = list(NP = 20,
                                     itermax = 10,
                                     storepopfrom = 1)) 
 save(thirdWaveFit, file = paste('1_inputs/fit/TLS_thirdWave',Sys.Date(),'.Rdata',sep=''))
+#__________________________
+
+
 
 ### Explore fit
 summary(thirdWaveFit)
@@ -112,12 +117,15 @@ colnames(to_plot) <- c('beta3','shift3')
 ggplot(to_plot) + geom_histogram(aes(x=beta3),bins=10)
 ggplot(to_plot) + geom_histogram(aes(x=shift3),bins=10)
 ggplot(to_plot) + geom_point(aes(x=beta3,y=shift3))
-#_________________________________________________
+#__________________________
 
 
-### Save rough fit for search of third wave
+### Save fitted result
+model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
 par = thirdWaveFit$optim$bestmem
-#model_weeks = as.numeric((covid19_waves$date[3]  - date_start)/7)
+
+#<run inside of f(x)>
+
 incidence_log = incidence_log %>% select(date,daily_cases)
 
 fitted_results = list(
@@ -126,8 +134,87 @@ fitted_results = list(
   FR_incidence_log_tidy = incidence_log_tidy,
   FR_incidence_log = incidence_log,
   FR_covid19_waves = covid19_waves,
-  FR_fitting_beta = fitting_beta,
-  FR_prev_beta = prev_beta,
-  FR_this_beta = this_beta
+  FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=""))
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
+
+
+workshop = case_history %>%
+  select(date,rolling_average) %>%
+  rename(reported_cases = rolling_average) %>%
+  right_join(incidence_log, by = "date") %>%
+  left_join(delta_shift, by = "date") %>%
+  rename(delta = percentage) %>%
+  left_join(omicron_shift, by = "date") %>%
+  rename(omicron = percentage) %>%
+  mutate(
+    rolling_average = case_when(
+      date >= min(omicron_shift$date)  & is.na(omicron) == FALSE ~ rolling_average * (1/under_reporting_wave3*omicron + 1/under_reporting_wave2*(1-omicron)),
+      date >= min(omicron_shift$date)  ~ rolling_average * 1/under_reporting_wave3,
+      date >= min(delta_shift$date)  & is.na(delta) == FALSE ~ rolling_average * (1/under_reporting_wave2*delta + 1/under_reporting_wave1*(1-delta)),
+      date >= min(delta_shift$date)  ~ rolling_average * 1/under_reporting_wave2,
+      date < min(delta_shift$date) ~ rolling_average * 1/under_reporting_wave1)) 
+ggplot() +
+  geom_line(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=workshop,aes(x=date,y=reported_cases)) +
+  plot_standard 
+#_________________________________________________
+
+
+
+### Save fitted result for pregnant women
+#NB: can't start from third wave save point as that is configured for adults_with_comorbidities
+
+fitting = "on"
+strain_inital = strain_now = 'WT' 
+risk_group_name = 'pregnant_women'; RR_estimate =  2.4
+
+TOGGLE_delta_truncation_factor = firstSecondWaveFit$optim$bestmem[1]
+fitting_beta = c(firstSecondWaveFit$optim$bestmem[2],
+                 firstSecondWaveFit$optim$bestmem[3],
+                 thirdWaveFit$optim$bestmem[1])
+
+covid19_waves = baseline_covid19_waves
+covid19_waves$date[1] = covid19_waves$date[1] + round(firstSecondWaveFit$optim$bestmem[4])
+covid19_waves$date[2] = covid19_waves$date[2] + round(firstSecondWaveFit$optim$bestmem[5])
+covid19_waves$date[3] = covid19_waves$date[3] + round(thirdWaveFit$optim$bestmem[2])
+
+date_start = covid19_waves$date[1] - 2
+model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
+
+source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE) 
+
+#<check>
+workshop = case_history %>%
+  select(date,rolling_average) %>%
+  rename(reported_cases = rolling_average) %>%
+  right_join(incidence_log, by = "date") %>%
+  left_join(delta_shift, by = "date") %>%
+  rename(delta = percentage) %>%
+  left_join(omicron_shift, by = "date") %>%
+  rename(omicron = percentage) %>%
+  mutate(
+    rolling_average = case_when(
+      date >= min(omicron_shift$date)  & is.na(omicron) == FALSE ~ rolling_average * (1/under_reporting_wave3*omicron + 1/under_reporting_wave2*(1-omicron)),
+      date >= min(omicron_shift$date)  ~ rolling_average * 1/under_reporting_wave3,
+      date >= min(delta_shift$date)  & is.na(delta) == FALSE ~ rolling_average * (1/under_reporting_wave2*delta + 1/under_reporting_wave1*(1-delta)),
+      date >= min(delta_shift$date)  ~ rolling_average * 1/under_reporting_wave2,
+      date < min(delta_shift$date) ~ rolling_average * 1/under_reporting_wave1)) 
+ggplot() +
+  geom_line(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) +
+  geom_point(data=workshop,aes(x=date,y=reported_cases)) +
+  plot_standard 
+#CHECKED: fit looks the same!
+
+incidence_log = incidence_log %>% select(date,daily_cases)
+
+fitted_results = list(
+  FR_parameters = parameters,
+  FR_next_state = next_state,
+  FR_incidence_log_tidy = incidence_log_tidy,
+  FR_incidence_log = incidence_log,
+  FR_covid19_waves = covid19_waves,
+  FR_fitting_beta = fitting_beta
+)
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
+#_________________________________________________

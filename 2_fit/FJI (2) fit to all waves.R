@@ -9,8 +9,7 @@ fit_all_waves <- function(par){
   
   fitting_beta = c(par[1],
                    par[2],
-                   par[3]
-  )
+                   par[3])
   
   covid19_waves = baseline_covid19_waves
   covid19_waves$date[1] = covid19_waves$date[1] + round(par[4])
@@ -22,8 +21,7 @@ fit_all_waves <- function(par){
   
   source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE) #15 minutes
   
-  
-  #quick search under reporting
+  # search under reporting
   increments_list = c(100,50,10,5,1,0.25)
   underreporting_tracker = data.frame()
   
@@ -84,7 +82,6 @@ fit_all_waves <- function(par){
         }
       }
     }
-    
   }
   
   fit_statistic = min(underreporting_tracker$fit, na.rm=TRUE)
@@ -100,8 +97,7 @@ under_reporting_wave1 = these_waves$wave1
 ggplot() +
   geom_line(data=workshop,aes(x=date,y=rolling_average),na.rm=TRUE) +
   geom_point(data=workshop,aes(x=date,y=reported_cases)) +
-  plot_standard #+
-  #geom_vline(xintercept=as.Date('2022-10-01'))
+  plot_standard 
 ggplot() +
   geom_line(data=incidence_log,aes(x=date,y=rolling_average),na.rm=TRUE) +
   plot_standard
@@ -110,7 +106,6 @@ ggplot() +
 
 ### Fit!
 require(DEoptim)
-#need by next Tuesday (5 days away) (40*10*15)/60/24 ~ 4.2 days
 full_fit <- DEoptim(fn = fit_all_waves,
                     lower = c(2,4,1.5,
                               -15,0,70
@@ -118,11 +113,10 @@ full_fit <- DEoptim(fn = fit_all_waves,
                     upper = c(4,6,4.5,
                               0,15,120
                     ),
-                    control = list(NP = 30, #ideally 60, possible rerun depending on how it settles
+                    control = list(NP = 30, #ideally 60, possible rerun depending on plot of bestvalit/bestmemit
                                    itermax = 10,
                                    storepopfrom = 1)) 
 save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
-load(file = "1_inputs/fit/full_fitFJI2023-04-09.Rdata")
 #_________________________________________________
 
 
@@ -163,8 +157,7 @@ save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sy
 
 ### Save fitted result for pregnant women
 par = full_fit$optim$bestmem
-risk_group_name = 'pregnant_women'
-RR_estimate =  2.4
+risk_group_name = 'pregnant_women'; RR_estimate =  2.4
 
 #<run inside of f(x)>
 
@@ -180,6 +173,3 @@ fitted_results = list(
 )
 save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
 #_________________________________________________
-
-
-

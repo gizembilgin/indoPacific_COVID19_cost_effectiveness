@@ -1,4 +1,4 @@
-fit_all_waves <- function(par){
+fit_firstTwo_waves <- function(par){
   
   fitting = "on"
   strain_inital = strain_now = 'WT' 
@@ -88,9 +88,9 @@ ggplot() +
 #____________________
 
 
+### Fit!
 require(DEoptim)
-#Run until next Monday ~ 3 days ~ 150 runs
-rough_fit <- DEoptim(fn = fit_all_waves,
+rough_fit <- DEoptim(fn = fit_firstTwo_waves,
                     lower = c(0.1,
                               2,2,
                               -14,60
@@ -103,6 +103,9 @@ rough_fit <- DEoptim(fn = fit_all_waves,
                                    itermax = 10,
                                    storepopfrom = 1)) 
 save(rough_fit, file = paste('1_inputs/fit/TLS_rough_fit',Sys.Date(),'.Rdata',sep=''))
+#____________________
+
+
 
 ### Explore fit
 summary(rough_fit)
@@ -122,7 +125,7 @@ ggplot(to_plot) + geom_point(aes(x=beta2,y=delta_trunc))
 #_________________________________________________
 
 
-### Save rough fit for search of third wave
+### Save fit for search of third wave
 par = rough_fit$optim$bestmem
 #model_weeks = as.numeric((covid19_waves$date[3]  - date_start)/7)
 incidence_log = incidence_log %>% select(date,daily_cases)
@@ -138,3 +141,4 @@ fitted_results = list(
   FR_this_beta = this_beta
 )
 save(fitted_results, file = paste("1_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=""))
+#____________________

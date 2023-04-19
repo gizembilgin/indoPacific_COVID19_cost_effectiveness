@@ -11,13 +11,11 @@ plot_2 = ggplot() +
 grid.arrange(plot_1,plot_2)
 
 
-#including wave 3 and 4
+#including wavelets in 2022
 plot_1 = ggplot() + 
   geom_line(data = NPI_estimates[NPI_estimates$date>as.Date('2021-04-16') ,], aes(x=date,y=(100-NPI))) 
 
-#plot_2 = 
-  
-ggplot() +
+plot_2 = ggplot() +
   geom_point(data=case_history[case_history$date>as.Date('2021-04-16'),],aes(x=date,y=rolling_average)) +
   geom_vline(xintercept = covid19_waves$date[1],linetype = "dashed") +
   geom_vline(xintercept = covid19_waves$date[2],linetype = "dashed")  +
@@ -27,11 +25,7 @@ ggplot() +
   geom_vline(xintercept = as.Date('2022-09-01'),linetype = "dashed") +
   geom_vline(xintercept = as.Date('2022-09-01')+45,linetype = "dashed")
   
-
 grid.arrange(plot_1,plot_2)
-
-#beta_fitted_values
-#Reff in April 2021 is 0.813 for delta with fitting_beta = 3, but will get higher as rho diminishes
 #_______________________________________________________________________________
 
 
@@ -136,8 +130,7 @@ for (this_beta1 in  seq(2,4,by = 1)){
           
           workshop = case_history %>%
             select(date,rolling_average) %>%
-            mutate(#under_reporting_est = coeff1 + coeff2*as.numeric(date - date_start), #linear
-              rolling_average =  rolling_average * under_reporting_est) %>%
+            mutate(rolling_average =  rolling_average * under_reporting_est) %>%
             rename(adjusted_reported = rolling_average) %>%
             left_join(incidence_log, by = "date") %>%
             mutate(fit_statistic = abs(rolling_average - adjusted_reported)^2 ,
@@ -146,8 +139,7 @@ for (this_beta1 in  seq(2,4,by = 1)){
                    shift1 = this_shift1,
                    shift2 = this_shift2)
           
-          fit_statistic = data.frame(fit = sum(workshop$fit_statistic, #fit only after first wave
-                                               na.rm=TRUE),
+          fit_statistic = data.frame(fit = sum(workshop$fit_statistic, na.rm=TRUE),
                                      beta1 = this_beta1,
                                      beta2 = this_beta2,
                                      shift1 = this_shift1,
@@ -180,7 +172,6 @@ beta_tracker = plot_tracker %>%
            #shift2 %in% c(60) 
            ) 
 
-
 under_reporting_est_w1 = 50
 under_reporting_est_w2 = 100
 reported_cases_plot = case_history[case_history$date<=max(beta_tracker$date[is.na(beta_tracker$rolling_average)==FALSE]) & case_history$date>=covid19_waves$date[1]-14,] %>%
@@ -203,9 +194,7 @@ ggplot() +
   facet_grid(shift2 ~ .) 
 
 save(plot_tracker, file = paste('1_inputs/fit/IDN_second_wave_search.Rdata',sep=''))
-#load(file = paste('1_inputs/fit/IDN_second_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
-
 
 
 
@@ -252,7 +241,6 @@ under_reporting_est_w3 = 800
 
 third_wave_range = data.frame()
 
-#TOGGLE_omicron_truncation_factor?
 for (this_beta_mod in seq(2,4, by = 1)) {
   for (this_shift in seq(15, 60, by = 15)) {
     if (nrow(third_wave_range[
@@ -293,8 +281,6 @@ for (this_beta_mod in seq(2,4, by = 1)) {
     }
   }
 }
-#31/03/2023 8.4 minute run time
-beep()
 
 to_plot = third_wave_range %>% 
   #filter(beta_mod %in% c(1.5,2,2.5,3,3.5)) %>%

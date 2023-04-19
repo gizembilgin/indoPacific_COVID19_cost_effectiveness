@@ -7,6 +7,7 @@ model_weeks = as.numeric(ceiling((as.Date('2022-12-31') - date_start)/7))
 prev_fitted_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-06-06'),as.Date('2021-10-04'),as.Date('2022-02-01')),
                            strain = c('delta','omicron','omicron'))
 
+# previous fit where NPI parameter was ill configured as NPI instead of (1-NPI)
 fitting_beta= c(0.93,1.04,1.22)
 under_reporting_est = c(16.9,60,166.5)
 
@@ -17,7 +18,6 @@ fitting_beta = fitting_beta * NPI_adj
 baseline_fitting_beta = fitting_beta
 
 source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
-beep()
 
 workshop = case_history %>%
   select(date,rolling_average) %>%
@@ -31,7 +31,7 @@ workshop = case_history %>%
         rolling_average * (1/under_reporting_est[3]*omicron + 1/under_reporting_est[2]*(1-omicron)),
       date>= min(omicron_shift$date[omicron_shift$wave == 2]) ~ 
         rolling_average * 1/under_reporting_est[3],
-      
+  
       date >= min(omicron_shift$date[omicron_shift$wave == 1]) & date < min(omicron_shift$date[omicron_shift$wave == 2]) & is.na(omicron) == FALSE ~ 
         rolling_average * (1/under_reporting_est[2]*omicron + 1/under_reporting_est[1]*(1-omicron)),
       date >= min(omicron_shift$date[omicron_shift$wave == 1]) & date < min(omicron_shift$date[omicron_shift$wave == 2])  ~ 
@@ -39,7 +39,6 @@ workshop = case_history %>%
       
       date < min(omicron_shift$date[omicron_shift$wave == 1]) ~ rolling_average * 1/under_reporting_est[1])) %>%
   mutate(fit_statistic = abs(rolling_average - reported_cases)^2)
-
 
 prev_fit = to_plot = workshop %>% filter(date>date_start)
 ggplot() +
@@ -89,15 +88,12 @@ for (search_this_wave in 1:length(fitting_beta)){
     fitting_beta_range_plot = rbind(fitting_beta_range_plot,workshop)
   }
 }
-beep()
 
 to_plot = fitting_beta_range_plot %>% filter(date>date_start)
-
 for (this_wave in unique(to_plot$wave)){
   workshop = prev_fit %>%
     mutate(wave = this_wave,
            adj = 1)
-  
   to_plot = rbind(workshop,to_plot)
 }
   

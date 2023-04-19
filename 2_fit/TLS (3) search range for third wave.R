@@ -26,9 +26,8 @@ for (this_shift3 in seq(30,60,by=15)) {
       fitting = "wave_three"
       
       date_start = baseline_covid19_waves$date[3]-1
-      #model_weeks = as.numeric((as.Date('2023-01-01') - date_start)/7)
-      model_weeks = as.numeric((as.Date('2024-01-01') - date_start)/7)
-      
+      model_weeks = as.numeric((as.Date('2023-01-01') - date_start)/7)
+      #model_weeks = as.numeric((as.Date('2024-01-01') - date_start)/7)
       
       strain_inital = strain_now = 'delta' 
       
@@ -41,7 +40,6 @@ for (this_shift3 in seq(30,60,by=15)) {
       covid19_waves$date[1] = covid19_waves$date[1] + round(rough_fit$optim$bestmem[4])
       covid19_waves$date[2] = covid19_waves$date[2] + round(rough_fit$optim$bestmem[5])
       covid19_waves$date[3] = covid19_waves$date[3] + this_shift3
-      
       
       source(paste(getwd(), "/CommandDeck.R", sep = "")) #10 minutes
       
@@ -78,78 +76,8 @@ ggplot() +
   facet_grid(shift3 ~. )  +
   geom_vline(xintercept = baseline_covid19_waves$date[3] + ceiling(365/2))
 beep()
-#save(third_wave_tracker, file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
-#load(file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
+save(third_wave_tracker, file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
-
-
-
-
-### Let's have another look at beta2! ##############################################
-middle_search = data.frame()
-
-for (this_beta3 in seq(1,6)) {
-  for (this_beta2 in seq(2,6)) {
-      
-      if (nrow(middle_search[middle_search$beta2 == this_beta2 &
-                             middle_search$beta3 == this_beta3, ]) > 0) {
-        #skip
-      } else{
-        
-        fitting = "on"
-  
-        strain_inital = strain_now = 'WT' 
-        
-        TOGGLE_delta_truncation_factor = rough_fit$optim$bestmem[1]
-        
-        fitting_beta = c(rough_fit$optim$bestmem[2],
-                         this_beta2,
-                         this_beta3)
-        
-        covid19_waves = baseline_covid19_waves
-        covid19_waves$date[1] = covid19_waves$date[1] + round(rough_fit$optim$bestmem[4])
-        covid19_waves$date[2] = covid19_waves$date[2] + round(rough_fit$optim$bestmem[5])
-        covid19_waves$date[3] = covid19_waves$date[3] + 60
-        
-        date_start = covid19_waves$date[1] - 2
-        model_weeks = as.numeric((as.Date('2022-04-01') - date_start)/7) 
-      
-  
-        
-        source(paste(getwd(), "/CommandDeck.R", sep = "")) #10 minutes
-        
-        workshop = case_history %>%
-          select(date, rolling_average) %>%
-          mutate(rolling_average  = case_when(
-            date<as.Date('2021-08-01') ~ rolling_average * under_reporting_wave1,
-            TRUE ~ rolling_average * under_reporting_wave2
-          )) %>%
-          rename(adjusted_reported = rolling_average) %>%
-          left_join(incidence_log, by = "date") %>%
-          mutate(
-            fit_statistic = abs(rolling_average - adjusted_reported) ^ 2 ,
-            beta2 = this_beta2,
-            beta3 = this_beta3
-          )
-        
-        middle_search = rbind(middle_search, workshop)
-    }
-  }
-}
-
-to_plot = middle_search %>%
-  filter(
-           date> baseline_covid19_waves$date[1] &
-             date<max(middle_search$date[is.na(middle_search$rolling_average)==FALSE],na.rm=TRUE))
-ggplot() +
-  geom_line(data=to_plot,aes(x=date,y=rolling_average,color=as.factor(beta2)),na.rm=TRUE) +
-  geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
-  plot_standard +
-  facet_grid(beta3 ~.)
-#save(third_wave_tracker, file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
-#load(file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
-#_______________________________________________________________________________
-
 
 
 

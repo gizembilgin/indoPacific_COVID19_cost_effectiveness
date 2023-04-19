@@ -77,9 +77,8 @@ ggplot() +
   labs(color = 'beta1') + 
   facet_grid(shift1 ~. )
 
-#save(first_wave_search, file = paste('1_inputs/fit/TLS_first_wave_search.Rdata',sep=''))
+save(first_wave_search, file = paste('1_inputs/fit/TLS_first_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
-
 
 
 
@@ -109,8 +108,6 @@ for (this_shift1 in c(-15,-7,0)) {
             covid19_waves$date[2] = covid19_waves$date[2] + this_shift2
             date_start = covid19_waves$date[1] - 2
             model_weeks = as.numeric((covid19_waves$date[3] - date_start)/7)
-            
-            #covid19_waves = covid19_waves[1,]
             
             source(paste(getwd(), "/CommandDeck.R", sep = ""))
             
@@ -184,10 +181,8 @@ ggplot() +
   facet_grid(shift2 ~. )
 
 beep()
-#save(plot_tracker, file = paste('1_inputs/fit/TLS_second_wave_search.Rdata',sep=''))
-#load(file = paste('1_inputs/fit/TLS_second_wave_search.Rdata',sep=''))
+save(plot_tracker, file = paste('1_inputs/fit/TLS_second_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
-
 
 
 
@@ -233,8 +228,6 @@ for (this_scenario in 1:length(scenario)){
     )
   
   plot_tracker_FINAL = rbind(plot_tracker_FINAL, workshop)
-  
-  
 }
 
 to_plot = plot_tracker_FINAL %>% filter(date>date_start & date<=(date_start+model_weeks*7))
@@ -247,13 +240,15 @@ ggplot() +
 #load(file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
 
 #NOTE: third wave takes off without seeding due to drop in NPI (scenario = 3 in plot_tracker_FINAL)
-#DECISION: let's 
+#DECISION (March 2023): let's 
 #(1) roughly fit the first two waves, to then 
 #(2) search for parameter ranges of the third wave, before
 #(3) setting all waves to fit
+
+#REVISED DECISION (April 2023): fitting all waves together pushes the third wave down to zero, let's
+#(1) fit the first two waves, to then
+#(2) search for paramteer ranges of the third wave, before
+#(3) fitting the third wave independently
 #_______________________________________________________________________________
-
-
-
 
 

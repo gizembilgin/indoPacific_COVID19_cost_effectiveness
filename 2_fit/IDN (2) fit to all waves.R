@@ -67,7 +67,6 @@ fit_all_waves <- function(par){
           underreporting_tracker = rbind(underreporting_tracker,fit_statistic)
       }
     }
-    
   }
 
   fit_statistic = min(underreporting_tracker$fit,na.rm=TRUE)
@@ -86,8 +85,9 @@ ggplot() +
   geom_line(data=incidence_log,aes(x=date,y=rolling_average))
 
 
+
+### Fit!
 require(DEoptim)
-#first round by Monday (4 days away) so roughly 100 runs
 full_fit <- DEoptim(fn = fit_all_waves,
                     lower = c(2,2,
                               0,45
@@ -99,6 +99,9 @@ full_fit <- DEoptim(fn = fit_all_waves,
                                    itermax = 10,
                                    storepopfrom = 1)) 
 save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+#_________________________________________________
+
+
 
 ### Explore fit
 summary(full_fit)
@@ -112,4 +115,47 @@ ggplot(to_plot) + geom_histogram(aes(x=beta2),bins=10)
 ggplot(to_plot) + geom_histogram(aes(x=seed1),bins=10)
 ggplot(to_plot) + geom_histogram(aes(x=seed2),bins=10)
 ggplot(to_plot) + geom_point(aes(x=beta1,y=seed1))
+#_________________________________________________
+
+
+
+### Save fitted result
+model_weeks = as.numeric((as.Date('2022-12-31') - date_start)/7)
+#model_weeks = as.numeric((as.Date('2023-12-31') - date_start)/7)
+par = full_fit$optim$bestmem
+
+#<run inside of f(x)>
+
+incidence_log = incidence_log %>% select(date,daily_cases)
+
+fitted_results = list(
+  FR_parameters = parameters,
+  FR_next_state = next_state,
+  FR_incidence_log_tidy = incidence_log_tidy,
+  FR_incidence_log = incidence_log,
+  FR_covid19_waves = covid19_waves,
+  FR_fitting_beta = fitting_beta
+)
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
+#_________________________________________________
+
+
+### Save fitted result for pregnant women
+par = full_fit$optim$bestmem
+risk_group_name = 'pregnant_women'
+RR_estimate =  2.4
+
+#<run inside of f(x)>
+
+incidence_log = incidence_log %>% select(date,daily_cases)
+
+fitted_results = list(
+  FR_parameters = parameters,
+  FR_next_state = next_state,
+  FR_incidence_log_tidy = incidence_log_tidy,
+  FR_incidence_log = incidence_log,
+  FR_covid19_waves = covid19_waves,
+  FR_fitting_beta = fitting_beta
+)
+save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
 #_________________________________________________

@@ -81,6 +81,7 @@ ggplot() +
   xlab('') #+ 
   #facet_grid(shift ~ . )
 
+#population-level seroprev
 final_state_tracker %>%
   filter((shift == -15 & beta_mod %in% c(1.4,1.2,1)) |
            (shift == 0 & beta_mod %in% c(1.6,1.8,2))) %>%
@@ -91,6 +92,7 @@ final_state_tracker %>%
   mutate(seroprev= pop/sum(pop_setting$pop)) %>%
   select(beta_mod,seroprev)
 
+#age-specific seroprevalence
 age_dn = final_state_tracker %>%
   filter((shift == -15 & beta_mod %in% c(1.4,1.2,1)) |
            (shift == 0 & beta_mod %in% c(1.6,1.8,2))) %>%
@@ -166,8 +168,6 @@ ggplot() +
   plot_standard + 
   labs(color='beta modifier') + 
   xlab('') 
-
-beep()
 #_______________________________________________________________________________
 
 
@@ -202,12 +202,9 @@ ensemble_plot_list
 ggplot() + 
   geom_line(data=ensemble_plot_log,aes(x=date,y=rolling_average,color=as.factor(label)),na.rm=TRUE) +
   xlab("") + 
-  #scale_x_date(date_breaks="3 month", date_labels="%b") +
   ylab("daily cases") +
   plot_standard +
-  labs(linetype="")#+ 
-  #facet_grid(label ~ .) 
-beep()
+  labs(linetype="")
 #_______________________________________________________________________________
 
 
