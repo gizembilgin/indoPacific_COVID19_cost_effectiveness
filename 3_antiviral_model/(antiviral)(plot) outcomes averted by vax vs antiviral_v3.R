@@ -31,7 +31,7 @@ if (plot_name ==  "figure_S3_2_1"){
 ### LOAD
 MASTER_RECORD_antiviral_model_simulations = data.frame()
 
-
+rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
 for (r in 1:length(risk_groups_to_plot)){
   this_risk_group = risk_groups_to_plot[r]
   for (i in 1:length(settings_to_plot)){
