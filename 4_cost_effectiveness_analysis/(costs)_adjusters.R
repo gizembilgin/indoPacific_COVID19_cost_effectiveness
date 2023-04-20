@@ -4,7 +4,7 @@ require(readr); require(ggplot2); require(tidyverse)
 ### (0) IMPORTS ################################################################
 ###import WB data on conversion rates
 #https://databank.worldbank.org/reports.aspx?source=2&series=NY.GDP.PCAP.CD&country=#
-list_poss_csv = list.files(pattern = "World Bank extract*")
+list_poss_csv = list.files(pattern = "2_inputs/World Bank extract*")
 list_poss_csv_details = double()
 for (i in 1:length(list_poss_csv)){
   list_poss_csv_details = rbind(list_poss_csv_details,
@@ -52,11 +52,11 @@ workshop_IMF = raw %>%
 #_______________________________________________________________________________
 
 ###import cost estimates
-cost_estimates <- read.csv("cost_estimates.csv",header=TRUE)
+cost_estimates <- read.csv("2_inputs/cost_estimates.csv",header=TRUE)
 #_______________________________________________________________________________
 
 ###import WHO CHOICE estimates
-WHO_CHOICE_raw <- read.csv("WHO_CHOICE_estimates.csv",header=TRUE)  %>%
+WHO_CHOICE_raw <- read.csv("2_inputs/WHO_CHOICE_estimates.csv",header=TRUE)  %>%
   mutate(currency_short = case_when(
     currency == "2010 internal dollars (PPP $)" ~ "PPP",
     currency == "2010 National Currency Unit (NCU)" ~ "NCU",
@@ -66,7 +66,7 @@ WHO_CHOICE_raw <- read.csv("WHO_CHOICE_estimates.csv",header=TRUE)  %>%
 #_______________________________________________________________________________
 
 ###import exchange rates
-exchange_rates <- read.csv("exchange_rate.csv",header=TRUE)
+exchange_rates <- read.csv("2_inputs/exchange_rate.csv",header=TRUE)
 #_______________________________________________________________________________
 ################################################################################
 
