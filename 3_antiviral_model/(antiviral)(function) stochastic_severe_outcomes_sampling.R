@@ -285,7 +285,7 @@ stochastic_severe_outcomes_sampling <- function(
         outcome %in% c('hosp','severe_disease') ~ 'severe_disease'
       ))
     
-    #(2) Load stochastic VE distirbution
+    #(2) Load stochastic VE distribution
     #VE_waning_distribution_SO - sample UNIFORM from all point estimates, waning distribution, ratios between age groups etc. 
     VE_waning_distribution = stochastic_VE(booster_combinations = booster_combinations,
                                            setting = setting,
