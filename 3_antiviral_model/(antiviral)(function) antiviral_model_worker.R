@@ -48,10 +48,9 @@ antiviral_model_worker <- function(
   toggle_antiviral_effectiveness = cbind(toggle_antiviral_effectiveness,sampled_value) 
   toggle_antiviral_effectiveness = toggle_antiviral_effectiveness %>% 
     select(antiviral_type,outcome,sampled_value) %>%
-    rename(AE = sampled_value)
-  YLL_addition = toggle_antiviral_effectiveness %>% filter(outcome == 'death') %>% mutate(outcome = 'YLL')
-  toggle_antiviral_effectiveness = rbind(toggle_antiviral_effectiveness,YLL_addition)
-  
+    rename(AE = sampled_value,
+           outcome_AE = outcome)
+   
   # Sample parameters related to severe outcome projections
   if (local_stochastic_SO == "on"){
     input_vaccine_type_list = unique(RECORD_antiviral_setup$vaccination_history_FINAL$vaccine_type)
@@ -86,7 +85,8 @@ antiviral_model_worker <- function(
       filter(
         vax_scenario            == toggle_vax_scenario,
         vax_scenario_risk_group == toggle_vax_scenario_risk_group
-      ) 
+      ) %>%
+      filter(! (outcome %in% c("YLL","neonatal_deaths","ICU"))) #reduce size
     this_incidence_log_tidy = RECORD_antiviral_setup$incidence_log_tidy %>%
       filter(
         vax_scenario            == toggle_vax_scenario,
@@ -126,7 +126,8 @@ antiviral_model_worker <- function(
         rho_SO_est = sampled_rho_SO_est
       )
       severe_outcome_log_tidy = SO_applied$severe_outcome_log_tidy
-      likelihood_severe_outcome = SO_applied$likelihood_severe_outcome
+      likelihood_severe_outcome = SO_applied$likelihood_severe_outcome %>%
+        filter(! (outcome %in% c("YLL","neonatal_deaths","ICU")))
     }
     #____________________________________________________________________________
     
@@ -149,7 +150,7 @@ antiviral_model_worker <- function(
         
         ### Calculate outcomes without antivirals
         if (local_stochastic_SO == "on"){
-          save_booster_dose_info = outcomes_without_antivirals %>% filter(outcome == 'booster_doses_delivered')
+          save_info = outcomes_without_antivirals %>% filter(outcome %in% c('booster_doses_delivered','mild','total_cases'))
           outcomes_without_antivirals = severe_outcome_log_tidy  %>%
             filter(date >= toggle_antiviral_start_date) %>%
             group_by(outcome) %>%
@@ -161,7 +162,7 @@ antiviral_model_worker <- function(
             group_by(outcome) %>%
             summarise(high_risk = sum(proj,na.rm=TRUE),.groups = "keep")
           outcomes_without_antivirals = outcomes_without_antivirals %>% left_join(append_high_risk, by = 'outcome')
-          outcomes_without_antivirals = rbind(outcomes_without_antivirals,save_booster_dose_info)
+          outcomes_without_antivirals = rbind(outcomes_without_antivirals,save_info)
           
           if (toggle_vax_scenario == 'all willing adults vaccinated with a primary schedule') {
             OWA_no_booster_doses = severe_outcome_log_tidy  %>%
@@ -174,7 +175,7 @@ antiviral_model_worker <- function(
               group_by(outcome) %>%
               summarise(high_risk = sum(proj, na.rm = TRUE), .groups = "keep")
             OWA_no_booster_doses = OWA_no_booster_doses %>% left_join(append_high_risk, by = 'outcome')
-            OWA_no_booster_doses = rbind(OWA_no_booster_doses, save_booster_dose_info)
+            OWA_no_booster_doses = rbind(OWA_no_booster_doses, save_info)
           } else{
             OWA_with_booster_doses = severe_outcome_log_tidy  %>%
               filter(date >= local_booster_start_date) %>%
@@ -186,7 +187,7 @@ antiviral_model_worker <- function(
               group_by(outcome) %>%
               summarise(high_risk = sum(proj, na.rm = TRUE), .groups = "keep")
             OWA_with_booster_doses = OWA_with_booster_doses %>% left_join(append_high_risk, by = 'outcome')
-            OWA_with_booster_doses = rbind(OWA_with_booster_doses, save_booster_dose_info)
+            OWA_with_booster_doses = rbind(OWA_with_booster_doses, save_info)
           }
         } else if (local_stochastic_SO == "off") {
           OWA_no_booster_doses = RECORD_antiviral_setup$outcomes_without_antivirals %>%
@@ -240,7 +241,8 @@ antiviral_model_worker <- function(
         antiviral_target_individuals = antiviral_target %>%
           mutate(symptomatic = round(symptomatic)) %>%
           select(-temp_risk) %>%
-          filter(symptomatic > 0)
+          filter(symptomatic > 0) %>%
+          select(-vax_scenario,-vax_scenario_risk_group,-country)
         
         rm(antiviral_target)
         #____________________________________________________________________________
@@ -287,6 +289,7 @@ antiviral_model_worker <- function(
             ))
           colnames(workshop) = c('healthcare_seeking')
           workshop = cbind(antiviral_target_individuals, workshop)
+          rm(antiviral_target_individuals)
           
           antiviral_target_individuals_run = workshop %>%
             filter(healthcare_seeking == 1) %>% #retain those who seek care
@@ -365,6 +368,7 @@ antiviral_model_worker <- function(
           } else{
             antiviral_target_individuals_run = antiviral_target_individuals
           }
+          rm(antiviral_target_individuals)
           
           ### do they test positive on the RAT test?
           RAT_test = function(age_group) {
@@ -394,6 +398,7 @@ antiviral_model_worker <- function(
           
           antiviral_target_individuals_run = antiviral_recipients %>%
             left_join(antiviral_target_individuals, by = 'ID') #remove all not selected for antivirals
+          rm(antiviral_target_individuals)
           
         } else{
           stop('select a valid pathway_to_care!')
@@ -410,10 +415,25 @@ antiviral_model_worker <- function(
           workshop = antiviral_target_individuals_run %>%
             left_join(
               likelihood_severe_outcome,
-              by = c("date", "risk_group", "age_group", "dose", "vaccine_type")
+              by = c("date", "risk_group", "age_group", "dose", "vaccine_type"),
+              relationship = "many-to-many"
             ) %>%
-            left_join(this_antiviral_effectiveness, by = 'outcome') %>%
+            mutate(outcome_AE = case_when(
+              outcome %in% c("death","YLL") ~ "death",
+              outcome == "hosp" ~ "hosp",
+              outcome %in% c("severe_disease","critical_disease","ICU","YLL") ~ "severe_disease"
+              )) %>%
+            left_join(this_antiviral_effectiveness, by = 'outcome_AE') 
+          rm(antiviral_target_individuals_run)
+          #<addition for CEA>
+          hosp_wAntivirals = workshop %>% 
+            filter(outcome == "hosp") %>%
+            mutate(outcome = "hosp_after_antivirals") %>%
+            mutate(AE = 1-AE)
+          #<>
+          workshop = rbind(workshop,hosp_wAntivirals) %>%
             mutate(percentage = percentage * AE)
+          rm(hosp_wAntivirals)
           workshop = na.omit(workshop)
           
           prevented_by_antivirals_this_date = workshop %>%
@@ -458,8 +478,8 @@ antiviral_model_worker <- function(
             
             
           }
-
         }
+        rm(workshop)
         }
       }} #end loop over different antiviral start dates, antiviral types, and antiviral target groups
 

@@ -43,6 +43,11 @@ antiviral_model_manger <- function(
   copy_application_fx_into_cluster = stochastic_severe_outcomes_application
   #____________________________________
   
+  #reduce size of RECORD_antiviral_setup to relevant
+  RECORD_antiviral_setup$likelihood_severe_outcome = RECORD_antiviral_setup$likelihood_severe_outcome %>%
+    filter(!(outcome %in% c("YLL","neonatal_deaths","ICU")))
+  #____________________________________
+  
   
   
   ### Step Two: set parallel runs
