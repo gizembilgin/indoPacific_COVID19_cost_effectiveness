@@ -25,7 +25,7 @@ stochastic_severe_outcomes_application <- function(
   risk_group_labels = c('general_public',risk_group_name) 
   sensitivity_analysis_toggles = list(VE_older_adults = "reduced",VE_adults_comorb = 0.9) #ALWAYS HAVE LOWER VE IN OLDER ADULTS AND ADULTS WITH COMORB IN ANTIVIRAL MODEL
 
-  ### PART ONE: CALCULATE VE AGAINST SEVE OUTCOMES BY DAY #####################################################
+  ### PART ONE: CALCULATE VE AGAINST SEVERE OUTCOMES BY DAY #####################################################
   VE_tracker = data.frame()
   for (outcome in c('death','severe_disease')){
     for (day in 0:num_time_steps){
@@ -99,7 +99,7 @@ stochastic_severe_outcomes_application <- function(
     left_join(reinfection_protection, by = c("date", "age_group")) %>%
     mutate(percentage = percentage*(1-protection)) %>%
     select(-protection) %>%
-    left_join(prop_sympt_LOCAL,by= c('age_group' = 'agegroup')) %>%
+    left_join(prop_sympt_LOCAL,by= c('age_group' = 'agegroup')) %>% #LIMITATION: no uncertainty in proportion symptomatic, and no vax dependency
     mutate(percentage = percentage * (1/value)) %>%
     select(-value)
   
