@@ -189,13 +189,20 @@ save(RR_sample,file = '1_inputs/RR_sample.Rdata') #VERIFIED 04/11/2022
 
 
 ### PART SIX: infection-derived protection against severe outcomes _____________
-mean = 0.878
-LB = 0.475
-UB = 0.971
+rho_SO_sample <- read.csv("1_inputs/hybrid_immunity.csv")
+rho_SO_sample = rho_SO_sample %>% 
+  filter(immunity_type == "previous_infection" &
+           protection_against == "severe_disease") %>%
+  mutate(day = (365/12) * month) %>%
+  filter(is.na(rho) == FALSE)
 
-rho_SO_sample = fit_beta(mean,LB,UB)
-# sampled_value = rbeta(10000000,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
-# plot(density(sampled_value)); mean(sampled_value); min(sampled_value);max(sampled_value)
+param_est = mapply(fit_beta,
+                   rho_SO_sample$rho,rho_SO_sample$LB,rho_SO_sample$UB)
+rho_SO_sample = cbind(rho_SO_sample,t(param_est)) 
+
+sampled_value = mapply(rbeta, 10000000,as.numeric(rho_SO_sample$beta_a), as.numeric(rho_SO_sample$beta_b))
+plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
+plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
 save(rho_SO_sample,file = '1_inputs/rho_SO_sample.Rdata') #VERIFIED 04/11/2022
 #_______________________________________________________________________________
 
