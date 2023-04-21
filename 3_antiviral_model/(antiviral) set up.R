@@ -364,6 +364,30 @@ for (ticket in 1:length(queue)){
      mutate(vax_scenario = vax_strategy_description,
             vax_scenario_risk_group = risk_group_name)
    
+   # addition for CEA
+   total_cases = incidence_log_tidy %>%
+     group_by(risk_group, vax_scenario, vax_scenario_risk_group) %>%
+     summarise(incidence = sum(incidence))
+   total_cases = data.frame(outcome = "total_cases",
+                            overall = sum(total_cases$incidence),
+                            high_risk = total_cases$incidence[total_cases$risk_group == risk_group_name],
+                            vax_scenario = vax_strategy_description,
+                            vax_scenario_risk_group = risk_group_name)
+   mild = incidence_log_tidy %>%
+     group_by(risk_group, age_group, vax_scenario, vax_scenario_risk_group) %>%
+     summarise(incidence = sum(incidence)) %>%
+     rename(agegroup = age_group) %>%
+     left_join(prop_sympt, by = c("agegroup")) %>%
+     mutate(incidence = incidence * value) %>%
+     group_by(risk_group, vax_scenario, vax_scenario_risk_group) %>%
+     summarise(incidence = sum(incidence))
+   mild = data.frame(outcome = "mild",
+                     overall = sum(mild$incidence),
+                     high_risk = mild$incidence[mild$risk_group == risk_group_name],
+                     vax_scenario = vax_strategy_description,
+                     vax_scenario_risk_group = risk_group_name)
+   outcomes_without_antivirals = rbind(outcomes_without_antivirals,mild,total_cases)
+   
    RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
    RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
    RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
