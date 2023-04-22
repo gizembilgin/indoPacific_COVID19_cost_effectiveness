@@ -424,7 +424,7 @@ antiviral_model_worker <- function(
               outcome %in% c("severe_disease","critical_disease","ICU","YLL") ~ "severe_disease"
               )) %>%
             left_join(this_antiviral_effectiveness, by = 'outcome_AE') 
-          rm(antiviral_target_individuals_run)
+          
           #<addition for CEA>
           hosp_wAntivirals = workshop %>% 
             filter(outcome == "hosp") %>%
@@ -479,7 +479,7 @@ antiviral_model_worker <- function(
             
           }
         }
-        rm(workshop)
+        rm(workshop,antiviral_target_individuals_run)
         }
       }} #end loop over different antiviral start dates, antiviral types, and antiviral target groups
 
