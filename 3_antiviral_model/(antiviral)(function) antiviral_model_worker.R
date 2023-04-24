@@ -437,7 +437,7 @@ antiviral_model_worker <- function(
           stop('select a valid pathway_to_care!')
           
         }
-        length_antiviral_delivery_tracker = sum(antiviral_target_individuals_run$count)
+        length_antiviral_delivery_tracker     = sum(antiviral_target_individuals_run$count)
         antivirals_delivered_prior_to_booster = sum(antiviral_target_individuals_run$count[antiviral_target_individuals_run$date < local_booster_start_date]) 
         antivirals_delivered_after_booster    = sum(antiviral_target_individuals_run$count[antiviral_target_individuals_run$date >= local_booster_start_date])  
           
@@ -470,8 +470,9 @@ antiviral_model_worker <- function(
           workshop = na.omit(workshop)
           
           prevented_by_antivirals_this_date = workshop %>%
+            mutate(count = count * percentage) %>%
             group_by(outcome) %>%
-            summarise(n = sum(percentage)) %>%
+            summarise(n = sum(count)) %>%
             mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
             mutate(antiviral_type = local_LIST_antiviral_type[[c]],
                    antiviral_target_group = toggle_antiviral_target,
