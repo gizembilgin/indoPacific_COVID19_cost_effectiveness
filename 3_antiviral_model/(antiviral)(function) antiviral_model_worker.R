@@ -352,61 +352,94 @@ antiviral_model_worker <- function(
           
           antiviral_target_individuals_run = antiviral_delivery_tracker %>%
             select(-date) %>%
-            left_join(antiviral_target_individuals_run, by = 'ID') #remove all not selected for antivirals
+            left_join(antiviral_target_individuals_run, by = 'ID') %>% #remove all not selected for antivirals
+            mutate(count = 1) %>%
+            group_by(date,risk_group,age_group,dose,vaccine_type) %>%
+            summarise(count = sum(count),.groups = "keep")
           rm(antiviral_delivery_tracker)
           #____________________________________________________________________________
           
         } else if (local_pathway_to_care == 'fixed_RAT') {
           
-          ### randomly sample the fixed proportion from the target population who have access to care
-          if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
-            num_to_sample = total_target * local_fixed_antiviral_coverage
-            antiviral_recipients = data.frame(ID = sample(antiviral_target_individuals$ID, num_to_sample, replace = FALSE))
+          if (setting %in% c("TLS","FJI","PNG")){
+            ### randomly sample the fixed proportion from the target population who have access to care
+            if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
+              num_to_sample = total_target * local_fixed_antiviral_coverage
+              antiviral_recipients = data.frame(ID = sample(antiviral_target_individuals$ID, num_to_sample, replace = FALSE))
+              
+              antiviral_target_individuals_run = antiviral_recipients %>%
+                left_join(antiviral_target_individuals, by = 'ID') #remove all not selected for antivirals
+            } else{
+              antiviral_target_individuals_run = antiviral_target_individuals
+            }
+            rm(antiviral_target_individuals)
             
-            antiviral_target_individuals_run = antiviral_recipients %>%
-              left_join(antiviral_target_individuals, by = 'ID') #remove all not selected for antivirals
+            ### do they test positive on the RAT test?
+            RAT_test = function(age_group) {
+              sample = rbinom(1, 1, 0.537) #rbinom(number of observations,number of trials,probability of success on each trial)
+              return(sample)
+            }
+            
+            workshop <-
+              as.data.frame(sapply(
+                antiviral_target_individuals_run$age_group,
+                RAT_test
+              ))
+            colnames(workshop) = c('RAT_test')
+            workshop = cbind(antiviral_target_individuals_run, workshop)
+            
+            antiviral_target_individuals_run = workshop %>%
+              filter(RAT_test == 1) %>% #retain those who tested positive on the RAT test
+              select(-RAT_test) %>%
+              mutate(count = 1) %>%
+              group_by(date,risk_group,age_group,dose,vaccine_type) %>%
+              summarise(count = sum(count),.groups = "keep")
+            
+            rm(workshop)
+            #____________________________________________________________________________
+            
+          } else if (setting == "IDN"){
+            ### randomly sample the fixed proportion from the target population who have access to care
+            if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
+              num_to_sample = total_target * local_fixed_antiviral_coverage
+              antiviral_recipients = data.frame(ID = sample(antiviral_target_individuals$ID, num_to_sample, replace = FALSE))
+              
+              antiviral_target_individuals_run = antiviral_recipients %>%
+                left_join(antiviral_target_individuals, by = 'ID') #remove all not selected for antivirals
+            } else{
+              antiviral_target_individuals_run = antiviral_target_individuals
+            }
+            rm(antiviral_target_individuals)
+            
+            antiviral_target_individuals_run = antiviral_target_individuals_run %>%
+              mutate(count = 0.537) %>%
+              group_by(date,risk_group,age_group,dose,vaccine_type) %>%
+              summarise(count = sum(count),.groups = "keep")
+            
           } else{
-            antiviral_target_individuals_run = antiviral_target_individuals
+            stop("select a valid setting!")
           }
-          rm(antiviral_target_individuals)
-          
-          ### do they test positive on the RAT test?
-          RAT_test = function(age_group) {
-            sample = rbinom(1, 1, 0.537) #rbinom(number of observations,number of trials,probability of success on each trial)
-            return(sample)
-          }
-          
-          workshop <-
-            as.data.frame(sapply(
-              antiviral_target_individuals_run$age_group,
-              RAT_test
-            ))
-          colnames(workshop) = c('RAT_test')
-          workshop = cbind(antiviral_target_individuals_run, workshop)
-          
-          antiviral_target_individuals_run = workshop %>%
-            filter(RAT_test == 1) %>% #retain those who tested positive on the RAT test
-            select(-RAT_test)
-          
-          rm(workshop)
-          #____________________________________________________________________________
-          
+        
         } else if (local_pathway_to_care == 'fixed_direct') {
           #randomly sample the fixed proportion from the target population
           num_to_sample = total_target * local_fixed_antiviral_coverage
           antiviral_recipients = data.frame(ID = sample(antiviral_target_individuals$ID, num_to_sample, replace = FALSE))
           
           antiviral_target_individuals_run = antiviral_recipients %>%
-            left_join(antiviral_target_individuals, by = 'ID') #remove all not selected for antivirals
-          rm(antiviral_target_individuals)
+            left_join(antiviral_target_individuals, by = 'ID') %>%#remove all not selected for antivirals
+            mutate(count = 1) %>%
+            group_by(date,risk_group,age_group,dose,vaccine_type) %>%
+            summarise(count = sum(count), .groups = "keep")
+          
+          rm(antiviral_target_individuals) 
           
         } else{
           stop('select a valid pathway_to_care!')
           
         }
-        length_antiviral_delivery_tracker = nrow(antiviral_target_individuals_run)
-        antivirals_delivered_prior_to_booster = nrow(antiviral_target_individuals_run[antiviral_target_individuals_run$date < local_booster_start_date,]) 
-        antivirals_delivered_after_booster    = nrow(antiviral_target_individuals_run[antiviral_target_individuals_run$date >= local_booster_start_date,])  
+        length_antiviral_delivery_tracker = sum(antiviral_target_individuals_run$count)
+        antivirals_delivered_prior_to_booster = sum(antiviral_target_individuals_run$count[antiviral_target_individuals_run$date < local_booster_start_date]) 
+        antivirals_delivered_after_booster    = sum(antiviral_target_individuals_run$count[antiviral_target_individuals_run$date >= local_booster_start_date])  
           
         ### PATHWAY TO CARE STEP FOUR: How many cases of severe disease are prevented?#######
         for (c in 1:length(local_LIST_antiviral_type)){
