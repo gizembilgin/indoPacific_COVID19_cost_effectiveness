@@ -65,12 +65,12 @@ stochastic_severe_outcomes_application <- function(
   #join VE over time with severe outcome projections
   if (length(risk_group_labels)>1){
     severe_outcome_this_run = severe_outcome_country_level %>% 
-      left_join(VE_tracker, by = c("age_group", "outcome_VE", "risk_group")) %>%
+      left_join(VE_tracker, by = c("age_group", "outcome_VE", "risk_group"),relationship = "many-to-many") %>%
       mutate(percentage = percentage*(1-VE)) %>%
       select(date,outcome,age_group,risk_group,vaccine_type,dose,percentage)
   } else{
     severe_outcome_this_run = severe_outcome_country_level %>% 
-      left_join(VE_tracker, by = c("age_group", "outcome_VE")) %>%
+      left_join(VE_tracker, by = c("age_group", "outcome_VE"),relationship = "many-to-many") %>%
       mutate(percentage = percentage*(1-VE)) %>%
       select(date,outcome,age_group,risk_group,vaccine_type,dose,percentage)
   }
@@ -79,9 +79,47 @@ stochastic_severe_outcomes_application <- function(
   
   
   ### PART THREE: Final calc ########################################################################   
-  #(A) infection-derived immunity against severe outcomes
+  #(A)  infection-derived immunity against severe outcomes
+  load(file = '1_inputs/AverageSymptomaticPeriod.Rdata' )
+  load(file = '1_inputs/lengthInfectionDerivedImmunity.Rdata' )
+  
+  APPLIED_rho_SO_est = data.frame()
+  
+  #create data set of historical cases by day in recovery class
+  workshop_incidence_log = incidence_log_tidy %>% 
+    group_by(date) %>%
+    summarise(daily_cases = sum(incidence))
+
+  
+  for (i in c(0:num_time_steps)){
+    
+    this_date = date_start + i
+    
+    #calculate proportion of individuals in recovery class by day since recovery
+    workshop = workshop_incidence_log %>%
+      mutate(date = date + round(AverageSymptomaticPeriod)) %>%
+      filter(date <= this_date & date > (this_date - lengthInfectionDerivedImmunity)) %>%
+      mutate(days = round(as.numeric(this_date - date)))
+    
+    workshop = workshop %>% mutate(prop_window = daily_cases/sum(workshop$daily_cases))  
+    workshop$date = as.Date(workshop$date, '%Y-%m-%d')
+    if (round(sum(workshop$prop_window),digits=5) != 1){stop('error in rho_time_step in stochastic SO proj')}
+    #ggplot(workshop) + geom_line(aes(date,prop_window)) 
+    #______________________
+    
+    #caluclate rho SO
+    #LIMITATION - not by age group, but variation minimal between 0.72-0.82
+    this_rho = workshop %>% 
+      left_join(rho_SO_est, by = "days") %>%
+      mutate(interim = protection * prop_window) %>%
+      summarise(protection = sum(interim,na.rm=TRUE),.groups="keep")  %>%
+      mutate(date = this_date)
+    APPLIED_rho_SO_est = rbind(APPLIED_rho_SO_est,this_rho)
+  }
+  
   reinfection_protection = exposed_log %>%
-    mutate(protection = reinfection_ratio * rho_SO_est) %>%
+    left_join(APPLIED_rho_SO_est,by='date') %>%
+    mutate(protection = reinfection_ratio * protection) %>%
     select(date,age_group,protection)
   
   #(B)Join incidence_log_tidy with severe outcome incidence by vax status

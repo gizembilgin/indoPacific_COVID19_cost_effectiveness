@@ -152,7 +152,7 @@ stochastic_severe_outcomes_sampling <- function(
       select(age,agegroup_RAW,agegroup_model,group_percent)
     
     workshop = workshop %>% 
-      left_join(pop_w, by = c("agegroup_RAW")) %>%
+      left_join(pop_w, by = c("agegroup_RAW"),relationship = "many-to-many") %>%
       mutate(interim = RR*group_percent)
     workshop_sum =  workshop %>% 
       group_by(outcome,agegroup_model) %>%
@@ -291,14 +291,53 @@ stochastic_severe_outcomes_sampling <- function(
                                            setting = setting,
                                            toggle_sampling = local_stochastic_VE_sampling) %>%
       filter(strain == strain_now & vaccine_type %in% vaccine_type_list)
-    
-    rho_SO_est = rbeta(1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
-    
 
+    #(3) Load stochastic rho
+    rho_SO_est = mapply(rbeta,1,rho_SO_sample$beta_a, rho_SO_sample$beta_b)
+    rho_SO_est = cbind(rho_SO_sample,rho_SO_est)
+    rho_SO_est = rho_SO_est %>% select(day,rho = rho_SO_est)
+    
+    issues = rho_SO_est %>%
+      filter(rho > lag(rho, default = 1))
+    while (nrow(issues)>0){
+      
+      rho_SO_est = rho_SO_est %>% mutate(lag_rho = lag(rho,default = 1))
+      
+      rho_SO_est$rho[rho_SO_est$day == issues$day[1]] = rho_SO_est$lag_rho[rho_SO_est$day == issues$day[1]]
+      
+      issues = rho_SO_est %>%
+        filter(rho > lag(rho, default = 1))
+      
+      rho_SO_est = rho_SO_est %>% select(-lag_rho)
+    }
+    
+    days_list = c(ceiling(min(rho_SO_est$day)):ceiling(max(rho_SO_est$day)))
+    smooth <- loess(rho ~ day,  data=rho_SO_est,degree = 1)
+    smooth <- predict(smooth,days_list )
+    smooth = data.frame(cbind(days_list,smooth)) 
+    colnames(smooth) = c('day','rho_est')
+    
+    filler_start = crossing(day = c(0:(min(smooth$day)-1)),
+                            rho_est = max(smooth$rho_est,na.rm=TRUE))
+    filler_end = crossing(day = c((max(smooth$day)+1):730),
+                          rho_est = min(smooth$rho_est,na.rm=TRUE))
+    
+    workshop = rbind(filler_start,smooth,filler_end) %>% 
+      filter(is.na(rho_est) == FALSE) %>%
+      mutate(outcome = "severe_outcome") %>%
+      rename(days = day) %>%
+      rename(protection = rho_est)
+    ggplot() + 
+      geom_line(data = workshop, aes(x=days,y=protection)) + 
+      geom_point(data = rho_SO_est, aes(x=day,y=rho)) +
+      ylim(0,1)
+    
+    rho_dn = workshop
+    
     result = list(
       SAVE_severe_outcome_country_level = severe_outcome_country_level,
       SAVE_VE_waning_distribution = VE_waning_distribution,
-      SAVE_rho_SO_est = rho_SO_est
+      SAVE_rho_SO_est = rho_dn
     ) 
   ########################################################################################################
   
