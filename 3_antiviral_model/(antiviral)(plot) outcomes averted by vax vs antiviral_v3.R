@@ -1,7 +1,7 @@
 library(RColorBrewer)
 options(scipen = 1000)
 
-plot_name = "figure_2" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_3","figure_S3_2_1"
+plot_name = "figure_S3_2_1" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3"
 plot_list = list()
 
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
@@ -83,7 +83,8 @@ RECORD_antiviral_model_simulations = MASTER_RECORD_antiviral_model_simulations %
       "(high-risk) prev primary",
     vax_scenario ==  "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a first booster dose" ~
       "(high-risk) prev first booster"
-  ))
+  )) %>%
+  filter(!(outcome %in% c("ICU","mild","total_cases",'hosp_after_antivirals')))
 #_______________________________________________________________________________
 
 
@@ -328,7 +329,7 @@ if (plot_name %in% c("figure_2",
         ylab('') +
         scale_color_manual(values = c("#BEBEBE", # grey - all
                                       "#00BA38", # green - high risk
-                                      "#FF61CC", # pink - pregnant owmen
+                                      "#FF61CC", # pink - pregnant women
                                       "#C77CFF"  # purple - unvaccinated
         )) 
   

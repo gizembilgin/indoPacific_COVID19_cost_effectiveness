@@ -1,11 +1,14 @@
 
 cases_averted_log = data.frame()
-settings_to_plot = c("FJI","PNG_low_beta")
+vaccine_coverage_log = data.frame()
+
+settings_to_plot = c("FJI","PNG_low_beta","TLS","IDN")
 risk_group_name = "adults_with_comorbidities" #options: pregnant_women, adults_with_comorbidities
 
 
 for (j in 1:length(settings_to_plot)){
-  setting_beta = settings_to_plot[j]
+  setting_beta = this_setting = settings_to_plot[j]
+  if (setting_beta == "PNG_low_beta"){this_setting = "PNG"}
   
   list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_*",sep=""))
   list_poss_Rdata_details = double()
@@ -75,6 +78,52 @@ for (j in 1:length(settings_to_plot)){
     select(-vax_scenario)
   
   cases_averted_log = rbind(cases_averted_log,workshop)
+  
+  # row = RECORD_antiviral_setup$vaccination_history_FINAL %>%
+  #   filter(age_group %in% c('60 to 69','70 to 100') &
+  #            date <= as.Date('2023-01-01') &
+  #            vax_scenario == "all willing adults vaccinated with a primary schedule") %>%
+  #   group_by(dose) %>%
+  #   summarise(doses_delivered = sum(doses_delivered_this_date)) %>%
+  #   mutate(coverage = doses_delivered/sum(UN_pop_est$PopTotal[UN_pop_est$AgeGrp >= 60 & UN_pop_est$ISO3_code == this_setting])) %>%
+  #   mutate(setting = this_setting,
+  #          age_group = "60+")
+  # vaccine_coverage_log = rbind(vaccine_coverage_log,row)
+  # 
+  # row = RECORD_antiviral_setup$vaccination_history_FINAL %>%
+  #   filter(age_group %in% c("18 to 29","30 to 44","45 to 59","60 to 69","70 to 100") &
+  #            date <= as.Date('2023-01-01') &
+  #            vax_scenario == "all willing adults vaccinated with a primary schedule") %>%
+  #   group_by(dose) %>%
+  #   summarise(doses_delivered = sum(doses_delivered_this_date)) %>%
+  #   mutate(coverage = doses_delivered/sum(UN_pop_est$PopTotal[UN_pop_est$AgeGrp >= 18 & UN_pop_est$ISO3_code == this_setting])) %>%
+  #   mutate(setting = this_setting,
+  #          age_group = "18+")
+  # vaccine_coverage_log = rbind(vaccine_coverage_log,row)
+  
+  row = RECORD_antiviral_setup$vaccination_history_FINAL %>%
+    filter(age_group %in% c('60 to 69','70 to 100') &
+             date <= as.Date('2023-01-01') &
+             vax_scenario == "all willing adults vaccinated with a primary schedule" &
+             ((dose == 2 & vaccine_type != "Johnson & Johnson") | (dose == 1 & vaccine_type == "Johnson & Johnson"))) %>%
+    ungroup() %>%
+    summarise(doses_delivered = sum(doses_delivered_this_date)) %>%
+    mutate(coverage = doses_delivered/sum(UN_pop_est$PopTotal[UN_pop_est$AgeGrp >= 60 & UN_pop_est$ISO3_code == this_setting])) %>%
+    mutate(setting = this_setting,
+           age_group = "60+")
+  vaccine_coverage_log = rbind(vaccine_coverage_log,row)
+  
+  row = RECORD_antiviral_setup$vaccination_history_FINAL %>%
+    filter(age_group %in% c("18 to 29","30 to 44","45 to 59","60 to 69","70 to 100") &
+             date <= as.Date('2023-01-01') &
+             vax_scenario == "all willing adults vaccinated with a primary schedule"&
+             ((dose == 2 & vaccine_type != "Johnson & Johnson") | (dose == 1 & vaccine_type == "Johnson & Johnson"))) %>%
+    ungroup() %>%
+    summarise(doses_delivered = sum(doses_delivered_this_date)) %>%
+    mutate(coverage = doses_delivered/sum(UN_pop_est$PopTotal[UN_pop_est$AgeGrp >= 18 & UN_pop_est$ISO3_code == this_setting])) %>%
+    mutate(setting = this_setting,
+           age_group = "18+")
+  vaccine_coverage_log = rbind(vaccine_coverage_log,row)
 }
 
 
@@ -91,4 +140,15 @@ cases_averted_log %>%
          percentage_high_risk_case_averted = percentage_high_risk_case_averted * 100,
          percentage_older_cases_averted = percentage_older_cases_averted *100) %>%
   select(setting,vax_scenario_short,percentage_cases_averted,percentage_high_risk_case_averted,percentage_older_cases_averted)
-
+# ggplot(vaccine_coverage_log[vaccine_coverage_log$dose<4,]) +
+#   geom_col(aes(x=setting,y=coverage,fill=as.factor(age_group)),position="dodge") + 
+#   facet_grid(dose~.)
+ggplot(vaccine_coverage_log) +
+  geom_col(aes(x=setting,y=coverage*100,fill=as.factor(age_group)),position="dodge") +
+  labs(fill = "") +
+  xlab("") +
+  ylab("primary schedule coverage (%)") +
+  theme_bw()+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.box = "vertical") 
