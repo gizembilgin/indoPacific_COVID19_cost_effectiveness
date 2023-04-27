@@ -71,7 +71,7 @@ stochastic_VE <- function(
     select(outcome,vaccine_type,dose,VE) %>%
     rename(omicron = VE)
   delta_omicron_ratio = delta %>% 
-    left_join(omicron, by = c("outcome", "vaccine_type", "dose")) %>%
+    left_join(omicron, by = c("outcome", "vaccine_type", "dose"),relationship = "many-to-many") %>%
     filter(dose<3)  %>%
     mutate(ratio = omicron/delta) %>% 
     group_by(outcome) %>%
@@ -283,10 +283,12 @@ stochastic_VE <- function(
   
   #(A/D) compare VE against death (where available) to VE against severe disease
   death = booster_estimates %>%
+    ungroup() %>%
     filter(outcome == "death") %>% 
     select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
     rename(death = VE)
   severe_disease = booster_estimates %>%
+    ungroup() %>%
     filter(outcome == "severe_disease") %>% 
     select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
     rename(severe_disease = VE)
@@ -300,10 +302,12 @@ stochastic_VE <- function(
   
   #(B/D) compare VE against any infection (where available) to symptomatic disease
   symptomatic_disease = booster_estimates %>%
+    ungroup() %>%
     filter(outcome == "symptomatic_disease") %>% 
     select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
     rename(symptomatic_disease = VE)
   any_infection = booster_estimates %>%
+    ungroup() %>%
     filter(outcome == "any_infection") %>% 
     select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
     rename(any_infection = VE)
@@ -547,7 +551,7 @@ stochastic_VE <- function(
     mutate(model_group_percent = population/sum(population))
   
   apply_ratio_MODEL = pop_RAW %>% 
-    left_join(apply_ratio, by = "agegroup_RAW") %>% 
+    left_join(apply_ratio, by = "agegroup_RAW",relationship = "many-to-many") %>% 
     mutate(interim = model_group_percent * VE_ratio) %>%
     group_by(dose,agegroup_MODEL) %>%
     summarise(VE_ratio = sum(interim),.groups = "keep") %>%
@@ -563,7 +567,7 @@ stochastic_VE <- function(
   workshop = apply_distribution %>% 
     rename(agegroup_RAW = age_group)
   workshop = pop_RAW %>% 
-    left_join(workshop, by = "agegroup_RAW") %>% 
+    left_join(workshop, by = "agegroup_RAW",relationship = "many-to-many") %>% 
     mutate(interim = model_group_percent * VE_internal) %>%
     group_by(dose,agegroup_MODEL,days) %>%
     summarise(VE_internal = sum(interim),.groups = "keep") %>%
@@ -668,8 +672,8 @@ stochastic_VE <- function(
   
   
   together = point_estimates %>% 
-    left_join(apply_ratio_MODEL,by='schedule') %>%
-    left_join(apply_distribution_MODEL, by = c('schedule','age_group')) %>%
+    left_join(apply_ratio_MODEL,by='schedule',relationship = "many-to-many") %>%
+    left_join(apply_distribution_MODEL, by = c('schedule','age_group'),relationship = "many-to-many") %>%
     rename(VE_days = VE) %>%
     mutate(VE_days = VE_days*VE_internal*VE_ratio)  %>%
     mutate(VE_days = case_when(VE_days>1 ~ 1, TRUE ~ VE_days))
