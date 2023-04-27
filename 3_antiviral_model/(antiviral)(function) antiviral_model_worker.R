@@ -361,7 +361,7 @@ antiviral_model_worker <- function(
           
         } else if (local_pathway_to_care == 'fixed_RAT') {
           
-          if (setting %in% c("TLS","FJI","PNG")){
+          if (setting %in% c("TLS","FJI","PNG")){ #settings with <10 million, where the randomness of who receives antivirals may influence the impact of these antivirals
             ### randomly sample the fixed proportion from the target population who have access to care
             if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
               num_to_sample = total_target * local_fixed_antiviral_coverage
@@ -398,7 +398,8 @@ antiviral_model_worker <- function(
             rm(workshop)
             #____________________________________________________________________________
             
-          } else if (setting == "IDN"){
+          } else if (setting %in% c("IDN")){ #settings with >10 million, where individually who receives the antivirals will not have as large of an influence on their impact
+            #NB: sampling 50 million times from the binomial distribution was prohibitively restrictive due to available computational resources
             ### randomly sample the fixed proportion from the target population who have access to care
             if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
               num_to_sample = total_target * local_fixed_antiviral_coverage
@@ -489,7 +490,7 @@ antiviral_model_worker <- function(
             prevented_by_antivirals_prior_booster = workshop %>%
               filter(date < local_booster_start_date) %>%
               group_by(outcome) %>%
-              summarise(n = sum(percentage)) %>%
+              summarise(n = sum(count)) %>%
               mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
               mutate(antiviral_type = local_LIST_antiviral_type[[c]],
                      antiviral_target_group = toggle_antiviral_target,
@@ -500,7 +501,7 @@ antiviral_model_worker <- function(
             prevented_by_antivirals_post_booster = workshop %>%
               filter(date >= local_booster_start_date) %>%
               group_by(outcome) %>%
-              summarise(n = sum(percentage)) %>%
+              summarise(n = sum(count)) %>%
               mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
               mutate(antiviral_type = local_LIST_antiviral_type[[c]],
                      antiviral_target_group = toggle_antiviral_target,
