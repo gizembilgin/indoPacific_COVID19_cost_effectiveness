@@ -351,7 +351,7 @@ for (ticket in 1:length(queue)){
      mutate(vax_scenario = vax_strategy_description,
             vax_scenario_risk_group = risk_group_name)
    incidence_log_tidy = incidence_log_tidy %>%
-     filter(date >= date_start) %>%
+     filter(date >= date_start - lengthInfectionDerivedImmunity) %>%
      mutate(vax_scenario = vax_strategy_description,
             vax_scenario_risk_group = risk_group_name)
    exposed_log = exposed_log %>%
