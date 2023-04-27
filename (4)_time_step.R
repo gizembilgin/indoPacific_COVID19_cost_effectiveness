@@ -67,7 +67,7 @@ for (increments_number in 1:num_time_steps){
       } #i.e. assume after end date that NPI constant
         
       #update VE
-      if (fitting == "off"){
+      if (fitting == "off"){ #calculate VE during antiviral setup in case booster doses have changed
         if ((date_now - min(vaxCovDelay$delay))>= min(vaccination_history_FINAL$date)){
           parameters$VE = VE_time_step(strain_now,date_now,'any_infection',
                                        VE_waning_LOCAL = VE_waning_distribution,
