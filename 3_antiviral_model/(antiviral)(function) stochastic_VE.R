@@ -312,7 +312,7 @@ stochastic_VE <- function(
     select(strain,vaccine_type,primary_if_booster,dose,VE) %>%
     rename(any_infection = VE)
   infection_sympt_ratio = symptomatic_disease %>% 
-    left_join(any_infection, by = c("strain", "vaccine_type", "dose")) %>%
+    left_join(any_infection, by = c("strain", "vaccine_type", "dose"),relationship="many-to-many") %>%
     mutate(ratio = any_infection/symptomatic_disease) %>% 
     ungroup() %>% 
     summarise(mean = mean(ratio,na.rm=TRUE))
@@ -461,14 +461,12 @@ stochastic_VE <- function(
   
   ###(1/3) Predict distribution
   predicted_distribution = data.frame()
-  plot_list = list()
   for (j in 1:length(unique(raw$age_group))){
-    subplot_list = list()
     for (i in 1: length(unique(raw$dose))){
       workshop_real = raw[raw$dose == unique(raw$dose)[i] & 
                             raw$age_group == unique(raw$age_group)[j],]
       attach(workshop_real)
-      model = lm(VE~days)
+      model = lm(workshop_real$VE~days)
       #summary(model)
       model_rsquared = summary(model)$adj.r.squared
       detach(workshop_real)
