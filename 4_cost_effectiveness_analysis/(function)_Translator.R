@@ -53,6 +53,7 @@ Translator <- function(LIST_CEA_settings,
   ### intervention_doses_delivered, count_outcomes_averted
   
   workshop = MASTER_antiviral_simulations %>%
+    filter(is.na(age_group) == FALSE) %>%
     select(-country,-setting_beta) %>%
     
     #created shorten name to describe booster dose eligibility
@@ -83,12 +84,12 @@ Translator <- function(LIST_CEA_settings,
     
     filter(result %in% c("n")) %>%
       
-    mutate(doses_per_outcome_averted = intervention_doses_delivered/value) %>%
+    #mutate(doses_per_outcome_averted = intervention_doses_delivered/value) %>%
     rename(count_outcomes_averted = value) %>%
     
     filter(! (outcome %in% c("YLL","neonatal_deaths","booster_doses_delivered","ICU"))) %>%
     
-    select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, intervention_doses_delivered,count_outcomes_averted,doses_per_outcome_averted)
+    select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group,count_outcomes_averted)
   
   if (nrow(workshop) != nrow(na.omit(workshop))){stop("NA introduced")}
   
