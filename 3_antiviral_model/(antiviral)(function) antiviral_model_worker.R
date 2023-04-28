@@ -76,6 +76,12 @@ antiviral_model_worker <- function(
     toggle_vax_scenario            = manager_scenario_dataframe$vax_scenario[run_number]
     toggle_vax_scenario_risk_group = manager_scenario_dataframe$vax_scenario_risk_group[run_number]
     
+    ageSpecific_outcomes_without_antivirals = RECORD_antiviral_setup$ageSpecific_outcomes_without_antivirals %>%
+      filter(
+        vax_scenario            == toggle_vax_scenario,
+        vax_scenario_risk_group == toggle_vax_scenario_risk_group
+      )
+    
     outcomes_without_antivirals = RECORD_antiviral_setup$outcomes_without_antivirals %>%
       filter(
         vax_scenario            == toggle_vax_scenario,
@@ -135,6 +141,7 @@ antiviral_model_worker <- function(
     
     ### ESTIMATE IMPACT OF ANTIVIRALS ##########################################
     prevented_by_antivirals = data.frame()
+    ageSpecific_prevented_by_antivirals = data.frame()
 
     for (a in 1:length(local_LIST_antiviral_start_date)){
       toggle_antiviral_start_date = local_LIST_antiviral_start_date[[a]]
@@ -164,6 +171,13 @@ antiviral_model_worker <- function(
           outcomes_without_antivirals = outcomes_without_antivirals %>% left_join(append_high_risk, by = 'outcome')
           outcomes_without_antivirals = rbind(outcomes_without_antivirals,save_info)
           
+          ageSpecific_save_info = ageSpecific_outcomes_without_antivirals %>% filter(outcome %in% c('mild','total_cases'))
+          ageSpecific_outcomes_without_antivirals = severe_outcome_log_tidy  %>%
+            filter(date >= toggle_antiviral_start_date) %>%
+            group_by(outcome,age_group) %>%
+            summarise(overall = sum(proj,na.rm=TRUE),.groups = "keep")
+          ageSpecific_outcomes_without_antivirals = rbind(ageSpecific_outcomes_without_antivirals,ageSpecific_save_info)
+          
           if (toggle_vax_scenario == 'all willing adults vaccinated with a primary schedule') {
             OWA_no_booster_doses = severe_outcome_log_tidy  %>%
               filter(date >= local_booster_start_date) %>%
@@ -176,6 +190,14 @@ antiviral_model_worker <- function(
               summarise(high_risk = sum(proj, na.rm = TRUE), .groups = "keep")
             OWA_no_booster_doses = OWA_no_booster_doses %>% left_join(append_high_risk, by = 'outcome')
             OWA_no_booster_doses = rbind(OWA_no_booster_doses, save_info)
+            
+            
+            AS_OWA_no_booster_doses = severe_outcome_log_tidy  %>%
+              filter(date >= local_booster_start_date) %>%
+              group_by(outcome,age_group) %>%
+              summarise(overall = sum(proj, na.rm = TRUE), .groups = "keep")
+            AS_OWA_no_booster_doses = rbind(AS_OWA_no_booster_doses, ageSpecific_save_info)
+            
           } else{
             OWA_with_booster_doses = severe_outcome_log_tidy  %>%
               filter(date >= local_booster_start_date) %>%
@@ -188,6 +210,12 @@ antiviral_model_worker <- function(
               summarise(high_risk = sum(proj, na.rm = TRUE), .groups = "keep")
             OWA_with_booster_doses = OWA_with_booster_doses %>% left_join(append_high_risk, by = 'outcome')
             OWA_with_booster_doses = rbind(OWA_with_booster_doses, save_info)
+            
+            AS_OWA_with_booster_doses = severe_outcome_log_tidy  %>%
+              filter(date >= local_booster_start_date) %>%
+              group_by(outcome,age_group) %>%
+              summarise(overall = sum(proj, na.rm = TRUE), .groups = "keep")
+            AS_OWA_with_booster_doses = rbind(AS_OWA_with_booster_doses, ageSpecific_save_info)
           }
         } else if (local_stochastic_SO == "off") {
           OWA_no_booster_doses = RECORD_antiviral_setup$outcomes_without_antivirals %>%
@@ -195,8 +223,19 @@ antiviral_model_worker <- function(
               vax_scenario            == 'all willing adults vaccinated with a primary schedule',
               vax_scenario_risk_group == toggle_vax_scenario_risk_group
             )
-          
           OWA_with_booster_doses = RECORD_antiviral_setup$outcomes_without_antivirals %>%
+            filter(
+              vax_scenario            == toggle_vax_scenario,
+              vax_scenario_risk_group == toggle_vax_scenario_risk_group
+            )
+          
+          AS_OWA_no_booster_doses= RECORD_antiviral_setup$ageSpecific_outcomes_without_antivirals %>%
+            filter(
+              vax_scenario            == 'all willing adults vaccinated with a primary schedule',
+              vax_scenario_risk_group == toggle_vax_scenario_risk_group
+            )
+          
+          AS_OWA_with_booster_doses = RECORD_antiviral_setup$ageSpecific_outcomes_without_antivirals %>%
             filter(
               vax_scenario            == toggle_vax_scenario,
               vax_scenario_risk_group == toggle_vax_scenario_risk_group
@@ -481,6 +520,17 @@ antiviral_model_worker <- function(
                    evaluation_group = 'overall',
                    intervention_doses_delivered = length_antiviral_delivery_tracker)
           prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_this_date)
+          
+          ageSpecific_prevented_by_antivirals_this_date = workshop %>%
+            mutate(count = count * percentage) %>%
+            group_by(outcome,age_group) %>%
+            summarise(n = sum(count), .groups = "keep") %>%
+            mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
+            mutate(antiviral_type = local_LIST_antiviral_type[[c]],
+                   antiviral_target_group = toggle_antiviral_target,
+                   intervention = paste('antiviral',toggle_antiviral_start_date), 
+                   evaluation_group = 'overall')
+          ageSpecific_prevented_by_antivirals = rbind(ageSpecific_prevented_by_antivirals,ageSpecific_prevented_by_antivirals_this_date)
           #____________________________________________________________________________
           
           
@@ -490,7 +540,7 @@ antiviral_model_worker <- function(
             prevented_by_antivirals_prior_booster = workshop %>%
               filter(date < local_booster_start_date) %>%
               group_by(outcome) %>%
-              summarise(n = sum(count)) %>%
+              summarise(n = sum(count), .groups = "keep") %>%
               mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
               mutate(antiviral_type = local_LIST_antiviral_type[[c]],
                      antiviral_target_group = toggle_antiviral_target,
@@ -501,7 +551,7 @@ antiviral_model_worker <- function(
             prevented_by_antivirals_post_booster = workshop %>%
               filter(date >= local_booster_start_date) %>%
               group_by(outcome) %>%
-              summarise(n = sum(count)) %>%
+              summarise(n = sum(count), .groups = "keep") %>%
               mutate(antiviral_start_date = toggle_antiviral_start_date) %>% 
               mutate(antiviral_type = local_LIST_antiviral_type[[c]],
                      antiviral_target_group = toggle_antiviral_target,
@@ -511,17 +561,18 @@ antiviral_model_worker <- function(
             
             prevented_by_antivirals = rbind(prevented_by_antivirals,prevented_by_antivirals_prior_booster,prevented_by_antivirals_post_booster)
             
-            
           }
         }
         rm(workshop,antiviral_target_individuals_run)
         }
-      }} #end loop over different antiviral start dates, antiviral types, and antiviral target groups
+      }
+    } #end loop over different antiviral start dates, antiviral types, and antiviral target groups
 
     
     
     ### ESTIMATE ISOLATED EFFECT OF VACCINE #####################################
     if (local_compare_to_vaccine_effect == "on" & toggle_vax_scenario != 'all willing adults vaccinated with a primary schedule'){
+      ###pop-level
       #Step One: load outcomes_without_antivirals (OWA) of no booster dose scenario
       workshop = OWA_no_booster_doses %>%
         select(-vax_scenario,-vax_scenario_risk_group) %>%
@@ -549,6 +600,22 @@ antiviral_model_worker <- function(
       
       prevented_by_antivirals = bind_rows(prevented_by_antivirals,vax_effect_comparison)
       
+      
+      ###age-specific
+      #Step One: load outcomes_without_antivirals (OWA) of no booster dose scenario
+      workshop = AS_OWA_no_booster_doses %>%
+        select(-vax_scenario,-vax_scenario_risk_group) %>%
+        rename(no_booster_overall = overall)
+      
+      #Step Two: compare OWA between booster and no-booster scenario
+      vax_effect_comparison = AS_OWA_with_booster_doses %>% 
+        select(-vax_scenario,-vax_scenario_risk_group) %>%
+        left_join(workshop, by = c('outcome','age_group')) %>%
+        mutate(n = no_booster_overall - overall) %>%
+        select(-no_booster_overall) %>%
+        mutate(intervention = 'vaccine')
+      
+      ageSpecific_prevented_by_antivirals = bind_rows(ageSpecific_prevented_by_antivirals,vax_effect_comparison)
     }
     #____________________________________________________________________________
     
@@ -589,7 +656,12 @@ antiviral_model_worker <- function(
       mutate(vax_scenario = toggle_vax_scenario,
              vax_scenario_risk_group = toggle_vax_scenario_risk_group)
     
-    this_worker_result = rbind(one_complete_run, this_worker_result)
+    one_complete_ageSpecific_run <- ageSpecific_prevented_by_antivirals %>%
+      select(age_group, outcome, antiviral_type,antiviral_target_group,intervention,evaluation_group, n) %>% 
+      mutate(vax_scenario = toggle_vax_scenario,
+             vax_scenario_risk_group = toggle_vax_scenario_risk_group)
+    
+    this_worker_result = bind_rows(one_complete_run,one_complete_ageSpecific_run, this_worker_result)
     
   } #end vaccination scenario loop
   
