@@ -65,3 +65,15 @@ for (this_setting_beta in c("TLS","PNG_low_beta")){ #IDN and FJI don't yet have 
   stochastiC_VE_timer = rbind(stochastiC_VE_timer,row)
 }
 beep()
+
+
+
+
+stochastiC_VE_run = RECORD_antiviral_model_simulations_0 
+stochastiC_VE_run$country = stochastiC_VE_run$setting = paste(this_setting,"_stochastic_VE",sep="")
+
+load(file = paste(rootpath,"x_results/","AntiviralRun_PNG_low_beta_adults_with_comorbidities_2023-04-08 17-28-44.Rdata",sep="")) #RECORD_antiviral_model_simulations
+RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste(this_setting,"_det_VE",sep="")
+
+MASTER_RECORD_antiviral_model_simulations = bind_rows(stochastiC_VE_run,
+                                                      RECORD_antiviral_model_simulations)
