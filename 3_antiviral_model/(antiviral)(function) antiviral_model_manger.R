@@ -165,10 +165,14 @@ antiviral_model_manger <- function(
       cols = "n":"percentage" ,
       names_to = 'result',
       values_to = 'value'
-    ) 
+    ) %>%
+    #reduce df size by removing irrelevant rows
+    filter(!(is.na(age_group) == FALSE & result %in% c('percentage')) & 
+             !(outcome == "hosp_after_antivirals" & result == "percentage"))
   
   workshop = RECORD_antiviral_model_simulations_tidy %>%
-    filter(result %in% c('n')) %>%
+    filter(result %in% c('n') &
+             is.na(age_group)) %>%
     mutate(result = 'doses_per_outcome_averted',
            value = intervention_doses_delivered/value) 
   
