@@ -268,10 +268,11 @@ RECORD_vaccination_history_FINAL = data.frame()
 RECORD_incidence_log_tidy = data.frame()
 RECORD_incidence_log = data.frame()
 RECORD_exposed_log = data.frame()
+RECORD_ageSpecific_outcomes_without_antivirals = data.frame()
 
 
 for (ticket in 1:length(queue)){
-  
+
   commands = queue[[ticket]]
     
   VE_loop = 0
@@ -303,6 +304,8 @@ for (ticket in 1:length(queue)){
    # (4) incidence_log_tidy
    #COMEBACK - could make probab symptomatic or probab severe outcomes stochastic
    
+  
+  ### (1) outcomes_without_antivirals
    outcomes_without_antivirals = severe_outcome_log_tidy  %>%
      filter(format(date,format = "%Y") == 2023) %>%
      group_by(outcome) %>%
@@ -325,15 +328,24 @@ for (ticket in 1:length(queue)){
    
    outcomes_without_antivirals = rbind(outcomes_without_antivirals,append_booster_doses)
    append_risk = rbind(append_high_risk,append_booster_doses_risk)
-   outcomes_without_antivirals = outcomes_without_antivirals %>% left_join(append_risk, by = 'outcome')
+   outcomes_without_antivirals = outcomes_without_antivirals %>% 
+     left_join(append_risk, by = 'outcome') %>%
+     mutate(vax_scenario = vax_strategy_description,
+            vax_scenario_risk_group = risk_group_name)
+   #__________________________________________________
    
    
+   ### (2) prop_sympt
    #ASSUMPTION: only symptomatic cases lead to severe outcomes
    prop_sympt = param_age %>% 
      filter(country == setting) %>%
      ungroup() %>%
      filter(param == 'prop_sympt') %>%
      select(-param)
+   #__________________________________________________
+   
+   
+   ### (3) likelihood_severe_outcome
    likelihood_severe_outcome = severe_outcome_this_run %>%
      filter(date >= date_start) %>%
      left_join(reinfection_protection, by = c("date", "age_group")) %>%
@@ -342,18 +354,21 @@ for (ticket in 1:length(queue)){
      left_join(prop_sympt,by= c('age_group' = 'agegroup')) %>%
      mutate(percentage = percentage * (1/value)) %>%
      select(-value)
-   
-   ###need to include variables which inform vaccination scenario and target group
-   outcomes_without_antivirals = outcomes_without_antivirals %>%
-     mutate(vax_scenario = vax_strategy_description,
-            vax_scenario_risk_group = risk_group_name)
    likelihood_severe_outcome = likelihood_severe_outcome %>%
      mutate(vax_scenario = vax_strategy_description,
             vax_scenario_risk_group = risk_group_name)
+   #__________________________________________________
+   
+   
+   ### (4) incidence_log_tidy
    incidence_log_tidy = incidence_log_tidy %>%
      filter(date >= date_start - lengthInfectionDerivedImmunity) %>%
      mutate(vax_scenario = vax_strategy_description,
             vax_scenario_risk_group = risk_group_name)
+   #__________________________________________________
+   
+   
+   ### EXTRA datasets for checking
    exposed_log = exposed_log %>%
      mutate(vax_scenario = vax_strategy_description,
             vax_scenario_risk_group = risk_group_name)
@@ -363,8 +378,11 @@ for (ticket in 1:length(queue)){
    vaccination_history_FINAL = vaccination_history_FINAL %>%
      mutate(vax_scenario = vax_strategy_description,
             vax_scenario_risk_group = risk_group_name)
+   #__________________________________________________
    
-   # addition for CEA
+   
+   ### addition for CEA
+   #(A/B) pop-level
    total_cases = incidence_log_tidy %>%
      group_by(risk_group, vax_scenario, vax_scenario_risk_group) %>%
      summarise(incidence = sum(incidence))
@@ -388,12 +406,43 @@ for (ticket in 1:length(queue)){
                      vax_scenario_risk_group = risk_group_name)
    outcomes_without_antivirals = rbind(outcomes_without_antivirals,mild,total_cases)
    
+   
+   #(B/B) age-specific
+   ageSpecific_outcomes_without_antivirals = severe_outcome_log_tidy  %>%
+     filter(format(date,format = "%Y") == 2023) %>%
+     group_by(outcome,age_group) %>%
+     summarise(overall = sum(proj)) %>%
+     mutate(vax_scenario = vax_strategy_description,
+            vax_scenario_risk_group = risk_group_name)
+   
+   ageSpecific_total_cases = incidence_log_tidy %>%
+     group_by(vax_scenario, vax_scenario_risk_group,age_group) %>%
+     summarise(overall = sum(incidence)) %>%
+     mutate(outcome = "total_cases")
+   
+   ageSpecific_mild = incidence_log_tidy %>%
+     group_by(age_group, vax_scenario, vax_scenario_risk_group) %>%
+     summarise(overall = sum(incidence)) %>%
+     rename(agegroup = age_group) %>%
+     left_join(prop_sympt, by = c("agegroup")) %>%
+     rename(age_group = agegroup) %>%
+     mutate(overall = overall * value) %>%
+     group_by(age_group, vax_scenario, vax_scenario_risk_group) %>%
+     summarise(overall = sum(overall)) %>%
+     mutate(outcome="mild")
+   ageSpecific_outcomes_without_antivirals = rbind(ageSpecific_outcomes_without_antivirals,ageSpecific_mild,ageSpecific_total_cases)
+   #__________________________________________________
+   
+   
+   ### bind on to tracker!
    RECORD_outcomes_without_antivirals = rbind(RECORD_outcomes_without_antivirals,outcomes_without_antivirals)
    RECORD_likelihood_severe_outcome   = rbind(RECORD_likelihood_severe_outcome,likelihood_severe_outcome)
    RECORD_incidence_log_tidy          = rbind(RECORD_incidence_log_tidy,incidence_log_tidy)
    RECORD_vaccination_history_FINAL   = rbind(RECORD_vaccination_history_FINAL,vaccination_history_FINAL)
    RECORD_exposed_log                 = rbind(RECORD_exposed_log,exposed_log)
    RECORD_incidence_log               = rbind(RECORD_incidence_log,incidence_log)
+   
+   RECORD_ageSpecific_outcomes_without_antivirals = rbind(RECORD_ageSpecific_outcomes_without_antivirals,ageSpecific_outcomes_without_antivirals)
    #____________________________________________________________________________________________________________________
    ###############################################################################################################
  }
@@ -408,7 +457,8 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               exposed_log = RECORD_exposed_log,
                               incidence_log = RECORD_incidence_log,
                               vaccination_history_FINAL = RECORD_vaccination_history_FINAL,
-                              generic_booster_toggles = RECORD_generic_booster_toggles)
+                              generic_booster_toggles = RECORD_generic_booster_toggles,
+                              ageSpecific_outcomes_without_antivirals = RECORD_ageSpecific_outcomes_without_antivirals)
 
 
 save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
