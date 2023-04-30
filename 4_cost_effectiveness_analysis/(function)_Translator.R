@@ -114,13 +114,10 @@ Translator <- function(LIST_CEA_settings,
   ### Summarise uncertainty in vax/antiviral model run ###########################
   ## DECISION: calculating uncertainty here and propagating through using this summary in case the number of CEA model runs != the number of vax/antiviral model runs (100)
   TRANSLATED_antiviral_simulations = workshop %>%
-    pivot_longer(cols = c("intervention_doses_delivered","count_outcomes_averted","doses_per_outcome_averted"),
-                 names_to = "result",
-                 values_to = "value") %>%
-    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group,result) %>%
-    summarise(mean = mean(value),
-              median = median(value),
-              sd = sd(value),
+    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group,age_group) %>%
+    summarise(mean = mean(count_outcomes_averted),
+              median = median(count_outcomes_averted),
+              sd = sd(count_outcomes_averted),
               .groups="keep")
   
   rm(workshop,MASTER_antiviral_simulations)
