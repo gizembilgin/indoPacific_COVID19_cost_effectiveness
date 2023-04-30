@@ -538,6 +538,7 @@ antiviral_model_worker <- function(
               toggle_vax_scenario != 'all willing adults vaccinated with a primary schedule'){
             
             prevented_by_antivirals_prior_booster = workshop %>%
+              mutate(count = count * percentage) %>%
               filter(date < local_booster_start_date) %>%
               group_by(outcome) %>%
               summarise(n = sum(count), .groups = "keep") %>%
@@ -549,6 +550,7 @@ antiviral_model_worker <- function(
                      intervention_doses_delivered = antivirals_delivered_prior_to_booster)
             
             prevented_by_antivirals_post_booster = workshop %>%
+              mutate(count = count * percentage) %>%
               filter(date >= local_booster_start_date) %>%
               group_by(outcome) %>%
               summarise(n = sum(count), .groups = "keep") %>%
@@ -659,9 +661,9 @@ antiviral_model_worker <- function(
     one_complete_ageSpecific_run <- ageSpecific_prevented_by_antivirals %>%
       select(age_group, outcome, antiviral_type,antiviral_target_group,intervention,evaluation_group, n) %>% 
       mutate(vax_scenario = toggle_vax_scenario,
-             vax_scenario_risk_group = toggle_vax_scenario_risk_group)
+             vax_scenario_risk_group = toggle_vax_scenario_risk_group) 
     
-    this_worker_result = bind_rows(one_complete_run,one_complete_ageSpecific_run, this_worker_result)
+    this_worker_result = bind_rows(one_complete_run,one_complete_ageSpecific_run, this_worker_result) 
     
   } #end vaccination scenario loop
   
