@@ -1,8 +1,15 @@
 require(readr); require(ggplot2); require(tidyverse)
 
-QALY_estimator <- function(LIST_CEA_settings,
-                           this_risk_group = "adults_with_comorbidities",
-                           discounting_rate = 0.03){
+### This function calculates the mean, median, and sd of total QALYs averted by setting, booster_vax_scenario, intervention, and intervention_target_group
+### It can also return additional outcomes such as death and hosp
+
+outcomesAverted_estimator <- function(
+    LIST_CEA_settings,
+    ARRAY_additional_outcomes = c("death","hosp"),
+    toggle_longCOVID = "off",
+    toggle_discounting_rate = 0.03, #NB: limitation can only change discounting of YLL of fatal cases, not YLD of critical cases due to restrictions of underlying data
+    this_risk_group = "adults_with_comorbidities"
+    ){
 
   setting_list = LIST_CEA_settings
   age_groups_num = c(0,4,9,17,29,44,59,69,110)
@@ -11,7 +18,7 @@ QALY_estimator <- function(LIST_CEA_settings,
   
   
   ### PART ONE: loading QALY estimates############################################
-  #### non-fatal QALYS ###########################################################
+  ## non-fatal QALYS 
   #Step One: load population distribution
   load(file = paste(gsub("4_cost_effectiveness_analysis","",getwd()),
                     "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata",sep=''))
@@ -25,12 +32,10 @@ QALY_estimator <- function(LIST_CEA_settings,
   rm(UN_pop_est)
   #_______________________________________________________________________________
   
-  
   #Step Two: load QALYs by severity and age
   raw <- read.csv("2_inputs/age_severity_specific_QALYs.csv",header=TRUE) 
   #ggplot(raw) + geom_line(aes(x=age,y=QALYs)) + facet_grid(severity ~ ., scale = "free_y")
   #_______________________________________________________________________________
-  
   
   #Step Three: calculate QALYs per model age group weighted by pop dn
   QALYs_nonFatal = raw %>%
@@ -41,15 +46,11 @@ QALY_estimator <- function(LIST_CEA_settings,
     mutate(group_percent = population/sum(population),
            interim = QALYs * group_percent) %>%
     summarise(QALYs = sum(interim),.groups="keep") 
-  
   #ggplot(QALYs_nonFatal) + geom_col(aes(x=age_group,y=QALYs,fill=as.factor(ISO3_code)),position="dodge") + facet_grid(severity ~ ., scale = "free_y")
-  #_______________________________________________________________________________
-  ################################################################################
+  #______________________________________________________________________________
   
   
-  
-  
-  #### fatal QALYS ###########################################################
+  ## fatal QALYS ###########################################################
   #Step One: load life expectancy at age X
   #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
   # who would be subject during the remaining of their lives to the mortality rates of a given period."
@@ -64,7 +65,6 @@ QALY_estimator <- function(LIST_CEA_settings,
   # ggplot(UN_lifeExpect_est[UN_lifeExpect_est$ISO3_code %in% setting_list,]) +
   #   geom_point(aes(x=age,y=life_expectancy,color=as.factor(ISO3_code)),position="dodge")
   #_______________________________________________________________________________
-  
   
   #Step Two: convert life expectancy to QALYs using HRQoL estimates
   raw <- read.csv("2_inputs/age_specific_HRQoL_v2.csv",header=TRUE) 
@@ -89,10 +89,10 @@ QALY_estimator <- function(LIST_CEA_settings,
                  age <= (this_age + ceiling(this_workshop$life_expectancy))) 
       
       #apply discounting (if>0) to each subsequent year of life
-      if (discounting_rate>0){
+      if (toggle_discounting_rate>0){
         this_workshop_window = this_workshop_window %>%
           mutate(discounting_year = age - this_age,
-                 discounting_multiplier = 1/(1+discounting_rate)^discounting_year,
+                 discounting_multiplier = 1/(1+toggle_discounting_rate)^discounting_year,
                  HRQoL = HRQoL*discounting_multiplier) %>%
           select(-discounting_year,-discounting_multiplier)
         
@@ -134,7 +134,6 @@ QALY_estimator <- function(LIST_CEA_settings,
            interim = QALY * group_percent) %>%
     summarise(QALYs = sum(interim),.groups="keep") %>%
     mutate(severity = "fatal")
-  
   #ggplot(QALYs_fatal[QALYs_fatal$ISO3_code %in% setting_list,]) + geom_col(aes(x=age_group,y=YLL,fill=as.factor(ISO3_code)),position="dodge")
   #_______________________________________________________________________________
   
@@ -215,27 +214,44 @@ QALY_estimator <- function(LIST_CEA_settings,
   ################################################################################
   
   
+  ## QALYs longCovid
+  if (toggle_longCOVID == "on"){
+    prevalence_postSixMonths = 0.027
+    prevalence_upToSixMonths = 0.457
+    longCOVID_disability_weight = 0.051
+    
+    QALYs_longCOVID = QALYs_fatal %>%
+      #for ongoing long COVID
+      mutate(QALYs = QALYs * prevalence_postSixMonths*longCOVID_disability_weight) %>%
+      mutate(severity = "total_cases") %>% #ASSUMPTION: all cases of COVID-19 can develop long COVID
+      #for short-term long COVID
+      mutate(QALYs = QALYs + prevalence_upToSixMonths*longCOVID_disability_weight*0.5)
+    
+    QALY_estimates = rbind(QALYs_nonFatal,QALYs_fatal,QALYs_longCOVID) 
+  } else(
+    QALY_estimates = rbind(QALYs_nonFatal,QALYs_fatal)
+  )
   
-  
-  #### bring together QALYS ######################################################
-  QALY_estimates = rbind(QALYs_nonFatal,QALYs_fatal) %>%
+
+  ## bring together QALYS ######################################################
+  QALY_estimates = QALY_estimates %>%
     rename(setting = ISO3_code) %>%
     mutate(outcome = case_when(
       severity == "critical" ~ "critical_disease",
       severity ==  "mild" ~  "mild" ,
       severity == "severe" ~ "severe_disease",
-      severity == "fatal"  ~ "death"
+      severity == "fatal"  ~ "death",
+      TRUE ~ severity
     )) %>%
     ungroup() %>%
     select(-severity)
-  # ggplot(QALY_estimates) + 
+  # ggplot(QALY_estimates) +
   #   geom_col(aes(x=age_group,y=QALYs,fill=as.factor(setting)),position="dodge") +
   #   theme_bw() +
-  #   labs(fill="")+ 
-  #   facet_grid(severity ~ ., scale = "free_y") 
+  #   labs(fill="")+
+  #   facet_grid(outcome ~ ., scale = "free_y")
   ##############################################################################
   ##############################################################################
-  
   
   
   
@@ -250,7 +266,8 @@ QALY_estimator <- function(LIST_CEA_settings,
   ### (3) the incidence of hospitalisation, and a fun
   ### (4) the incidence of hospitalisation of individuals who HAVE recieved antivirals
   ###
-  ### Load RECORD_antiviral_model_simulations ####################################
+  
+  ## Load RECORD_antiviral_model_simulations ####################################
   rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
   
   MASTER_antiviral_simulations = data.frame()
@@ -286,11 +303,10 @@ QALY_estimator <- function(LIST_CEA_settings,
   #_______________________________________________________________________________
   
   
-  
-  ### Subset #####################################################################
-  ### We would like a data set with the following columns:
-  ### setting, outcome, booster_vax_scenario, intervention, intervention target group, 
-  ### intervention_doses_delivered, count_outcomes_averted
+  ## Subset #####################################################################
+  # We would like a data set with the following columns:
+  # setting, outcome, booster_vax_scenario, intervention, intervention target group, 
+  # intervention_doses_delivered, count_outcomes_averted
   
   workshop = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == FALSE) %>%
@@ -350,9 +366,8 @@ QALY_estimator <- function(LIST_CEA_settings,
   #_______________________________________________________________________________
   
   
-  
-  ### Summarise uncertainty in vax/antiviral model run ###########################
-  ## DECISION: calculating uncertainty here and propagating through using this summary in case the number of CEA model runs != the number of vax/antiviral model runs (100)
+  ## Summarise uncertainty in vax/antiviral model run ###########################
+  # DECISION: calculating uncertainty here and propagating through using this summary in case the number of CEA model runs != the number of vax/antiviral model runs (100)
   TRANSLATED_antiviral_simulations = workshop %>%
     group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group,age_group) %>%
     summarise(mean = mean(count_outcomes_averted),
@@ -369,21 +384,21 @@ QALY_estimator <- function(LIST_CEA_settings,
   
   
   
-  
   ### PART THREE: calculating QALYs ############################################
-  QALY_calculation = TRANSLATED_antiviral_simulations %>%
+  outcomes_averted = TRANSLATED_antiviral_simulations %>%
     left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
     filter(is.na(QALYs) == FALSE) %>%
     mutate(mean = mean * QALYs,
            median = median * QALYs,
            sd = sd * QALYs) %>%
     select(-QALYs) %>%
+    mutate(outcome = "QALYs")%>%
     #collapsing outcome and age_group to calculate QALYs
-    group_by(setting,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(mean = sum(mean),
               median = sum(median),
               sd = sum(sd),
-              .groups = "keep")
+              .groups = "keep") 
   
   ###Plot to breakdown where QALYs from
   # to_plot = TRANSLATED_antiviral_simulations %>%
@@ -397,8 +412,36 @@ QALY_estimator <- function(LIST_CEA_settings,
   #   summarise(mean = sum(mean),
   #             median = sum(median),
   #             sd = sum(sd))
-  # ggplot(to_plot) + geom_col(aes(x=outcome,y=mean)) + 
+  # ggplot(to_plot) + geom_col(aes(x=outcome,y=mean)) +
   #   facet_grid(booster_vax_scenario ~.)
+  ##############################################################################
   
-  return(QALY_calculation)
+  #BONUS: add hosp and death outcomes while here
+  if (length(ARRAY_additional_outcomes)>0){
+    additional_outcomes = TRANSLATED_antiviral_simulations %>%
+      filter(outcome %in% ARRAY_additional_outcomes) %>%
+      #collapsing outcome and age_group 
+      group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+      summarise(mean = sum(mean),
+                median = sum(median),
+                sd = sum(sd),
+                .groups = "keep")
+    
+    outcomes_averted = rbind(outcomes_averted,additional_outcomes)
+    rm(additional_outcomes,TRANSLATED_antiviral_simulations)
+    
+    #CHECK
+    # check = outcomes_averted %>%
+    #   select(-median,-sd) %>%
+    #   pivot_wider(values_from = "mean",names_from = "outcome")
+  }
+  ##############################################################################
+  
+  
+  
+  return(outcomes_averted)
 }
+
+#test
+# outcomes_averted <- outcomes_averted_estimator(LIST_CEA_settings,toggle_discounting_rate = TOGGLE_discounting_rate)
+# outcomes_averted %>% arrange(setting,booster_vax_scenario,desc(mean))
