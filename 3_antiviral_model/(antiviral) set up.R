@@ -244,25 +244,27 @@ if (this_risk_group_name == "adults_with_comorbidities"){
 
 ### VACCINATION SCENARIO = CATCHUP CAMPIGN TO BOOSTER ALL PREV PRIMARY SCHEDULE
 #NB: only those who completed their primary schedule
-generic_booster_toggles$prev_dose_floor = generic_booster_toggles$prev_dose_ceiling = 2
-
-#high-risk adults
-generic_booster_toggles$delivery_risk_group = c(this_risk_group_name)
-queue[[length(queue)+1]] = list(
-  vax_strategy_description = 'catchup campaign for high-risk adults',
-  vax_strategy_description_long = 'assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster',
-  risk_group_name = this_risk_group_name,
-  risk_group_toggle = "on",
-  booster_toggles = generic_booster_toggles) 
-
-#all adults
-generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
-queue[[length(queue)+1]] = list(
-  vax_strategy_description = 'catchup campaign for all adults',
-  vax_strategy_description_long = 'assume booster to all adults who have previously completed their primary schedule but have not recieved a booster',
-  risk_group_name = this_risk_group_name,
-  risk_group_toggle = "on",
-  booster_toggles = generic_booster_toggles) 
+if (this_risk_group_name == "adults_with_comorbidities"){
+  generic_booster_toggles$prev_dose_floor = generic_booster_toggles$prev_dose_ceiling = 2
+  
+  #high-risk adults
+  generic_booster_toggles$delivery_risk_group = c(this_risk_group_name)
+  queue[[length(queue)+1]] = list(
+    vax_strategy_description = 'catchup campaign for high-risk adults',
+    vax_strategy_description_long = 'assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster',
+    risk_group_name = this_risk_group_name,
+    risk_group_toggle = "on",
+    booster_toggles = generic_booster_toggles) 
+  
+  #all adults
+  generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
+  queue[[length(queue)+1]] = list(
+    vax_strategy_description = 'catchup campaign for all adults',
+    vax_strategy_description_long = 'assume booster to all adults who have previously completed their primary schedule but have not recieved a booster',
+    risk_group_name = this_risk_group_name,
+    risk_group_toggle = "on",
+    booster_toggles = generic_booster_toggles) 
+}
 #______________________________________________________________________________________________________________
 
 
