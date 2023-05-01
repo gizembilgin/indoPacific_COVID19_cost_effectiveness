@@ -162,22 +162,24 @@ queue[[length(queue)+1]] = list(
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
-generic_booster_toggles$prev_dose_floor = 3
-queue[[length(queue)+1]] = list(
-  vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
-  vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
-  risk_group_name = this_risk_group_name,
-  risk_group_toggle = "on",
-  booster_toggles = generic_booster_toggles) 
-
-if (setting == "FJI" & TOGGLE_include_second_booster_elig == TRUE){
-  generic_booster_toggles$prev_dose_floor = 4
+if (this_risk_group_name == "adults_with_comorbidities"){
+  generic_booster_toggles$prev_dose_floor = 3
   queue[[length(queue)+1]] = list(
     vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
+    vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
     risk_group_name = this_risk_group_name,
     risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles)
+    booster_toggles = generic_booster_toggles) 
+  
+  if (setting == "FJI" & TOGGLE_include_second_booster_elig == TRUE){
+    generic_booster_toggles$prev_dose_floor = 4
+    queue[[length(queue)+1]] = list(
+      vax_strategy_description = 'all willing adults vaccinated with a primary schedule and high risk group recieve a booster',
+      vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
+      risk_group_name = this_risk_group_name,
+      risk_group_toggle = "on",
+      booster_toggles = generic_booster_toggles)
+  }
 }
 #______________________________________________________________________________________________________________
 
@@ -198,40 +200,44 @@ queue[[length(queue)+1]] = list(
   risk_group_toggle = "on",
   booster_toggles = generic_booster_toggles) 
 
-generic_booster_toggles$prev_dose_floor = 3
-queue[[length(queue)+1]] = list(
-  vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-  vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
-  risk_group_name = this_risk_group_name,
-  risk_group_toggle = "on",
-  booster_toggles = generic_booster_toggles) 
-
-if (setting == "FJI" & TOGGLE_include_second_booster_elig == TRUE){
-  generic_booster_toggles$prev_dose_floor = 4
+if (this_risk_group_name == "adults_with_comorbidities"){
+  generic_booster_toggles$prev_dose_floor = 3
   queue[[length(queue)+1]] = list(
     vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-    vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
+    vax_strategy_description_long = 'assume booster to all adults who have previously recieved a first booster dose',
     risk_group_name = this_risk_group_name,
     risk_group_toggle = "on",
-    booster_toggles = generic_booster_toggles)
+    booster_toggles = generic_booster_toggles) 
+  
+  if (setting == "FJI" & TOGGLE_include_second_booster_elig == TRUE){
+    generic_booster_toggles$prev_dose_floor = 4
+    queue[[length(queue)+1]] = list(
+      vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
+      vax_strategy_description_long = 'assume booster to all adults who have previously recieved two booster doses',
+      risk_group_name = this_risk_group_name,
+      risk_group_toggle = "on",
+      booster_toggles = generic_booster_toggles)
+  }
 }
 #______________________________________________________________________________________________________________
 
 
 
 ### VACCINATION SCENARIO = BOOSTER ALL but prioritise risk-group (unrealistic but good for SM)
-generic_booster_toggles$prioritised_risk = "Y"
-generic_booster_toggles$prev_dose_floor = 2
-
-generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
-queue[[length(queue)+1]] = list(
-  vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
-  vax_strategy_description_long = 'prioritise delivery to high-risk adults',
-  risk_group_name = this_risk_group_name,
-  risk_group_toggle = "on",
-  booster_toggles = generic_booster_toggles) 
-
-generic_booster_toggles$prioritised_risk = "N"
+if (this_risk_group_name == "adults_with_comorbidities"){
+  generic_booster_toggles$prioritised_risk = "Y"
+  generic_booster_toggles$prev_dose_floor = 2
+  
+  generic_booster_toggles$delivery_risk_group = c('general_public',this_risk_group_name)
+  queue[[length(queue)+1]] = list(
+    vax_strategy_description = 'all willing adults vaccinated with a primary schedule plus booster dose',
+    vax_strategy_description_long = 'prioritise delivery to high-risk adults',
+    risk_group_name = this_risk_group_name,
+    risk_group_toggle = "on",
+    booster_toggles = generic_booster_toggles) 
+  
+  generic_booster_toggles$prioritised_risk = "N"
+}
 #______________________________________________________________________________________________________________
 
 
