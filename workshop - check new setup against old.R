@@ -1,8 +1,7 @@
 ### COMPARISON OF OUTCOMES_WITHOUT_ANTIVIRALS
-this_risk_group_name = "pregnant_women" #adults_with_comorbidities,pregnant_women
+this_risk_group_name = "adults_with_comorbidities" #adults_with_comorbidities,pregnant_women
 setting_beta = "TLS"
 
-if (exists("master_toggles")){setting_beta = master_toggles$setting_beta} 
 setting = this_setting = substr(setting_beta,1,3)
 
 #PREVIOUS FILE
@@ -50,4 +49,3 @@ ageSpecific = RECORD_antiviral_setup$ageSpecific_outcomes_without_antivirals %>%
 comparison = popLevel %>%
   left_join(ageSpecific, by = c('outcome','vax_scenario','vax_scenario_risk_group'))
 comparison %>% filter(round(ageSpecific_overall) != round(overall))
-comparison
