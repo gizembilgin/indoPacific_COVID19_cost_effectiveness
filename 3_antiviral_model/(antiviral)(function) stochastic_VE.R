@@ -718,9 +718,10 @@ stochastic_VE <- function(
     group_by(age_group) %>%
     filter(strain == strain_now)
   if (max(booster_combinations$dose) == 5){
-    workshop = VE_waning_distribution_SO %>% filter(dose == 4) %>% mutate(dose == 5)
+    workshop = VE_waning_distribution_SO %>% filter(dose == 4) %>% mutate(dose = 5)
     VE_waning_distribution_SO = rbind(VE_waning_distribution_SO,workshop)
   }
+  
   
   #average booster dose effectiveness across heterogeneous combinations of each vaccine-dose combination
   workshop = data.frame()
