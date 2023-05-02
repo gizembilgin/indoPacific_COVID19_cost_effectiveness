@@ -82,7 +82,7 @@ fit_gamma <- function(mean,LB,UB){
 
 
 ### PART ONE: WHO CHOICE estimates _____________________________________________
-#COME BACK - load WHO CHOICE 2022
+load(file = "2_inputs/WHO_CHOICE_2022.Rdata")
 workshop = WHO_CHOICE_2022 %>% 
   filter(statistic %in% c("model_prediction","UB","LB","SD")) %>%
   pivot_wider(names_from = statistic,values_from=value) %>%
@@ -91,7 +91,7 @@ workshop = WHO_CHOICE_2022 %>%
 lognorm_param = mapply(fit_lognormal, workshop$model_prediction, workshop$LB, workshop$UB)
 workshop = cbind(workshop,t(lognorm_param)) 
 
-gamma_param = mapply(fit_lognormal, workshop$model_prediction, workshop$LB, workshop$UB)
+gamma_param = mapply(fit_gamma, workshop$model_prediction, workshop$LB, workshop$UB)
 workshop = cbind(workshop,t(gamma_param))
 
 sampled_norm = mapply(rnorm,10000000,workshop$model_prediction, workshop$SD)
@@ -100,7 +100,7 @@ sampled_gamma = mapply(rgamma,10000000,workshop$gamma_shape, workshop$gamma_scal
 
 
 ### check outpatient cost
-num = 20 #4,12,20,28
+num = 4 #4,12,20,28
 workshop[num,c("model_prediction","LB","UB")]
 plot(density(sampled_norm[,num])); quantile(sampled_norm[,num],probs=c(0.05,0.5,0.95))
 plot(density(sampled_lognorm[,num])); quantile(sampled_lognorm[,num],probs=c(0.05,0.5,0.95))

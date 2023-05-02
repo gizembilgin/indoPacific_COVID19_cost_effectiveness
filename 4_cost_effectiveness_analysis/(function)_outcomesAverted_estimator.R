@@ -2,6 +2,8 @@ require(readr); require(ggplot2); require(tidyverse)
 
 ### This function calculates the mean, median, and sd of total QALYs averted by setting, booster_vax_scenario, intervention, and intervention_target_group
 ### It can also return additional outcomes such as death and hosp
+#NB: No uncertainty in QALY estimates as data sources are expert point estimates of:
+#       population (UN), life expectancy (UN), HRQoL (Robinson, Eber & Hammitt), and age_severity_specific_QALYs (Robinson, Eber & Hammitt)
 
 outcomesAverted_estimator <- function(
     LIST_CEA_settings,
