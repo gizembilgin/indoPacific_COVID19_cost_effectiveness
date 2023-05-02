@@ -94,7 +94,6 @@ if (num_risk_groups>1){
         summarise(prop = sum(interim)) %>%
         rename(age_group = agegroup_MODEL)
       
-      
     }
   } else if (risk_group_name %in% c('pregnant_women')){
     load(file = "1_inputs/prevalence_pregnancy.Rdata")
@@ -219,6 +218,7 @@ if (file.exists(paste("1_inputs/live_updates/case_history",this_setting,Sys.Date
     mutate(new = cases - lag(cases),
            rolling_average = (new + lag(new,default=0) + lag(new,n=2,default=0)+lag(new,n=3,default=0)
                               +lag(new,n=4,default=0)+lag(new,n=5,default=0)+lag(new,n=6,default=0))/7)
+  rm(workshop_cases)
   
   # ggplot() +
   #   geom_point(data=case_history,aes(x=date,y=rolling_average),na.rm=TRUE) +
@@ -231,10 +231,7 @@ if (file.exists(paste("1_inputs/live_updates/case_history",this_setting,Sys.Date
   #         panel.border = element_blank(),
   #         axis.line = element_line(color = 'black'))
   
-  rm(workshop_cases)
-  
   save(case_history, file = paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
-
 }
 #______________________________________________________________________________________________________________________________________
 
@@ -280,7 +277,6 @@ if(antiviral_setup == "on"){
   proj_dates = seq(max(vaccination_history_TRUE$date) + 1, as.Date('2024-01-01'),by="days")
   proj_dates = crossing(date = proj_dates,
                         age_group = age_group_labels)
-  #proj_dates = seq(max(vaccination_history_TRUE$date) + 1, date_start + 7*model_weeks,by="days")
   
   if(setting == "PNG"){
     future_vaccine_type = "Johnson & Johnson"
@@ -377,7 +373,6 @@ if(antiviral_setup == "on"){
     rm(primary_program_proj)
   
 }
-
 #______________________________________________________________________________________________________________________________________
 
 
@@ -427,5 +422,3 @@ if (file.exists(paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Dat
   save(NPI_estimates, file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
 }
 #______________________________________________________________________________________________________________________________________
-
-

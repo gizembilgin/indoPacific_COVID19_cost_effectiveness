@@ -21,34 +21,28 @@ waning_toggle_rho_acqusition = TRUE
 if (this_setting == "FJI"){
   date_start = as.Date('2021-04-30')
   strain_inital = strain_now = 'WT' 
-  
-  covid19_waves = baseline_covid19_waves = data.frame(date = #c(as.Date('2021-06-06'),as.Date('2021-10-21'),as.Date('2022-01-15')), # initial best guess!
-                             c(as.Date('2021-06-09'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
-                     strain = c('delta','omicron','omicron'))
-} else if (this_setting == "PNG"){
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-06-09'),as.Date('2021-10-15'),as.Date('2022-02-01')), # previous best guess
+                                                      strain = c('delta','omicron','omicron'))
 
+} else if (this_setting == "PNG"){
   strain_inital = strain_now = 'WT'
-  
   baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-01-15'),as.Date('2021-09-01'),as.Date('2021-12-01')),
-                             strain = c('WT','delta','omicron'))
-  
+                                                      strain = c('WT','delta','omicron'))
   date_start = covid19_waves$date[1] - 2
+
 } else if (this_setting == "TLS") {
   strain_inital = strain_now = 'WT'
-  baseline_covid19_waves = covid19_waves = data.frame(
-    date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2021-11-01')),
-    strain = c('WT', 'delta', 'omicron'))
-  
+  baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-03-01'),as.Date('2021-05-01'),as.Date('2021-11-01')),
+                                                      strain = c('WT', 'delta', 'omicron'))
   date_start = covid19_waves$date[1] - 2
   
 } else if (this_setting == "IDN") {
   strain_inital = strain_now = 'WT'
-  
   baseline_covid19_waves = covid19_waves = data.frame(date = c(as.Date('2021-04-01'),as.Date('2021-10-15')),
                                       strain = c('delta','omicron'))
-  
   date_start = covid19_waves$date[1] - 2
 }
+
 model_weeks = as.numeric((Sys.Date()+1-date_start)/7)
 
 #plot standard
@@ -153,6 +147,6 @@ if (this_setting == "FJI"){
                        reported_peaks[2] + as.numeric(reported_peaks[3] - reported_peaks[2])/2)  
 } else if (this_setting == "IDN"){
   fit_cutoff_dates =c((sort(reported_peaks)[2]-sort(reported_peaks)[1])/2+sort(reported_peaks)[1],
-                      sort(reported_peaks)[2]+90) #first good introduction of Delta in PNG
+                      sort(reported_peaks)[2]+90)
 }
 #_____________________________________________
