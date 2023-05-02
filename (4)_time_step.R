@@ -16,7 +16,6 @@ if (exists("fitting_beta") == FALSE){fitting_beta = rep(1,nrow(covid19_waves))}
 while(length(fitting_beta) < nrow(covid19_waves)){fitting_beta = c(fitting_beta,1)}
 
 for (increments_number in 1:num_time_steps){
-#for (increments_number in 1:74){
 
   if (fitting == "on" & increments_number == 1){
     
@@ -53,7 +52,6 @@ for (increments_number in 1:num_time_steps){
       colnames(Reff_tracker) <- c('Reff')
     }
 
-    
   } else{
     
     date_now = date_start + increments_number*time_step
@@ -359,13 +357,7 @@ for (increments_number in 1:num_time_steps){
         parameters$beta7 = parameters$beta[7]
         parameters$beta8 = parameters$beta[8]
       }
-        # if (fitting == "off"){
-        #   if (date_now>=seed_date){
-        #     parameters$VE$VE = parameters$VE$VE * 0.9
-        #     parameters$rho = parameters$rho * 0.9
-        #   }
-        # }
-    
+
       if (round(sum(next_state$pop)) != round(sum(prev_state$pop))) {
         stop('pop not retained between next_state and prev_state!')
       }
@@ -564,5 +556,4 @@ if (fitting_details == "on"){
   Reff_tracker <- cbind(Reff = Reff_tracker, date = seq(date_start+1,date_start+nrow(rho_tracker_dataframe)+1,by="days"))
   colnames(Reff_tracker) = c('Reff','date')
 }
-
 

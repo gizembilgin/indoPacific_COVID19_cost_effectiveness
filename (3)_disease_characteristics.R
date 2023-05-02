@@ -17,8 +17,6 @@ lota    = 0.5                                                     # (iii) modifi
   } else if (strain_inital == 'omicron'){
     AverageLatentPeriod = 2.22
   }
-#}else if (run_type == "rand"){AverageLatentPeriod = rlnorm(1,meanlog = 1.3, sd=0.2)} 
-
 lambda = 1/AverageLatentPeriod
 
 
@@ -37,4 +35,3 @@ delta = 1/AverageSymptomaticPeriod
 ### (D/D) Waning of infection-derived immunity
 lengthInfectionDerivedImmunity = 180 #days
 omega = 1/lengthInfectionDerivedImmunity
-

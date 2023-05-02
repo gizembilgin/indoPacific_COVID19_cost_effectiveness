@@ -342,7 +342,6 @@ VE_waning_distribution <- VE_waning_distribution_expander(VE_waning_distribution
 
 if ((date_start - vaxCovDelay$delay[vaxCovDelay$dose == d])>= min(vaccination_history_TRUE$date)){
   VE = VE_inital = VE_time_step(strain_inital,date_start,'any_infection')
-  #VE_onwards_inital <- VE_time_step(strain_inital,date_start,'transmission')
 } else(
   VE = VE_inital = crossing(risk_group = unique(vaccination_history_FINAL$risk_group),
                             dose = unique(vaccination_history_FINAL$dose),
