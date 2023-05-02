@@ -400,7 +400,7 @@ antiviral_model_worker <- function(
           
         } else if (local_pathway_to_care == 'fixed_RAT') {
           
-          if (setting %in% c("TLS","FJI","PNG")){ #settings with <10 million, where the randomness of who receives antivirals may influence the impact of these antivirals
+          if (total_target<500000){ #where the randomness of who receives antivirals may influence the impact of these antivirals
             ### randomly sample the fixed proportion from the target population who have access to care
             if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
               num_to_sample = total_target * local_fixed_antiviral_coverage
@@ -437,9 +437,10 @@ antiviral_model_worker <- function(
             rm(workshop)
             #____________________________________________________________________________
             
-          } else if (setting %in% c("IDN")){ #settings with >10 million, where individually who receives the antivirals will not have as large of an influence on their impact
-            #NB: sampling 50 million times from the binomial distribution was prohibitively restrictive due to available computational resources
-            ### randomly sample the fixed proportion from the target population who have access to care
+          } else { 
+            #NB: sampling half a million times from the binomial distribution was prohibitively restrictive due to available computational resources
+            ### but also not very useful as it converges to the mean
+            ### hence, fix the proportion of the target population who have access to care
             if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
               num_to_sample = total_target * local_fixed_antiviral_coverage
               antiviral_recipients = data.frame(ID = sample(antiviral_target_individuals$ID, num_to_sample, replace = FALSE))
@@ -456,9 +457,7 @@ antiviral_model_worker <- function(
               group_by(date,risk_group,age_group,dose,vaccine_type) %>%
               summarise(count = sum(count),.groups = "keep")
             
-          } else{
-            stop("select a valid setting!")
-          }
+          } 
         
         } else if (local_pathway_to_care == 'fixed_direct') {
           #randomly sample the fixed proportion from the target population
