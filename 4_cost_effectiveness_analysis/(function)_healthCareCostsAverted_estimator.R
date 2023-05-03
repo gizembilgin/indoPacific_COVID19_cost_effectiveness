@@ -136,29 +136,40 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   healthcare_access = data.frame(setting = c("FJI","IDN","PNG","TLS"),
                                  access = c(0.816,0.7,0.7,0.766))
   
-  cost_estimates = rbind(hosp_adm,outpatient)
+  cost_estimates = rbind(hosp_adm,outpatient) %>%
+    filter(setting %in% LIST_CEA_settings)
+  
   cost_estimates = TRANSLATED_antiviral_simulations %>%
     filter(outcome %in% c("hosp","mild")) %>%
     ungroup() %>%
     right_join(cost_estimates,by=c("setting","outcome"),relationship = "many-to-many") %>%
     
-    #analytically propagating the error
-    mutate(mean_propogated= mean * mean_cost,
-           sd_propogated = mean_propogated * sqrt((sd/mean)^2 + (sd_cost/mean_cost)^2)) %>%
-    select(setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,mean_propogated,sd_propogated) %>%
-    
     #modifying outpatient costs by access to care
     left_join(healthcare_access, by = "setting", relationship = "many-to-many") %>%
     mutate(
-      mean_propogated = case_when(
-        patient_type == "outpatient" ~ mean_propogated * access,
-        TRUE ~ mean_propogated
-      ),
-      sd_propogated = case_when(
-        patient_type == "outpatient" ~ sd_propogated * access,
-        TRUE ~ sd_propogated
-      )
-    ) 
+      mean = case_when(
+        patient_type == "outpatient" ~ mean * access,
+        TRUE ~ mean
+      )) %>%
+    
+    mutate(cost = 0)
+  
+  if (toggle_uncertainty == "rand"){
+    #COMEBACK - once fitted lognormal or gamma distribution to WHO_CHOICE
+    for (row in 1:nrow(cost_estimates)){
+      this_sample = data.frame(est = rnorm(cost_estimates$mean[row], mean = cost_estimates$mean_cost[row], sd = cost_estimates$sd_cost[row])) %>%
+        mutate(est = case_when(
+          est <0 ~ 0,
+          TRUE ~ est
+        ))
+      cost_estimates$cost[row] = sum(this_sample$est)
+    }
+    rm(this_sample)
+    
+  } else if (toggle_uncertainty == "fixed"){
+    cost_estimates = cost_estimates %>%
+      mutate(cost = mean * mean_cost)
+  }
   #___________________________________________________________________________
   
   
@@ -166,6 +177,23 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   
 
+  ##############################################################################
   
-  return()
+  
+  
+  
+  ### Export result  ###########################################################
+  healthcareCosts_averted = cost_estimates %>%
+    group_by(setting,booster_vax_scenario,intervention,intervention_target_group) %>%
+    summarise(cost = sum(cost), .groups= "keep")
+  
+  healthcareCosts_breakdown = cost_estimates %>%
+    select(setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
+  
+  # ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
+  #   facet_grid(booster_vax_scenario ~.)
+  
+  result = list(healthcareCosts_averted = cost_estimates,
+                healthcareCosts_breakdown = healthcareCosts_breakdown)  
+  return(result)
 }
