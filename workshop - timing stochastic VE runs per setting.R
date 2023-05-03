@@ -8,8 +8,9 @@ copy_function_into_cluster = antiviral_model_worker
 
 stochastiC_VE_timer = data.frame()
 
-for (this_num in c(4,3,2,1)){
+for (this_num in c(2,3,4)){
   for (this_setting_beta in c("FJI","IDN")){ #IDN and FJI don't yet have the updated AntiviralSetup
+
     
     time.start.AntiviralSimulations=proc.time()[[3]]
     
@@ -92,24 +93,15 @@ for (this_num in c(4,3,2,1)){
 beep()
 
 
-###IDN
-load(file = paste(rootpath,"x_results/Stochastic_VE_AntiviralRun_IDN_adults_with_comorbidities_2023-05-02 08-30-25.Rdata",sep=''))
-RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("IDN_stoch_VE",sep="")
+### compare stoch to det
+load(file = paste(rootpath,"x_results/Stochastic_VE_AntiviralRun_PNG_low_beta_adults_with_comorbidities_2023-05-02 23-05-41.Rdata",sep=''))
+RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("stoch_VE",sep="")
 MASTER_RECORD_antiviral_model_simulations = RECORD_antiviral_model_simulations
 
-load(file = paste(rootpath,"x_results/","AntiviralRun_IDN_adults_with_comorbidities_2023-04-25 23-44-09.Rdata",sep=''))
-RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("IDN_det_VE",sep="")
+#AntiviralRun_TLS_adults_with_comorbidities_2023-04-15 21-09-12.Rdata
+load(file = paste(rootpath,"x_results/AntiviralRun_PNG_low_beta_adults_with_comorbidities_2023-04-08 17-28-44.Rdata",sep=''))
+RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("det_VE",sep="")
 MASTER_RECORD_antiviral_model_simulations = bind_rows(MASTER_RECORD_antiviral_model_simulations,
                                                        RECORD_antiviral_model_simulations)
 
-
-###FJI
-load(file = paste(rootpath,"x_results/Stochastic_VE_AntiviralRun_FJI_adults_with_comorbidities_2023-05-02 04-40-09.Rdata",sep=''))
-RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("FJI_stoch_VE",sep="")
-MASTER_RECORD_antiviral_model_simulations = RECORD_antiviral_model_simulations
-
-load(file = paste(rootpath,"x_results/","AntiviralRun_FJI_adults_with_comorbidities_2023-04-12 04-51-38.Rdata",sep=''))
-RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("FJI_det_VE",sep="")
-MASTER_RECORD_antiviral_model_simulations = bind_rows(MASTER_RECORD_antiviral_model_simulations,
-                                                      RECORD_antiviral_model_simulations)
 
