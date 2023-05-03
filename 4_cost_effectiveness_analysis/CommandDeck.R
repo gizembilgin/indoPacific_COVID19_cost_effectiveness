@@ -21,9 +21,11 @@ for (ticket in 1:TOGGLE_numberOfRuns){
   
   ###(2/3) Calculate QALYs, intervention costs, and healthcare costs averted
     
-  outcomes_averted <- outcomesAverted_estimator(LIST_CEA_settings,
+  outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings,
                                                 toggle_longCOVID = TOGGLE_longCOVID,
                                                  toggle_discounting_rate = TOGGLE_discounting_rate)
+  #list including QALY_breakdown by setting,outcome_source,booster_vax_scenario,intervention,intervention_target_group, and 
+  #               outcomes_averted by setting,outcome,booster_vax_scenario,intervention,intervention_target_group
     
   interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings,
                              antiviral_cost_scenario = "low_generic_cost",
@@ -32,7 +34,7 @@ for (ticket in 1:TOGGLE_numberOfRuns){
 
   
   ###(3/3) CEA per setting
-  
+  #include plot of QALY breakdown by outcome_source
   
   
 }
