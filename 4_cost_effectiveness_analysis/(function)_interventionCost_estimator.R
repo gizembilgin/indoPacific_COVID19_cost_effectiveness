@@ -230,7 +230,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       filter(intervention != "booster dose 2023-03-01") %>%
       mutate(operational_cost = 0)
     
-    if (toggle_uncertainty == "on"){
+    if (toggle_uncertainty == "rand"){
       #COMEBACK - once fitted lognormal or gamma distribution to WHO_CHOICE
       for (row in 1:nrow(antiviral_estimates)){
         this_sample = data.frame(est = rnorm (antiviral_estimates$mean[row],mean = outpatient$mean_cost, sd = outpatient$sd_cost  )) %>%
@@ -242,7 +242,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       }
       rm(this_sample)
 
-    } else if (toggle_uncertainty == "off"){
+    } else if (toggle_uncertainty == "fixed"){
       antiviral_estimates$operational_cost = antiviral_estimates$mean * outpatient$mean_cost
     }
 
