@@ -1,8 +1,8 @@
 require(readr); require(ggplot2); require(tidyverse)
 
 ### This function calculates the mean, median, and sd of total QALYs averted by setting, booster_vax_scenario, intervention, and intervention_target_group
-### It can also return additional outcomes such as death and hosp
-#NB: No uncertainty in QALY estimates as data sources are expert point estimates of:
+### Italso returns additional outcomes such as death and hosp
+#NB: There is no uncertainty in QALY conversion estimates as data sources are expert point estimates of:
 #       population (UN), life expectancy (UN), HRQoL (Robinson, Eber & Hammitt), and age_severity_specific_QALYs (Robinson, Eber & Hammitt)
 
 outcomesAverted_estimator <- function(
@@ -34,7 +34,7 @@ outcomesAverted_estimator <- function(
   rm(UN_pop_est)
   #_______________________________________________________________________________
   
-  #Step Two: load QALYs by severity and age
+  #Step Two: load non-fatal QALYs by severity and age
   raw <- read.csv("2_inputs/age_severity_specific_QALYs.csv",header=TRUE) 
   #ggplot(raw) + geom_line(aes(x=age,y=QALYs)) + facet_grid(severity ~ ., scale = "free_y")
   #_______________________________________________________________________________
@@ -223,7 +223,7 @@ outcomesAverted_estimator <- function(
     longCOVID_disability_weight = 0.051
     
     QALYs_longCOVID = QALYs_fatal %>%
-      #for ongoing long COVID
+      #for ongoing long COVID use fatal QALY estimates of YLL weighted by HRQoL and discounted in future years
       mutate(QALYs = QALYs * prevalence_postSixMonths*longCOVID_disability_weight) %>%
       mutate(severity = "total_cases") %>% #ASSUMPTION: all cases of COVID-19 can develop long COVID
       #for short-term long COVID
@@ -260,18 +260,8 @@ outcomesAverted_estimator <- function(
   
   
   ### PART TWO: load antiviral simulation ######################################
-  ### This section translates the antiviral/vaccine model results into a useful from for the cost-effectiveness analysis
-  ###
-  ### Fundamentally we need:
-  ### (1) the incidence of all, mild, severe, critical, and fatal disease for calculation of QALYs
-  ### (2) the incidence of fatal disease (deaths)
-  ### (3) the incidence of hospitalisation, and a fun
-  ### (4) the incidence of hospitalisation of individuals who HAVE recieved antivirals
-  ###
-  
-  ## Load RECORD_antiviral_model_simulations ####################################
+  ## Load full simulations #####################################################
   rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
-  
   MASTER_antiviral_simulations = data.frame()
   
   for (i in 1:length(LIST_CEA_settings)){
@@ -325,7 +315,7 @@ outcomesAverted_estimator <- function(
     )) %>%
     filter(is.na(booster_vax_scenario) == FALSE) %>%
     
-    #DECISION - CEA for antivirals as of 01/01/2023 
+    #DECISION - CEA of antivirals for a whole year (as of 01/01/2023)
     filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%
     mutate(intervention = case_when(
       intervention == "vaccine" ~ "booster dose 2023-03-01",
@@ -377,9 +367,44 @@ outcomesAverted_estimator <- function(
               sd = sd(count_outcomes_averted),
               .groups="keep")
   
-  rm(workshop,MASTER_antiviral_simulations)
+  #CHECK: normally distributed
+  #check normally distributed
+  shapiro_tracker = data.frame()
+  for (this_outcome in unique(workshop$outcome)){
+    for (this_intervention in unique(workshop$intervention)){
+      for (this_intervention_group in unique(workshop$intervention_target_group[workshop$intervention == this_intervention])){
+        for (this_vax_scenario in unique(workshop$booster_vax_scenario[workshop$intervention == this_intervention & workshop$intervention_target_group == this_intervention_group])){
+          this_workshop = workshop %>% 
+            filter(intervention == this_intervention &
+                     intervention_target_group == this_intervention_group &
+                     outcome == this_outcome &
+                     booster_vax_scenario == this_vax_scenario) %>%
+            filter(count_outcomes_averted>0)
+          
+          if (nrow(this_workshop)>0){
+            this_test <- shapiro.test(this_workshop$count_outcomes_averted   )
+            
+            row = data.frame(test = this_test$method, 
+                             statistic = this_test$statistic,
+                             p_value = this_test$p.value,
+                             intervention = this_intervention,
+                             intervention_target_group = this_intervention_group,
+                             outcome = this_outcome,
+                             booster_vax_scenario = this_vax_scenario,
+                             values_tested = "count_outcomes_averted   ")
+            shapiro_tracker = rbind(shapiro_tracker,row)
+          }
+        }
+      }
+    }
+  }
+  shapiro_tracker = shapiro_tracker %>% 
+    filter(p_value < 0.05)
+  if (nrow(shapiro_tracker)>0){warning(paste(nrow(shapiro_tracker),"rows of count outcomes averted are not normally distributed"))}
   #_______________________________________________________________________________
   ##############################################################################
+  
+  rm(workshop,MASTER_antiviral_simulations)
   ##############################################################################
   
   
@@ -402,19 +427,23 @@ outcomesAverted_estimator <- function(
               sd = sum(sd),
               .groups = "keep") 
   
+  QALY_breakdown = TRANSLATED_antiviral_simulations %>%
+    left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
+    filter(is.na(QALYs) == FALSE) %>%
+    mutate(mean = mean * QALYs,
+           median = median * QALYs,
+           sd = sd * QALYs) %>%
+    select(-QALYs) %>%
+    mutate(outcome_source = outcome,
+           outcome = "QALYs") %>%
+    group_by(setting,outcome_source,booster_vax_scenario,intervention,intervention_target_group) %>%
+    summarise(mean = sum(mean),
+              median = sum(median),
+              sd = sum(sd),
+              .groups = "keep") 
+  
   ###Plot to breakdown where QALYs from
-  # to_plot = TRANSLATED_antiviral_simulations %>%
-  #   left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
-  #   filter(is.na(QALYs) == FALSE) %>%
-  #   mutate(mean = mean * QALYs,
-  #          median = median * QALYs,
-  #          sd = sd * QALYs) %>%
-  #   select(-QALYs) %>%
-  #   group_by(setting,booster_vax_scenario,intervention,intervention_target_group,outcome) %>%
-  #   summarise(mean = sum(mean),
-  #             median = sum(median),
-  #             sd = sum(sd))
-  # ggplot(to_plot) + geom_col(aes(x=outcome,y=mean)) +
+  # ggplot(QALY_breakdown) + geom_col(aes(x=outcome_source,y=mean)) +
   #   facet_grid(booster_vax_scenario ~.)
   ##############################################################################
   
@@ -430,18 +459,19 @@ outcomesAverted_estimator <- function(
                 .groups = "keep")
     
     outcomes_averted = rbind(outcomes_averted,additional_outcomes)
-    rm(additional_outcomes,TRANSLATED_antiviral_simulations)
+    rm(additional_outcomes)
     
     #CHECK
     # check = outcomes_averted %>%
     #   select(-median,-sd) %>%
     #   pivot_wider(values_from = "mean",names_from = "outcome")
   }
+  rm(TRANSLATED_antiviral_simulations)
   ##############################################################################
-  
-  
-  
-  return(outcomes_averted)
+
+  result = list(outcomes_averted = outcomes_averted,
+                QALY_breakdown = QALY_breakdown)  
+  return(result)
 }
 
 #test
