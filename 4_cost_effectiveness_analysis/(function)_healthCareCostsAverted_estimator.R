@@ -108,6 +108,20 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   ##############################################################################
   
   
+  ## Reduced LOS (outcome == "hosp_after_antivirals")
+  #COMEBACK - need to sample 0.78 0.027-1.542
+  workshop = TRANSLATED_antiviral_simulations %>%
+    filter(outcome == "hosp_after_antivirals") %>%
+    mutate(proportion = 0.1*0.784,
+           mean = mean * proportion,
+           outcome = "hosp"
+           )
+  TRANSLATED_antiviral_simulations = TRANSLATED_antiviral_simulations[TRANSLATED_antiviral_simulations$outcome %in% c("hosp","mild"),]
+  TRANSLATED_antiviral_simulations =   rbind(TRANSLATED_antiviral_simulations,workshop) %>%
+    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+    summarise(mean = sum(mean), .groups="keep")
+  ##############################################################################
+  
   
   
   ### Calculate healthcare costs ##############################################
@@ -171,15 +185,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
       mutate(cost = mean * mean_cost)
   }
   #___________________________________________________________________________
-  
-  
-  ## Reduced LOS (outcome == "hosp_after_antivirals")
-  
-  
 
-  ##############################################################################
-  
-  
   
   
   ### Export result  ###########################################################
@@ -193,7 +199,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   # ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
   #   facet_grid(booster_vax_scenario ~.)
   
-  result = list(healthcareCosts_averted = cost_estimates,
+  result = list(healthcareCosts_averted = healthcareCosts_averted,
                 healthcareCosts_breakdown = healthcareCosts_breakdown)  
   return(result)
 }
