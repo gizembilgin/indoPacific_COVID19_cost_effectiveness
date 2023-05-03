@@ -21,6 +21,7 @@ antiviral_model_worker <- function(
     local_booster_start_date = as.Date('2023-01-01'),
     
     worker_stochastic_VE_sampling = "uniform",
+    num_at_which_to_sample = 250000,
   
     stochastic_severe_outcomes_sampling = copy_sampling_fx_into_cluster,
     stochastic_severe_outcomes_application = copy_application_fx_into_cluster
@@ -400,7 +401,7 @@ antiviral_model_worker <- function(
           
         } else if (local_pathway_to_care == 'fixed_RAT') {
           
-          if (total_target<500000){ #where the randomness of who receives antivirals may influence the impact of these antivirals
+          if (total_target<num_at_which_to_sample){ #where the randomness of who receives antivirals may influence the impact of these antivirals
             ### randomly sample the fixed proportion from the target population who have access to care
             if (local_fixed_antiviral_coverage != 1){ #no need to sample if all included!
               num_to_sample = total_target * local_fixed_antiviral_coverage
