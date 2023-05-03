@@ -94,12 +94,14 @@ beep()
 
 
 ### compare stoch to det
-load(file = paste(rootpath,"x_results/Stochastic_VE_AntiviralRun_PNG_low_beta_adults_with_comorbidities_2023-05-02 23-05-41.Rdata",sep=''))
+load(file = paste(rootpath,"x_results/Stochastic_VE_AntiviralRun_FJI_adults_with_comorbidities_2023-05-04 07-16-45.Rdata",sep=''))
 RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("stoch_VE",sep="")
 MASTER_RECORD_antiviral_model_simulations = RECORD_antiviral_model_simulations
 
 #AntiviralRun_TLS_adults_with_comorbidities_2023-04-15 21-09-12.Rdata
-load(file = paste(rootpath,"x_results/AntiviralRun_PNG_low_beta_adults_with_comorbidities_2023-04-08 17-28-44.Rdata",sep=''))
+#AntiviralRun_FJI_adults_with_comorbidities_2023-04-22 20-56-50
+#AntiviralRun_PNG_low_beta_adults_with_comorbidities_2023-04-08 17-28-44
+load(file = paste(rootpath,"x_results/AntiviralRun_FJI_adults_with_comorbidities_2023-04-22 20-56-50.Rdata",sep=''))
 RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("det_VE",sep="")
 MASTER_RECORD_antiviral_model_simulations = bind_rows(MASTER_RECORD_antiviral_model_simulations,
                                                        RECORD_antiviral_model_simulations)
