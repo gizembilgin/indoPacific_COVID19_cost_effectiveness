@@ -33,7 +33,7 @@ workshop_WB = raw %>%
   select(-Series.Code)
 #_______________________________________________________________________________
 
-## (2/5) International Monetary Fund data on GDP deflator (latest October 2022)
+## (2/5) International Monetary Fund data on GDP deflator (latest April 2023)
 #https://www.imf.org/en/Publications/SPROLLS/world-economic-outlook-databases#sort=%40imfdate%20descending
 raw <- read.csv("2_inputs/IMF_data.csv",header=TRUE)
 # "GDP_deflator"   
@@ -62,6 +62,7 @@ workshop_IMF = raw %>%
 ## (3/5) cost estimates
 cost_estimates <- read.csv("2_inputs/cost_estimates.csv",header=TRUE)
 #hospital_admission
+#operational_cost
 #_______________________________________________________________________________
 
 ## (4/5) WHO CHOICE estimates
@@ -148,7 +149,7 @@ WHO_CHOICE_2010 = workshop
 
 
 ### (2) CALCULATE COSTS IN 2022 USD ############################################
-## (A/B) cost of a hospital admission
+## (A/C) cost of a hospital admission
 hosp_adm <- cost_estimates %>% filter(variable == "hospital_admission")
 
 #adjust NCU to 2022
@@ -167,7 +168,7 @@ hosp_adm$year = "2022"
 #_______________________________________________________________________________
 
 
-## (B/B) cost per outpatient visit
+## (B/C) cost per outpatient visit
 #adjust NCU to 2022
 adj_factor = workshop_IMF %>%
   filter(variable == "GDP_deflator" & year %in% c(2010,2022)) %>%
@@ -226,6 +227,20 @@ ggplot(to_plot) + geom_col(aes(x=ISO3_code,y=value,fill=as.factor(label)),positi
 #   filter(currency_short == "PPP")
 # ggplot(to_plot) + geom_col(aes(x=ISO3_code,y=model_prediction,fill=as.factor(label)),position="dodge")
 #_______________________________________________________________________________
+
+
+## (C/C) operational cost per dose delivered____________________________________
+operational_cost <- cost_estimates %>% filter(variable == "operational_cost")
+
+#adjust USD to 2022
+adj_factor = 
+  workshop_IMF$value[workshop_IMF$ISO3_code == "USA" & workshop_IMF$year %in% c(2022) & workshop_IMF$variable == "GDP_deflator"]/
+  workshop_IMF$value[workshop_IMF$ISO3_code == "USA" & workshop_IMF$year %in% c(2018) & workshop_IMF$variable == "GDP_deflator"]
+operational_cost$estimate = operational_cost$estimate * adj_factor
+operational_cost$sd = operational_cost$sd  * adj_factor
+operational_cost$LB = operational_cost$LB  * adj_factor
+operational_cost$UB = operational_cost$UB  * adj_factor
+operational_cost$year = "2022"
 ################################################################################
 
 
@@ -318,3 +333,4 @@ hosp_adm = hosp_adm %>%
 ### (4) SAVE ##########################################
 save(WHO_CHOICE_2022, file = "2_inputs/WHO_CHOICE_2022.Rdata")
 save(hosp_adm, file = "2_inputs/hosp_adm.Rdata")
+save(operational_cost, file = "2_inputs/operational_cost.Rdata")
