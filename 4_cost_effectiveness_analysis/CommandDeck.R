@@ -6,7 +6,7 @@ source(paste(getwd(),"/(function)_interventionCost_estimator.R",sep=""),local=TR
 source(paste(getwd(),"/(function)_healthCareCostsAverted_estimator.R",sep=""),local=TRUE)
 source(paste(getwd(),"/(function)_CEA_calculation.R",sep=""),local=TRUE)
 
-LIST_CEA_settings = list("TLS")
+LIST_CEA_settings = list("TLS","PNG")
 CEA_risk_group = "adults_with_comorbidities"
 
 TOGGLE_uncertainty = "fixed" #fixed or rand
