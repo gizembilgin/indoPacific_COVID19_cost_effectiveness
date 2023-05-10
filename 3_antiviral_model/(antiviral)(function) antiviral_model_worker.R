@@ -261,6 +261,9 @@ antiviral_model_worker <- function(
         } else if (toggle_antiviral_target == 'unvaccinated_adults_AND_adults_with_comorbidities') {
           antiviral_target = antiviral_target %>%
             filter(dose == 0 | risk_group == 'adults_with_comorbidities')
+        } else if (toggle_antiviral_target == 'adults_18_44'){
+          antiviral_target = antiviral_target %>%
+            filter(age_group %in% c("18 to 29",  "30 to 44") & !(risk_group %in% c('adults_with_comorbidities', 'pregnant_women')))
         } else {
           stop('pick a valid toggle_antiviral_target!')
         }

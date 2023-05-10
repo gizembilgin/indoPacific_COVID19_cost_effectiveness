@@ -1,7 +1,7 @@
 library(RColorBrewer)
 options(scipen = 1000)
 
-plot_name = "figure_S3_2_1" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3"
+plot_name = "figure_S3_1_3" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3", "figure_S2_4"
 plot_list = list()
 
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
@@ -11,11 +11,10 @@ TOGGLE_print = "on"
 TOGGLE_antiviral_type = "nirmatrelvir_ritonavir"
 
 risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
-#risk_groups_to_plot = "adults_with_comorbidities"
+if (plot_name == "figure_S2_4"){risk_groups_to_plot = "pregnant_women"}
 
 #settings_to_plot = c("PNG_high_beta","PNG_low_beta")
-settings_to_plot = c("FJI","PNG_low_beta","TLS")
-#settings_to_plot = c("FJI")
+settings_to_plot = c("TLS","PNG_low_beta","FJI","IDN")
 
 
 if (plot_name ==  "figure_S3_2_3"){
@@ -38,6 +37,7 @@ for (r in 1:length(risk_groups_to_plot)){
     this_setting = settings_to_plot[i]
     
     list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
+    list_poss_Rdata = list_poss_Rdata[substr(list_poss_Rdata,1,26) != "Stochastic_VE_AntiviralRun"]
     if (length(list_poss_Rdata)>0){
       list_poss_Rdata_details = double()
       for (j in 1:length(list_poss_Rdata)){
@@ -243,7 +243,8 @@ if (plot_name %in% c("figure_1",
 ### FIGURE 2 family
 if (plot_name %in% c("figure_2",
                      "figure_S3_2_3",
-                     "figure_S3_2_1"
+                     "figure_S3_2_1",
+                     "figure_S2_4"
 )){
   
   LIST_vax_scenarios = c("booster to high-risk",
@@ -261,8 +262,22 @@ if (plot_name %in% c("figure_2",
   } else if (plot_name == "figure_S3_2_1"){
     workshop_this_plot = RECORD_antiviral_model_simulations %>% 
       filter(antiviral_target_group == "adults_with_comorbidities") %>% 
-      filter(intervention %in% c("antiviral 2023-01-01","antiviral prior to booster 2023-01-01", "antiviral after booster 2023-01-01"))  %>%
-      mutate(antiviral_target_group = intervention) #so colour on plot
+      filter(intervention %in% c("antiviral 2023-01-01",
+        "antiviral prior to booster 2023-01-01", "antiviral after booster 2023-01-01"))  %>%
+      mutate(antiviral_target_group = case_when(
+        intervention == "antiviral prior to booster 2023-01-01" ~ "antiviral delivered prior to booster campaign",
+        intervention == "antiviral after booster 2023-01-01" ~ "antiviral delivered after booster campaign",
+        intervention == "antiviral 2023-01-01" ~ "antiviral in 2023"
+      )) #so colour on plot
+  } else if (plot_name ==  "figure_S2_4"){
+    workshop_this_plot = RECORD_antiviral_model_simulations %>% 
+      filter(antiviral_target_group %in% c("pregnant_women","adults_18_44")) %>% 
+      filter(intervention %in% c("antiviral 2023-01-01")) %>%
+      mutate(vax_scenario_short = case_when(
+        vax_scenario_short == "booster to high-risk" ~ "booster to pregnant women",
+        TRUE ~ vax_scenario_short
+      ))
+    LIST_vax_scenarios = c("booster to pregnant women", "no booster")
   }
   
   workshop_this_plot = workshop_this_plot%>%
@@ -270,12 +285,14 @@ if (plot_name %in% c("figure_2",
     filter(antiviral_target_group != "unvaccinated_adults_AND_adults_with_comorbidities") %>%
     filter(evaluation_group == 'pop_level')  %>%
     filter(vax_scenario_short %in% c("booster to high-risk",
-                                        "no booster"))  %>% 
+                                        "no booster",
+                                     "booster to pregnant women"))  %>% 
       mutate(antiviral_target_group = case_when(
       antiviral_target_group == "adults_with_comorbidities" ~ "high-risk",
       antiviral_target_group == "all_adults" ~ "all",
       antiviral_target_group == "unvaccinated_adults" ~ "unvaccinated",
       antiviral_target_group == "pregnant_women" ~ "pregnant_women",
+      antiviral_target_group == "adults_18_44" ~ "adults 18-44",
       TRUE ~ antiviral_target_group
     )) %>%
     mutate(outcome_extended = case_when(outcome == 'hosp' ~ 'hospitalisation',
@@ -364,6 +381,17 @@ if (plot_name %in% c("figure_2",
         plot_list[[a]]  = plot_list[[a]]  + labs(color='') +
           scale_color_manual(values = c("#FF61CC", # grey - all
                                         "#00BA38")) # green - high risk
+      }
+      if (plot_name == "figure_S2_4"){
+        plot_list[[a]]  = plot_list[[a]]  + labs(color='') +
+          scale_color_manual(values = c("#33CCFF",# light blue - adults 18 to 44
+                                        "#FF61CC" ))  # pink - pregnant women
+      }
+      if (plot_name == "figure_S3_2_1"){
+        plot_list[[a]]  = plot_list[[a]]  + labs(color='') +
+          scale_color_manual(values = c("#33CCFF", #delivered after booster campaign
+                                        "#00BA38", #delivered prior to booster campaign
+                                        "#BEBEBE")) #delivered anytime
       }
     
 
