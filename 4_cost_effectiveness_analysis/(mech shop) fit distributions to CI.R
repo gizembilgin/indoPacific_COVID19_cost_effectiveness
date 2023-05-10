@@ -1,4 +1,7 @@
-### This program fits distributions to confidence intervals from literature
+### This program fits distributions to:
+### (1) Operational costs for vaccine dose delivery
+### (2) Operational costs for antiviral delivery / cost per outpatient visit
+### (3) Reduced length of stay of patients who recieve oral antivirals
 
 ### MINIMISE FUNCTIONS #########################################################
 fit_normal <- function(mean,LB,UB){
@@ -22,10 +25,13 @@ fit_lognormal <- function(mean,LB,UB){
     b = log(1+sd_sq/mean_sq)
     
     Z= rlnorm(10000000, meanlog = a,sdlog = b)
-    LB_estimate <- as.numeric(quantile(Z,.025))
-    UB_estimate <- as.numeric(quantile(Z,.975))
+    LB_estimate <- as.numeric(quantile(Z,.025,na.rm=TRUE))
+    UB_estimate <- as.numeric(quantile(Z,.975,na.rm=TRUE))
+    mean_estimate <-  mean(Z)
     
-    return((LB - LB_estimate)^2 + (UB - UB_estimate)^2) #squared residuals
+    return((LB - LB_estimate)^2 + 
+             (mean - mean_estimate)^2 + 
+             (UB - UB_estimate)^2)
   }
   
   sd_est = optimize(minimise_this_lognormal, interval=c(0,mean*2))
@@ -48,8 +54,11 @@ fit_beta <- function(mean,LB,UB){
     Z= rbeta(10000000, a, b)
     LB_estimate <- as.numeric(quantile(Z,.025,na.rm=TRUE))
     UB_estimate <- as.numeric(quantile(Z,.975,na.rm=TRUE))
+    mean_estimate <-  mean(Z)
     
-    return((LB - LB_estimate)^2 + (UB - UB_estimate)^2) #squared residuals
+    return((LB - LB_estimate)^2 + 
+             (mean - mean_estimate)^2 + 
+             (UB - UB_estimate)^2)
   }
   
   X_estimate = optimize(minimise_this_beta, interval=c(0,100))
@@ -68,7 +77,13 @@ fit_gamma <- function(mean,LB,UB){
     scale=param[2]
     
     Z= rgamma(10000000, shape, scale=scale)
-    return((LB - quantile(Z,.025,na.rm=TRUE))^2 + (mean(Z))^2 + (UB - as.numeric(quantile(Z,.975,na.rm=TRUE))^2))
+    LB_estimate <- as.numeric(quantile(Z,.025,na.rm=TRUE))
+    UB_estimate <- as.numeric(quantile(Z,.975,na.rm=TRUE))
+    mean_estimate <-  mean(Z)
+    
+    return((LB - LB_estimate)^2 + 
+             (mean - mean_estimate)^2 + 
+             (UB - UB_estimate)^2)
   }
   
   X_estimate = optim(c(1,1),minimise_this_gamma)
@@ -81,12 +96,14 @@ fit_gamma <- function(mean,LB,UB){
 
 
 
-### PART ONE: WHO CHOICE estimates _____________________________________________
+### PART TWO: Operational costs for antiviral delivery / cost per outpatient visit (WHO CHOICE estimates)
 load(file = "2_inputs/WHO_CHOICE_2022.Rdata")
 workshop = WHO_CHOICE_2022 %>% 
+  filter(currency_short == "USD" &
+           patient_type == "outpatient" &
+           care_setting == "Health centre (no beds)") %>%
   filter(statistic %in% c("model_prediction","UB","LB","SD")) %>%
-  pivot_wider(names_from = statistic,values_from=value) %>%
-  filter(currency_short == "USD")
+  pivot_wider(names_from = statistic,values_from=value) 
   
 lognorm_param = mapply(fit_lognormal, workshop$model_prediction, workshop$LB, workshop$UB)
 workshop = cbind(workshop,t(lognorm_param)) 
@@ -100,7 +117,7 @@ sampled_gamma = mapply(rgamma,10000000,workshop$gamma_shape, workshop$gamma_scal
 
 
 ### check outpatient cost
-num = 4 #4,12,20,28
+num = 2
 workshop[num,c("model_prediction","LB","UB")]
 plot(density(sampled_norm[,num])); quantile(sampled_norm[,num],probs=c(0.05,0.5,0.95))
 plot(density(sampled_lognorm[,num])); quantile(sampled_lognorm[,num],probs=c(0.05,0.5,0.95))
