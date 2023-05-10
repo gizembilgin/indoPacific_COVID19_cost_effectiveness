@@ -44,12 +44,17 @@ load(file = paste(rootpath,"x_results/",latest_file,sep=''))
 
 RECORD_antiviral_model_simulations_0 <- antiviral_model_manger(
   
-  LIST_antiviral_start_date = c(as.Date('2023-01-01'),as.Date('2023-07-01')), 
+  LIST_antiviral_start_date = c(as.Date('2023-01-01'),
+                                as.Date('2023-07-01')
+                                ), 
   LIST_vax_scenario = c("all willing adults vaccinated with a primary schedule",                                                                                                                      
                         "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
   ),
-  LIST_antiviral_target_group = list('pregnant_women'),
-  LIST_antiviral_type = list("nirmatrelvir_ritonavir","molunipiravir"), #options:nirmatrelvir_ritonavir,molunipiravir 
+  LIST_antiviral_target_group = list('pregnant_women',
+                                     'adults_18_44'),
+  LIST_antiviral_type = list("nirmatrelvir_ritonavir",
+                             "molunipiravir"
+                             ), #options:nirmatrelvir_ritonavir,molunipiravir 
   toggle_high_risk_group = this_risk_group_name,
   
   
