@@ -5,7 +5,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
                                        wastage_rate_antiviralSchedule = 0,
                                        toggle_uncertainty = TOGGLE_uncertainty,
                                        TORNADO_PLOT_OVERRIDE = list(),
-                                       fitted_distributions = fitted_distributions){
+                                       local_fitted_distributions = fitted_distributions){
   
   #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
   #     but we include wastage rates for all other components.
@@ -87,7 +87,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     # This is an estimate per dose across a whole program (thinking through the meta-analysis), not a distribution of costs per individual
     # Hence, sample once for whole program, NOT for # of individuals
     if (toggle_uncertainty == "rand"){
-      op_fitted_distributions = fitted_distributions %>% filter(parameter == "operation_cost_vaccine")
+      op_fitted_distributions = local_fitted_distributions %>% filter(parameter == "operation_cost_vaccine")
       operational_cost = rlnorm(1,op_fitted_distributions$param1,op_fitted_distributions$param2)
     } else if (toggle_uncertainty == "fixed"){
       operational_cost = 2.85
@@ -135,7 +135,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     
     #(E/E) operational_cost
     #WHO CHOICE estimates provide the distribution for individual costs, therefore sample from this distribution for the number of individuals and sum across
-    op_fitted_distributions = fitted_distributions %>% filter(parameter == "outpatient_visit_cost" &
+    op_fitted_distributions = local_fitted_distributions %>% filter(parameter == "outpatient_visit_cost" &
                                                                 setting == this_setting)
     
     antiviral_estimates = TRANSLATED_antiviral_simulations  %>%
