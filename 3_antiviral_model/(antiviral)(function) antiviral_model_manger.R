@@ -58,7 +58,7 @@ antiviral_model_manger <- function(
   system.time({
     RECORD_antiviral_model_simulations <- foreach::foreach(
       model_run_number = c(1:toggle_number_of_runs),
-      .packages = c('tidyverse'),
+      .packages = c('tidyverse','ids'),
       .combine = rbind,
       .inorder = FALSE
     )  %dopar% {
