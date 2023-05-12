@@ -1,43 +1,12 @@
 
 healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
+                                             MASTER_antiviral_simulations,
                                        toggle_uncertainty = TOGGLE_uncertainty,
                                        TORNADO_PLOT_OVERRIDE = list()){
   
   ### Load RECORD_antiviral_model_simulations ####################################
   # We would like a data set with the following columns:
   # setting, booster_vax_scenario, outcome, count_outcomes_averted
-  
-  ## Step One: load all antiviral results
-  rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
-  MASTER_antiviral_simulations = data.frame()
-  
-  for (i in 1:length(LIST_CEA_settings)){
-    this_setting = LIST_CEA_settings[[i]]
-    
-    list_poss_Rdata = list.files(
-      path = paste(rootpath, "x_results/", sep = ''),
-      pattern = paste("AntiviralRun_", this_setting, "_", this_risk_group, "*", sep ="")
-    )
-    if (length(list_poss_Rdata) > 0) {
-      list_poss_Rdata_details = double()
-      for (j in 1:length(list_poss_Rdata)) {
-        list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                        file.info(paste(rootpath, 'x_results/', list_poss_Rdata[[j]], sep = ''))$mtime)
-      }
-      latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-      load(file = paste(rootpath, "x_results/", latest_file, sep = ''))
-    } else{
-      stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
-    }
-    
-    if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
-    
-    df_this_setting = RECORD_antiviral_model_simulations %>% mutate(setting = this_setting)
-    MASTER_antiviral_simulations = bind_rows(MASTER_antiviral_simulations,df_this_setting)
-  }
-  rm(RECORD_antiviral_model_simulations)
-  #_______________________________________________________________________________
-  
   
   ## Step Two: subset 
   workshop = MASTER_antiviral_simulations %>%
@@ -110,9 +79,12 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   ## Reduced LOS (outcome == "hosp_after_antivirals")
   #COMEBACK - need to sample 0.78 0.027-1.542
+  cost_per_extra_LOS = rnorm(1, mean = 0.09, sd = 0.01) #sampling coefficient
+  cost_per_extra_LOS = exp(cost_per_extra_LOS) - 1      #proportion decreased cost of stay
+  
   workshop = TRANSLATED_antiviral_simulations %>%
     filter(outcome == "hosp_after_antivirals") %>%
-    mutate(proportion = 0.1*0.784,
+    mutate(proportion = cost_per_extra_LOS*0.784,
            mean = mean * proportion,
            outcome = "hosp"
            )
