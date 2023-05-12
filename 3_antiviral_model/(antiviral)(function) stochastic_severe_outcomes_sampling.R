@@ -40,7 +40,7 @@ stochastic_severe_outcomes_sampling <- function(
     sampled_value = mapply(rlnorm,1,severe_outcome_age_distribution_RAW_v2$lognorm_a, severe_outcome_age_distribution_RAW_v2$lognorm_b)
     workshop = cbind(severe_outcome_age_distribution_RAW_v2,sampled_value)
     workshop = workshop %>%
-      filter(outcome %in% c('death','severe_disease','hosp')) %>%
+      filter(outcome %in% c('death','severe_disease','hosp',"critical_disease" )) %>%
       mutate(sampled_value = case_when(
         mean == LB & mean == UB ~ mean,
         TRUE ~ sampled_value
@@ -64,7 +64,7 @@ stochastic_severe_outcomes_sampling <- function(
     
     ### PART TWO: Adjust age-distributions to setting ######################################################
     severe_outcome_country_level = severe_outcome_country_level %>%
-      filter(country == setting & outcome %in% c('death','severe_disease','hosp')) 
+      filter(country == setting & outcome %in% c('death','severe_disease','hosp',"critical_disease")) 
     
     sampled_value = mapply(runif,1,severe_outcome_country_level$LB, severe_outcome_country_level$UB) 
     severe_outcome_country_level = cbind(severe_outcome_country_level,sampled_value)
@@ -191,7 +191,7 @@ stochastic_severe_outcomes_sampling <- function(
     severe_outcome_country_level = severe_outcome_country_level %>%
       mutate(pop_est = case_when(
         outcome == 'death' ~ pop_est * variant_multiplier$multiplier[variant_multiplier$outcome == 'death'],
-        outcome == 'severe_disease' ~ pop_est * variant_multiplier$multiplier[variant_multiplier$outcome == 'ICU'], #ASSUMPTION
+        outcome %in% c('severe_disease','ICU','critical_disease')~ pop_est * variant_multiplier$multiplier[variant_multiplier$outcome == 'ICU'], #ASSUMPTION
         outcome == 'hosp' ~ pop_est * variant_multiplier$multiplier[variant_multiplier$outcome == 'hosp']
       )) %>%
       left_join(age_distribution_RR, by = c('outcome')) %>%
@@ -282,7 +282,7 @@ stochastic_severe_outcomes_sampling <- function(
     severe_outcome_country_level = severe_outcome_country_level %>%
       mutate(outcome_VE = case_when(
         outcome %in% c('death','YLL') ~ 'death',
-        outcome %in% c('hosp','severe_disease') ~ 'severe_disease'
+        outcome %in% c('hosp','severe_disease','critical_disease') ~ 'severe_disease'
       ))
     
     #(2) Load stochastic VE distribution
