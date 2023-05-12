@@ -666,7 +666,8 @@ antiviral_model_worker <- function(
       mutate(vax_scenario = toggle_vax_scenario,
              vax_scenario_risk_group = toggle_vax_scenario_risk_group) 
     
-    this_worker_result = bind_rows(one_complete_run,one_complete_ageSpecific_run, this_worker_result) 
+    this_worker_result = bind_rows(one_complete_run,one_complete_ageSpecific_run, this_worker_result) %>%
+      mutate(run_ID = random_id(n = 1, bytes = 8))
     
   } #end vaccination scenario loop
   
