@@ -1,45 +1,19 @@
 
 interventionCost_estimator <- function(LIST_CEA_settings,
+                                       MASTER_antiviral_simulations,
                                        antiviral_cost_scenario = "low_generic_cost",
                                        wastage_rate_antiviralSchedule = 0,
                                        toggle_uncertainty = TOGGLE_uncertainty,
                                        TORNADO_PLOT_OVERRIDE = list()){
   
+  #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
+  #     but we include wastage rates for all other components.
+  #     These wastage rates then need to be converted to wastage factors by 1/(1-wastage_rate)
+  
+  
   ### Load RECORD_antiviral_model_simulations ####################################
   # We would like a data set with the following columns:
   # setting, booster_vax_scenario, intervention, intervention target group, intervention_doses_delivered
-  
-  ## Step One: load model results
-  rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
-  MASTER_antiviral_simulations = data.frame()
-  
-  for (i in 1:length(LIST_CEA_settings)){
-    this_setting = LIST_CEA_settings[[i]]
-    
-    list_poss_Rdata = list.files(
-      path = paste(rootpath, "x_results/", sep = ''),
-      pattern = paste("AntiviralRun_", this_setting, "_", this_risk_group, "*", sep ="")
-    )
-    if (length(list_poss_Rdata) > 0) {
-      list_poss_Rdata_details = double()
-      for (j in 1:length(list_poss_Rdata)) {
-        list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                        file.info(paste(rootpath, 'x_results/', list_poss_Rdata[[j]], sep = ''))$mtime)
-      }
-      latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-      load(file = paste(rootpath, "x_results/", latest_file, sep = ''))
-    } else{
-      stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
-    }
-    
-    if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
-    
-    df_this_setting = RECORD_antiviral_model_simulations %>% mutate(setting = this_setting)
-    MASTER_antiviral_simulations = bind_rows(MASTER_antiviral_simulations,df_this_setting)
-  }
-  rm(RECORD_antiviral_model_simulations)
-  #_______________________________________________________________________________
-  
   
   ## Step Two: subset 
   workshop = MASTER_antiviral_simulations %>%
@@ -183,8 +157,8 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     }
     
     #calculate!
-    static_costs = price_per_boosterDose*(1+wastage_rate_boosterDose) +
-      price_per_injectionEquipmentDose*(1+wastage_rate_injectionEquipment)
+    static_costs = price_per_boosterDose*(1/(1-wastage_rate_boosterDose)) +
+      price_per_injectionEquipmentDose*(1/(1-wastage_rate_injectionEquipment))
     
     vax_estimates = TRANSLATED_antiviral_simulations  %>%
       filter(intervention == "booster dose 2023-03-01") %>%
@@ -210,8 +184,8 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     #(C/E) price_per_RAT
     price_per_RAT = 2.225 #Median price across 8 products listed on UNICEF catalogue 
     
-    #(D/E) wastage_rate_RAT
-    wastage_rate_RAT = 5 #COMEBACK??
+    #(D/E) wastage_factor_RAT
+    wastage_factor_RAT = 6
     
     #(E/E) operational_cost
     load(file = "2_inputs/WHO_CHOICE_2022.Rdata")
@@ -251,14 +225,14 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       if("price_per_antiviralDose" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_antiviralDose = TORNADO_PLOT_OVERRIDE$price_per_antiviralDose}
       if("wastage_rate_antiviralSchedule" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_antiviralSchedule = TORNADO_PLOT_OVERRIDE$wastage_rate_antiviralSchedule}
       if("price_per_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_RAT = TORNADO_PLOT_OVERRIDE$price_per_RAT}
-      if("wastage_rate_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_RAT = TORNADO_PLOT_OVERRIDE$wastage_rate_RAT}
+      if("wastage_factor_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_factor_RAT = TORNADO_PLOT_OVERRIDE$wastage_factor_RAT}
       if("operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$mean * TORNADO_PLOT_OVERRIDE$operational_cost}
     }
     
     #calculate!
     
-    static_costs = price_per_antiviralDose*(1+wastage_rate_antiviralSchedule) +
-      price_per_RAT*(1+wastage_rate_RAT)
+    static_costs = price_per_antiviralDose*(1/(1-wastage_rate_antiviralSchedule)) +
+      price_per_RAT*wastage_factor_RAT
     
     antiviral_estimates = antiviral_estimates  %>%
       mutate(cost = operational_cost + mean * static_costs) %>%
