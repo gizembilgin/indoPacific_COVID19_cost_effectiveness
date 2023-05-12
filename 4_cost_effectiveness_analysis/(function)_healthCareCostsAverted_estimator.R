@@ -1,15 +1,16 @@
 
 healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
                                              MASTER_antiviral_simulations,
-                                       toggle_uncertainty = TOGGLE_uncertainty,
-                                       TORNADO_PLOT_OVERRIDE = list()){
+                                             toggle_uncertainty = TOGGLE_uncertainty,
+                                             TORNADO_PLOT_OVERRIDE = list(),
+                                             fitted_distributions = local_fitted_distributions){
   
   ### Load RECORD_antiviral_model_simulations ####################################
   # We would like a data set with the following columns:
   # setting, booster_vax_scenario, outcome, count_outcomes_averted
   
   ## Step Two: subset 
-  workshop = MASTER_antiviral_simulations %>%
+  TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == TRUE) %>%
     filter(evaluation_group == "pop_level") %>%
     
@@ -45,86 +46,81 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     
     select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes_averted)
     
-  if (nrow(workshop) != nrow(na.omit(workshop))){stop("NA introduced")}
-  
-  #unique(workshop$setting)
-  #[1] "FJI" "PNG" "TLS"
-  #unique(workshop$booster_vax_scenario)
-  # [1] "booster dose catch-up campaign for high-risk adults"                 "booster dose catch-up campaign for all adults"                      
-  # [3] "booster to all adults, prioritised to high-risk adults"              "booster to all adults previously willing to be vaccinated"          
-  # [5] "booster to all high-risk adults previously willing to be vaccinated" "no booster dose"                                                   
-  #unique(workshop$intervention)
-  #[1] "nirmatrelvir_ritonavir 2023-01-01" "molunipiravir 2023-01-01"          "booster dose 2023-03-01"          
-  #unique(workshop$intervention_target_group)
-  #[1] "adults_with_comorbidities"                         "unvaccinated_adults_AND_adults_with_comorbidities" "all_adults"                                       
-  #[4] "unvaccinated_adults"                               "pregnant_women"      
-  #_______________________________________________________________________________
-  
-  
-  ## Step Three: summarise uncertainty in vax/antiviral model run 
-  TRANSLATED_antiviral_simulations = workshop %>%
-    group_by(setting, outcome, booster_vax_scenario, intervention, intervention_target_group) %>%
-    summarise(mean = mean(count_outcomes_averted),
-              median = median(count_outcomes_averted),
-              sd = sd(count_outcomes_averted),
-              UB = mean + 1.96*sd,
-              LB = mean -1.96*sd,
-              .groups="keep")
-  
-  rm(workshop,MASTER_antiviral_simulations)
-  #_______________________________________________________________________________
-  ##############################################################################
+  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
   ##############################################################################
   
   
   ## Reduced LOS (outcome == "hosp_after_antivirals")
-  #COMEBACK - need to sample 0.78 0.027-1.542
-  cost_per_extra_LOS = rnorm(1, mean = 0.09, sd = 0.01) #sampling coefficient
-  cost_per_extra_LOS = exp(cost_per_extra_LOS) - 1      #proportion decreased cost of stay
+  #analytically propogating error, see scanned proof 12/05/2023 in 1_derivation
+  X = cost_per_extra_LOS_MEAN = 0.09
+  sdX = cost_per_extra_LOS_SD = 0.01
   
-  workshop = TRANSLATED_antiviral_simulations %>%
+  Y = extra_LOS_MEAN = fitted_distributions$param1[fitted_distributions$parameter == "reduced_LOS_days"]
+  sdY = extra_LOS_SD = fitted_distributions$param2[fitted_distributions$parameter == "reduced_LOS_days"]
+  
+  new_sd = (exp(X) - 1) * Y * sqrt(((exp(X)*sdX)/(exp(X)-1))^2+(sdY/Y)^2)
+  new_mean = (exp(X) - 1) * Y
+  
+  reduced_LOS_estimates = TRANSLATED_antiviral_simulations  %>%
     filter(outcome == "hosp_after_antivirals") %>%
-    mutate(proportion = cost_per_extra_LOS*0.784,
-           mean = mean * proportion,
-           outcome = "hosp"
-           )
+    mutate(estimate = 0)
+  
+  if (toggle_uncertainty == "rand"){
+    for (row in 1:nrow(reduced_LOS_estimates)){
+      this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes_averted[row],mean = new_mean, sd = new_sd)) %>%
+        mutate(est = case_when(
+          est <0 ~ 0,
+          TRUE ~ est
+        ))
+      reduced_LOS_estimates$estimate[row] = sum(this_sample$est)
+    }
+    rm(this_sample)
+    
+  } else if (toggle_uncertainty == "fixed"){
+    reduced_LOS_estimates$estimate = reduced_LOS_estimates$count_outcomes_averted * (exp(X) - 1) * Y
+  }
+  
+
+  workshop = reduced_LOS_estimates %>%
+    mutate(count_outcomes_averted = estimate,
+           outcome = "hosp") %>%
+    select(-estimate)
   TRANSLATED_antiviral_simulations = TRANSLATED_antiviral_simulations[TRANSLATED_antiviral_simulations$outcome %in% c("hosp","mild"),]
   TRANSLATED_antiviral_simulations =   rbind(TRANSLATED_antiviral_simulations,workshop) %>%
     group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
-    summarise(mean = sum(mean), .groups="keep")
+    summarise(count_outcomes_averted = sum(count_outcomes_averted), .groups="keep") #including hosp $ from reduced LOS of inpatients who recieved antivirals with other inpatients
   ##############################################################################
   
   
   
   ### Calculate healthcare costs ##############################################
   load(file = "2_inputs/hosp_adm.Rdata")
+  
+  ##inputs
   hosp_adm = hosp_adm %>%
     rename(setting = ISO3_code,
            sd_cost = sd,
            mean_cost = estimate) %>%
     mutate(patient_type = "inpatient",
            outcome = "hosp") %>%
-    select(setting,patient_type,outcome,mean_cost,sd_cost)
+    select(setting,patient_type,outcome,mean_cost,sd_cost) %>%
+    rename(param2 = sd_cost) %>%
+    mutate(param1 = mean_cost)
   
-  load(file = "2_inputs/WHO_CHOICE_2022.Rdata")
-  outpatient = WHO_CHOICE_2022 %>% 
-    filter(patient_type == "outpatient" &
-             care_setting == "Health centre (no beds)" &
-             currency_short == "USD" &
-             statistic %in% c("model_prediction","SD")) %>%
-    pivot_wider(names_from = statistic,values_from=value) %>%
-    rename(setting = ISO3_code,
-           mean_cost = model_prediction,
-           sd_cost = SD) %>%
-    mutate(outcome = "mild") %>%
-    select(setting,patient_type,outcome,mean_cost,sd_cost)
-  
-  healthcare_access = data.frame(setting = c("FJI","IDN","PNG","TLS"),
-                                 access = c(0.816,0.7,0.7,0.766))
+  outpatient = local_fitted_distributions %>% 
+    filter(parameter == "outpatient_visit_cost") %>%
+    mutate(patient_type = "outpatient",
+           outcome = "mild") %>%
+    select(setting,patient_type,outcome,param1,param2,mean_cost) 
   
   cost_estimates = rbind(hosp_adm,outpatient) %>%
     filter(setting %in% LIST_CEA_settings)
   
+  healthcare_access = data.frame(setting = c("FJI","IDN","PNG","TLS"),
+                                 access = c(0.816,0.7,0.7,0.766))
+  
+
+  ## calculation
   cost_estimates = TRANSLATED_antiviral_simulations %>%
     filter(outcome %in% c("hosp","mild")) %>%
     ungroup() %>%
@@ -133,28 +129,35 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     #modifying outpatient costs by access to care
     left_join(healthcare_access, by = "setting", relationship = "many-to-many") %>%
     mutate(
-      mean = case_when(
-        patient_type == "outpatient" ~ mean * access,
-        TRUE ~ mean
+      count_outcomes_averted = case_when(
+        patient_type == "outpatient" ~ count_outcomes_averted * access,
+        TRUE ~ count_outcomes_averted
       )) %>%
-    
     mutate(cost = 0)
   
   if (toggle_uncertainty == "rand"){
     #COMEBACK - once fitted lognormal or gamma distribution to WHO_CHOICE
     for (row in 1:nrow(cost_estimates)){
-      this_sample = data.frame(est = rnorm(cost_estimates$mean[row], mean = cost_estimates$mean_cost[row], sd = cost_estimates$sd_cost[row])) %>%
-        mutate(est = case_when(
-          est <0 ~ 0,
-          TRUE ~ est
-        ))
-      cost_estimates$cost[row] = sum(this_sample$est)
+      if (cost_estimates$patient_type[row] == "inpatient"){
+        this_sample = data.frame(est = rnorm(cost_estimates$count_outcomes_averted[row], mean = cost_estimates$param1[row], sd = cost_estimates$param2[row])) %>%
+          mutate(est = case_when(
+            est <0 ~ 0,
+            TRUE ~ est
+          ))
+        cost_estimates$cost[row] = sum(this_sample$est)
+      } else if (cost_estimates$patient_type[row] == "outpatient"){
+        this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes_averted[row], meanlog = cost_estimates$param1[row], sdlog = cost_estimates$param2[row])) %>%
+          mutate(est = case_when(
+            est <0 ~ 0,
+            TRUE ~ est
+          ))
+        cost_estimates$cost[row] = sum(this_sample$est)
+      }
+      rm(this_sample)
     }
-    rm(this_sample)
-    
   } else if (toggle_uncertainty == "fixed"){
     cost_estimates = cost_estimates %>%
-      mutate(cost = mean * mean_cost)
+      mutate(cost = count_outcomes_averted * mean_cost)
   }
   #___________________________________________________________________________
 
