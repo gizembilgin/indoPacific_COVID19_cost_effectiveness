@@ -16,7 +16,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
   # setting, booster_vax_scenario, intervention, intervention target group, intervention_doses_delivered
   
   ## Step Two: subset 
-  workshop = MASTER_antiviral_simulations %>%
+  TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == TRUE) %>%
     filter(evaluation_group == "pop_level") %>%
     select(-country,-setting_beta) %>%
@@ -52,66 +52,13 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     
     select(setting, booster_vax_scenario, intervention, intervention_target_group,intervention_doses_delivered)
   
-  if (nrow(workshop) != nrow(na.omit(workshop))){stop("NA introduced")}
-  
-  #unique(workshop$setting)
-  #[1] "FJI" "PNG" "TLS"
-  #unique(workshop$booster_vax_scenario)
-  # [1] "booster dose catch-up campaign for high-risk adults"                 "booster dose catch-up campaign for all adults"                      
-  # [3] "booster to all adults, prioritised to high-risk adults"              "booster to all adults previously willing to be vaccinated"          
-  # [5] "booster to all high-risk adults previously willing to be vaccinated" "no booster dose"                                                   
-  #unique(workshop$intervention)
-  #[1] "nirmatrelvir_ritonavir 2023-01-01" "molunipiravir 2023-01-01"          "booster dose 2023-03-01"          
-  #unique(workshop$intervention_target_group)
-  #[1] "adults_with_comorbidities"                         "unvaccinated_adults_AND_adults_with_comorbidities" "all_adults"                                       
-  #[4] "unvaccinated_adults"                               "pregnant_women"      
-  #_______________________________________________________________________________
-  
-  
-  ## Step Three: summarise uncertainty in vax/antiviral model run
-  #check normally distributed
-  shapiro_tracker = data.frame()
-  for (this_intervention in unique(workshop$intervention)){
-    for (this_intervention_group in unique(workshop$intervention_target_group[workshop$intervention == this_intervention])){
-      this_workshop = workshop %>% 
-        filter(intervention == this_intervention &
-                 intervention_target_group == this_intervention_group)
-      this_test <- shapiro.test(this_workshop$intervention_doses_delivered)
-      
-      row = data.frame(test = this_test$method, 
-             statistic = this_test$statistic,
-             p_value = this_test$p.value,
-             intervention = this_intervention,
-             intervention_target_group = this_intervention_group,
-             values_tested = "intervention_doses_delivered")
-      shapiro_tracker = rbind(shapiro_tracker,row)
-    }
-  }
-  shapiro_tracker = shapiro_tracker %>% 
-    filter(intervention != "booster dose 2023-03-01") %>%
-    filter(p_value < 0.05)
-  if (nrow(shapiro_tracker)>0){warning(paste(nrow(shapiro_tracker),"rows of intervention doses delivered are not normally distributed"))}
- 
-  
-  #summarise
-   TRANSLATED_antiviral_simulations = workshop %>%
-    group_by(setting, booster_vax_scenario, intervention, intervention_target_group) %>%
-    summarise(mean = mean(intervention_doses_delivered),
-              median = median(intervention_doses_delivered),
-              sd = sd(intervention_doses_delivered),
-              UB = mean + 1.96*sd,
-              LB = mean -1.96*sd,
-              .groups="keep")
-  
-  rm(workshop,MASTER_antiviral_simulations)
-  #_______________________________________________________________________________
-  ##############################################################################
+  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
   ##############################################################################
   
   
   
   
-  ### Caculate intervention costs ##############################################
+  ### Calculate intervention costs ##############################################
   interventionCost_estimates = data.frame()
   
   for (i in 1:length(LIST_CEA_settings)){
@@ -162,7 +109,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     
     vax_estimates = TRANSLATED_antiviral_simulations  %>%
       filter(intervention == "booster dose 2023-03-01") %>%
-      mutate(cost = mean * (operational_cost + static_costs)) %>%
+      mutate(cost = intervention_doses_delivered * (operational_cost + static_costs)) %>%
       select(setting,booster_vax_scenario,intervention,intervention_target_group,cost)
     
     interventionCost_estimates = rbind(interventionCost_estimates,vax_estimates)
@@ -207,7 +154,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     if (toggle_uncertainty == "rand"){
       #COMEBACK - once fitted lognormal or gamma distribution to WHO_CHOICE
       for (row in 1:nrow(antiviral_estimates)){
-        this_sample = data.frame(est = rnorm (antiviral_estimates$mean[row],mean = outpatient$mean_cost, sd = outpatient$sd_cost  )) %>%
+        this_sample = data.frame(est = rnorm (antiviral_estimates$intervention_doses_delivered[row],mean = outpatient$mean_cost, sd = outpatient$sd_cost  )) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
@@ -217,7 +164,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       rm(this_sample)
 
     } else if (toggle_uncertainty == "fixed"){
-      antiviral_estimates$operational_cost = antiviral_estimates$mean * outpatient$mean_cost
+      antiviral_estimates$operational_cost = antiviral_estimates$intervention_doses_delivered * outpatient$mean_cost
     }
 
     #use any overrides for tornado plot
@@ -226,7 +173,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       if("wastage_rate_antiviralSchedule" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_antiviralSchedule = TORNADO_PLOT_OVERRIDE$wastage_rate_antiviralSchedule}
       if("price_per_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_RAT = TORNADO_PLOT_OVERRIDE$price_per_RAT}
       if("wastage_factor_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_factor_RAT = TORNADO_PLOT_OVERRIDE$wastage_factor_RAT}
-      if("operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$mean * TORNADO_PLOT_OVERRIDE$operational_cost}
+      if("operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$intervention_doses_delivered * TORNADO_PLOT_OVERRIDE$operational_cost}
     }
     
     #calculate!
@@ -235,7 +182,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       price_per_RAT*wastage_factor_RAT
     
     antiviral_estimates = antiviral_estimates  %>%
-      mutate(cost = operational_cost + mean * static_costs) %>%
+      mutate(cost = operational_cost + intervention_doses_delivered * static_costs) %>%
       select(setting,booster_vax_scenario,intervention,intervention_target_group,cost)
     
     interventionCost_estimates = rbind(interventionCost_estimates,antiviral_estimates)
