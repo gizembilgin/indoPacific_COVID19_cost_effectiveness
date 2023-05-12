@@ -1,6 +1,6 @@
 require(readr); require(ggplot2); require(tidyverse)
 
-### This function calculates the mean, median, and sd of total QALYs averted by setting, booster_vax_scenario, intervention, and intervention_target_group
+### This function calculates the QALYs averted by setting, booster_vax_scenario, intervention, and intervention_target_group
 ### Italso returns additional outcomes such as death and hosp
 #NB: There is no uncertainty in QALY conversion estimates as data sources are expert point estimates of:
 #       population (UN), life expectancy (UN), HRQoL (Robinson, Eber & Hammitt), and age_severity_specific_QALYs (Robinson, Eber & Hammitt)
@@ -231,9 +231,9 @@ outcomesAverted_estimator <- function(
       mutate(QALYs = QALYs + prevalence_upToSixMonths*longCOVID_disability_weight*0.5)
     
     QALY_estimates = rbind(QALYs_nonFatal,QALYs_fatal,QALYs_longCOVID) 
-  } else(
+  } else{
     QALY_estimates = rbind(QALYs_nonFatal,QALYs_fatal)
-  )
+  }
   
 
   ## bring together QALYS ######################################################
@@ -266,7 +266,7 @@ outcomesAverted_estimator <- function(
   # setting, outcome, booster_vax_scenario, intervention, intervention target group, 
   # intervention_doses_delivered, count_outcomes_averted
   
-  workshop = MASTER_antiviral_simulations %>%
+  TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == FALSE) %>%
     select(-country,-setting_beta) %>%
     
@@ -305,38 +305,7 @@ outcomesAverted_estimator <- function(
     
     select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group,count_outcomes_averted)
   
-  if (nrow(workshop) != nrow(na.omit(workshop))){stop("NA introduced")}
-  
-  #unique(workshop$setting)
-  #[1] "FJI" "PNG" "TLS"
-  #unique(workshop$outcome)
-  # [1] "critical_disease"      "death"                 "hosp"                  "hosp_after_antivirals"
-  # [5] "severe_disease"        "mild"                  "total_cases"   
-  #unique(workshop$booster_vax_scenario)
-  # [1] "booster dose catch-up campaign for high-risk adults"                 "booster dose catch-up campaign for all adults"                      
-  # [3] "booster to all adults, prioritised to high-risk adults"              "booster to all adults previously willing to be vaccinated"          
-  # [5] "booster to all high-risk adults previously willing to be vaccinated" "no booster dose"                                                   
-  #unique(workshop$intervention)
-  #[1] "nirmatrelvir_ritonavir 2023-01-01" "molunipiravir 2023-01-01"          "booster dose 2023-03-01"          
-  #unique(workshop$intervention_target_group)
-  #[1] "adults_with_comorbidities"                         "unvaccinated_adults_AND_adults_with_comorbidities" "all_adults"                                       
-  #[4] "unvaccinated_adults"                               "pregnant_women"      
-  #_______________________________________________________________________________
-  
-  
-  ## Summarise uncertainty in vax/antiviral model run ###########################
-  # DECISION: calculating uncertainty here and propagating through using this summary in case the number of CEA model runs != the number of vax/antiviral model runs (100)
-  TRANSLATED_antiviral_simulations = workshop %>%
-    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group,age_group) %>%
-    summarise(mean = mean(count_outcomes_averted),
-              median = median(count_outcomes_averted),
-              sd = sd(count_outcomes_averted),
-              .groups="keep")
-  
-  #_______________________________________________________________________________
-  ##############################################################################
-  
-  rm(workshop,MASTER_antiviral_simulations)
+  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
   ##############################################################################
   
   
@@ -347,35 +316,27 @@ outcomesAverted_estimator <- function(
   outcomes_averted = TRANSLATED_antiviral_simulations %>%
     left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
     filter(is.na(QALYs) == FALSE) %>%
-    mutate(mean = mean * QALYs,
-           median = median * QALYs,
-           sd = sd * QALYs) %>%
+    mutate(count_outcomes_averted = count_outcomes_averted * QALYs) %>%
     select(-QALYs) %>%
     mutate(outcome = "QALYs")%>%
     #collapsing outcome and age_group to calculate QALYs
     group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
-    summarise(mean = sum(mean),
-              median = sum(median),
-              sd = sum(sd),
+    summarise(count_outcomes_averted = sum(count_outcomes_averted),
               .groups = "keep") 
   
   QALY_breakdown = TRANSLATED_antiviral_simulations %>%
     left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
     filter(is.na(QALYs) == FALSE) %>%
-    mutate(mean = mean * QALYs,
-           median = median * QALYs,
-           sd = sd * QALYs) %>%
+    mutate(count_outcomes_averted = count_outcomes_averted * QALYs) %>%
     select(-QALYs) %>%
     mutate(outcome_source = outcome,
            outcome = "QALYs") %>%
     group_by(setting,outcome_source,booster_vax_scenario,intervention,intervention_target_group) %>%
-    summarise(mean = sum(mean),
-              median = sum(median),
-              sd = sum(sd),
+    summarise(count_outcomes_averted = sum(count_outcomes_averted),
               .groups = "keep") 
   
   ###Plot to breakdown where QALYs from
-  # ggplot(QALY_breakdown) + geom_col(aes(x=outcome_source,y=mean)) +
+  # ggplot(QALY_breakdown) + geom_col(aes(x=outcome_source,y=count_outcomes_averted)) +
   #   facet_grid(booster_vax_scenario ~.)
   ##############################################################################
   
@@ -385,9 +346,7 @@ outcomesAverted_estimator <- function(
       filter(outcome %in% ARRAY_additional_outcomes) %>%
       #collapsing outcome and age_group 
       group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
-      summarise(mean = sum(mean),
-                median = sum(median),
-                sd = sum(sd),
+      summarise(count_outcomes_averted = sum(count_outcomes_averted),
                 .groups = "keep")
     
     outcomes_averted = rbind(outcomes_averted,additional_outcomes)
@@ -395,8 +354,7 @@ outcomesAverted_estimator <- function(
     
     #CHECK
     # check = outcomes_averted %>%
-    #   select(-median,-sd) %>%
-    #   pivot_wider(values_from = "mean",names_from = "outcome")
+    #   pivot_wider(values_from = "count_outcomes_averted",names_from = "outcome")
   }
   rm(TRANSLATED_antiviral_simulations)
   ##############################################################################
@@ -408,4 +366,4 @@ outcomesAverted_estimator <- function(
 
 #test
 # outcomes_averted <- outcomes_averted_estimator(LIST_CEA_settings,toggle_discounting_rate = TOGGLE_discounting_rate)
-# outcomes_averted %>% arrange(setting,booster_vax_scenario,desc(mean))
+# outcomes_averted %>% arrange(setting,booster_vax_scenario,desc(count_outcomes_averted))
