@@ -1,6 +1,7 @@
 
 require(readr); require(ggplot2); require(tidyverse)
 
+source(paste(getwd(),"/(function)_sample_compartmentalModel_run.R",sep=""),local=TRUE)
 source(paste(getwd(),"/(function)_outcomesAverted_estimator.R",sep=""),local=TRUE)
 source(paste(getwd(),"/(function)_interventionCost_estimator.R",sep=""),local=TRUE)
 source(paste(getwd(),"/(function)_healthCareCostsAverted_estimator.R",sep=""),local=TRUE)
@@ -22,20 +23,23 @@ if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1}
 for (ticket in 1:TOGGLE_numberOfRuns){
   
   ###(1/3) Load antiviral model runs
+  MASTER_antiviral_simulations <- sample_compartmentalModel_run(LIST_CEA_settings)
   
   ###(2/3) Calculate QALYs, intervention costs, and healthcare costs averted
-    
   outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings,
-                                                toggle_longCOVID = TOGGLE_longCOVID,
-                                                 toggle_discounting_rate = TOGGLE_discounting_rate)
+                                                         MASTER_antiviral_simulations,
+                                                         toggle_longCOVID = TOGGLE_longCOVID,
+                                                         toggle_discounting_rate = TOGGLE_discounting_rate)
   #list including QALY_breakdown by setting,outcome_source,booster_vax_scenario,intervention,intervention_target_group, and 
   #               outcomes_averted by setting,outcome,booster_vax_scenario,intervention,intervention_target_group
     
   interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings,
-                             antiviral_cost_scenario = TOGGLE_antiviral_cost_scanario,
-                             wastage_rate_antiviralSchedule = 0)
+                                                           MASTER_antiviral_simulations,
+                                                           antiviral_cost_scenario = TOGGLE_antiviral_cost_scanario,
+                                                           wastage_rate_antiviralSchedule = 0)
   
   healthcareCostEstimation <- healthCareCostsAverted_estimator(LIST_CEA_settings,
+                                                               MASTER_antiviral_simulations,
                                                                toggle_uncertainty = TOGGLE_uncertainty,
                                                                TORNADO_PLOT_OVERRIDE = list())
   
