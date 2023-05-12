@@ -4,7 +4,8 @@ interventionCost_estimator <- function(LIST_CEA_settings,
                                        antiviral_cost_scenario = "low_generic_cost",
                                        wastage_rate_antiviralSchedule = 0,
                                        toggle_uncertainty = TOGGLE_uncertainty,
-                                       TORNADO_PLOT_OVERRIDE = list()){
+                                       TORNADO_PLOT_OVERRIDE = list(),
+                                       fitted_distributions = fitted_distributions){
   
   #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
   #     but we include wastage rates for all other components.
@@ -73,7 +74,6 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     }
     
     #(B/E) wastage_rate_boosterDose
-    #COMEBACK
     wastage_rate_boosterDose = 0.1
     
     #(C/E) price_per_injectionEquipmentDose
@@ -84,14 +84,13 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     
     #(E/E) operational_cost
     #NB: would sample # from distribution, but currently fixed estimate
-    if (this_setting == "FJI"){
-      operational_cost = 11.61
-    } else if (this_setting == "IDN"){
-      operational_cost = 1.28
-    } else if (this_setting == "PNG"){
-      operational_cost = 3.93
-    } else if (this_setting == "TLS"){
-      operational_cost = 4.17
+    # This is an estimate per dose across a whole program (thinking through the meta-analysis), not a distribution of costs per individual
+    # Hence, sample once for whole program, NOT for # of individuals
+    if (toggle_uncertainty == "rand"){
+      op_fitted_distributions = fitted_distributions %>% filter(parameter == "operation_cost_vaccine")
+      operational_cost = rlnorm(1,op_fitted_distributions$param1,op_fitted_distributions$param2)
+    } else if (toggle_uncertainty == "fixed"){
+      operational_cost = 2.85
     }
 
     #use any overrides for tornado plot
@@ -135,26 +134,17 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     wastage_factor_RAT = 6
     
     #(E/E) operational_cost
-    load(file = "2_inputs/WHO_CHOICE_2022.Rdata")
-    outpatient = WHO_CHOICE_2022 %>% 
-      filter(patient_type == "outpatient" &
-               care_setting == "Health centre (no beds)" &
-               currency_short == "USD" &
-               statistic %in% c("model_prediction","SD")) %>%
-      pivot_wider(names_from = statistic,values_from=value) %>%
-      filter(ISO3_code == this_setting) %>%
-      rename(mean_cost = model_prediction,
-             sd_cost = SD) %>%
-      select(mean_cost,sd_cost)
+    #WHO CHOICE estimates provide the distribution for individual costs, therefore sample from this distribution for the number of individuals and sum across
+    op_fitted_distributions = fitted_distributions %>% filter(parameter == "outpatient_visit_cost" &
+                                                                setting == this_setting)
     
     antiviral_estimates = TRANSLATED_antiviral_simulations  %>%
       filter(intervention != "booster dose 2023-03-01") %>%
       mutate(operational_cost = 0)
     
     if (toggle_uncertainty == "rand"){
-      #COMEBACK - once fitted lognormal or gamma distribution to WHO_CHOICE
       for (row in 1:nrow(antiviral_estimates)){
-        this_sample = data.frame(est = rnorm (antiviral_estimates$intervention_doses_delivered[row],mean = outpatient$mean_cost, sd = outpatient$sd_cost  )) %>%
+        this_sample = data.frame(est = rlnorm (antiviral_estimates$intervention_doses_delivered[row],meanlog = op_fitted_distributions$param1, sdlog = op_fitted_distributions$param2)) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
