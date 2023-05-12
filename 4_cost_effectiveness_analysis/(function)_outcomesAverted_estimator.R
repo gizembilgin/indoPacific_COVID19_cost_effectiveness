@@ -7,6 +7,7 @@ require(readr); require(ggplot2); require(tidyverse)
 
 outcomesAverted_estimator <- function(
     LIST_CEA_settings,
+    MASTER_antiviral_simulations,
     ARRAY_additional_outcomes = c("death","hosp"),
     toggle_longCOVID = "off",
     toggle_discounting_rate = 0.03, #NB: limitation can only change discounting of YLL of fatal cases, not YLD of critical cases due to restrictions of underlying data
@@ -260,41 +261,6 @@ outcomesAverted_estimator <- function(
   
   
   ### PART TWO: load antiviral simulation ######################################
-  ## Load full simulations #####################################################
-  rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
-  MASTER_antiviral_simulations = data.frame()
-  
-  for (i in 1:length(LIST_CEA_settings)){
-    this_setting = LIST_CEA_settings[[i]]
-    
-    list_poss_Rdata = list.files(
-      path = paste(rootpath, "x_results/", sep = ''),
-      pattern = paste("AntiviralRun_", this_setting, "_", this_risk_group, "*", sep ="")
-    )
-    if (length(list_poss_Rdata) > 0) {
-      list_poss_Rdata_details = double()
-      for (j in 1:length(list_poss_Rdata)) {
-        list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                        file.info(paste(
-                                          rootpath, 'x_results/', list_poss_Rdata[[j]], sep = ''
-                                        ))$mtime)
-      }
-      latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-      load(file = paste(rootpath, "x_results/", latest_file, sep = ''))
-      
-    } else{
-      stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
-    }
-    
-    if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
-    
-    df_this_setting = RECORD_antiviral_model_simulations %>% mutate(setting = this_setting)
-    MASTER_antiviral_simulations = bind_rows(MASTER_antiviral_simulations,df_this_setting)
-  }
-  rm(RECORD_antiviral_model_simulations)
-  #_______________________________________________________________________________
-  
-  
   ## Subset #####################################################################
   # We would like a data set with the following columns:
   # setting, outcome, booster_vax_scenario, intervention, intervention target group, 
@@ -367,40 +333,6 @@ outcomesAverted_estimator <- function(
               sd = sd(count_outcomes_averted),
               .groups="keep")
   
-  #CHECK: normally distributed
-  #check normally distributed
-  shapiro_tracker = data.frame()
-  for (this_outcome in unique(workshop$outcome)){
-    for (this_intervention in unique(workshop$intervention)){
-      for (this_intervention_group in unique(workshop$intervention_target_group[workshop$intervention == this_intervention])){
-        for (this_vax_scenario in unique(workshop$booster_vax_scenario[workshop$intervention == this_intervention & workshop$intervention_target_group == this_intervention_group])){
-          this_workshop = workshop %>% 
-            filter(intervention == this_intervention &
-                     intervention_target_group == this_intervention_group &
-                     outcome == this_outcome &
-                     booster_vax_scenario == this_vax_scenario) %>%
-            filter(count_outcomes_averted>0)
-          
-          if (nrow(this_workshop)>0){
-            this_test <- shapiro.test(this_workshop$count_outcomes_averted   )
-            
-            row = data.frame(test = this_test$method, 
-                             statistic = this_test$statistic,
-                             p_value = this_test$p.value,
-                             intervention = this_intervention,
-                             intervention_target_group = this_intervention_group,
-                             outcome = this_outcome,
-                             booster_vax_scenario = this_vax_scenario,
-                             values_tested = "count_outcomes_averted   ")
-            shapiro_tracker = rbind(shapiro_tracker,row)
-          }
-        }
-      }
-    }
-  }
-  shapiro_tracker = shapiro_tracker %>% 
-    filter(p_value < 0.05)
-  if (nrow(shapiro_tracker)>0){warning(paste(nrow(shapiro_tracker),"rows of count outcomes averted are not normally distributed"))}
   #_______________________________________________________________________________
   ##############################################################################
   
