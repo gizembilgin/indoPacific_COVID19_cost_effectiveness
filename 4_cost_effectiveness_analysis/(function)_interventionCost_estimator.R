@@ -154,7 +154,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       rm(this_sample)
 
     } else if (toggle_uncertainty == "fixed"){
-      antiviral_estimates$operational_cost = antiviral_estimates$intervention_doses_delivered * outpatient$mean_cost
+      antiviral_estimates$operational_cost = antiviral_estimates$intervention_doses_delivered * op_fitted_distributions$mean
     }
 
     #use any overrides for tornado plot
