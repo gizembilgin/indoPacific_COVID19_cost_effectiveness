@@ -67,6 +67,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   if (toggle_uncertainty == "rand"){
     for (row in 1:nrow(reduced_LOS_estimates)){
+      #sampling reduced LOS per hospitalised individual who had received antivirals
       this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes_averted[row],mean = new_mean, sd = new_sd)) %>%
         mutate(est = case_when(
           est <0 ~ 0,
@@ -109,6 +110,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   outpatient = local_fitted_distributions %>% 
     filter(parameter == "outpatient_visit_cost") %>%
+    rename(mean_cost = mean) %>%
     mutate(patient_type = "outpatient",
            outcome = "mild") %>%
     select(setting,patient_type,outcome,param1,param2,mean_cost) 
@@ -136,7 +138,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     mutate(cost = 0)
   
   if (toggle_uncertainty == "rand"){
-    #COMEBACK - once fitted lognormal or gamma distribution to WHO_CHOICE
+    #sampling cost of each outpatient visit and each hospital admission
     for (row in 1:nrow(cost_estimates)){
       if (cost_estimates$patient_type[row] == "inpatient"){
         this_sample = data.frame(est = rnorm(cost_estimates$count_outcomes_averted[row], mean = cost_estimates$param1[row], sd = cost_estimates$param2[row])) %>%
