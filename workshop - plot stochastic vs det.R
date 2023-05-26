@@ -1,7 +1,48 @@
 library(RColorBrewer)
 options(scipen = 1000)
 
-plot_name = "figure_2" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3"
+num_prev = 3
+
+MASTER_RECORD_antiviral_model_simulations = data.frame()
+risk_groups_to_plot = "adults_with_comorbidities"
+settings_to_plot = "IDN"
+
+rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
+for (r in 1:length(risk_groups_to_plot)){
+  this_risk_group = risk_groups_to_plot[r]
+  for (i in 1:length(settings_to_plot)){
+    this_setting = settings_to_plot[i]
+    
+    list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
+    list_poss_Rdata = list_poss_Rdata[substr(list_poss_Rdata,1,26) != "Stochastic_VE_AntiviralRun"]
+    if (length(list_poss_Rdata)>0){
+      list_poss_Rdata_details = double()
+      for (j in 1:length(list_poss_Rdata)){
+        list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                        file.info(paste(rootpath,'x_results/',list_poss_Rdata[[j]],sep=''))$mtime)
+      }
+    }
+  }
+}
+
+### Load old
+prev_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)-num_prev]]
+load(file = paste(rootpath,"x_results/",prev_file,sep=''))
+RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("prev",this_setting,sep="_")
+MASTER_RECORD_antiviral_model_simulations = bind_rows(MASTER_RECORD_antiviral_model_simulations,RECORD_antiviral_model_simulations)
+
+
+### Load new
+latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+load(file = paste(rootpath,"x_results/",latest_file,sep=''))
+RECORD_antiviral_model_simulations$country = RECORD_antiviral_model_simulations$setting_beta = paste("latest",this_setting,sep="_")
+MASTER_RECORD_antiviral_model_simulations = bind_rows(MASTER_RECORD_antiviral_model_simulations,RECORD_antiviral_model_simulations)
+#_______________________________________________________________________________
+
+
+
+###PLOT!
+plot_name = "figure_1" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3"
 plot_list = list()
 
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
