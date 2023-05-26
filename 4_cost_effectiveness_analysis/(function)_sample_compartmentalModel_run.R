@@ -1,5 +1,6 @@
 
-sample_compartmentalModel_run <- function(LIST_CEA_settings){
+sample_compartmentalModel_run <- function(LIST_CEA_settings,
+                                          sampling_strategy = "empirical_distribution"){
   
   rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
   MASTER_antiviral_simulations = data.frame()
@@ -31,13 +32,23 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings){
   }
   rm(RECORD_antiviral_model_simulations)
   
-  #CHOICE - sampling from the empirical distribution of each parameter
-  sampled_df = MASTER_antiviral_simulations %>%
-    group_by(outcome, antiviral_type, antiviral_target_group, intervention, evaluation_group, vax_scenario, vax_scenario_risk_group, age_group, result,country,setting_beta,setting) %>%
-    summarise(intervention_doses_delivered = sample(intervention_doses_delivered, size = 1),
-              value = sample(value, size = 1),
-              .groups="keep") %>%
-    ungroup()
+  #CHOICE - sampling from the empirical distribution of each parameter created by 100 simulations; OR take one stochasticmodel run 
+  if (sampling_strategy == "empirical_distribution"){
+    sampled_df = MASTER_antiviral_simulations %>%
+      group_by(outcome, antiviral_type, antiviral_target_group, intervention, evaluation_group, vax_scenario, vax_scenario_risk_group, age_group, result,country,setting_beta,setting) %>%
+      summarise(intervention_doses_delivered = sample(intervention_doses_delivered, size = 1),
+                value = sample(value, size = 1),
+                .groups="keep") %>%
+      ungroup()
+  } else if (sampling_strategy == "single_run"){
+    sampled_df = MASTER_antiviral_simulations %>%
+      group_by(vax_scenario_risk_group,setting_beta) %>%
+      summarise(this_run = sample(run_ID, size = 1))
+    sampled_df = MASTER_antiviral_simulations %>%
+      filter(run_ID %in% sampled_df$this_run)
+  }
+  if (nrow(sampled_df) != nrow(MASTER_antiviral_simulations)/100){stop("Did you not run 100 simulations?")}
+
 
   return(sampled_df)
 }
