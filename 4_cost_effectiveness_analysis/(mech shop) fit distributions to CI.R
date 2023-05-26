@@ -130,6 +130,7 @@ plot(density(sampled_gamma[sampled_gamma<20]));mean(sampled_gamma); max(sampled_
 
 row = data.frame(parameter = "operation_cost_vaccine",
                  setting = NA,
+                 mean = mean,
                  distribution = "lognorm",
                  param1 = a,
                  param2 = b,
@@ -177,13 +178,14 @@ plot(density(sampled_gamma[,num]),xlim = c(0,20)); quantile(sampled_gamma[,num],
 
 rows = workshop %>% 
   rename(setting = ISO3_code,
+         mean = model_prediction,
          param1 = a,
          param2= b) %>%
   mutate(parameter = "outpatient_visit_cost",
          distribution = "lognorm",
          param1_name = "meanlog",
          param2_name = "sdlog") %>%
-  select(parameter,setting,distribution,param1,param2,param1_name,param2_name)
+  select(parameter,setting,mean,distribution,param1,param2,param1_name,param2_name)
 fitted_distributions = bind_rows(fitted_distributions,rows)
 #_______________________________________________________________________________
 
@@ -208,6 +210,7 @@ plot(density(sampled_gamma));mean(sampled_gamma); max(sampled_gamma); min(sample
 #95% CI of rnorm fits the best
 row = data.frame(parameter = "reduced_LOS_days",
                  setting = NA,
+                 mean = mean,
                  distribution = "norm",
                  param1 = mean,
                  param2 = norm_est,
