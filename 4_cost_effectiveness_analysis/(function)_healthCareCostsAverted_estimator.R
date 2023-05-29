@@ -1,8 +1,8 @@
 
 healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
                                              MASTER_antiviral_simulations,
+                                             TORNADO_PLOT_OVERRIDE,
                                              toggle_uncertainty = TOGGLE_uncertainty,
-                                             TORNADO_PLOT_OVERRIDE = list(),
                                              fitted_distributions = local_fitted_distributions){
   
   ### Load RECORD_antiviral_model_simulations ####################################
@@ -57,6 +57,12 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   Y = extra_LOS_MEAN = fitted_distributions$param1[fitted_distributions$parameter == "reduced_LOS_days"]
   sdY = extra_LOS_SD = fitted_distributions$param2[fitted_distributions$parameter == "reduced_LOS_days"]
+  
+  #use any overrides for tornado plot
+  if (length(TORNADO_PLOT_OVERRIDE)>0){
+    if("cost_per_extra_LOS" %in% names(TORNADO_PLOT_OVERRIDE)){X = X*TORNADO_PLOT_OVERRIDE$cost_per_extra_LOS}
+    if("extra_LOS" %in% names(TORNADO_PLOT_OVERRIDE)){Y = Y * TORNADO_PLOT_OVERRIDE$extra_LOS}
+  }
   
   new_sd = (exp(X) - 1) * Y * sqrt(((exp(X)*sdX)/(exp(X)-1))^2+(sdY/Y)^2)
   new_mean = (exp(X) - 1) * Y
@@ -147,6 +153,11 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
             TRUE ~ est
           ))
         cost_estimates$cost[row] = sum(this_sample$est)
+        
+        if (length(TORNADO_PLOT_OVERRIDE)>0){
+          if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$inpatient}
+        }
+        
       } else if (cost_estimates$patient_type[row] == "outpatient"){
         this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes_averted[row], meanlog = cost_estimates$param1[row], sdlog = cost_estimates$param2[row])) %>%
           mutate(est = case_when(
@@ -154,12 +165,25 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
             TRUE ~ est
           ))
         cost_estimates$cost[row] = sum(this_sample$est)
+        
+        if (length(TORNADO_PLOT_OVERRIDE)>0){
+          if("outpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$outpatient}
+        }
       }
       rm(this_sample)
     }
   } else if (toggle_uncertainty == "fixed"){
     cost_estimates = cost_estimates %>%
       mutate(cost = count_outcomes_averted * mean_cost)
+    
+    if (length(TORNADO_PLOT_OVERRIDE)>0){
+      if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){
+        cost_estimates$cost[cost_estimates$patient_type == "inpatient"] = cost_estimates$cost[cost_estimates$patient_type == "inpatient"]*TORNADO_PLOT_OVERRIDE$inpatient
+      }
+      if("outpatient" %in% names(TORNADO_PLOT_OVERRIDE)){
+        cost_estimates$cost[cost_estimates$patient_type == "outpatient"] = cost_estimates$cost[cost_estimates$patient_type == "outpatient"]*TORNADO_PLOT_OVERRIDE$outpatient
+      }
+    }
   }
   #___________________________________________________________________________
 
