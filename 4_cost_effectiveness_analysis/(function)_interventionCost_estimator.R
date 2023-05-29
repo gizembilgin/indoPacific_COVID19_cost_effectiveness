@@ -1,10 +1,10 @@
 
 interventionCost_estimator <- function(LIST_CEA_settings,
                                        MASTER_antiviral_simulations,
+                                       TORNADO_PLOT_OVERRIDE,
                                        antiviral_cost_scenario = "low_generic_cost",
                                        wastage_rate_antiviralSchedule = 0,
                                        toggle_uncertainty = TOGGLE_uncertainty,
-                                       TORNADO_PLOT_OVERRIDE = list(),
                                        local_fitted_distributions = fitted_distributions){
   
   #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
@@ -99,7 +99,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       if("wastage_rate_boosterDose" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_boosterDose = TORNADO_PLOT_OVERRIDE$wastage_rate_boosterDose}
       if("price_per_injectionEquipmentDose" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_injectionEquipmentDose = TORNADO_PLOT_OVERRIDE$price_per_injectionEquipmentDose}
       if("wastage_rate_injectionEquipment" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_injectionEquipment = TORNADO_PLOT_OVERRIDE$wastage_rate_injectionEquipment}
-      if("operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){operational_cost = TORNADO_PLOT_OVERRIDE$operational_cost}
+      if("vax_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){operational_cost = TORNADO_PLOT_OVERRIDE$vax_operational_cost}
     }
     
     #calculate!
@@ -163,7 +163,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       if("wastage_rate_antiviralSchedule" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_antiviralSchedule = TORNADO_PLOT_OVERRIDE$wastage_rate_antiviralSchedule}
       if("price_per_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_RAT = TORNADO_PLOT_OVERRIDE$price_per_RAT}
       if("wastage_factor_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_factor_RAT = TORNADO_PLOT_OVERRIDE$wastage_factor_RAT}
-      if("operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$intervention_doses_delivered * TORNADO_PLOT_OVERRIDE$operational_cost}
+      if("antiviral_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$operational_cost * TORNADO_PLOT_OVERRIDE$antiviral_operational_cost}
     }
     
     #calculate!
