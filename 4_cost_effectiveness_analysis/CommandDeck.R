@@ -29,17 +29,17 @@ LIST_antiviral_types = list(
 )
 
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 1
+TOGGLE_numberOfRuns = 100
 TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 TORNADO_PLOT_OVERRIDE = list()
 this_sampling_strategy = "empirical_distribution"
 
-if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1}
 if (exists("CommandDeck_CONTROLS") == FALSE){CommandDeck_CONTROLS = list()}
 if (length(CommandDeck_CONTROLS)>0){
   TORNADO_PLOT_OVERRIDE              = CommandDeck_CONTROLS
+  if("TOGGLE_uncertainty" %in% names(CommandDeck_CONTROLS))        {TOGGLE_uncertainty                 = CommandDeck_CONTROLS$TOGGLE_uncertainty}
   if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)){LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios}
   if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups}
   if("LIST_antiviral_types" %in% names(CommandDeck_CONTROLS))      {LIST_antiviral_types               = CommandDeck_CONTROLS$LIST_antiviral_types}
@@ -48,8 +48,10 @@ if (length(CommandDeck_CONTROLS)>0){
   if("TOGGLE_antiviral_cost_scenario" %in% names(CommandDeck_CONTROLS)){TOGGLE_antiviral_cost_scenario = CommandDeck_CONTROLS$TOGGLE_antiviral_cost_scenario}
   if("sampling_strategy" %in% names(CommandDeck_CONTROLS))             {this_sampling_strategy         = CommandDeck_CONTROLS$sampling_strategy}
 }
+if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1}
 
-CommandDeck_result = data.frame()
+
+CommandDeck_result = CommandDeck_result_long = data.frame()
 
 for (ticket in 1:TOGGLE_numberOfRuns){
   
@@ -88,13 +90,13 @@ for (ticket in 1:TOGGLE_numberOfRuns){
   this_result <- simulationSummary(outcomesAvertedEstimation,
                             interventionCost_estimates,
                             healthcareCostEstimation)
-  CommandDeck_result = rbind(CommandDeck_result,this_result)
+  CommandDeck_result_long = rbind(CommandDeck_result_long,this_result)
   
 }
 ### TIME =?
 
 #calculating 'expected' of each
-CommandDeck_result = CommandDeck_result %>%
+CommandDeck_result = CommandDeck_result_long %>%
   group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
   summarise(interventionCost = mean(interventionCost),
             healthcareCostAverted = mean(healthcareCostAverted),
@@ -102,6 +104,13 @@ CommandDeck_result = CommandDeck_result %>%
             death = mean(death),
             hosp = mean(hosp),
             .groups = "keep") %>%
+  pivot_longer(cols = c("QALYs","death","hosp"),
+               names_to = "outcome",
+               values_to = "count_outcomes_averted") %>%
+  mutate(netCost = interventionCost - healthcareCostAverted,
+         cost_per_outcome_averted = netCost / count_outcomes_averted)
+
+CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
                names_to = "outcome",
                values_to = "count_outcomes_averted") %>%
