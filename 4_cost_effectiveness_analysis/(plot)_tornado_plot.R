@@ -1,4 +1,5 @@
 
+this_antiviral_cost_estimate = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 this_setting_GDP = 4332.71
 
 tornado_plot = list()
@@ -55,9 +56,6 @@ queue = list(
   
   
   ## (3/3) other toggles
-  list(sampling_strategy = "empirical_distribution", label = "Sampling strategy of model runs",direction = "lower"),
-  list(sampling_strategy = "single_run"            , label = "Sampling strategy of model runs",direction = "upper"),
-  
   list(TOGGLE_discounting_rate = 0.0, label = "Discounting rate (0-5%)",direction = "lower"),
   list(TOGGLE_discounting_rate = 0.5, label = "Discounting rate (0-5%)",direction = "upper"),
   
@@ -76,7 +74,9 @@ for (ticket in 1:length(queue)){
                                     "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
                                     ),
                                   LIST_antiviral_elig_groups = list("adults_with_comorbidities"),
-                                  LIST_antiviral_types = list("nirmatrelvir_ritonavir")
+                                  LIST_antiviral_types = list("nirmatrelvir_ritonavir"),
+                                  TOGGLE_uncertainty = "fixed",
+                                  TOGGLE_antiviral_cost_scenario = this_antiviral_cost_estimate
                                   )
                                 )
 
@@ -146,7 +146,7 @@ ggplot() +
                      labels = order_parameters) +
   coord_flip() + 
   geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
-  annotate("text", x = 4, y = this_setting_GDP*2.2, label = "GDP per capita")
+  annotate("text", x = 4, y = this_setting_GDP*0.65, label = "GDP per capita")
 
 ggplot() + 
   geom_rect(data = df_2[!(df_2$label %in% c("Antiviral wastage (0-60%)","Antiviral schedule price ($25-530)","Inpatient costs (±50%)","Discounting rate (0-5%)")),], 
