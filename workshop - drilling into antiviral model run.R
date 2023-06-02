@@ -36,3 +36,8 @@ local_fixed_antiviral_coverage = toggle_fixed_antiviral_coverage
 local_antiviral_effectiveness = antiviral_effectiveness
 local_booster_start_date = booster_start_date
 worker_stochastic_VE_sampling = manager_stochastic_VE_sampling
+num_at_which_to_sample = 250000
+
+
+to_plot = RECORD_antiviral_model_simulations %>% filter(evaluation_group == "net" & outcome == "severe_disease" & intervention %in% c(NA,"antiviral 2023-01-01") & (antiviral_type != "molunipiravir" | is.na(antiviral_type)) &  (antiviral_target_group == "adults_with_comorbidities" | is.na(antiviral_target_group)))
+ggplot(to_plot) + geom_point(aes(x=antiviral_type,y=n,color=as.factor(vax_scenario))) + theme(legend.position = "bottom")
