@@ -5,6 +5,7 @@ source(paste(getwd(),"/(function)_sample_compartmentalModel_run.R",sep=""),local
 source(paste(getwd(),"/(function)_outcomesAverted_estimator.R",sep=""),local=TRUE)
 source(paste(getwd(),"/(function)_interventionCost_estimator.R",sep=""),local=TRUE)
 source(paste(getwd(),"/(function)_healthCareCostsAverted_estimator.R",sep=""),local=TRUE)
+source(paste(getwd(),"/(function)_productivityCosts_estimator.R",sep=""),local=TRUE)
 source(paste(getwd(),"/(function)_simulationSummary.R",sep=""),local=TRUE)
 
 load(file = "2_inputs/fitted_distributions.Rdata")
@@ -28,6 +29,7 @@ LIST_antiviral_types = list(
   "nirmatrelvir_ritonavir"
 )
 
+TOGGLE_perspective = "societal"
 TOGGLE_uncertainty = "rand" #fixed or rand
 TOGGLE_numberOfRuns = 100
 TOGGLE_discounting_rate = 0.03
@@ -39,6 +41,7 @@ this_sampling_strategy = "empirical_distribution"
 if (exists("CommandDeck_CONTROLS") == FALSE){CommandDeck_CONTROLS = list()}
 if (length(CommandDeck_CONTROLS)>0){
   TORNADO_PLOT_OVERRIDE              = CommandDeck_CONTROLS
+  if("TOGGLE_perspective" %in% names(CommandDeck_CONTROLS))        {TOGGLE_perspective                 = CommandDeck_CONTROLS$TOGGLE_perspective}
   if("TOGGLE_uncertainty" %in% names(CommandDeck_CONTROLS))        {TOGGLE_uncertainty                 = CommandDeck_CONTROLS$TOGGLE_uncertainty}
   if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)){LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios}
   if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups}
@@ -84,12 +87,24 @@ for (ticket in 1:TOGGLE_numberOfRuns){
                                                                TORNADO_PLOT_OVERRIDE,
                                                                toggle_uncertainty = TOGGLE_uncertainty)
   # 7.82 seconds for all combinations, 0.39 for one booster + one antiviral
+  
+  if (TOGGLE_perspective == "societal"){
+    productivityCosts <- productivityCosts_estimator (
+      LIST_CEA_settings,
+      MASTER_antiviral_simulations,
+      toggle_discounting_rate = TOGGLE_discounting_rate,
+      this_risk_group = "adults_with_comorbidities"
+    )
+  } else{
+    productivityCosts <- data.frame()
+  }
 
   
   ###(3/3) CEA per setting
   this_result <- simulationSummary(outcomesAvertedEstimation,
                             interventionCost_estimates,
-                            healthcareCostEstimation)
+                            healthcareCostEstimation,
+                            productivityCosts)
   CommandDeck_result_long = rbind(CommandDeck_result_long,this_result)
   
 }
@@ -100,6 +115,7 @@ CommandDeck_result = CommandDeck_result_long %>%
   group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
   summarise(interventionCost = mean(interventionCost),
             healthcareCostAverted = mean(healthcareCostAverted),
+            productivityLoss = mean(productivityLoss),
             QALYs = mean(QALYs),
             death = mean(death),
             hosp = mean(hosp),
@@ -107,12 +123,12 @@ CommandDeck_result = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
                names_to = "outcome",
                values_to = "count_outcomes_averted") %>%
-  mutate(netCost = interventionCost - healthcareCostAverted,
+  mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
          cost_per_outcome_averted = netCost / count_outcomes_averted)
 
 CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
                names_to = "outcome",
                values_to = "count_outcomes_averted") %>%
-  mutate(netCost = interventionCost - healthcareCostAverted,
+  mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
          cost_per_outcome_averted = netCost / count_outcomes_averted)

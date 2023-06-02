@@ -2,12 +2,13 @@
 
 simulationSummary <- function(outcomesAvertedEstimation,
                             interventionCost_estimates,
-                            healthcareCostEstimation)
+                            healthcareCostEstimation,
+                            productivityCosts)
 {
   colnames(outcomesAvertedEstimation$outcomes_averted)
   #"setting"                   "outcome"                   "booster_vax_scenario"      "intervention"    "intervention_target_group" "mean" 
   
-  colnames(interventionCost_estimates)
+  colnames(interventionCost_estimates) #colnames(productivityCosts)
   #[1] "setting"                   "booster_vax_scenario"      "intervention"              "intervention_target_group" "cost"  
   
   colnames(healthcareCostEstimation$healthcareCosts_averted)
@@ -18,6 +19,15 @@ simulationSummary <- function(outcomesAvertedEstimation,
     left_join(healthcareCostEstimation$healthcareCosts_averted, by = c("setting","booster_vax_scenario","intervention","intervention_target_group")) %>%
     rename(healthcareCostAverted = cost) %>%
     left_join(outcomesAvertedEstimation$outcomes_averted,by = join_by(setting, booster_vax_scenario, intervention, intervention_target_group))
+  if (nrow(productivityCosts)>0){
+    Combined_0 = Combined_0 %>%
+      left_join(productivityCosts, by = c("setting","booster_vax_scenario","intervention","intervention_target_group")) %>%
+      rename(productivityLoss = cost)
+  } else{
+    Combined_0 = Combined_0 %>%
+      mutate(productivityLoss = 0)
+  }
+  
   
   Combined = data.frame()
   ###vax no antiviral
@@ -25,7 +35,7 @@ simulationSummary <- function(outcomesAvertedEstimation,
     filter(intervention == "booster dose 2023-03-01") %>%
     mutate(antiviral_scenario = "no antiviral")  %>%
     select(setting,booster_vax_scenario,antiviral_scenario,
-           interventionCost, healthcareCostAverted,
+           interventionCost, healthcareCostAverted, productivityLoss,
            outcome,count_outcomes_averted)
   Combined = rbind(Combined,row)
   
@@ -41,10 +51,11 @@ simulationSummary <- function(outcomesAvertedEstimation,
         summarise(interventionCost = sum(interventionCost),
                   healthcareCostAverted = sum(healthcareCostAverted),
                   count_outcomes_averted = sum(count_outcomes_averted),
+                  productivityLoss = sum(productivityLoss),
                   .groups = "keep") %>%
         mutate(antiviral_scenario = paste(this_antiviral,this_antiviral_target)) %>%
         select(setting,booster_vax_scenario,antiviral_scenario,
-               interventionCost, healthcareCostAverted,
+               interventionCost, healthcareCostAverted,productivityLoss,
                outcome,count_outcomes_averted)
       Combined = rbind(Combined,row)
     }
