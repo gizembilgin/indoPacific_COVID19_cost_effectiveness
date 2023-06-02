@@ -1,4 +1,8 @@
 
+### Note: two assumptions we make to estimate expected earnings due to lack of granular data:
+### (1) We assume equal wages across lifetime
+### (2) We assume no individuals under the age of 15 work
+
 load(file = paste(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_pop_est.Rdata",sep=''))
 labour_force_participation_RAW <- read.csv("2_inputs/Labour force participation rate by age - ILO modelled estimates.csv",header=TRUE)
 annual_output_per_worker_RAW <- read.csv("2_inputs/Output per worker (GDP constant 2015 US $).csv",header=TRUE)
@@ -77,5 +81,5 @@ result_daily = annual_output_per_worker %>%
   select(ISO3_code,age_group,daily_earning)
 
 
-
-#Expected remaining lifetime earnings
+expected_daily_earnings <- result_daily
+save(expected_daily_earnings, file = "2_inputs/expected_daily_earnings.Rdata")
