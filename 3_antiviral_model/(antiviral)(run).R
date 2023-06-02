@@ -54,13 +54,13 @@ time.start.AntiviralSimulations=proc.time()[[3]]
                            #,"all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a first booster dose"
                            ,"all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule"                      
                            #,"all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a first booster dose"                    
-                           #,"all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults"                                                           
+                           ,"all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults"                                                           
                            ,"catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"             
                            ,"catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster"  
                            ),
     LIST_antiviral_target_group = list('adults_with_comorbidities' #baseline
                                        ,'unvaccinated_adults',
-                                       #'unvaccinated_adults_AND_adults_with_comorbidities',
+                                       'unvaccinated_adults_AND_adults_with_comorbidities',
                                        'all_adults'
                                        ),
     LIST_antiviral_type = list("nirmatrelvir_ritonavir"
@@ -72,8 +72,8 @@ time.start.AntiviralSimulations=proc.time()[[3]]
     RECORD_antiviral_setup = RECORD_antiviral_setup,
     setting = setting,
     
-    toggle_number_of_runs = 10, #DEFAULT 100
-    toggle_cluster_number = 1,
+    toggle_number_of_runs = 100, #DEFAULT 100
+    toggle_cluster_number = 2,
     
     toggle_stochastic_SO = "on", # DEFAULT "on"
     toggle_compare_to_vaccine_effect = "on",
