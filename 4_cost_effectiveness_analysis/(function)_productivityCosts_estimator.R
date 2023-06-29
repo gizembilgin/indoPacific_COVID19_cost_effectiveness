@@ -1,6 +1,7 @@
 require(readr); require(ggplot2); require(tidyverse)
 
 ### This function calculates the productivity losses due to illness and premature mortality 
+### NB: no sampling for this cost category since underlying uncertainty not available for multiple informing data sources
 
 productivityCosts_estimator <- function(
     LIST_CEA_settings,
