@@ -191,6 +191,7 @@ antiviral_model_worker <- function(
               summarise(high_risk = sum(proj, na.rm = TRUE), .groups = "keep")
             OWA_no_booster_doses = OWA_no_booster_doses %>% left_join(append_high_risk, by = 'outcome')
             OWA_no_booster_doses = rbind(OWA_no_booster_doses, save_info)
+            OWA_with_booster_doses = OWA_no_booster_doses
             
             
             AS_OWA_no_booster_doses = severe_outcome_log_tidy  %>%
