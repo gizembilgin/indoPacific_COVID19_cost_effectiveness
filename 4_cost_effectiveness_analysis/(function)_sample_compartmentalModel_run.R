@@ -29,7 +29,7 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings,
       stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
     }
     
-    if (this_setting == "PNG_low_beta" & !("PNG_high_beta" %in% settings_to_plot)){this_setting = "PNG"}
+    if (this_setting == "PNG_low_beta"){this_setting = "PNG"}
     
     df_this_setting = RECORD_antiviral_model_simulations %>% mutate(setting = this_setting)
     MASTER_antiviral_simulations = bind_rows(MASTER_antiviral_simulations,df_this_setting)
