@@ -524,4 +524,11 @@ to_plot$age_group <- factor(to_plot$age_group,levels = age_group_labels)
 ggplot(to_plot[to_plot$discounting_rate %in% c(0,0.03,0.05),]) +
   geom_col(aes(x=age_group,y=productivity_loss,fill=as.factor(discounting_rate)),position = "dodge") +
   facet_grid(outcome ~.)
+
+print = productivity_loss_reference_df %>% 
+  filter(discounting_rate %in% c(0,0.03,0.05)) %>%
+  pivot_wider(names_from = setting,values_from = productivity_loss)
+write.csv(print, file = "x_results/Table_S2.csv")
 ################################################################################
+
+
