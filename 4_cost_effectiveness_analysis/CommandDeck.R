@@ -1,15 +1,16 @@
 
-require(readr); require(ggplot2); require(tidyverse); require(beepr)
+#rm(list = ls())
 
-source(paste(getwd(),"/(function)_sample_compartmentalModel_run.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_outcomesAverted_estimator.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_interventionCost_estimator.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_healthCareCostsAverted_estimator.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_productivityCosts_estimator.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_simulationSummary.R",sep=""),local=TRUE)
 
-load(file = "2_inputs/fitted_distributions.Rdata")
 
+### LOADING ####################################################################
+require(beepr); require(parallel); require(foreach); require(ids); require(readr); require(ggplot2); require(tidyverse); 
+source(paste(getwd(),"/(function)_CEA_worker.R",sep=""),local=TRUE)
+################################################################################
+
+
+
+### TOGGLES ####################################################################
 CEA_risk_group = "adults_with_comorbidities"
 LIST_CEA_settings = list("IDN")
 LIST_booster_vax_scenarios = list(
@@ -29,9 +30,10 @@ LIST_antiviral_types = list(
   "nirmatrelvir_ritonavir"
 )
 
-TOGGLE_perspective = "societal"
+TOGGLE_perspective = "healthcare" #options: societal, healthcare
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 100
+TOGGLE_numberOfRuns = 1
+TOGGLE_clusterNumber = 1
 TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
@@ -51,80 +53,81 @@ if (length(CommandDeck_CONTROLS)>0){
   if("TOGGLE_antiviral_cost_scenario" %in% names(CommandDeck_CONTROLS)){TOGGLE_antiviral_cost_scenario = CommandDeck_CONTROLS$TOGGLE_antiviral_cost_scenario}
   if("sampling_strategy" %in% names(CommandDeck_CONTROLS))             {this_sampling_strategy         = CommandDeck_CONTROLS$sampling_strategy}
 }
-if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1}
+if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1;TOGGLE_clusterNumber = 1}
+################################################################################
 
 
-CommandDeck_result = CommandDeck_result_long = data.frame()
 
-for (ticket in 1:TOGGLE_numberOfRuns){
-  
-  ###(1/3) Load antiviral model runs
-  MASTER_antiviral_simulations <- sample_compartmentalModel_run(LIST_CEA_settings,
-                                                                LIST_booster_vax_scenarios,
-                                                                LIST_antiviral_elig_groups,
-                                                                LIST_antiviral_types,
-                                                                sampling_strategy = this_sampling_strategy,
-                                                                toggle_uncertainty = TOGGLE_uncertainty)
-  
-  ###(2/3) Calculate QALYs, intervention costs, and healthcare costs averted
-  outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings,
-                                                         MASTER_antiviral_simulations,
-                                                         toggle_longCOVID = TOGGLE_longCOVID,
-                                                         toggle_discounting_rate = TOGGLE_discounting_rate)
-  # 0.63 seconds
-  #list including QALY_breakdown by setting,outcome_source,booster_vax_scenario,intervention,intervention_target_group, and 
-  #               outcomes_averted by setting,outcome,booster_vax_scenario,intervention,intervention_target_group
+### MODEL RUN ##################################################################
+numberOfRunsPerCluster = TOGGLE_numberOfRuns/TOGGLE_clusterNumber
+CLUSTER <- parallel::makeCluster(TOGGLE_clusterNumber) # create cluster
+doParallel::registerDoParallel(CLUSTER) # activate cluster
+
+system.time({
+  CommandDeck_result_long <- foreach::foreach(
+    model_run_number = c(1:TOGGLE_clusterNumber),
+    .packages = c('tidyverse','ids'),
+    .combine = rbind,
+    .inorder = FALSE
+  )  %dopar% {
     
-  interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings,
-                                                           MASTER_antiviral_simulations,
-                                                           TORNADO_PLOT_OVERRIDE,
-                                                           antiviral_cost_scenario = TOGGLE_antiviral_cost_scenario,
-                                                           toggle_uncertainty = TOGGLE_uncertainty)
-  # 217.43  seconds for all combinations, 3.06 for one booster + one antiviral
-  
-  healthcareCostEstimation <- healthCareCostsAverted_estimator(LIST_CEA_settings,
-                                                               MASTER_antiviral_simulations,
-                                                               TORNADO_PLOT_OVERRIDE,
-                                                               toggle_uncertainty = TOGGLE_uncertainty)
-  # 7.82 seconds for all combinations, 0.39 for one booster + one antiviral
-  
-  if (TOGGLE_perspective == "societal"){
-    productivityCosts <- productivityCosts_estimator (
+    CEA_worker(
+      numberOfRunsPerCluster,
+      CEA_risk_group,
       LIST_CEA_settings,
-      MASTER_antiviral_simulations,
-      toggle_discounting_rate = TOGGLE_discounting_rate,
-      this_risk_group = "adults_with_comorbidities"
+      LIST_booster_vax_scenarios,
+      LIST_antiviral_elig_groups,
+      LIST_antiviral_types,
+      this_sampling_strategy,
+      TOGGLE_uncertainty,
+      TOGGLE_longCOVID,
+      TOGGLE_discounting_rate,
+      TOGGLE_antiviral_cost_scenario,
+      TORNADO_PLOT_OVERRIDE
     )
-  } else{
-    productivityCosts <- data.frame()
+    
   }
+})
+#t = 102.11/99.80  seconds for 10 runs of societal/healthcare ; NB: using one cluster and antiviral model also running at the same time
+#i.e., 3 hours per settings without parallel running
+parallel::stopCluster(CLUSTER)
 
-  
-  ###(3/3) CEA per setting
-  this_result <- simulationSummary(outcomesAvertedEstimation,
-                            interventionCost_estimates,
-                            healthcareCostEstimation,
-                            productivityCosts)
-  CommandDeck_result_long = rbind(CommandDeck_result_long,this_result)
+if (TOGGLE_numberOfRuns>10){
+  if(shapiro.test(CommandDeck_result_long$interventionCost)$p.value > 0.05 |
+     shapiro.test(CommandDeck_result_long$healthcareCostAverted)$p.value  > 0.05 |
+     shapiro.test(CommandDeck_result_long$QALYs)$p.value > 0.05 |
+     shapiro.test(CommandDeck_result_long$death)$p.value > 0.05 |
+     shapiro.test(CommandDeck_result_long$hosp)$p.value > 0.05){
+    warning("Model outputs are not normally distributed")
+  }
+  if(TOGGLE_perspective == "societal"){
+    if(shapiro.test(CommandDeck_result_long$productivityLoss)$p.value > 0.05){
+      warning("Model outputs are not normally distributed")
+    }
+  }
   
 }
-### TIME =?
 
 #calculating 'expected' of each
 CommandDeck_result = CommandDeck_result_long %>%
-  group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
-  summarise(interventionCost = mean(interventionCost),
-            healthcareCostAverted = mean(healthcareCostAverted),
-            productivityLoss = mean(productivityLoss),
-            QALYs = mean(QALYs),
-            death = mean(death),
-            hosp = mean(hosp),
-            .groups = "keep") %>%
-  pivot_longer(cols = c("QALYs","death","hosp"),
-               names_to = "outcome",
-               values_to = "count_outcomes_averted") %>%
   mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
-         cost_per_outcome_averted = netCost / count_outcomes_averted)
+         cost_per_QALY_averted = QALYs/netCost,
+         cost_per_death_averted = death/netCost,
+         cost_per_hosp_averted = hosp/netCost) %>%
+  pivot_longer(cols = c("interventionCost", "healthcareCostAverted","productivityLoss", "QALYs", "death","hosp","netCost","cost_per_QALY_averted","cost_per_death_averted","cost_per_hosp_averted"),
+               names_to = "variable",
+               values_to = "value_raw") %>%
+  mutate(variable_type = case_when(
+    variable %in% c("QALYs","death","hosp") ~ "outcome",
+    variable %in% c("interventionCost", "healthcareCostAverted","productivityLoss","netCost") ~ "cost",
+    variable %in% c("cost_per_QALY_averted","cost_per_death_averted","cost_per_hosp_averted") ~ "ICER"
+  )) %>%
+  group_by(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable) %>%
+  summarise(mean = mean(value_raw),
+            LPI = mean(value_raw)-qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
+            UPI = mean(value_raw)+qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
+            .groups = "keep"
+            )  
 
 CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
