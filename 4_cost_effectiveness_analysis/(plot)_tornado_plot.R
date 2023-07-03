@@ -1,4 +1,7 @@
 
+###NB: structure of CommandDeck_result adapted 03/07
+
+
 this_antiviral_cost_estimate = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 this_setting_GDP = 4332.71
 
@@ -83,9 +86,9 @@ for (ticket in 1:length(queue)){
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   rows = CommandDeck_result %>%
+    filter(variable == "cost_per_QALY_averted") %>%
     mutate(label = CommandDeck_CONTROLS$label,
-           direction = CommandDeck_CONTROLS$direction) %>%
-    select(-interventionCost,-healthcareCostAverted,-count_outcomes_averted,-netCost)
+           direction = CommandDeck_CONTROLS$direction) 
   tornado_result = rbind(tornado_result,rows)
   
 }
@@ -97,19 +100,18 @@ CommandDeck_CONTROLS = list()
 
 ### PLOT
 to_plot = tornado_result %>%
-  filter(antiviral_scenario != "no antiviral" &
-           outcome == "QALYs") 
+  filter(antiviral_scenario != "no antiviral") 
 
-base.value <- to_plot$cost_per_outcome_averted[to_plot$direction == "lower" & 
+base.value <- to_plot$mean[to_plot$direction == "lower" & 
                                                  to_plot$label == "Long COVID (off/on)" ] # final value was baseline estimates
 
 # width of columns in plot (value between 0 and 1)
 width <- 0.95
 order_parameters <- to_plot %>%
-  select(label,cost_per_outcome_averted,direction) %>%
+  select(label,mean,direction) %>%
   group_by(label) %>%
-  summarise(LB = min(cost_per_outcome_averted),
-            UB = max(cost_per_outcome_averted)) %>%
+  summarise(LB = min(mean),
+            UB = max(mean)) %>%
   mutate(UL_Difference = UB - LB) %>% 
   arrange(UL_Difference) %>%
   mutate(label=factor(x=label, levels=label)) %>%
@@ -119,8 +121,8 @@ order_parameters <- to_plot %>%
 
 # get data frame in shape for ggplot and geom_rect
 df_2 <- to_plot %>%
-  select(label,cost_per_outcome_averted,direction) %>% 
-  rename(value = cost_per_outcome_averted) %>%
+  select(label,mean,direction) %>% 
+  rename(value = mean) %>%
   ungroup() %>%
   # create the columns for geom_rect
   mutate(label=factor(label, levels=order_parameters),
