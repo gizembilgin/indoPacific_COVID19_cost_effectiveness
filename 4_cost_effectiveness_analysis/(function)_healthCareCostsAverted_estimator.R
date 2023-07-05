@@ -147,12 +147,14 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     #sampling cost of each outpatient visit and each hospital admission
     for (row in 1:nrow(cost_estimates)){
       if (cost_estimates$patient_type[row] == "inpatient"){
-        this_sample = data.frame(est = rnorm(cost_estimates$count_outcomes_averted[row], mean = cost_estimates$param1[row], sd = cost_estimates$param2[row])) %>%
+        if (cost_estimates$count_outcomes_averted[row]<0){multiplier = -1
+        } else{multiplier = 1}
+        this_sample = data.frame(est = rnorm(abs(cost_estimates$count_outcomes_averted[row]), mean = cost_estimates$param1[row], sd = cost_estimates$param2[row])) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
           ))
-        cost_estimates$cost[row] = sum(this_sample$est)
+        cost_estimates$cost[row] = sum(this_sample$est)*multiplier
         
         if (length(TORNADO_PLOT_OVERRIDE)>0){
           if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$inpatient}
