@@ -199,6 +199,7 @@ antiviral_model_worker <- function(
               group_by(outcome,age_group) %>%
               summarise(overall = sum(proj, na.rm = TRUE), .groups = "keep")
             AS_OWA_no_booster_doses = rbind(AS_OWA_no_booster_doses, ageSpecific_save_info)
+            AS_OWA_with_booster_doses = AS_OWA_no_booster_doses
             
           } else{
             OWA_with_booster_doses = severe_outcome_log_tidy  %>%
@@ -628,6 +629,7 @@ antiviral_model_worker <- function(
 
   
     ### INCLUDE NET NUMBER OF OUTCOMES FOR CEA ##################################
+    #overall (for calculating costs)
     vaccine_only_row = OWA_with_booster_doses %>%
       rename(n=overall) %>%
       select(-high_risk,-vax_scenario,-vax_scenario_risk_group) %>%
@@ -643,6 +645,24 @@ antiviral_model_worker <- function(
       select(-prevented)
     
     prevented_by_antivirals = bind_rows(prevented_by_antivirals,vaccine_only_row,vaccine_with_antivirals); rm(vaccine_with_antivirals,vaccine_only_row)
+    
+    
+    #age-specific (for calculating QALYs)
+    vaccine_only_row = AS_OWA_with_booster_doses %>%
+      rename(n=overall) %>%
+      select(-vax_scenario,-vax_scenario_risk_group) %>%
+      mutate(evaluation_group = "net")
+    
+    vaccine_with_antivirals = ageSpecific_prevented_by_antivirals %>%
+      filter(antiviral_start_date == "2023-01-01" & evaluation_group == "overall" & outcome != "hosp_after_antivirals") %>%
+      filter(intervention == "antiviral 2023-01-01" | is.na(intervention) == TRUE) %>%
+      mutate(evaluation_group = "net") %>%
+      rename(prevented = n) %>%
+      left_join(vaccine_only_row,by = join_by(outcome, age_group, evaluation_group)) %>%
+      mutate(n=n-prevented) %>%
+      select(-prevented)
+    
+    ageSpecific_prevented_by_antivirals = bind_rows(ageSpecific_prevented_by_antivirals,vaccine_only_row,vaccine_with_antivirals); rm(vaccine_with_antivirals,vaccine_only_row)
     #____________________________________________________________________________
     
     
