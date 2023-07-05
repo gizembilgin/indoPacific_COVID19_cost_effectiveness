@@ -11,8 +11,8 @@ source(paste(getwd(),"/(function)_CEA_worker.R",sep=""),local=TRUE)
 
 
 ### TOGGLES ####################################################################
-CEA_risk_group = "adults_with_comorbidities"
-LIST_CEA_settings = list("IDN")
+CEA_risk_group = this_risk_group = "adults_with_comorbidities"
+LIST_CEA_settings = list("PNG_low_beta")
 LIST_booster_vax_scenarios = list(
   "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
   # "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule"                    
@@ -32,7 +32,7 @@ LIST_antiviral_types = list(
 
 TOGGLE_perspective = "healthcare" #options: societal, healthcare
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 1
+TOGGLE_numberOfRuns = 100
 TOGGLE_clusterNumber = 1
 TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
@@ -111,9 +111,9 @@ if (TOGGLE_numberOfRuns>10){
 #calculating 'expected' of each
 CommandDeck_result = CommandDeck_result_long %>%
   mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
-         cost_per_QALY_averted = QALYs/netCost,
-         cost_per_death_averted = death/netCost,
-         cost_per_hosp_averted = hosp/netCost) %>%
+         cost_per_QALY_averted = netCost/QALYs,
+         cost_per_death_averted = netCost/death,
+         cost_per_hosp_averted = netCost/hosp) %>%
   pivot_longer(cols = c("interventionCost", "healthcareCostAverted","productivityLoss", "QALYs", "death","hosp","netCost","cost_per_QALY_averted","cost_per_death_averted","cost_per_hosp_averted"),
                names_to = "variable",
                values_to = "value_raw") %>%
@@ -121,13 +121,22 @@ CommandDeck_result = CommandDeck_result_long %>%
     variable %in% c("QALYs","death","hosp") ~ "outcome",
     variable %in% c("interventionCost", "healthcareCostAverted","productivityLoss","netCost") ~ "cost",
     variable %in% c("cost_per_QALY_averted","cost_per_death_averted","cost_per_hosp_averted") ~ "ICER"
-  )) %>%
-  group_by(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable) %>%
-  summarise(mean = mean(value_raw),
-            LPI = mean(value_raw)-qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
-            UPI = mean(value_raw)+qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
-            .groups = "keep"
-            )  
+  )) 
+if(TOGGLE_numberOfRuns == 1){
+  CommandDeck_result = CommandDeck_result %>%
+    group_by(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable) %>%
+    summarise(mean = mean(value_raw),
+              .groups = "keep"
+    )  
+} else{
+  CommandDeck_result = CommandDeck_result %>%
+    group_by(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable) %>%
+    summarise(mean = mean(value_raw),
+              LPI = mean(value_raw)-qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
+              UPI = mean(value_raw)+qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
+              .groups = "keep"
+    )  
+}
 
 CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
