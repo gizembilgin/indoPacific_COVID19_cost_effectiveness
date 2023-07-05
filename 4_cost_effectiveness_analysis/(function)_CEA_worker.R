@@ -36,6 +36,7 @@ CEA_worker <- function(
                                                                   LIST_antiviral_types,
                                                                   sampling_strategy = this_sampling_strategy,
                                                                   toggle_uncertainty = TOGGLE_uncertainty)
+    LIST_CEA_settings = gsub("PNG_low_beta","PNG",LIST_CEA_settings)
     
     ###(2/3) Calculate QALYs, intervention costs, and healthcare costs averted
     outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings,
