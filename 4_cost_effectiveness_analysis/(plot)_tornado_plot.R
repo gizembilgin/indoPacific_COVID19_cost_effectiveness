@@ -1,7 +1,7 @@
 
 ###NB: structure of CommandDeck_result adapted 03/07
 
-
+tornado_variable_of_interest = "cost_per_QALY_averted"
 this_antiviral_cost_estimate = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 this_setting_GDP = 4332.71
 
@@ -86,7 +86,7 @@ for (ticket in 1:length(queue)){
   source(paste(getwd(),"/CommandDeck.R",sep=""))
   
   rows = CommandDeck_result %>%
-    filter(variable == "cost_per_QALY_averted") %>%
+    filter(variable == tornado_variable_of_interest) %>%
     mutate(label = CommandDeck_CONTROLS$label,
            direction = CommandDeck_CONTROLS$direction) 
   tornado_result = rbind(tornado_result,rows)
