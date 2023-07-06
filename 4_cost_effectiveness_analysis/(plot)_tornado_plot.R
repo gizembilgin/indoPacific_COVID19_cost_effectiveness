@@ -1,165 +1,116 @@
+### PLOT
+##Note: run for default booster dose strategy and antiviral strategy, go back to (run)_deterministic_results.R to extract more results
+## make reactive so doesn't reload when different number of param selected (line 74)
 
-###NB: structure of CommandDeck_result adapted 03/07
-
-tornado_variable_of_interest = "cost_per_QALY_averted"
-this_antiviral_cost_estimate = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
-this_setting_GDP = 4332.71
-
-tornado_plot = list()
-
-### RUN SCENARIOS
-queue = list(
-  
-  ## (1/3) healthcare costs averted
-  list(cost_per_extra_LOS = 0.5, label = "Cost per extra LOS (±50%)",direction = "lower"),
-  list(cost_per_extra_LOS = 1.5, label = "Cost per extra LOS (±50%)",direction = "upper"),
-  
-  list(extra_LOS  = 0.5, label = "Reduced LOS (±50%)",direction = "lower"),
-  list(extra_LOS  = 1.5, label = "Reduced LOS (±50%)",direction = "upper"),
-  
-  list(outpatient = 0.5, label = "Outpatient costs (±50%)",direction = "lower"),
-  list(outpatient = 1.5, label = "Outpatient costs (±50%)",direction = "upper"),
-  
-  list(inpatient = 0.5, label = "Inpatient costs (±50%)",direction = "lower"),
-  list(inpatient = 1.5, label = "Inpatient costs (±50%)",direction = "upper"),
-  
-  
-  ## (2/3) intervention costs
-  #(A/B) booster program costs
-  list(price_per_boosterDose  = 0.5, label = "Booster price ($0.50-$3.00)",direction = "lower"),
-  list(price_per_boosterDose  = 3.0, label = "Booster price ($0.50-$3.00)",direction = "upper"),
-
-  list(wastage_rate_boosterDose = 0.0, label = "Booster wastage (0-50%)",direction = "lower"),
-  list(wastage_rate_boosterDose = 0.5, label = "Booster wastage (0-50%)",direction = "upper"),
-  
-  list(price_per_injectionEquipmentDose = 0.025, label = "Injection Equipment price ($0.025-$0.050)",direction = "lower"),
-  list(price_per_injectionEquipmentDose = 0.050, label = "Injection Equipment price ($0.025-$0.050)",direction = "upper"),
-  
-  list(wastage_rate_injectionEquipment = 0.0, label = "Injection Equipment wastage (0-50%)",direction = "lower"),
-  list(wastage_rate_injectionEquipment = 0.5, label = "Injection Equipment wastage (0-50%)",direction = "upper"),
-  
-  list(vax_operational_cost = 00.21, label = "Booster operational cost ($0.21-$13.04)",direction = "lower"),
-  list(vax_operational_cost = 13.04, label = "Booster operational cost ($0.21-$13.04)",direction = "upper"),
-  
-  #(B/B) antiviral program costs
-  list(price_per_antiviralDose = 25,  label = "Antiviral schedule price ($25-530)",direction = "lower"),
-  list(price_per_antiviralDose = 530, label = "Antiviral schedule price ($25-530)",direction = "upper"),
-  
-  list(wastage_rate_antiviralSchedule = 0.0, label = "Antiviral wastage (0-60%)",direction = "lower"),
-  list(wastage_rate_antiviralSchedule = 0.6, label = "Antiviral wastage (0-60%)",direction = "upper"),
-  
-  list(price_per_RAT = 1, label = "RAT price ($1-5)",direction = "lower"),
-  list(price_per_RAT = 5, label = "RAT price ($1-5)",direction = "upper"),
-  
-  list(wastage_factor_RAT = 3,  label = "RAT wastage factor (3-12)",direction = "lower"),
-  list(wastage_factor_RAT = 12, label = "RAT wastage factor (3-12)",direction = "upper"),
-  
-  list(antiviral_operational_cost = 0.5, label = "Antiviral operational costs (±50%)",direction = "lower"),
-  list(antiviral_operational_cost = 1.5, label = "Antiviral operational costs (±50%)",direction = "upper"),
-  
-  
-  ## (3/3) other toggles
-  list(TOGGLE_discounting_rate = 0.0, label = "Discounting rate (0-5%)",direction = "lower"),
-  list(TOGGLE_discounting_rate = 0.5, label = "Discounting rate (0-5%)",direction = "upper"),
-  
-  list(TOGGLE_longCOVID = "off", label = "Long COVID (off/on)",direction = "lower"),
-  list(TOGGLE_longCOVID = "on", label = "Long COVID (off/on)",direction = "upper")
-  
+INPUT_outcome = "QALYs"
+INPUT_setting_list = c("PNG")
+INPUT_perspective = "healthcare"
+INPUT_include_GDP = "Y"
+INPUT_parameters = c(
+  # "Antiviral schedule price ($25-530)",
+  # "Antiviral wastage (0-60%)"          ,
+  # "Inpatient costs (±50%)"              ,
+  # "Discounting rate (0-5%)"              ,
+  "RAT price ($1-5)"                      ,
+  "RAT wastage factor (3-12)"              ,
+  "Cost per extra LOS (±50%)"               ,
+  "Reduced LOS (±50%)"                       ,
+  "Antiviral operational costs (±50%)"       ,
+  "Booster operational cost ($0.21-$13.04)"  ,
+  "Long COVID (off/on)"                      ,
+  "Booster price ($0.50-$3.00)"              ,
+  "Booster wastage (0-50%)"                  ,
+  "Outpatient costs (±50%)"                  ,
+  "Injection Equipment wastage (0-50%)"      ,
+  "Injection Equipment price ($0.025-$0.050)"
 )
 
-tornado_result = data.frame()
 
-for (ticket in 1:length(queue)){
-  CommandDeck_CONTROLS = queue[[ticket]]
-  CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                list(
-                                  LIST_booster_vax_scenarios = list(
-                                    "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
-                                    ),
-                                  LIST_antiviral_elig_groups = list("adults_with_comorbidities"),
-                                  LIST_antiviral_types = list("nirmatrelvir_ritonavir"),
-                                  TOGGLE_uncertainty = "fixed",
-                                  TOGGLE_antiviral_cost_scenario = this_antiviral_cost_estimate
-                                  )
-                                )
 
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
+load(file = "x_results/tornado_result.Rdata")
+tornado_variable_of_interest = paste("cost_per_",
+                                     gsub("QALYs","QALY",INPUT_outcome),
+                                     "_averted",
+                                     sep ="")
+tornado_result = tornado_result %>%
+  filter(antiviral_scenario != "no antiviral" &
+           variable == tornado_variable_of_interest &
+           setting %in% INPUT_setting_list &
+           perspective %in% INPUT_perspective) 
+
+plot_list = list()
+
+for (this_setting in unique(tornado_result$setting)){
+  to_plot = tornado_result %>%
+    filter(setting == this_setting)
   
-  rows = CommandDeck_result %>%
-    filter(variable == tornado_variable_of_interest) %>%
-    mutate(label = CommandDeck_CONTROLS$label,
-           direction = CommandDeck_CONTROLS$direction) 
-  tornado_result = rbind(tornado_result,rows)
+  if (this_setting == "FJI"){this_setting_GDP = 5316.7}
+  if (this_setting == "IDN"){this_setting_GDP = 4788.0}
+  if (this_setting == "PNG"){this_setting_GDP = 3020.3}
+  if (this_setting == "TLS"){this_setting_GDP = 2358.4}
   
+  base.value <- to_plot$mean[to_plot$direction == "lower" & 
+                               to_plot$label == "Long COVID (off/on)" ] # final value was baseline estimates
+  
+  # width of columns in plot (value between 0 and 1)
+  width <- 0.95
+  order_parameters <- to_plot %>%
+    select(label,mean,direction) %>%
+    group_by(label) %>%
+    summarise(LB = min(mean),
+              UB = max(mean)) %>%
+    mutate(UL_Difference = UB - LB) %>% 
+    arrange(UL_Difference) %>%
+    mutate(label=factor(x=label, levels=label)) %>%
+    select(label) %>% 
+    unlist() %>% 
+    levels()
+  
+  # get data frame in shape for ggplot and geom_rect
+  df_2 <- to_plot %>%
+    select(label,mean,direction) %>% 
+    rename(value = mean) %>%
+    ungroup() %>%
+    # create the columns for geom_rect
+    mutate(label=factor(label, levels=order_parameters),
+           ymin=pmin(value, base.value),
+           ymax=pmax(value, base.value),
+           xmin=as.numeric(label)-width/2,
+           xmax=as.numeric(label)+width/2)
+  
+  # create plot
+  require(ggtext)
+  options(scipen=999) #turn off scientific notation
+  
+  #REACTIVE CHANGE OF PLOT STARTS HERE
+  plot_list[[length(plot_list)+1]] = ggplot() + 
+    geom_rect(data = df_2[df_2$label %in% INPUT_parameters,], #THIS IS THE MAIN EXPECTED CHANGE
+              aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
+    geom_hline(yintercept = base.value) +
+    theme_bw() + 
+    #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
+    theme(axis.title.y=element_blank(), legend.position = 'bottom',
+          legend.title = element_blank())  +
+    ylab('Cost per QALY averted (2022 USD)') +
+    scale_x_continuous(breaks = c(1:length(order_parameters)), 
+                       labels = order_parameters) +
+    coord_flip() 
+  
+  if (INPUT_include_GDP == "Y"){
+    plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+    geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
+    annotate("text", x = 4, y = this_setting_GDP*0.65, label = "GDP per capita")
+  }
 }
 
-CommandDeck_CONTROLS = list()
-#_______________________________________________________________________________
+### Arrange plots based no number of settings
+if (length(plot_list) == 1){
+  plot_list
+} else if (length(plot_list) == 2){
+  ggarrange(plot_list, ncol = 1, nrow = 2, common.legend = TRUE)
+} else if (length(plot_list) == 3){
+  ggarrange(plot_list, ncol = 2, nrow = 2, common.legend = TRUE)
+} else if (length(plot_list) == 4){
+  ggarrange(plot_list, ncol = 2, nrow = 2, common.legend = TRUE)
+}
 
-
-
-### PLOT
-to_plot = tornado_result %>%
-  filter(antiviral_scenario != "no antiviral") 
-
-base.value <- to_plot$mean[to_plot$direction == "lower" & 
-                                                 to_plot$label == "Long COVID (off/on)" ] # final value was baseline estimates
-
-# width of columns in plot (value between 0 and 1)
-width <- 0.95
-order_parameters <- to_plot %>%
-  select(label,mean,direction) %>%
-  group_by(label) %>%
-  summarise(LB = min(mean),
-            UB = max(mean)) %>%
-  mutate(UL_Difference = UB - LB) %>% 
-  arrange(UL_Difference) %>%
-  mutate(label=factor(x=label, levels=label)) %>%
-  select(label) %>% 
-  unlist() %>% 
-  levels()
-
-# get data frame in shape for ggplot and geom_rect
-df_2 <- to_plot %>%
-  select(label,mean,direction) %>% 
-  rename(value = mean) %>%
-  ungroup() %>%
-  # create the columns for geom_rect
-  mutate(label=factor(label, levels=order_parameters),
-         ymin=pmin(value, base.value),
-         ymax=pmax(value, base.value),
-         xmin=as.numeric(label)-width/2,
-         xmax=as.numeric(label)+width/2)
-
-# create plot
-require(ggtext)
-options(scipen=999) #turn off scientific notation
-
-ggplot() + 
-  geom_rect(data = df_2, 
-            aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
-  geom_hline(yintercept = base.value) +
-  theme_bw() + 
-  #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-  theme(axis.title.y=element_blank(), legend.position = 'bottom',
-        legend.title = element_blank())  +
-  ylab('Cost per QALY averted (2022 USD)') +
-  scale_x_continuous(breaks = c(1:length(order_parameters)), 
-                     labels = order_parameters) +
-  coord_flip() + 
-  geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
-  annotate("text", x = 4, y = this_setting_GDP*0.65, label = "GDP per capita")
-
-ggplot() + 
-  geom_rect(data = df_2[!(df_2$label %in% c("Antiviral wastage (0-60%)","Antiviral schedule price ($25-530)","Inpatient costs (±50%)","Discounting rate (0-5%)")),], 
-            aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
-  geom_hline(yintercept = base.value) +
-  theme_bw() + 
-  #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-  theme(axis.title.y=element_blank(), legend.position = 'bottom',
-        legend.title = element_blank())  +
-  ylab('Cost per QALY averted (2022 USD)') +
-  scale_x_continuous(breaks = c(1:length(order_parameters)), 
-                     labels = order_parameters) +
-  coord_flip() #+ 
-  #geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed')
