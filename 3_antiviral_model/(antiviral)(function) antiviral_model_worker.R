@@ -658,16 +658,18 @@ antiviral_model_worker <- function(
       filter(intervention == "antiviral 2023-01-01" | is.na(intervention) == TRUE) %>%
       mutate(evaluation_group = "net") %>%
       rename(prevented = n) %>%
-      right_join(vaccine_only_row[vaccine_only_row$outcome %in% unique(ageSpecific_prevented_by_antivirals$outcome),]
+      right_join(vaccine_only_row [vaccine_only_row$outcome %in% unique(ageSpecific_prevented_by_antivirals$outcome),]
                  ,by = join_by(outcome, age_group, evaluation_group)) 
     expanding_underage_rows = vaccine_with_antivirals %>%
       filter(is.na(antiviral_type)) %>%
       select(-antiviral_type,-antiviral_target_group,-antiviral_start_date,-intervention,-prevented)
+    structure = vaccine_with_antivirals %>%
+      filter(is.na(antiviral_type) == FALSE) %>%
+      ungroup() %>%
+      select(antiviral_type,antiviral_target_group,antiviral_start_date,intervention)
+    structure = unique(structure)
     expanding_underage_rows = crossing(expanding_underage_rows,
-                                       antiviral_type = unique(ageSpecific_prevented_by_antivirals$antiviral_type),
-                                       antiviral_target_group = unique(ageSpecific_prevented_by_antivirals$antiviral_target_group),
-                                       antiviral_start_date = unique(ageSpecific_prevented_by_antivirals$antiviral_start_date),
-                                       intervention = unique(ageSpecific_prevented_by_antivirals$intervention),
+                                       structure,
                                        prevented = 0)
     vaccine_with_antivirals = vaccine_with_antivirals %>%
       filter(is.na(antiviral_type) == FALSE) #remove underage rows

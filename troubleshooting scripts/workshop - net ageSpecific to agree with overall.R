@@ -21,10 +21,14 @@ check =  antiviral_model_worker(
   stochastic_severe_outcomes_application = copy_application_fx_into_cluster
 )
 
-subset = check %>% filter(evaluation_group == "net")
+subset_df = check %>% filter(evaluation_group == "net")
 
-subset_ageSpecific = subset %>% filter(is.na(age_group)==FALSE) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario) %>% summarise(n_ageSpecific=sum(n)) 
-subset_overall = subset %>% filter(is.na(age_group)) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario) %>% summarise(n_overall=sum(n))
+subset_ageSpecific = subset_df %>% filter(is.na(age_group)==FALSE) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario,vax_scenario_risk_group) %>% summarise(n_ageSpecific=sum(n)) 
+subset_overall = subset_df %>% filter(is.na(age_group)) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario,vax_scenario_risk_group) %>% summarise(n_overall=sum(n))
 
-compare = subset_overall %>% left_join(subset_ageSpecific)
-compare = compare %>% filter(round(n_overall) != round(n_ageSpecific))
+compare = subset_overall %>% 
+  left_join(subset_ageSpecific)%>% 
+  filter(round(n_overall) != round(n_ageSpecific))
+
+require(beepr); beep()
+nrow(compare)
