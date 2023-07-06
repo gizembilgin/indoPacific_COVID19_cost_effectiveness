@@ -12,32 +12,33 @@ source(paste(getwd(),"/(function)_CEA_worker.R",sep=""),local=TRUE)
 
 ### TOGGLES ####################################################################
 CEA_risk_group = this_risk_group = "adults_with_comorbidities"
-LIST_CEA_settings = list("PNG_low_beta")
+LIST_CEA_settings = list("PNG_low_beta","TLS")
 LIST_booster_vax_scenarios = list(
   "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
-  # "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule"                    
-  # "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster"                       
-  # "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"           
-  # "all willing adults vaccinated with a primary schedule"  
+   ,"all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule"                    
+   ,"catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster"                       
+   ,"catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"           
+   ,"all willing adults vaccinated with a primary schedule"  
 )
 LIST_antiviral_elig_groups = list(
   "adults_with_comorbidities" 
-  # "all_adults" 
-  # "unvaccinated_adults" 
+   ,"all_adults" 
+   ,"unvaccinated_adults" 
 )
 LIST_antiviral_types = list(
-  #"molunipiravir"          
-  "nirmatrelvir_ritonavir"
+  "molunipiravir"          
+  ,"nirmatrelvir_ritonavir"
 )
 
 TOGGLE_perspective = "healthcare" #options: societal, healthcare
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 100
-TOGGLE_clusterNumber = 1
+TOGGLE_numberOfRuns = 1000
+TOGGLE_clusterNumber = 4
 TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 TORNADO_PLOT_OVERRIDE = list()
+DECISION_save_result = "Y"
 DECISION_sampling_strategy = "empirical_distribution"
 DECISION_CEA_agreement = "Y"
 
@@ -187,3 +188,15 @@ CommandDeck_result_long = CommandDeck_result_long %>%
          perspective = TOGGLE_perspective,
          discounting_rate = TOGGLE_discounting_rate ,
          antiviral_cost = TOGGLE_antiviral_cost_scenario)
+
+if (DECISION_save_result == "Y"){
+  CommandDeck_result_list = list(CommandDeck_result_long = CommandDeck_result_long,
+                                 CommandDeck_result = CommandDeck_result)
+  temp_name = ''
+  time = Sys.time()
+  time = gsub(':','-',time)
+  time = paste(temp_name,time,sep='')
+  
+  save(CommandDeck_result_list, file = paste("x_results/CommandDeck_result_list_",this_risk_group,"_",TOGGLE_perspective,"_perspective_",time,".Rdata",sep=''))
+}
+
