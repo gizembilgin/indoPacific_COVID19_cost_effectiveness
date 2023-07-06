@@ -653,12 +653,25 @@ antiviral_model_worker <- function(
       select(-vax_scenario,-vax_scenario_risk_group) %>%
       mutate(evaluation_group = "net")
     
-    vaccine_with_antivirals = ageSpecific_prevented_by_antivirals %>%
+    vaccine_with_antivirals = ageSpecific_prevented_by_antivirals %>% filter(evaluation_group != "net")%>%
       filter(antiviral_start_date == "2023-01-01" & evaluation_group == "overall" & outcome != "hosp_after_antivirals") %>%
       filter(intervention == "antiviral 2023-01-01" | is.na(intervention) == TRUE) %>%
       mutate(evaluation_group = "net") %>%
       rename(prevented = n) %>%
-      left_join(vaccine_only_row,by = join_by(outcome, age_group, evaluation_group)) %>%
+      right_join(vaccine_only_row[vaccine_only_row$outcome %in% unique(ageSpecific_prevented_by_antivirals$outcome),]
+                 ,by = join_by(outcome, age_group, evaluation_group)) 
+    expanding_underage_rows = vaccine_with_antivirals %>%
+      filter(is.na(antiviral_type)) %>%
+      select(-antiviral_type,-antiviral_target_group,-antiviral_start_date,-intervention,-prevented)
+    expanding_underage_rows = crossing(expanding_underage_rows,
+                                       antiviral_type = unique(ageSpecific_prevented_by_antivirals$antiviral_type),
+                                       antiviral_target_group = unique(ageSpecific_prevented_by_antivirals$antiviral_target_group),
+                                       antiviral_start_date = unique(ageSpecific_prevented_by_antivirals$antiviral_start_date),
+                                       intervention = unique(ageSpecific_prevented_by_antivirals$intervention),
+                                       prevented = 0)
+    vaccine_with_antivirals = vaccine_with_antivirals %>%
+      filter(is.na(antiviral_type) == FALSE) #remove underage rows
+    vaccine_with_antivirals = rbind(vaccine_with_antivirals,expanding_underage_rows) %>%
       mutate(n=n-prevented) %>%
       select(-prevented)
     
@@ -691,14 +704,12 @@ antiviral_model_worker <- function(
         select(outcome,evaluation_group,overall)
     }
     
-    one_complete_run <-
-      prevented_by_antivirals %>%
+    one_complete_run <- prevented_by_antivirals %>%
       left_join(outcomes_without_antivirals, by = c("outcome",'evaluation_group')) %>%
       mutate(
         percentage = n / overall * 100
       ) %>%
-      select(outcome, antiviral_type,antiviral_target_group,intervention,evaluation_group, intervention_doses_delivered, n,
-             percentage) %>% 
+      select(outcome, antiviral_type,antiviral_target_group,intervention,evaluation_group, intervention_doses_delivered, n, percentage) %>% 
       mutate(vax_scenario = toggle_vax_scenario,
              vax_scenario_risk_group = toggle_vax_scenario_risk_group)
     
@@ -707,10 +718,15 @@ antiviral_model_worker <- function(
       mutate(vax_scenario = toggle_vax_scenario,
              vax_scenario_risk_group = toggle_vax_scenario_risk_group) 
     
-    this_worker_result = bind_rows(one_complete_run,one_complete_ageSpecific_run, this_worker_result) %>%
-      mutate(run_ID = random_id(n = 1, bytes = 8))
+    this_worker_result = bind_rows(one_complete_run,one_complete_ageSpecific_run, this_worker_result) 
+    
+
     
   } #end vaccination scenario loop
+  
+  this_worker_result = this_worker_result %>%
+    mutate(run_ID = random_id(n = 1, bytes = 8))
+  
   
    return(this_worker_result)
 }
