@@ -5,7 +5,7 @@ CEA_worker <- function(
     LIST_booster_vax_scenarios,
     LIST_antiviral_elig_groups,
     LIST_antiviral_types,
-    this_sampling_strategy,
+    DECISION_sampling_strategy,
     TOGGLE_uncertainty,
     TOGGLE_longCOVID,
     TOGGLE_discounting_rate,
@@ -34,7 +34,7 @@ CEA_worker <- function(
                                                                   LIST_booster_vax_scenarios,
                                                                   LIST_antiviral_elig_groups,
                                                                   LIST_antiviral_types,
-                                                                  sampling_strategy = this_sampling_strategy,
+                                                                  sampling_strategy = DECISION_sampling_strategy,
                                                                   toggle_uncertainty = TOGGLE_uncertainty)
     LIST_CEA_settings = gsub("PNG_low_beta","PNG",LIST_CEA_settings)
     

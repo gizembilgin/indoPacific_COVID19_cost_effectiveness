@@ -38,7 +38,8 @@ TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 TORNADO_PLOT_OVERRIDE = list()
-this_sampling_strategy = "empirical_distribution"
+DECISION_sampling_strategy = "empirical_distribution"
+DECISION_CEA_agreement = "Y"
 
 if (exists("CommandDeck_CONTROLS") == FALSE){CommandDeck_CONTROLS = list()}
 if (length(CommandDeck_CONTROLS)>0){
@@ -51,7 +52,7 @@ if (length(CommandDeck_CONTROLS)>0){
   if("TOGGLE_discounting_rate" %in% names(CommandDeck_CONTROLS))   {TOGGLE_discounting_rate            = CommandDeck_CONTROLS$TOGGLE_discounting_rate}
   if("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))          {TOGGLE_longCOVID                   = CommandDeck_CONTROLS$TOGGLE_longCOVID}
   if("TOGGLE_antiviral_cost_scenario" %in% names(CommandDeck_CONTROLS)){TOGGLE_antiviral_cost_scenario = CommandDeck_CONTROLS$TOGGLE_antiviral_cost_scenario}
-  if("sampling_strategy" %in% names(CommandDeck_CONTROLS))             {this_sampling_strategy         = CommandDeck_CONTROLS$sampling_strategy}
+  if("sampling_strategy" %in% names(CommandDeck_CONTROLS))             {DECISION_sampling_strategy         = CommandDeck_CONTROLS$sampling_strategy}
 }
 if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1;TOGGLE_clusterNumber = 1}
 ################################################################################
@@ -78,7 +79,7 @@ system.time({
       LIST_booster_vax_scenarios,
       LIST_antiviral_elig_groups,
       LIST_antiviral_types,
-      this_sampling_strategy,
+      DECISION_sampling_strategy,
       TOGGLE_uncertainty,
       TOGGLE_longCOVID,
       TOGGLE_discounting_rate,
@@ -132,15 +133,57 @@ if(TOGGLE_numberOfRuns == 1){
   CommandDeck_result = CommandDeck_result %>%
     group_by(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable) %>%
     summarise(mean = mean(value_raw),
+              sd = sd(value_raw),
               LPI = mean(value_raw)-qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
               UPI = mean(value_raw)+qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
               .groups = "keep"
     )  
+  
+  if (DECISION_CEA_agreement == "Y"){ #force ICER to align with netCost/netOutcomesAverted
+    workshop_outcome = CommandDeck_result %>%
+      filter(variable_type == "outcome") %>%
+      ungroup() %>%
+      select(-LPI,-UPI,-variable_type) %>%
+      rename(mean_outcome = mean,
+             sd_outcome = sd,
+             outcome = variable)
+    
+    workshop_cost = CommandDeck_result %>%
+      filter( variable == "netCost")%>%
+      ungroup() %>%
+      select(-LPI,-UPI,-variable_type,-variable) %>%
+      rename(mean_cost = mean,
+             sd_cost = sd)
+    
+    workshop = workshop_outcome %>%
+      left_join(workshop_cost,by = join_by(setting, booster_vax_scenario, antiviral_scenario)) %>%
+      mutate(
+        mean = mean_cost/mean_outcome,
+        sd = mean_cost/mean_outcome * sqrt(
+          ((sd_cost/mean_cost)^2)+((sd_outcome)/mean_outcome)^2
+        ),
+        LPI = mean - qt(.975,df=(TOGGLE_numberOfRuns-1))*sd*sqrt(1+(1/TOGGLE_numberOfRuns)) ,
+        UPI = mean + qt(.975,df=(TOGGLE_numberOfRuns-1))*sd*sqrt(1+(1/TOGGLE_numberOfRuns))
+      ) %>%
+      mutate(variable_type = "ICER",
+             variable = paste("cost_per_",outcome,"_averted",sep=""),
+             variable = gsub("QALYs","QALY",variable)) %>%
+      select(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable,mean,sd,LPI,UPI)
+    
+    CommandDeck_result = CommandDeck_result %>%
+      filter(variable_type != "ICER")
+    CommandDeck_result = rbind(CommandDeck_result,workshop); rm(workshop,workshop_cost,workshop_outcome)
+    
+  }
 }
+
 
 CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
                names_to = "outcome",
                values_to = "count_outcomes_averted") %>%
   mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
-         cost_per_outcome_averted = netCost / count_outcomes_averted)
+         cost_per_outcome_averted = netCost / count_outcomes_averted,
+         perspective = TOGGLE_perspective,
+         discounting_rate = TOGGLE_discounting_rate ,
+         antiviral_cost = TOGGLE_antiviral_cost_scenario)
