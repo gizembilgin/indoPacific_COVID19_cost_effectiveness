@@ -3,7 +3,7 @@
 
 INPUT_outcome = "QALYs"
 INPUT_setting_list = c("PNG")
-INPUT_perspective = "societal"
+INPUT_perspective = "healthcare"
 INPUT_discounting_rate = 0.03
 INPUT_antiviral_cost = "middle_income_cost"
 INPUT_booster_strategy = "booster to all high-risk adults previously willing to be vaccinated"
