@@ -7,7 +7,7 @@
 
 INPUT_include_net = "Y"
 INPUT_include_outcomes = c("QALY")
-INPUT_include_setting = c("PNG")
+INPUT_include_setting = c("PNG","TLS")
 INPUT_include_booster_vax_scenario = c("high-risk adults")
 INPUT_include_antiviral_scenario = c("no antiviral","nirmatrelvir-ritonavir to high-risk adults")
 

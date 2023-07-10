@@ -1,8 +1,9 @@
 
 #Require result (CommandDeck_result_long) with variables outcome, setting, perspective, discounting_rate, antiviral_cost, booster_vax_scenario,antiviral_scenario,netCost,count_outcomes_averted
+require(ggpubr)
 
 INPUT_outcome = "QALYs"
-INPUT_setting_list = c("PNG")
+INPUT_setting_list = c("PNG","TLS")
 INPUT_perspective = "healthcare"
 INPUT_discounting_rate = 0.03
 INPUT_antiviral_cost = "middle_income_cost"
@@ -29,23 +30,27 @@ to_plot = CommandDeck_result_long %>%
 
 ### Create plots
 plot_list = list()
-for (i in 1:length(INPUT_setting_list)){
+for (this_setting in INPUT_setting_list){
+  to_plot_setting = to_plot[to_plot$setting == this_setting,]
   if (length(INPUT_antiviral_strategy)>1){
-    plot_list[[length(plot_list)+1]] = ggplot(to_plot) +
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
       geom_point(aes(x=netCost,y=count_outcomes_averted,color=as.factor(antiviral_scenario))) +
       labs(color="antiviral strategy") 
   } else if (length(INPUT_booster_strategy)>1){
-    plot_list[[length(plot_list)+1]] = ggplot(to_plot) +
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
       geom_point(aes(x=netCost,y=count_outcomes_averted,color=as.factor(booster_vax_scenario))) +
       labs(color="booster strategy")
   } else{
-    plot_list[[length(plot_list)+1]] = ggplot(to_plot) +
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
       geom_point(aes(x=netCost,y=count_outcomes_averted)) 
   }
   plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
     ylab("QALYs averted") +
     xlab("net cost (2022 USD)") +
-    theme_bw() + theme(legend.position="bottom")
+    theme_bw() + 
+    theme(legend.position="bottom") +
+    labs(title = this_setting) +
+    ylim(0,max(to_plot_setting$count_outcomes_averted))
 
 }
 
@@ -53,9 +58,9 @@ for (i in 1:length(INPUT_setting_list)){
 if (length(plot_list) == 1){
   plot_list
 } else if (length(plot_list) == 2){
-  ggarrange(plot_list, ncol = 1, nrow = 2, common.legend = TRUE)
+  ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
 } else if (length(plot_list) == 3){
-  ggarrange(plot_list, ncol = 2, nrow = 2, common.legend = TRUE)
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
 } else if (length(plot_list) == 4){
-  ggarrange(plot_list, ncol = 2, nrow = 2, common.legend = TRUE)
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
 }

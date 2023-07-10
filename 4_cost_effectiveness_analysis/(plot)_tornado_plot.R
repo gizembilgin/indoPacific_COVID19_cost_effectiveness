@@ -94,7 +94,8 @@ for (this_setting in unique(tornado_result$setting)){
     ylab('Cost per QALY averted (2022 USD)') +
     scale_x_continuous(breaks = c(1:length(order_parameters)), 
                        labels = order_parameters) +
-    coord_flip() 
+    coord_flip() +
+    labs(title = this_setting)
   
   if (INPUT_include_GDP == "Y"){
     plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
@@ -107,10 +108,10 @@ for (this_setting in unique(tornado_result$setting)){
 if (length(plot_list) == 1){
   plot_list
 } else if (length(plot_list) == 2){
-  ggarrange(plot_list, ncol = 1, nrow = 2, common.legend = TRUE)
+  ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
 } else if (length(plot_list) == 3){
-  ggarrange(plot_list, ncol = 2, nrow = 2, common.legend = TRUE)
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
 } else if (length(plot_list) == 4){
-  ggarrange(plot_list, ncol = 2, nrow = 2, common.legend = TRUE)
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
 }
 
