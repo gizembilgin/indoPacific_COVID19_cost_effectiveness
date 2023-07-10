@@ -62,8 +62,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
   ### Calculate intervention costs ##############################################
   interventionCost_estimates = data.frame()
   
-  for (i in 1:length(LIST_CEA_settings)){
-    this_setting = LIST_CEA_settings[[i]]
+  for (this_setting in LIST_CEA_settings){
     
     ## Booster dose costs
     #(A/E) price_per_boosterDose
@@ -107,7 +106,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
       price_per_injectionEquipmentDose*(1/(1-wastage_rate_injectionEquipment))
     
     vax_estimates = TRANSLATED_antiviral_simulations  %>%
-      filter(intervention == "booster dose 2023-03-01") %>%
+      filter(intervention == "booster dose 2023-03-01" & setting == this_setting) %>%
       mutate(cost = intervention_doses_delivered * (operational_cost + static_costs)) %>%
       select(setting,booster_vax_scenario,intervention,intervention_target_group,cost)
     
