@@ -1,58 +1,88 @@
-
-this_outcome = "QALYs"
-
-CommandDeck_CONTROLS = list(
-  LIST_booster_vax_scenarios = list(
-    "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
-     ,"all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule"                    
-    # "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster"                       
-    # "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"           
-     ,"all willing adults vaccinated with a primary schedule"  
-  ),
-  LIST_antiviral_elig_groups = list(
-    "adults_with_comorbidities" 
-    # "all_adults" 
-    # "unvaccinated_adults" 
-  ),
-  LIST_antiviral_types = list(
-    #"molunipiravir"          
-    "nirmatrelvir_ritonavir"
-  ),
-  TOGGLE_uncertainty = "rand"
-)
-
-source(paste(getwd(),"/CommandDeck.R",sep=""))
-
-CEAC_dataframe = data.frame()
-this_workshop = CommandDeck_result_long %>% filter(outcome == this_outcome)
+options(scipen = 1000); require(ggpubr)
 
 
-for (this_WTP in seq(round(min(this_workshop$cost_per_outcome_averted )),
-                   round(max(this_workshop$cost_per_outcome_averted )),by =50)){
+
+INPUT_outcome = "QALYs"
+INPUT_setting_list = c("PNG","TLS")
+INPUT_perspective = "societal"
+INPUT_parameter_to_vary = "booster_strategy" 
+
+#R SHINY conditional UI, check boxes for one and button for all others
+INPUT_discounting_rate = 0.03
+INPUT_antiviral_cost = "middle_income_cost"
+INPUT_booster_strategy = "booster to all high-risk adults previously willing to be vaccinated"
+INPUT_antiviral_strategy = c("no antiviral","nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities")
+
+
+
+### Create plots
+this_workshop = CEAC_dataframe %>% filter(outcome == INPUT_outcome &
+                                            setting %in% INPUT_setting_list &
+                                            perspective == INPUT_perspective &
+                                            discounting_rate == INPUT_discounting_rate &
+                                            antiviral_cost == INPUT_antiviral_cost &
+                                            booster_vax_scenario %in% INPUT_booster_strategy &
+                                            antiviral_scenario %in% INPUT_antiviral_strategy)
+xmax = this_workshop %>% 
+  group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
+  filter(probability >=1) %>%
+  summarise(min = min(WTP), .groups = "keep") %>%
+  ungroup()
+xmax = max(xmax$min)
+
+xmin = this_workshop %>% 
+  group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
+  filter(probability == min(probability)) %>%
+  summarise(max = max(WTP), .groups = "keep") %>%
+  ungroup()
+xmin = min(xmin$max)
+
+n_options_selected = max(length(INPUT_discounting_rate),
+                         length(INPUT_antiviral_cost),
+                         length(INPUT_booster_strategy),
+                         length(INPUT_antiviral_strategy))
   
-  rows = this_workshop %>%
-    filter(cost_per_outcome_averted  <= this_WTP) %>%
-    group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
-    summarise(probability = n() / TOGGLE_numberOfRuns, .groups = "keep") %>%
-    mutate(WTP = this_WTP)
-  
-  CEAC_dataframe = rbind(CEAC_dataframe,rows)
+plot_list = list()
+for (this_setting in INPUT_setting_list){
+  to_plot_setting = this_workshop[this_workshop$setting == this_setting,]
+  if (length(INPUT_antiviral_strategy)>1){
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+      geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_scenario))) +
+      labs(color="antiviral strategy") 
+  } else if (length(INPUT_booster_strategy)>1){
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+      geom_point(aes(x=WTP,y=probability,color=as.factor(booster_vax_scenario))) +
+      labs(color="booster strategy")
+  } else if (length(INPUT_discounting_rate)>1){
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+      geom_point(aes(x=WTP,y=probability,color=as.factor(discounting_rate))) +
+      labs(color="discounting rate")
+  } else if (length(INPUT_antiviral_cost)>1){
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+      geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_cost))) +
+      labs(color="antiviral cost")
+  } else{
+    plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+      geom_point(aes(x=WTP,y=probability)) 
+  }
+  plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
+    xlab("Willingness to pay ($/QALY)") +
+    ylab("Probability cost-effective") +
+    theme_bw() + 
+    theme(legend.position="bottom") +
+    labs(title = this_setting) +
+    xlim(xmin,xmax) + guides(colour = guide_legend(nrow = n_options_selected))
 }
 
-to_plot = CEAC_dataframe %>%
-  mutate(scenario = case_when(
-    booster_vax_scenario == "no booster dose" & antiviral_scenario == "nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities" ~ "oral antiviral to high-risk adults",
-    
-    booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" & antiviral_scenario == "no antiviral"   ~ "booster to high-risk adults",
-    booster_vax_scenario == "booster to all adults previously willing to be vaccinated" & antiviral_scenario == "no antiviral"   ~ "booster to all adults",
-    
-    booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" & antiviral_scenario == "nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities" ~ "booster and oral antiviral to high-risk adults",
-    booster_vax_scenario == "booster to all adults previously willing to be vaccinated" & antiviral_scenario == "nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities" ~ "booster to all and oral antiviral to high-risk adults",
-    
-  )) %>%
-  filter(is.na(scenario) == FALSE)
 
-ggplot() + geom_point(data = to_plot, aes(x=WTP,y=probability,color=as.factor(scenario))) +
-  xlab("Willingness to pay ($/QALY)") +
-  ylab("Probability cost-effective") +
-  theme_bw() 
+
+### Arrange plots based no number of settings
+if (length(plot_list) == 1){
+  plot_list
+} else if (length(plot_list) == 2){
+  ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
+} else if (length(plot_list) == 3){
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
+} else if (length(plot_list) == 4){
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
+}
