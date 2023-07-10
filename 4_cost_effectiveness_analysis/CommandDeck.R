@@ -30,7 +30,7 @@ LIST_antiviral_types = list(
   ,"nirmatrelvir_ritonavir"
 )
 
-TOGGLE_perspective = "healthcare" #options: societal, healthcare
+TOGGLE_perspective = "societal" #options: societal, healthcare
 TOGGLE_uncertainty = "rand" #fixed or rand
 TOGGLE_numberOfRuns = 1000
 TOGGLE_clusterNumber = 4
@@ -94,21 +94,44 @@ system.time({
 #i.e., 3 hours per settings without parallel running
 parallel::stopCluster(CLUSTER)
 
+normality_tracker = data.frame()
 if (TOGGLE_numberOfRuns>10){
-  if(shapiro.test(CommandDeck_result_long$interventionCost)$p.value > 0.05 |
-     shapiro.test(CommandDeck_result_long$healthcareCostAverted)$p.value  > 0.05 |
-     shapiro.test(CommandDeck_result_long$QALYs)$p.value > 0.05 |
-     shapiro.test(CommandDeck_result_long$death)$p.value > 0.05 |
-     shapiro.test(CommandDeck_result_long$hosp)$p.value > 0.05){
-    warning("Model outputs are not normally distributed")
-  }
-  if(TOGGLE_perspective == "societal"){
-    if(shapiro.test(CommandDeck_result_long$productivityLoss)$p.value > 0.05){
-      warning("Model outputs are not normally distributed")
+  for (this_setting in unique(CommandDeck_result_long$setting)){
+    for (this_antiviral_scenario in unique(CommandDeck_result_long$antiviral_scenario)){
+      for (this_booster_scenario in unique(CommandDeck_result_long$booster_vax_scenario)){
+       
+        check_normality_df = CommandDeck_result_long %>%
+          filter(setting == this_setting &
+                   antiviral_scenario == this_antiviral_scenario &
+                   booster_vax_scenario == this_booster_scenario)
+        this_row = data.frame(setting = this_setting,
+                              antiviral_scenario = this_antiviral_scenario,
+                              booster_vax_scenario = this_booster_scenario,
+                              interventionCost = FALSE,
+                              healthcareCostAverted = FALSE,
+                              QALYs = FALSE,
+                              hosp = FALSE,
+                              death = FALSE,
+                              productivityLoss = FALSE)
+        
+        if (nrow(check_normality_df)>0){
+          if (shapiro.test(check_normality_df$interventionCost)$p.value < 0.05){this_row$interventionCost = TRUE}
+          if (shapiro.test(check_normality_df$healthcareCostAverted)$p.value < 0.05){this_row$healthcareCostAverted = TRUE}
+          if (shapiro.test(check_normality_df$QALYs)$p.value < 0.05){this_row$QALYs = TRUE}
+          if (shapiro.test(check_normality_df$death)$p.value < 0.05){this_row$death = TRUE}
+          if(TOGGLE_perspective == "societal"){
+            if(shapiro.test(check_normality_df$productivityLoss)$p.value < 0.05){this_row$productivityLoss = TRUE}
+          }
+          if(nrow(check_normality_df[check_normality_df$hosp>0,])){
+            if (shapiro.test(check_normality_df$hosp)$p.value < 0.05){this_row$hosp = TRUE}
+          }
+        }
+        normality_tracker = rbind(normality_tracker,this_row)
+      }
     }
   }
-  
 }
+#On inspection, intervention costs not normal when no booster, hosp not normal when molnupiravir etc. i.e., as expected
 
 #calculating 'expected' of each
 CommandDeck_result = CommandDeck_result_long %>%
