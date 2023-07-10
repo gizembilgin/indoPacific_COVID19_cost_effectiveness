@@ -82,7 +82,7 @@ for (this_perspective in c("healthcare","societal")){
     if(!("TOGGLE_discounting_rate" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
                                                                                                     list(TOGGLE_discounting_rate = 0.03))}
     if(!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                                                                             list(TOGGLE_longCOVID = 0.03))}
+                                                                                             list(TOGGLE_longCOVID = "off"))}
     
     source(paste(getwd(),"/CommandDeck.R",sep=""))
     
