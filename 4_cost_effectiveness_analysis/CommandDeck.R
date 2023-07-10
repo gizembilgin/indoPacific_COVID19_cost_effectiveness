@@ -32,13 +32,13 @@ LIST_antiviral_types = list(
 
 TOGGLE_perspective = "societal" #options: societal, healthcare
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 1000
-TOGGLE_clusterNumber = 4
+TOGGLE_numberOfRuns = 100#1000
+TOGGLE_clusterNumber = 1 #4
 TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 TORNADO_PLOT_OVERRIDE = list()
-DECISION_save_result = "Y"
+DECISION_save_result = "N" #"Y"
 DECISION_sampling_strategy = "empirical_distribution"
 DECISION_CEA_agreement = "Y"
 
@@ -47,6 +47,9 @@ if (length(CommandDeck_CONTROLS)>0){
   TORNADO_PLOT_OVERRIDE              = CommandDeck_CONTROLS
   if("TOGGLE_perspective" %in% names(CommandDeck_CONTROLS))        {TOGGLE_perspective                 = CommandDeck_CONTROLS$TOGGLE_perspective}
   if("TOGGLE_uncertainty" %in% names(CommandDeck_CONTROLS))        {TOGGLE_uncertainty                 = CommandDeck_CONTROLS$TOGGLE_uncertainty}
+  if("TOGGLE_numberOfRuns" %in% names(CommandDeck_CONTROLS))       {TOGGLE_numberOfRuns                = CommandDeck_CONTROLS$TOGGLE_numberOfRuns}  
+  if("TOGGLE_clusterNumber" %in% names(CommandDeck_CONTROLS))      {TOGGLE_clusterNumber               = CommandDeck_CONTROLS$TOGGLE_clusterNumber}
+  if("DECISION_save_result" %in% names(CommandDeck_CONTROLS))      {DECISION_save_result               = CommandDeck_CONTROLS$DECISION_save_result}
   if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)){LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios}
   if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups}
   if("LIST_antiviral_types" %in% names(CommandDeck_CONTROLS))      {LIST_antiviral_types               = CommandDeck_CONTROLS$LIST_antiviral_types}
