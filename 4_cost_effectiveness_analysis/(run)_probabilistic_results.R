@@ -8,8 +8,8 @@
 probab_CommandDeck_result_long = probab_CommandDeck_result = data.frame()
 
 #66 runs in total (2*11*3), need to time one run!
-for (this_perspective in c("healthcare","societal")){
-  for (this_discounting_rate in seq(0,0.1,by=0.01)){
+for (this_discounting_rate in seq(0,0.1,by=0.01)){
+  for (this_perspective in c("healthcare","societal")){
     for (this_antiviral_cost_scenario in c("low_generic_cost","middle_income_cost", "high_income_cost")){
   
       CommandDeck_CONTROLS =
