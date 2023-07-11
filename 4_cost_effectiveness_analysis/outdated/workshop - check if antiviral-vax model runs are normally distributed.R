@@ -35,7 +35,7 @@ rm(RECORD_antiviral_model_simulations)
 ## Step Two: check age-specific outcomes averted distributed normally
 # We would like a data set with the following columns:
 # setting, outcome, booster_vax_scenario, intervention, intervention target group, 
-# intervention_doses_delivered, count_outcomes_averted
+# intervention_doses_delivered, count_outcomes
 
 workshop = MASTER_antiviral_simulations %>%
   filter(is.na(age_group) == FALSE) %>%
@@ -70,11 +70,11 @@ workshop = MASTER_antiviral_simulations %>%
   filter(result %in% c("n")) %>%
   
   #mutate(doses_per_outcome_averted = intervention_doses_delivered/value) %>%
-  rename(count_outcomes_averted = value) %>%
+  rename(count_outcomes = value) %>%
   
   filter(! (outcome %in% c("YLL","neonatal_deaths","booster_doses_delivered","ICU"))) %>%
   
-  select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group,count_outcomes_averted)
+  select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group,count_outcomes)
 
 if (nrow(workshop) != nrow(na.omit(workshop))){stop("NA introduced")}
 
@@ -111,10 +111,10 @@ for (this_setting in unique(workshop$setting)){
                        outcome == this_outcome &
                        booster_vax_scenario == this_vax_scenario &
                        age_group == this_age_group) %>%
-              filter(count_outcomes_averted != 0 )
+              filter(count_outcomes != 0 )
             
             if (nrow(this_workshop)>0){
-              this_test <- shapiro.test(this_workshop$count_outcomes_averted   )
+              this_test <- shapiro.test(this_workshop$count_outcomes   )
               
               row = data.frame(test = this_test$method, 
                                statistic = this_test$statistic,
@@ -125,7 +125,7 @@ for (this_setting in unique(workshop$setting)){
                                age_group = this_age_group,
                                outcome = this_outcome,
                                booster_vax_scenario = this_vax_scenario,
-                               values_tested = "count_outcomes_averted   ")
+                               values_tested = "count_outcomes   ")
               shapiro_tracker = rbind(shapiro_tracker,row)
             }
           }
@@ -249,10 +249,10 @@ workshop = MASTER_antiviral_simulations %>%
            )) %>%
   
   filter(result %in% c("n")) %>%
-  rename(count_outcomes_averted = value) %>%
+  rename(count_outcomes = value) %>%
   filter(outcome %in% c("hosp","hosp_after_antivirals","mild")) %>%
   
-  select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes_averted)
+  select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
 if (nrow(workshop) != nrow(na.omit(workshop))){stop("NA introduced")}
 
 
@@ -268,10 +268,10 @@ for (this_setting in unique(workshop$setting)){
                        intervention_target_group == this_intervention_group &
                        outcome == this_outcome &
                        booster_vax_scenario == this_vax_scenario ) %>%
-              filter(count_outcomes_averted != 0 )
+              filter(count_outcomes != 0 )
             
             if (nrow(this_workshop)>0){
-              this_test <- shapiro.test(this_workshop$count_outcomes_averted   )
+              this_test <- shapiro.test(this_workshop$count_outcomes   )
               
               row = data.frame(test = this_test$method, 
                                statistic = this_test$statistic,
@@ -281,7 +281,7 @@ for (this_setting in unique(workshop$setting)){
                                intervention_target_group = this_intervention_group,
                                outcome = this_outcome,
                                booster_vax_scenario = this_vax_scenario,
-                               values_tested = "count_outcomes_averted   ")
+                               values_tested = "count_outcomes   ")
               shapiro_tracker = rbind(shapiro_tracker,row)
             }
         }
@@ -293,4 +293,4 @@ for (this_setting in unique(workshop$setting)){
 shapiro_tracker = shapiro_tracker %>% 
   filter(p_value < 0.05)
 if (nrow(shapiro_tracker)>0){warning(paste(nrow(shapiro_tracker),"rows of count outcomes averted are not normally distributed"))}
-plot(density(this_workshop$count_outcomes_averted))
+plot(density(this_workshop$count_outcomes))
