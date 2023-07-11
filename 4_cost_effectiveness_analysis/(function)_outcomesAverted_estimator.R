@@ -38,7 +38,7 @@ outcomesAverted_estimator <- function(
   ## Subset #####################################################################
   # We would like a data set with the following columns:
   # setting, outcome, booster_vax_scenario, intervention, intervention target group, 
-  # intervention_doses_delivered, count_outcomes_averted
+  # intervention_doses_delivered, count_outcomes
   
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == FALSE) %>%
@@ -56,8 +56,10 @@ outcomesAverted_estimator <- function(
     filter(is.na(booster_vax_scenario) == FALSE) %>%
     
     #DECISION - CEA of antivirals for a whole year (as of 01/01/2023)
-    filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%
+    filter(!(intervention %in% c(' "antiviral after booster 2023-01-01","antiviral prior to booster 2023-01-01"'))) %>%
     mutate(intervention = case_when(
+      is.na(intervention) & evaluation_group == "net" & booster_vax_scenario == "no booster dose" ~ "no intervention",
+      is.na(intervention) & evaluation_group == "net" ~ "booster dose 2023-03-01",
       intervention == "vaccine" ~ "booster dose 2023-03-01",
       antiviral_type == "molunipiravir" ~ "molunipiravir 2023-01-01",
       antiviral_type == "nirmatrelvir_ritonavir" ~ "nirmatrelvir_ritonavir 2023-01-01"
@@ -70,16 +72,24 @@ outcomesAverted_estimator <- function(
                booster_vax_scenario %in% c("booster dose catch-up campaign for all adults","booster to all adults, prioritised to high-risk adults", "booster to all adults previously willing to be vaccinated") ~ "all_adults"
              )) %>%
     
+    mutate(evaluation_group = 
+             case_when(
+               is.na(evaluation_group) ~ "incremental", #is.na() when antiviral_type and antiviral_target_group is.na(),
+               evaluation_group == "pop_level" ~ "incremental", #rename, used to be "pop_level" to distinguish between pop-level and high-risk incremental changes
+               TRUE ~ evaluation_group
+             )) %>%
+    
     filter(result %in% c("n")) %>%
     
     #mutate(doses_per_outcome_averted = intervention_doses_delivered/value) %>%
-    rename(count_outcomes_averted = value) %>%
+    rename(count_outcomes = value) %>%
     
     filter(! (outcome %in% c("YLL","neonatal_deaths","booster_doses_delivered","ICU"))) %>%
     
-    select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group,count_outcomes_averted)
+    select(evaluation_group,setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group,count_outcomes)
   
-  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
+  if (nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),]) #intervention_target_group is understandably NA 
+      != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
   ##############################################################################
   
   
@@ -90,28 +100,34 @@ outcomesAverted_estimator <- function(
   outcomes_averted = TRANSLATED_antiviral_simulations %>%
     left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
     filter(is.na(QALYs) == FALSE) %>%
-    mutate(count_outcomes_averted = count_outcomes_averted * QALYs) %>%
+    mutate(count_outcomes = count_outcomes * QALYs) %>%
     select(-QALYs) %>%
     mutate(outcome = "QALYs")%>%
     #collapsing outcome and age_group to calculate QALYs
-    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
-    summarise(count_outcomes_averted = sum(count_outcomes_averted),
+    group_by(evaluation_group,setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+    summarise(count_outcomes = sum(count_outcomes),
               .groups = "keep") 
   
   QALY_breakdown = TRANSLATED_antiviral_simulations %>%
     left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
     filter(is.na(QALYs) == FALSE) %>%
-    mutate(count_outcomes_averted = count_outcomes_averted * QALYs) %>%
+    mutate(count_outcomes = count_outcomes * QALYs) %>%
     select(-QALYs) %>%
     mutate(outcome_source = outcome,
            outcome = "QALYs") %>%
-    group_by(setting,outcome_source,booster_vax_scenario,intervention,intervention_target_group) %>%
-    summarise(count_outcomes_averted = sum(count_outcomes_averted),
+    group_by(evaluation_group,setting,outcome_source,booster_vax_scenario,intervention,intervention_target_group) %>%
+    summarise(count_outcomes = sum(count_outcomes),
               .groups = "keep") 
   
   ###Plot to breakdown where QALYs from
-  # ggplot(QALY_breakdown) + geom_col(aes(x=outcome_source,y=count_outcomes_averted)) +
+  # ggplot(QALY_breakdown[QALY_breakdown$evaluation_group == "incremental",]) + geom_col(aes(x=outcome_source,y=count_outcomes)) +
   #   facet_grid(booster_vax_scenario ~.)
+  # ggplot(QALY_breakdown[QALY_breakdown$evaluation_group == "net" & 
+  #                         QALY_breakdown$intervention =="nirmatrelvir_ritonavir 2023-01-01" & 
+  #                         QALY_breakdown$intervention_target_group ==  "adults_with_comorbidities" ,]) + 
+  #   geom_col(aes(x=outcome_source,y=count_outcomes)) +
+  #   facet_grid(booster_vax_scenario ~.)
+  #COME BACK - plot QALY breakdown in SM incremental vs net for complete scenarios (i.e., booster scenario + antiviral scenario combinations)
   ##############################################################################
   
   #BONUS: add hosp and death outcomes while here
@@ -119,8 +135,8 @@ outcomesAverted_estimator <- function(
     additional_outcomes = TRANSLATED_antiviral_simulations %>%
       filter(outcome %in% ARRAY_additional_outcomes) %>%
       #collapsing outcome and age_group 
-      group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
-      summarise(count_outcomes_averted = sum(count_outcomes_averted),
+      group_by(evaluation_group, setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+      summarise(count_outcomes = sum(count_outcomes),
                 .groups = "keep")
     
     outcomes_averted = rbind(outcomes_averted,additional_outcomes)
@@ -128,7 +144,7 @@ outcomesAverted_estimator <- function(
     
     #CHECK
     # check = outcomes_averted %>%
-    #   pivot_wider(values_from = "count_outcomes_averted",names_from = "outcome")
+    #   pivot_wider(values_from = "count_outcomes",names_from = "outcome")
   }
   rm(TRANSLATED_antiviral_simulations)
   ##############################################################################
@@ -140,4 +156,4 @@ outcomesAverted_estimator <- function(
 
 #test
 # outcomes_averted <- outcomes_averted_estimator(LIST_CEA_settings,toggle_discounting_rate = TOGGLE_discounting_rate)
-# outcomes_averted %>% arrange(setting,booster_vax_scenario,desc(count_outcomes_averted))
+# outcomes_averted %>% arrange(setting,booster_vax_scenario,desc(count_outcomes))
