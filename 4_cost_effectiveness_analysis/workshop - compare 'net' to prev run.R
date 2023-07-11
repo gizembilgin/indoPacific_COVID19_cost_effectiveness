@@ -1,3 +1,5 @@
+### Compare to previous run
+LIST_CEA_settings = c("PNG_low_beta")
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
 MASTER_antiviral_simulations = data.frame()
 
@@ -28,8 +30,8 @@ for (i in 1:length(LIST_CEA_settings)){
   } 
   
   if (this_setting == "PNG_low_beta"){this_setting = "PNG"}
-  latest_file = latest_file %>% mutate(setting = paste(this_setting,"latest"))
-  prev_file = prev_file %>% mutate(setting = paste(this_setting,"prev"))
+  latest_file = latest_file %>% mutate(setting = paste(this_setting,"latest",sep="_"))
+  prev_file = prev_file %>% mutate(setting = paste(this_setting,"prev",sep="_"))
   MASTER_antiviral_simulations = bind_rows(MASTER_antiviral_simulations,prev_file,latest_file)
     
 }
@@ -44,7 +46,24 @@ sampled_df = MASTER_antiviral_simulations %>%
 
 check = sampled_df %>% 
   pivot_wider(names_from = setting, values_from = value) %>% 
-  filter( (`PNG latest` > `PNG prev`*1.2|`PNG latest` < `PNG prev`*0.8))
+  filter( round(PNG_latest) != round(PNG_prev) & (PNG_latest > PNG_prev*1.2|PNG_latest < PNG_prev*0.8)) %>%
+  mutate(comparison = (PNG_latest-PNG_prev)/PNG_latest)
 
 check = sampled_df %>% filter(evaluation_group == "net") %>%
   select(-setting_beta,-country,-evaluation_group,-result,-vax_scenario_risk_group,-age_group)
+
+#workshop - plot stochatic vs det.R
+
+
+
+### Check for internal consistency
+check = MASTER_antiviral_simulations %>%
+  filter(setting == "PNG_latest" & evaluation_group == "net")
+subset_ageSpecific = check %>% filter(is.na(age_group)==FALSE) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario,vax_scenario_risk_group) %>% summarise(n_ageSpecific=sum(value)) 
+subset_overall = check %>% filter(is.na(age_group)) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario,vax_scenario_risk_group) %>% summarise(n_overall=sum(value))
+
+compare = subset_overall %>% 
+  left_join(subset_ageSpecific)%>% 
+  filter(round(n_overall) != round(n_ageSpecific))
+
+
