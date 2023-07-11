@@ -2,10 +2,9 @@
 ##Note: run for default booster dose strategy and antiviral strategy, go back to (run)_deterministic_results.R to extract more results
 ## make reactive so doesn't reload when different number of param selected (line 74)
 
-INPUT_outcome = "QALYs"
 INPUT_setting_list = c("PNG")
 INPUT_perspective = "healthcare"
-INPUT_include_GDP = "Y"
+INPUT_outcome = "QALYs"
 INPUT_parameters = c(
   # "Antiviral schedule price ($25-530)",
   # "Antiviral wastage (0-60%)"          ,
@@ -24,7 +23,7 @@ INPUT_parameters = c(
   "Injection Equipment wastage (0-50%)"      ,
   "Injection Equipment price ($0.025-$0.050)"
 )
-
+INPUT_include_GDP = "Y"
 
 
 load(file = "x_results/tornado_result.Rdata")

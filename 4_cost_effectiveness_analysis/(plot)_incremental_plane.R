@@ -1,14 +1,16 @@
 
-#Require result (CommandDeck_result_long) with variables outcome, setting, perspective, discounting_rate, antiviral_cost, booster_vax_scenario,antiviral_scenario,netCost,count_outcomes_averted
+#Require result (CommandDeck_result_long) with variables outcome, setting, perspective, discounting_rate, antiviral_cost, booster_vax_scenario,antiviral_scenario,netCost,count_outcomes
 require(ggpubr)
 
-INPUT_outcome = "QALYs"
 INPUT_setting_list = c("PNG","TLS")
+INPUT_booster_strategy = "booster to all high-risk adults previously willing to be vaccinated"
+INPUT_antiviral_strategy = c("no antiviral","nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities")
 INPUT_perspective = "healthcare"
 INPUT_discounting_rate = 0.03
 INPUT_antiviral_cost = "middle_income_cost"
-INPUT_booster_strategy = "booster to all high-risk adults previously willing to be vaccinated"
-INPUT_antiviral_strategy = c("no antiviral","nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities")
+INPUT_outcome = "QALYs"
+
+
 
 options(scipen = 1000)
 
@@ -34,15 +36,15 @@ for (this_setting in INPUT_setting_list){
   to_plot_setting = to_plot[to_plot$setting == this_setting,]
   if (length(INPUT_antiviral_strategy)>1){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-      geom_point(aes(x=netCost,y=count_outcomes_averted,color=as.factor(antiviral_scenario))) +
+      geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(antiviral_scenario))) +
       labs(color="antiviral strategy") 
   } else if (length(INPUT_booster_strategy)>1){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-      geom_point(aes(x=netCost,y=count_outcomes_averted,color=as.factor(booster_vax_scenario))) +
+      geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(booster_vax_scenario))) +
       labs(color="booster strategy")
   } else{
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-      geom_point(aes(x=netCost,y=count_outcomes_averted)) 
+      geom_point(aes(x=netCost,y=count_outcomes)) 
   }
   plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
     ylab("QALYs averted") +
@@ -50,7 +52,7 @@ for (this_setting in INPUT_setting_list){
     theme_bw() + 
     theme(legend.position="bottom") +
     labs(title = this_setting) +
-    ylim(0,max(to_plot_setting$count_outcomes_averted))
+    ylim(0,max(to_plot_setting$count_outcomes))
 
 }
 

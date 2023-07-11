@@ -1,9 +1,8 @@
 options(scipen = 1000); require(ggpubr)
 
 
-
-INPUT_outcome = "QALYs"
 INPUT_setting_list = c("PNG","TLS")
+INPUT_outcome = "QALYs"
 INPUT_perspective = "societal"
 INPUT_parameter_to_vary = "booster_strategy" 
 

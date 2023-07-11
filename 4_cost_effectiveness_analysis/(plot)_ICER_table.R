@@ -5,11 +5,14 @@
 ### - INPUT as buttons
 ### - make reactive up to user input
 
-INPUT_include_net = "Y"
-INPUT_include_outcomes = c("QALY")
 INPUT_include_setting = c("PNG","TLS")
 INPUT_include_booster_vax_scenario = c("high-risk adults")
 INPUT_include_antiviral_scenario = c("no antiviral","nirmatrelvir-ritonavir to high-risk adults")
+INPUT_perspective = "healthcare"
+INPUT_discounting_rate = 0.03
+INPUT_antiviral_cost = "middle_income_cost"
+INPUT_include_outcomes = c("QALY")
+INPUT_include_net = "Y"
 
 to_plot = CommandDeck_result %>% 
   rename(booster_vax_scenario_long = booster_vax_scenario) %>%
@@ -71,6 +74,9 @@ to_plot = to_plot %>%
 to_plot = to_plot %>%
   filter(outcome %in% INPUT_include_outcomes &
            setting %in% INPUT_include_setting &
+           perspective == INPUT_perspective & 
+           discounting_rate == INPUT_discounting_rate &
+           antiviral_cost == INPUT_antiviral_cost &
            booster_vax_scenario %in% INPUT_include_booster_vax_scenario &
            antiviral_scenario %in% INPUT_include_antiviral_scenario)
 
