@@ -12,7 +12,7 @@ source(paste(getwd(),"/(function)_CEA_worker.R",sep=""),local=TRUE)
 
 ### TOGGLES ####################################################################
 CEA_risk_group = this_risk_group = "adults_with_comorbidities"
-LIST_CEA_settings = list("PNG_low_beta","TLS")
+LIST_CEA_settings = list("PNG_low_beta")
 LIST_booster_vax_scenarios = list(
   "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
    ,"all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule"                    
@@ -208,9 +208,9 @@ if(TOGGLE_numberOfRuns == 1){
 CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
                names_to = "outcome",
-               values_to = "count_outcomes_averted") %>%
+               values_to = "count_outcomes") %>%
   mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
-         cost_per_outcome_averted = netCost / count_outcomes_averted,
+         cost_per_outcome_averted = netCost / count_outcomes,
          perspective = TOGGLE_perspective,
          discounting_rate = TOGGLE_discounting_rate ,
          antiviral_cost = TOGGLE_antiviral_cost_scenario)

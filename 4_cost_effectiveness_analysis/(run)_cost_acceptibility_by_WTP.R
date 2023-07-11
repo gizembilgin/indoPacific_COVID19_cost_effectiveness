@@ -8,7 +8,7 @@ for (this_outcome in unique(CommandDeck_result_long$outcome)){
     filter(outcome == this_outcome)
   
   min_seq = round(min(workshop$cost_per_outcome_averted))
-  max_seq = round(max(workshop$cost_per_outcome_averted[workshop$count_outcomes_averted != 0] ))
+  max_seq = round(max(workshop$cost_per_outcome_averted[workshop$count_outcomes != 0] ))
   interval_seq = (max_seq-min_seq)/1000
   
   for (this_WTP in seq(min_seq,max_seq,by =interval_seq)){

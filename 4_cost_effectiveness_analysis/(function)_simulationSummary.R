@@ -36,7 +36,7 @@ simulationSummary <- function(outcomesAvertedEstimation,
     mutate(antiviral_scenario = "no antiviral")  %>%
     select(setting,booster_vax_scenario,antiviral_scenario,
            interventionCost, healthcareCostAverted, productivityLoss,
-           outcome,count_outcomes_averted)
+           outcome,count_outcomes)
   Combined = rbind(Combined,row)
   
   ###vax with antiviral
@@ -50,19 +50,19 @@ simulationSummary <- function(outcomesAvertedEstimation,
         group_by(setting,booster_vax_scenario,outcome) %>%
         summarise(interventionCost = sum(interventionCost),
                   healthcareCostAverted = sum(healthcareCostAverted),
-                  count_outcomes_averted = sum(count_outcomes_averted),
+                  count_outcomes = sum(count_outcomes),
                   productivityLoss = sum(productivityLoss),
                   .groups = "keep") %>%
         mutate(antiviral_scenario = paste(this_antiviral,this_antiviral_target)) %>%
         select(setting,booster_vax_scenario,antiviral_scenario,
                interventionCost, healthcareCostAverted,productivityLoss,
-               outcome,count_outcomes_averted)
+               outcome,count_outcomes)
       Combined = rbind(Combined,row)
     }
   }
   
   #make wider because makes object 40% smaller
-  Combined  = Combined %>% pivot_wider(values_from = "count_outcomes_averted", names_from = "outcome")
+  Combined  = Combined %>% pivot_wider(values_from = "count_outcomes", names_from = "outcome")
   
   return(Combined)
 }

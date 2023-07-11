@@ -7,7 +7,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   ### Load RECORD_antiviral_model_simulations ####################################
   # We would like a data set with the following columns:
-  # setting, booster_vax_scenario, outcome, count_outcomes_averted
+  # setting, booster_vax_scenario, outcome, count_outcomes
   
   ## Step Two: subset 
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
@@ -41,10 +41,10 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
              )) %>%
     
     filter(result %in% c("n")) %>%
-    rename(count_outcomes_averted = value) %>%
+    rename(count_outcomes = value) %>%
     filter(outcome %in% c("hosp","hosp_after_antivirals","mild")) %>%
     
-    select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes_averted)
+    select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
     
   if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
   ##############################################################################
@@ -74,7 +74,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   if (toggle_uncertainty == "rand"){
     for (row in 1:nrow(reduced_LOS_estimates)){
       #sampling reduced LOS per hospitalised individual who had received antivirals
-      this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes_averted[row],mean = new_mean, sd = new_sd)) %>%
+      this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes[row],mean = new_mean, sd = new_sd)) %>%
         mutate(est = case_when(
           est <0 ~ 0,
           TRUE ~ est
@@ -84,18 +84,18 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     rm(this_sample)
     
   } else if (toggle_uncertainty == "fixed"){
-    reduced_LOS_estimates$estimate = reduced_LOS_estimates$count_outcomes_averted * (exp(X) - 1) * Y
+    reduced_LOS_estimates$estimate = reduced_LOS_estimates$count_outcomes * (exp(X) - 1) * Y
   }
   
 
   workshop = reduced_LOS_estimates %>%
-    mutate(count_outcomes_averted = estimate,
+    mutate(count_outcomes = estimate,
            outcome = "hosp") %>%
     select(-estimate)
   TRANSLATED_antiviral_simulations = TRANSLATED_antiviral_simulations[TRANSLATED_antiviral_simulations$outcome %in% c("hosp","mild"),]
   TRANSLATED_antiviral_simulations =   rbind(TRANSLATED_antiviral_simulations,workshop) %>%
     group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
-    summarise(count_outcomes_averted = sum(count_outcomes_averted), .groups="keep") #including hosp $ from reduced LOS of inpatients who recieved antivirals with other inpatients
+    summarise(count_outcomes = sum(count_outcomes), .groups="keep") #including hosp $ from reduced LOS of inpatients who recieved antivirals with other inpatients
   ##############################################################################
   
   
@@ -137,9 +137,9 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     #modifying outpatient costs by access to care
     left_join(healthcare_access, by = "setting", relationship = "many-to-many") %>%
     mutate(
-      count_outcomes_averted = case_when(
-        patient_type == "outpatient" ~ count_outcomes_averted * access,
-        TRUE ~ count_outcomes_averted
+      count_outcomes = case_when(
+        patient_type == "outpatient" ~ count_outcomes * access,
+        TRUE ~ count_outcomes
       )) %>%
     mutate(cost = 0)
   
@@ -147,9 +147,9 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     #sampling cost of each outpatient visit and each hospital admission
     for (row in 1:nrow(cost_estimates)){
       if (cost_estimates$patient_type[row] == "inpatient"){
-        if (cost_estimates$count_outcomes_averted[row]<0){multiplier = -1
+        if (cost_estimates$count_outcomes[row]<0){multiplier = -1
         } else{multiplier = 1}
-        this_sample = data.frame(est = rnorm(abs(cost_estimates$count_outcomes_averted[row]), mean = cost_estimates$param1[row], sd = cost_estimates$param2[row])) %>%
+        this_sample = data.frame(est = rnorm(abs(cost_estimates$count_outcomes[row]), mean = cost_estimates$param1[row], sd = cost_estimates$param2[row])) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
@@ -161,7 +161,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
         }
         
       } else if (cost_estimates$patient_type[row] == "outpatient"){
-        this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes_averted[row], meanlog = cost_estimates$param1[row], sdlog = cost_estimates$param2[row])) %>%
+        this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes[row], meanlog = cost_estimates$param1[row], sdlog = cost_estimates$param2[row])) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
@@ -176,7 +176,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     }
   } else if (toggle_uncertainty == "fixed"){
     cost_estimates = cost_estimates %>%
-      mutate(cost = count_outcomes_averted * mean_cost)
+      mutate(cost = count_outcomes * mean_cost)
     
     if (length(TORNADO_PLOT_OVERRIDE)>0){
       if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){
