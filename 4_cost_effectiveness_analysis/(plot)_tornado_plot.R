@@ -2,9 +2,9 @@
 ##Note: run for default booster dose strategy and antiviral strategy, go back to (run)_deterministic_results.R to extract more results
 ## make reactive so doesn't reload when different number of param selected (line 74)
 
-INPUT_setting_list = c("PNG")
+INPUT_include_setting = c("PNG")
 INPUT_perspective = "healthcare"
-INPUT_outcome = "QALYs"
+INPUT_include_outcomes = "QALYs"
 INPUT_parameters = c(
   # "Antiviral schedule price ($25-530)",
   # "Antiviral wastage (0-60%)"          ,
@@ -28,13 +28,13 @@ INPUT_include_GDP = "Y"
 
 load(file = "x_results/tornado_result.Rdata")
 tornado_variable_of_interest = paste("cost_per_",
-                                     gsub("QALYs","QALY",INPUT_outcome),
+                                     gsub("QALYs","QALY",INPUT_include_outcomes),
                                      "_averted",
                                      sep ="")
 tornado_result = tornado_result %>%
   filter(antiviral_scenario != "no antiviral" &
            variable == tornado_variable_of_interest &
-           setting %in% INPUT_setting_list &
+           setting %in% INPUT_include_setting &
            perspective %in% INPUT_perspective) 
 
 plot_list = list()

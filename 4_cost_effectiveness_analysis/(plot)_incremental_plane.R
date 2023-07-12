@@ -2,43 +2,43 @@
 #Require result (CommandDeck_result_long) with variables outcome, setting, perspective, discounting_rate, antiviral_cost, booster_vax_scenario,antiviral_scenario,netCost,count_outcomes
 require(ggpubr)
 
-INPUT_setting_list = c("PNG","TLS")
-INPUT_booster_strategy = "booster to all high-risk adults previously willing to be vaccinated"
-INPUT_antiviral_strategy = c("no antiviral","nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities")
+INPUT_include_setting = c("PNG","TLS")
+INPUT_include_booster_vax_scenario = "booster to all high-risk adults previously willing to be vaccinated"
+INPUT_include_antiviral_scenario = c("no antiviral","nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities")
 INPUT_perspective = "healthcare"
 INPUT_discounting_rate = 0.03
 INPUT_antiviral_cost = "middle_income_cost"
-INPUT_outcome = "QALYs"
+INPUT_include_outcomes = "QALYs"
 
 
 
 options(scipen = 1000)
 
 ### Check inputs
-if(length(INPUT_antiviral_strategy)>1 & length(INPUT_booster_strategy)>1){
+if(length(INPUT_include_antiviral_scenario)>1 & length(INPUT_include_booster_vax_scenario)>1){
   stop('Please select either multiple antiviral strategies OR multiple booster strategies')
 }
 
 ### Subset results
 to_plot = CommandDeck_result_long %>%
-  filter(outcome == INPUT_outcome &
-           setting %in% INPUT_setting_list &
+  filter(outcome == INPUT_include_outcomes &
+           setting %in% INPUT_include_setting &
            perspective == INPUT_perspective &
            discounting_rate == INPUT_discounting_rate &
            antiviral_cost == INPUT_antiviral_cost &
-           booster_vax_scenario %in% INPUT_booster_strategy &
-           antiviral_scenario %in% INPUT_antiviral_strategy)
+           booster_vax_scenario %in% INPUT_include_booster_vax_scenario &
+           antiviral_scenario %in% INPUT_include_antiviral_scenario)
 
 
 ### Create plots
 plot_list = list()
-for (this_setting in INPUT_setting_list){
+for (this_setting in INPUT_include_setting){
   to_plot_setting = to_plot[to_plot$setting == this_setting,]
-  if (length(INPUT_antiviral_strategy)>1){
+  if (length(INPUT_include_antiviral_scenario)>1){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
       geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(antiviral_scenario))) +
       labs(color="antiviral strategy") 
-  } else if (length(INPUT_booster_strategy)>1){
+  } else if (length(INPUT_include_booster_vax_scenario)>1){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
       geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(booster_vax_scenario))) +
       labs(color="booster strategy")
