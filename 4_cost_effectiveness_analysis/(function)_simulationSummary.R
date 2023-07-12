@@ -7,6 +7,7 @@ simulationSummary <- function(outcomesAvertedEstimation,
 {
   colnames(outcomesAvertedEstimation$outcomes_averted)
   #"setting"                   "outcome"                   "booster_vax_scenario"      "intervention"    "intervention_target_group" "mean" 
+  #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"   "antiviral_scenario"     "antiviral_target_group" "count_outcomes" (CHANGED 12/07/2023)
   
   colnames(interventionCost_estimates) #colnames(productivityCosts)
   #[1] "setting"                   "booster_vax_scenario"      "intervention"              "intervention_target_group" "cost"  
