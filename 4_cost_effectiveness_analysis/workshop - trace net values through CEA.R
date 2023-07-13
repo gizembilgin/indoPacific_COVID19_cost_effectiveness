@@ -24,7 +24,6 @@ nrow(check) == 0
 
 
 ## CHECKED: incremental aligns with differences between net scenarios
-
 outcomes_averted %>% group_by(evaluation_level) %>% summarise(n= n())
 # evaluation_level     n
 # incremental        102
@@ -46,17 +45,7 @@ workshop = workshop %>%
   #join back incremental
   left_join(outcomes_averted[outcomes_averted$evaluation_level == "incremental",], by = join_by(setting,outcome,booster_vax_scenario,antiviral_scenario,antiviral_target_group))
 
-workshop %>% filter(round(incremental,digits=2) != round(count_outcomes,digits=2))
+workshop  = workshop %>% filter(round(incremental,digits=2) != round(count_outcomes,digits=2))
 #completely don't agree when DECISION_sampling_strategy = "empirical_distribution" as separate samples from the empirical distribution of 'net' and 'incremental'
 #agree (with below exception) when DECISION_sampling_strategy = "single_run"
-
-# setting outcome booster_vax_scenario antiviral_scenario                antiviral_target_group    incremental evaluation_level count_outcomes
-#  PNG     QALYs   no booster dose      molunipiravir 2023-01-01          adults_with_comorbidities      91783. incremental               6643.
-#  PNG     QALYs   no booster dose      molunipiravir 2023-01-01          all_adults                     95035. incremental               9894.
-#  PNG     QALYs   no booster dose      molunipiravir 2023-01-01          unvaccinated_adults            94787. incremental               9647.
-#  PNG     QALYs   no booster dose      nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities     105771. incremental              20631.
-#  PNG     QALYs   no booster dose      nirmatrelvir_ritonavir 2023-01-01 all_adults                    115678. incremental              30537.
-#  PNG     QALYs   no booster dose      nirmatrelvir_ritonavir 2023-01-01 unvaccinated_adults           114917. incremental              29777.
-
-#_______________________________________________________________________________
-################################################################################
+nrow(workshop)

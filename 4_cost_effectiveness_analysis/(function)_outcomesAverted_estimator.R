@@ -140,6 +140,18 @@ outcomesAverted_estimator <- function(
         TRUE ~ antiviral_scenario
       ))
   
+  #add back mild for scenarios with antivirals (antivirals don't affect mild presentations of disease, but mild presentations still add to the net QALYs!)
+  add_mild_to_net = TRANSLATED_antiviral_simulations %>%
+    filter(outcome == "mild" & evaluation_level == "net" & booster_vax_scenario == "no booster dose")
+  structure = TRANSLATED_antiviral_simulations %>%
+    select(antiviral_scenario,antiviral_target_group) %>%
+    filter(!(antiviral_scenario %in% add_mild_to_net$antiviral_scenario))
+  structure = unique(structure)
+  add_mild_to_net = add_mild_to_net %>%
+    select(-antiviral_scenario,-antiviral_target_group)
+  add_mild_to_net = crossing(add_mild_to_net,structure)
+  TRANSLATED_antiviral_simulations = rbind(TRANSLATED_antiviral_simulations,add_mild_to_net)
+  
   TRANSLATED_antiviral_simulations = rbind(Combined,TRANSLATED_antiviral_simulations); rm(Combined_0,Combined,this_row)
   ##############################################################################
   
