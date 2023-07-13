@@ -36,10 +36,10 @@ CEA_worker <- function(
                                                                   LIST_antiviral_types,
                                                                   sampling_strategy = DECISION_sampling_strategy,
                                                                   toggle_uncertainty = TOGGLE_uncertainty)
-    LIST_CEA_settings = gsub("PNG_low_beta","PNG",LIST_CEA_settings)
+    LIST_CEA_settings_mod = gsub("PNG_low_beta","PNG",LIST_CEA_settings)
     
     ###(2/3) Calculate QALYs, intervention costs, and healthcare costs averted
-    outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings,
+    outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings_mod,
                                                            MASTER_antiviral_simulations,
                                                            toggle_longCOVID = TOGGLE_longCOVID,
                                                            toggle_discounting_rate = TOGGLE_discounting_rate)
@@ -47,14 +47,14 @@ CEA_worker <- function(
     #list including QALY_breakdown by evaluation_level,setting,outcome_source,booster_vax_scenario,antiviral_scenario,antiviral_target_group,count_outcomes; and 
     #               outcomes_averted by evaluation_level,setting,outcome {QALYs,deaths,hospitalisations},booster_vax_scenario,antiviral_scenario,antiviral_target_group,count_outcomes
     
-    interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings,
+    interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings_mod,
                                                              MASTER_antiviral_simulations,
                                                              TORNADO_PLOT_OVERRIDE,
                                                              antiviral_cost_scenario = TOGGLE_antiviral_cost_scenario,
                                                              toggle_uncertainty = TOGGLE_uncertainty)
     # 217.43  seconds for all combinations, 3.06 for one booster + one antiviral
     
-    healthcareCostEstimation <- healthCareCostsAverted_estimator(LIST_CEA_settings,
+    healthcareCostEstimation <- healthCareCostsAverted_estimator(LIST_CEA_settings_mod,
                                                                  MASTER_antiviral_simulations,
                                                                  TORNADO_PLOT_OVERRIDE,
                                                                  toggle_uncertainty = TOGGLE_uncertainty)
@@ -62,7 +62,7 @@ CEA_worker <- function(
     
     if (TOGGLE_perspective == "societal"){
       productivityCosts <- productivityCosts_estimator (
-        LIST_CEA_settings,
+        LIST_CEA_settings_mod,
         MASTER_antiviral_simulations,
         toggle_discounting_rate = TOGGLE_discounting_rate,
         this_risk_group = CEA_risk_group
