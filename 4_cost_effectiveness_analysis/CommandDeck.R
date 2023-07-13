@@ -39,7 +39,7 @@ TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 TORNADO_PLOT_OVERRIDE = list()
 DECISION_save_result = "N" #"Y"
-DECISION_sampling_strategy = "empirical_distribution"
+DECISION_sampling_strategy = "empirical_distribution" #options: "single_run" & "empirical_distribution", NB: need to force "single_run" for Net <-> incremental to align for SM table, otherwise sampling from distribution of both
 DECISION_CEA_agreement = "Y"
 
 if (exists("CommandDeck_CONTROLS") == FALSE){CommandDeck_CONTROLS = list()}
