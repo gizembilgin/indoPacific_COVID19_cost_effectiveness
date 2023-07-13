@@ -54,7 +54,8 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings,
   } else if (sampling_strategy == "single_run"){
     sampled_df = MASTER_antiviral_simulations %>%
       group_by(vax_scenario_risk_group,setting_beta) %>%
-      summarise(this_run = sample(run_ID, size = 1))
+      summarise(this_run = sample(run_ID, size = 1),
+                .groups = "keep")
     sampled_df = MASTER_antiviral_simulations %>%
       filter(run_ID %in% sampled_df$this_run)
   }
