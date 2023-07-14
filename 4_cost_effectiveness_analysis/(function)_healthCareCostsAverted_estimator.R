@@ -11,8 +11,8 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   ## Step Two: subset 
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
-    filter(is.na(age_group) == TRUE) %>%
-    filter(evaluation_group == "pop_level") %>%
+    filter(is.na(age_group) == TRUE) %>% #don't care about age-specific incidence since we don't have age-specific costs for access to healthcare
+    filter(evaluation_group %in% c("pop_level","net")) %>%
     
     #created shorten name to describe booster dose eligibility
     mutate(booster_vax_scenario = case_when( 
@@ -26,8 +26,10 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     filter(is.na(booster_vax_scenario) == FALSE) %>%
     
     #DECISION - CEA for antivirals as of 01/01/2023 
-    filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%
+    filter(!(intervention %in% c(' "antiviral after booster 2023-01-01","antiviral prior to booster 2023-01-01"'))) %>%
     mutate(intervention = case_when(
+      is.na(intervention) & evaluation_group == "net" & booster_vax_scenario == "no booster dose" ~ "no intervention",
+      is.na(intervention) & evaluation_group == "net" ~ "booster dose 2023-03-01",
       intervention == "vaccine" ~ "booster dose 2023-03-01",
       antiviral_type == "molunipiravir" ~ "molunipiravir 2023-01-01",
       antiviral_type == "nirmatrelvir_ritonavir" ~ "nirmatrelvir_ritonavir 2023-01-01"
@@ -40,13 +42,21 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
                booster_vax_scenario %in% c("booster dose catch-up campaign for all adults","booster to all adults, prioritised to high-risk adults", "booster to all adults previously willing to be vaccinated") ~ "all_adults"
              )) %>%
     
+    mutate(evaluation_level = 
+             case_when(
+               is.na(evaluation_group) ~ "incremental", #is.na() when antiviral_type and antiviral_target_group is.na(),
+               evaluation_group == "pop_level" ~ "incremental", #rename, used to be "pop_level" to distinguish between pop-level and high-risk incremental changes
+               TRUE ~ evaluation_group
+             )) %>%
+    
     filter(result %in% c("n")) %>%
     rename(count_outcomes = value) %>%
     filter(outcome %in% c("hosp","hosp_after_antivirals","mild")) %>%
     
-    select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
+    select(evaluation_level,setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
     
-  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
+  if (nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),]) #intervention_target_group is understandably NA 
+      != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
   ##############################################################################
   
   
@@ -87,14 +97,18 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     reduced_LOS_estimates$estimate = reduced_LOS_estimates$count_outcomes * (exp(X) - 1) * Y
   }
   
-
+  #adding reduced LOS to TRANSLATED_antiviral_simulations for this cost to be calculated alongside reduced cost due to hospital admissions prevented
   workshop = reduced_LOS_estimates %>%
     mutate(count_outcomes = estimate,
            outcome = "hosp") %>%
-    select(-estimate)
+    select(-estimate,-evaluation_level)
+
+  workshop = crossing(workshop,evaluation_level = c("incremental","net")) #incremental and net will be the same!
+  workshop$count_outcomes[workshop$evaluation_level == "net"] = workshop$count_outcomes[workshop$evaluation_level == "net"] * -1 #net healthcare cost will be net hosp + net outpatient - reduced LOS
+  
   TRANSLATED_antiviral_simulations = TRANSLATED_antiviral_simulations[TRANSLATED_antiviral_simulations$outcome %in% c("hosp","mild"),]
   TRANSLATED_antiviral_simulations =   rbind(TRANSLATED_antiviral_simulations,workshop) %>%
-    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(evaluation_level,setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(count_outcomes = sum(count_outcomes), .groups="keep") #including hosp $ from reduced LOS of inpatients who recieved antivirals with other inpatients
   ##############################################################################
   
@@ -193,11 +207,11 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   ### Export result  ###########################################################
   healthcareCosts_averted = cost_estimates %>%
-    group_by(setting,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(cost = sum(cost), .groups= "keep")
   
   healthcareCosts_breakdown = cost_estimates %>%
-    select(setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
+    select(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
   
   # ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
   #   facet_grid(booster_vax_scenario ~.)
