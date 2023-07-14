@@ -1,21 +1,17 @@
 
-healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
-                                             MASTER_antiviral_simulations,
-                                             TORNADO_PLOT_OVERRIDE,
-                                             toggle_uncertainty = TOGGLE_uncertainty,
-                                             fitted_distributions = local_fitted_distributions){
+healthCareCostsAverted_estimator <- function(
+    LIST_CEA_settings,
+    MASTER_antiviral_simulations,
+    TORNADO_PLOT_OVERRIDE,
+    toggle_uncertainty = TOGGLE_uncertainty,
+    fitted_distributions = local_fitted_distributions
+    ){
   
-  ### Load RECORD_antiviral_model_simulations ####################################
-  # We would like a data set with the following columns:
-  # setting, booster_vax_scenario, outcome, count_outcomes
-  
-  ## Step Two: subset 
+  ### PART ONE: load antiviral simulation ######################################
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == TRUE) %>% #don't care about age-specific incidence since we don't have age-specific costs for access to healthcare
-    
     rename(count_outcomes = value) %>%
     filter(outcome %in% c("hosp","hosp_after_antivirals","mild")) %>%
-    
     select(evaluation_level,setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
     
   if (nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),]) #intervention_target_group is understandably NA 
@@ -23,8 +19,9 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   ##############################################################################
   
   
-  ## Reduced LOS (outcome == "hosp_after_antivirals")
-  #analytically propogating error, see scanned proof 12/05/2023 in 1_derivation
+  
+  ### <intermission>  Reduced LOS (outcome == "hosp_after_antivirals") #########
+  #analytically propagating error, see scanned proof 12/05/2023 in 1_derivation
   X = cost_per_extra_LOS_MEAN = 0.09
   sdX = cost_per_extra_LOS_SD = 0.01
   
@@ -77,7 +74,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   
   
   
-  ### Calculate healthcare costs ##############################################
+  ### PART TWO: calculating healthcare costs ###################################
   load(file = "2_inputs/hosp_adm.Rdata")
   
   ##inputs
@@ -164,22 +161,22 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
       }
     }
   }
-  #___________________________________________________________________________
+  ##############################################################################
 
   
   
   ### Export result  ###########################################################
-  healthcareCosts_averted = cost_estimates %>%
+  healthcareCosts_breakdown = cost_estimates %>%
+    select(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
+  # ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
+  #   facet_grid(booster_vax_scenario ~.)  
+  
+  healthcareCosts_averted = healthcareCosts_breakdown %>%
     group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(cost = sum(cost), .groups= "keep")
   
-  healthcareCosts_breakdown = cost_estimates %>%
-    select(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
-  
-  # ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
-  #   facet_grid(booster_vax_scenario ~.)
-  
   result = list(healthcareCosts_averted = healthcareCosts_averted,
                 healthcareCosts_breakdown = healthcareCosts_breakdown)  
+  
   return(result)
 }
