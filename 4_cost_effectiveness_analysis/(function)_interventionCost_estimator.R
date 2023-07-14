@@ -18,8 +18,8 @@ interventionCost_estimator <- function(LIST_CEA_settings,
   
   ## Step Two: subset 
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
-    filter(is.na(age_group) == TRUE) %>%
-    filter(evaluation_group == "pop_level") %>%
+    filter(is.na(age_group) == TRUE) %>%   #select overall value of intervention doses delivered, not age-specific
+    filter(evaluation_group == "pop_level") %>% #the incremental number of doses delivered will be the same for "net" and "pop_level"
     select(-country,-setting_beta) %>%
     
     #created shorten name to describe booster dose eligibility
@@ -48,7 +48,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
                booster_vax_scenario %in% c("booster dose catch-up campaign for all adults","booster to all adults, prioritised to high-risk adults", "booster to all adults previously willing to be vaccinated") ~ "all_adults"
              )) %>%
     
-    #ensure one value per simulation
+    #ensure one value per simulation, NB: we don't care about the outcome, only the intervention_doses_delivered column
     filter(result == "n" & outcome == "death") %>%
     
     select(setting, booster_vax_scenario, intervention, intervention_target_group,intervention_doses_delivered)
