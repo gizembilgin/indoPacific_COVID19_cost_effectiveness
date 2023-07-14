@@ -12,44 +12,7 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
   ## Step Two: subset 
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == TRUE) %>% #don't care about age-specific incidence since we don't have age-specific costs for access to healthcare
-    filter(evaluation_group %in% c("pop_level","net")) %>%
     
-    #created shorten name to describe booster dose eligibility
-    mutate(booster_vax_scenario = case_when( 
-      vax_scenario == "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"  ~ "booster dose catch-up campaign for high-risk adults",           
-      vax_scenario == "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster" ~ "booster dose catch-up campaign for all adults",                       
-      vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults" ~ "booster to all adults, prioritised to high-risk adults",                                                           
-      vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all adults previously willing to be vaccinated",                      
-      vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all high-risk adults previously willing to be vaccinated",  
-      vax_scenario == "all willing adults vaccinated with a primary schedule" ~ "no booster dose"           
-    )) %>%
-    filter(is.na(booster_vax_scenario) == FALSE) %>%
-    
-    #DECISION - CEA for antivirals as of 01/01/2023 
-    filter(!(intervention %in% c(' "antiviral after booster 2023-01-01","antiviral prior to booster 2023-01-01"'))) %>%
-    mutate(intervention = case_when(
-      is.na(intervention) & evaluation_group == "net" & booster_vax_scenario == "no booster dose" ~ "no intervention",
-      is.na(intervention) & evaluation_group == "net" ~ "booster dose 2023-03-01",
-      intervention == "vaccine" ~ "booster dose 2023-03-01",
-      antiviral_type == "molunipiravir" ~ "molunipiravir 2023-01-01",
-      antiviral_type == "nirmatrelvir_ritonavir" ~ "nirmatrelvir_ritonavir 2023-01-01"
-    )) %>%
-    
-    mutate(intervention_target_group = 
-             case_when(
-               intervention %in% c("molunipiravir 2023-01-01","nirmatrelvir_ritonavir 2023-01-01") ~ antiviral_target_group,
-               booster_vax_scenario %in% c("booster dose catch-up campaign for high-risk adults","booster to all high-risk adults previously willing to be vaccinated") ~ vax_scenario_risk_group,
-               booster_vax_scenario %in% c("booster dose catch-up campaign for all adults","booster to all adults, prioritised to high-risk adults", "booster to all adults previously willing to be vaccinated") ~ "all_adults"
-             )) %>%
-    
-    mutate(evaluation_level = 
-             case_when(
-               is.na(evaluation_group) ~ "incremental", #is.na() when antiviral_type and antiviral_target_group is.na(),
-               evaluation_group == "pop_level" ~ "incremental", #rename, used to be "pop_level" to distinguish between pop-level and high-risk incremental changes
-               TRUE ~ evaluation_group
-             )) %>%
-    
-    filter(result %in% c("n")) %>%
     rename(count_outcomes = value) %>%
     filter(outcome %in% c("hosp","hosp_after_antivirals","mild")) %>%
     

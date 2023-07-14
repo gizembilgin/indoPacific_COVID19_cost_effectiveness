@@ -38,7 +38,7 @@ for (i in 1:length(LIST_CEA_settings)){
 rm(RECORD_antiviral_model_simulations)
 
 sampled_df = MASTER_antiviral_simulations %>%
-  group_by(outcome, antiviral_type, antiviral_target_group, intervention, evaluation_group, vax_scenario, vax_scenario_risk_group, age_group, result,country,setting_beta,setting) %>%
+  group_by(outcome, antiviral_type, antiviral_target_group, intervention, evaluation_level, booster_vax_scenario, vax_scenario_risk_group, age_group, result,setting) %>%
   summarise(intervention_doses_delivered = mean(intervention_doses_delivered),
             value = mean(value),
             .groups="keep") %>%
@@ -49,8 +49,8 @@ check = sampled_df %>%
   filter( round(PNG_latest) != round(PNG_prev) & (PNG_latest > PNG_prev*1.2|PNG_latest < PNG_prev*0.8)) %>%
   mutate(comparison = (PNG_latest-PNG_prev)/PNG_latest)
 
-check = sampled_df %>% filter(evaluation_group == "net") %>%
-  select(-setting_beta,-country,-evaluation_group,-result,-vax_scenario_risk_group,-age_group)
+check = sampled_df %>% filter(evaluation_level == "net") %>%
+  select(-evaluation_level,-result,-vax_scenario_risk_group,-age_group)
 
 #workshop - plot stochatic vs det.R
 
@@ -58,9 +58,9 @@ check = sampled_df %>% filter(evaluation_group == "net") %>%
 
 ### Check for internal consistency
 check = MASTER_antiviral_simulations %>%
-  filter(setting == "PNG_latest" & evaluation_group == "net")
-subset_ageSpecific = check %>% filter(is.na(age_group)==FALSE) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario,vax_scenario_risk_group) %>% summarise(n_ageSpecific=sum(value)) 
-subset_overall = check %>% filter(is.na(age_group)) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,vax_scenario,vax_scenario_risk_group) %>% summarise(n_overall=sum(value))
+  filter(setting == "PNG_latest" & evaluation_level == "net")
+subset_ageSpecific = check %>% filter(is.na(age_group)==FALSE) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,booster_vax_scenario,vax_scenario_risk_group) %>% summarise(n_ageSpecific=sum(value)) 
+subset_overall = check %>% filter(is.na(age_group)) %>% group_by(outcome,antiviral_type,antiviral_target_group,intervention,booster_vax_scenario,vax_scenario_risk_group) %>% summarise(n_overall=sum(value))
 
 compare = subset_overall %>% 
   left_join(subset_ageSpecific)%>% 
