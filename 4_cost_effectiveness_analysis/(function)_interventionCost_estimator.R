@@ -1,29 +1,24 @@
 
-interventionCost_estimator <- function(LIST_CEA_settings,
-                                       MASTER_antiviral_simulations,
-                                       TORNADO_PLOT_OVERRIDE,
-                                       antiviral_cost_scenario = "low_generic_cost",
-                                       wastage_rate_antiviralSchedule = 0,
-                                       toggle_uncertainty = TOGGLE_uncertainty,
-                                       fitted_distributions = local_fitted_distributions){
+interventionCost_estimator <- function(
+    LIST_CEA_settings,
+    MASTER_antiviral_simulations,
+    TORNADO_PLOT_OVERRIDE,
+    antiviral_cost_scenario = "low_generic_cost",
+    wastage_rate_antiviralSchedule = 0,
+    toggle_uncertainty = TOGGLE_uncertainty,
+    fitted_distributions = local_fitted_distributions
+    ){
   
   #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
   #     but we include wastage rates for all other components.
   #     These wastage rates then need to be converted to wastage factors by 1/(1-wastage_rate)
   
   
-  ### Load RECORD_antiviral_model_simulations ####################################
-  # We would like a data set with the following columns:
-  # setting, booster_vax_scenario, intervention, intervention target group, intervention_doses_delivered
-  
-  ## Step Two: subset 
+  ### PART ONE: load antiviral simulation ######################################
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
     filter(is.na(age_group) == TRUE) %>%   #select overall value of intervention doses delivered, not age-specific
     filter(evaluation_level == "incremental") %>% #the incremental number of doses delivered will be the same for "net" and "pop_level"
-    
-    #ensure one value per simulation, NB: we don't care about the outcome, only the intervention_doses_delivered column
-    filter(outcome == "death") %>%
-    
+    filter(outcome == "death") %>% #ensure one value per simulation, NB: we don't care about the outcome, only the intervention_doses_delivered column
     select(setting, booster_vax_scenario, intervention, intervention_target_group,intervention_doses_delivered)
   
   if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
@@ -31,8 +26,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
   
   
   
-  
-  ### Calculate intervention costs ##############################################
+  ### PART TWO: calculate intervention costs ###################################
   interventionCost_estimates = data.frame()
   
   for (this_setting in LIST_CEA_settings){
@@ -100,15 +94,15 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     #(B/E) wastage_rate_antiviralSchedule - built in as a function parameter
 
     #(C/E) price_per_RAT
-    price_per_RAT = 2.225 #Median price across 8 products listed on UNICEF catalogue 
+    price_per_RAT = 2.225 #Median price across 8 products listed on UNICEF catalog 
     
     #(D/E) wastage_factor_RAT
     wastage_factor_RAT = 6
     
     #(E/E) operational_cost
     #WHO CHOICE estimates provide the distribution for individual costs, therefore sample from this distribution for the number of individuals and sum across
-    op_fitted_distributions = fitted_distributions %>% filter(parameter == "outpatient_visit_cost" &
-                                                                setting == this_setting)
+    op_fitted_distributions = fitted_distributions %>% 
+      filter(parameter == "outpatient_visit_cost" & setting == this_setting)
     
     antiviral_estimates = TRANSLATED_antiviral_simulations  %>%
       filter(intervention != "booster dose 2023-03-01") %>%
@@ -139,7 +133,6 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     }
     
     #calculate!
-    
     static_costs = price_per_antiviralDose*(1/(1-wastage_rate_antiviralSchedule)) +
       price_per_RAT*wastage_factor_RAT
     
@@ -149,8 +142,8 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     
     interventionCost_estimates = rbind(interventionCost_estimates,antiviral_estimates)
     #___________________________________________________________________________
-    
   }
+  ##############################################################################
   
   return(interventionCost_estimates)
 }

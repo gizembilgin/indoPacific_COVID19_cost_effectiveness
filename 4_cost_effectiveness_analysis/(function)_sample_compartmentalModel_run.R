@@ -89,7 +89,7 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings,
     select(-evaluation_group) %>%
     
     #DECISION - CEA of antivirals for a whole year (as of 01/01/2023)
-    filter(!(intervention %in% c(' "antiviral after booster 2023-01-01","antiviral prior to booster 2023-01-01"'))) %>%
+    filter(!(intervention %in% c("antiviral after booster 2023-01-01","antiviral prior to booster 2023-01-01"))) %>%
     mutate(intervention = case_when(
       is.na(intervention) & evaluation_level == "net" & booster_vax_scenario == "no booster dose" ~ "no intervention",
       is.na(intervention) & evaluation_level == "net" ~ "booster dose 2023-03-01",

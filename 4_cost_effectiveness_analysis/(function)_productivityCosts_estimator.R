@@ -1,5 +1,3 @@
-require(readr); require(ggplot2); require(tidyverse)
-
 ### This function calculates the productivity losses due to illness and premature mortality 
 ### NB: no sampling for this cost category since underlying uncertainty not available for multiple informing data sources
 
@@ -10,7 +8,7 @@ productivityCosts_estimator <- function(
     this_risk_group = "adults_with_comorbidities"
 ){
   
-  ### PART ONE: loading productivity loss estimates############################################
+  ### PART ONE: loading productivity loss estimates#############################
   if (!(toggle_discounting_rate %in% seq(0,0.1,by = 0.01))){
     stop('Go back to (mech shop) productivity loss and ensure that productivity losses by this discounting rate are calculated')
   }
