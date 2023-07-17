@@ -3,15 +3,16 @@ options(scipen = 1000); require(ggpubr)
 
 INPUT_setting_list = c("PNG","TLS")
 INPUT_outcome = "QALYs"
-INPUT_perspective = "societal"
+INPUT_perspective = "healthcare"
 INPUT_parameter_to_vary = "booster_strategy" 
 
 #R SHINY conditional UI, check boxes for one and button for all others
 INPUT_discounting_rate = 0.03
-INPUT_antiviral_cost = "middle_income_cost"
+INPUT_antiviral_cost = "low_generic_cost"
 INPUT_booster_strategy = "booster to all high-risk adults previously willing to be vaccinated"
-INPUT_antiviral_strategy = c("no antiviral","nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities")
-
+INPUT_include_antiviral_type = c("nirmatrelvir_ritonavir 2023-01-01")
+INPUT_include_antiviral_type = c(INPUT_include_antiviral_type,"no antiviral")
+INPUT_antiviral_target_group = c("adults_with_comorbidities")
 
 
 ### Create plots
@@ -21,16 +22,17 @@ this_workshop = CEAC_dataframe %>% filter(outcome == INPUT_outcome &
                                             discounting_rate == INPUT_discounting_rate &
                                             antiviral_cost == INPUT_antiviral_cost &
                                             booster_vax_scenario %in% INPUT_booster_strategy &
-                                            antiviral_scenario %in% INPUT_antiviral_strategy)
+                                            antiviral_type %in% INPUT_include_antiviral_type & 
+                                            antiviral_target_group %in% INPUT_antiviral_target_group)
 xmax = this_workshop %>% 
-  group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
+  group_by(setting,booster_vax_scenario,antiviral_type) %>%
   filter(probability >=1) %>%
   summarise(min = min(WTP), .groups = "keep") %>%
   ungroup()
 xmax = max(xmax$min)
 
 xmin = this_workshop %>% 
-  group_by(setting,booster_vax_scenario,antiviral_scenario) %>%
+  group_by(setting,booster_vax_scenario,antiviral_type) %>%
   filter(probability == min(probability)) %>%
   summarise(max = max(WTP), .groups = "keep") %>%
   ungroup()
@@ -39,14 +41,14 @@ xmin = min(xmin$max)
 n_options_selected = max(length(INPUT_discounting_rate),
                          length(INPUT_antiviral_cost),
                          length(INPUT_booster_strategy),
-                         length(INPUT_antiviral_strategy))
+                         length(INPUT_include_antiviral_type))
   
 plot_list = list()
 for (this_setting in INPUT_setting_list){
   to_plot_setting = this_workshop[this_workshop$setting == this_setting,]
-  if (length(INPUT_antiviral_strategy)>1){
+  if (length(INPUT_include_antiviral_type)>1){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-      geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_scenario))) +
+      geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_type))) +
       labs(color="antiviral strategy") 
   } else if (length(INPUT_booster_strategy)>1){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
