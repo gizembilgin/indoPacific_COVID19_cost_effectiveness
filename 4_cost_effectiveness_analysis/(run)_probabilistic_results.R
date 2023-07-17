@@ -21,17 +21,14 @@ for (this_discounting_rate in seq(0,0.05,by=0.01)){
           TOGGLE_longCOVID = "off",
           TOGGLE_uncertainty = "rand",
           TOGGLE_numberOfRuns = 100, #1000 eventually
-          TOGGLE_clusterNumber = 1,  #4 or 5? test and time!
+          TOGGLE_clusterNumber = 5,  #4 or 5? test and time! (workshop - timing probabilistic model runs by number of cores)
           DECISION_save_result = "N"
         )
 
       source(paste(getwd(),"/CommandDeck.R",sep=""))
       
-      rows = CommandDeck_result %>%
-        mutate(discounting_rate = this_discounting_rate,
-               antiviral_cost = this_antiviral_cost_scenario,
-               perspective = this_perspective) 
-      probab_CommandDeck_result = rbind(probab_CommandDeck_result,rows)
+      probab_CommandDeck_result = rbind(probab_CommandDeck_result,
+                                        CommandDeck_result)
       
       probab_CommandDeck_result_long = rbind(probab_CommandDeck_result_long,
                                              CommandDeck_result_long)

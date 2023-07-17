@@ -33,3 +33,7 @@ for (num_cores in c(5,4,3,2,1)){
     timing_df = rbind(timing_df,this_row)
   }
 }
+
+# cores time_seconds time_minutes
+# 5       962.73     16.04550
+# 4      1075.00     17.91667
