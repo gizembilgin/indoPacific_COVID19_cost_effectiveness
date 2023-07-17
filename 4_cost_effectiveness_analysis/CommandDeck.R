@@ -32,8 +32,8 @@ LIST_antiviral_types = list(
 
 TOGGLE_perspective = "societal" #options: societal, healthcare
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 100#1000
-TOGGLE_clusterNumber = 1 #4
+TOGGLE_numberOfRuns = 10#1000
+TOGGLE_clusterNumber = 5 #4
 TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
@@ -167,9 +167,10 @@ if(TOGGLE_numberOfRuns == 1){
               .groups = "keep"
     )  
   
-  if (DECISION_CEA_agreement == "Y"){ #force ICER to align with netCost/netOutcomesAverted
+  if (DECISION_CEA_agreement == "Y"){ #force ICER to align with (incremental) netCost/ (incremental) netOutcomesAverted
     workshop_outcome = CommandDeck_result %>%
-      filter(variable_type == "outcome") %>%
+      filter(variable_type == "outcome" &
+               evaluation_level == "incremental") %>%
       ungroup() %>%
       select(-LPI,-UPI,-variable_type) %>%
       rename(mean_outcome = mean,
@@ -177,7 +178,8 @@ if(TOGGLE_numberOfRuns == 1){
              outcome = variable)
     
     workshop_cost = CommandDeck_result %>%
-      filter( variable == "netCost")%>%
+      filter( variable == "netCost" &
+                evaluation_level == "incremental")%>%
       ungroup() %>%
       select(-LPI,-UPI,-variable_type,-variable) %>%
       rename(mean_cost = mean,
@@ -196,7 +198,7 @@ if(TOGGLE_numberOfRuns == 1){
       mutate(variable_type = "ICER",
              variable = paste("cost_per_",outcome,"_averted",sep=""),
              variable = gsub("QALYs","QALY",variable)) %>%
-      select(setting,booster_vax_scenario,antiviral_type,variable_type,variable,mean,sd,LPI,UPI)
+      select(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,variable_type,variable,mean,sd,LPI,UPI)
     
     CommandDeck_result = CommandDeck_result %>%
       filter(variable_type != "ICER")
@@ -205,6 +207,10 @@ if(TOGGLE_numberOfRuns == 1){
   }
 }
 
+CommandDeck_result = CommandDeck_result %>%
+  mutate(discounting_rate = this_discounting_rate,
+         antiviral_cost = this_antiviral_cost_scenario,
+         perspective = this_perspective) 
 
 CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),

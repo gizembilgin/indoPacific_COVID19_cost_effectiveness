@@ -7,7 +7,7 @@ INPUT_booster_strategy = "booster to all high-risk adults previously willing to 
 INPUT_include_antiviral_type = c("nirmatrelvir_ritonavir 2023-01-01")
 INPUT_include_antiviral_type = c(INPUT_include_antiviral_type,"no antiviral")
 INPUT_antiviral_target_group = c("adults_with_comorbidities")
-INPUT_perspective = "healthcare"
+INPUT_perspective = "societal"
 INPUT_discounting_rate = 0.03
 INPUT_antiviral_cost = "middle_income_cost"
 INPUT_outcome = "QALYs"
@@ -23,6 +23,7 @@ if(length(INPUT_antiviral_target_group)>1 & length(INPUT_booster_strategy)>1){
 
 ### Subset results
 to_plot = CommandDeck_result_long %>%
+  filter(evaluation_level == "incremental") %>%
   filter(outcome == INPUT_outcome &
            setting %in% INPUT_setting_list &
            perspective == INPUT_perspective &
