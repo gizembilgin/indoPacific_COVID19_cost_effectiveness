@@ -1,11 +1,11 @@
 library(RColorBrewer)
 options(scipen = 1000)
 
-num_prev = 3
+num_prev = 1
 
 MASTER_RECORD_antiviral_model_simulations = data.frame()
 risk_groups_to_plot = "adults_with_comorbidities"
-settings_to_plot = "IDN"
+settings_to_plot = "TLS"
 
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
 for (r in 1:length(risk_groups_to_plot)){
@@ -42,7 +42,7 @@ MASTER_RECORD_antiviral_model_simulations = bind_rows(MASTER_RECORD_antiviral_mo
 
 
 ###PLOT!
-plot_name = "figure_1" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3"
+plot_name = "figure_2" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3"
 plot_list = list()
 
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
