@@ -44,8 +44,8 @@ CEA_worker <- function(
                                                            toggle_longCOVID = TOGGLE_longCOVID,
                                                            toggle_discounting_rate = TOGGLE_discounting_rate)
     # 0.63 seconds
-    #list including QALY_breakdown by evaluation_level,setting,outcome_source,booster_vax_scenario,antiviral_scenario,antiviral_target_group,count_outcomes; and 
-    #               outcomes_averted by evaluation_level,setting,outcome {QALYs,deaths,hospitalisations},booster_vax_scenario,antiviral_scenario,antiviral_target_group,count_outcomes
+    #list including QALY_breakdown by evaluation_level,setting,outcome_source,booster_vax_scenario,antiviral_type,antiviral_target_group,count_outcomes; and 
+    #               outcomes_averted by evaluation_level,setting,outcome {QALYs,deaths,hospitalisations},booster_vax_scenario,antiviral_type,antiviral_target_group,count_outcomes
     
     interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings_mod,
                                                              MASTER_antiviral_simulations,

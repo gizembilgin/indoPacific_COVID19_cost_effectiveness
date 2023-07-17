@@ -7,7 +7,11 @@
 
 INPUT_include_setting = c("PNG","TLS")
 INPUT_include_booster_vax_scenario = c("high-risk adults")
-INPUT_include_antiviral_scenario = c("no antiviral","nirmatrelvir-ritonavir to high-risk adults")
+
+INPUT_include_antiviral_type = c("nirmatrelvir_ritonavir 2023-01-01")
+INPUT_include_antiviral_type = c(INPUT_include_antiviral_type,"no antiviral")
+INPUT_antiviral_target_group = c("adults_with_comorbidities")
+
 INPUT_perspective = "healthcare"
 INPUT_discounting_rate = 0.03
 INPUT_antiviral_cost = "middle_income_cost"
@@ -25,15 +29,11 @@ to_plot = CommandDeck_result %>%
       booster_vax_scenario_long ==  "all willing adults vaccinated with a primary schedule"               ~ "no booster",
       booster_vax_scenario_long ==  "booster to all adults, prioritised to high-risk adults"              ~ "all adults, prioritised to high-risk"
     ), 
-    antiviral_scenario = case_when(
-      antiviral_scenario == "nirmatrelvir_ritonavir 2023-01-01 adults_with_comorbidities" ~ "nirmatrelvir-ritonavir to high-risk adults",
-      antiviral_scenario == "nirmatrelvir_ritonavir 2023-01-01 unvaccinated_adults"       ~ "nirmatrelvir-ritonavir to unvaccinated adults",
-      antiviral_scenario == "nirmatrelvir_ritonavir 2023-01-01 all_adults"                ~ "nirmatrelvir-ritonavir to all adults",
-      antiviral_scenario == "molunipiravir 2023-01-01 adults_with_comorbidities"          ~ "molunipiravir to high-risk adults",
-      antiviral_scenario == "molunipiravir 2023-01-01 unvaccinated_adults"                ~ "molunipiravir to unvaccinated adults",
-      antiviral_scenario == "molunipiravir 2023-01-01 all_adults"                         ~ "molunipiravir to all adults",
-      antiviral_scenario == "no antiviral"                                                ~ "no antiviral"
-    )
+    
+    antiviral_type = gsub("_"," ",antiviral_type),
+    antiviral_type = gsub(" 2023-01-01","",antiviral_type),
+    
+    antiviral_target_group = gsub("_"," ",antiviral_target_group)
   ) %>%
   filter(variable_type %in% c("ICER","outcome") | variable == "netCost") %>%
   rename(outcome = variable) %>%
@@ -68,7 +68,7 @@ to_plot = to_plot %>%
          PI = paste(round(LPI_ICER),"to",round(UPI_ICER)),
   ) %>%
   ungroup() %>%
-  select(setting,booster_vax_scenario,antiviral_scenario,outcome,count_outcome_averted,net_cost,ICER,LPI_ICER,UPI_ICER)
+  select(setting,booster_vax_scenario,antiviral_type,antiviral_target_group,outcome,count_outcome_averted,net_cost,ICER,LPI_ICER,UPI_ICER)
 
 #apply user input (hence reactive up to here!)
 to_plot = to_plot %>%
@@ -78,7 +78,7 @@ to_plot = to_plot %>%
            discounting_rate == INPUT_discounting_rate &
            antiviral_cost == INPUT_antiviral_cost &
            booster_vax_scenario %in% INPUT_include_booster_vax_scenario &
-           antiviral_scenario %in% INPUT_include_antiviral_scenario)
+           antiviral_type %in% INPUT_include_antiviral_type)
 
 if (INPUT_include_net == "N"){
   to_plot = to_plot %>%

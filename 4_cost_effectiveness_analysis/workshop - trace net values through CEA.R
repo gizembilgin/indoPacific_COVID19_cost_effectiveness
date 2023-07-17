@@ -33,9 +33,9 @@ outcomes_averted %>% group_by(evaluation_level) %>% summarise(n= n())
 workshop = outcomes_averted %>%
   filter(evaluation_level == "net")
 null_row = workshop %>% 
-  filter(booster_vax_scenario == "no booster dose" & antiviral_scenario == "no antiviral") %>%
+  filter(booster_vax_scenario == "no booster dose" & antiviral_type == "no antiviral") %>%
   ungroup() %>%
-  select(-booster_vax_scenario,-antiviral_scenario,-antiviral_target_group) %>%
+  select(-booster_vax_scenario,-antiviral_type,-antiviral_target_group) %>%
   rename(baseline = count_outcomes)
 workshop = workshop %>%
   left_join(null_row, by = join_by(evaluation_level,setting,outcome)) %>%
@@ -43,7 +43,7 @@ workshop = workshop %>%
   ungroup() %>%
   select(-count_outcomes,-baseline,-evaluation_level) %>%
   #join back incremental
-  left_join(outcomes_averted[outcomes_averted$evaluation_level == "incremental",], by = join_by(setting,outcome,booster_vax_scenario,antiviral_scenario,antiviral_target_group))
+  left_join(outcomes_averted[outcomes_averted$evaluation_level == "incremental",], by = join_by(setting,outcome,booster_vax_scenario,antiviral_type,antiviral_target_group,antiviral_target_group))
 
 workshop  = workshop %>% filter(round(incremental,digits=2) != round(count_outcomes,digits=2))
 #completely don't agree when DECISION_sampling_strategy = "empirical_distribution" as separate samples from the empirical distribution of 'net' and 'incremental'

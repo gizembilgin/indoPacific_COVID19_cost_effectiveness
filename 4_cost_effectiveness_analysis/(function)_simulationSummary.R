@@ -6,7 +6,7 @@ simulationSummary <- function(outcomesAvertedEstimation,
                             productivityCosts)
 {
   colnames(outcomesAvertedEstimation$outcomes_averted)
-  #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"   "antiviral_scenario"     "antiviral_target_group" "count_outcomes" (12/07/2023)
+  #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"   "antiviral_type"     "antiviral_target_group" "count_outcomes" (12/07/2023)
   #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"    "intervention"          "intervention_target_group "count_outcomes" (14/07/2023) 
   
   colnames(interventionCost_estimates) #need to copy for both evaluation_levels
@@ -46,9 +46,9 @@ simulationSummary <- function(outcomesAvertedEstimation,
   ##vax no antiviral
   this_row = Combined_1 %>% 
     filter(intervention == "booster dose 2023-03-01") %>%
-    mutate(antiviral_scenario = "no antiviral",
+    mutate(antiviral_type = "no antiviral",
            antiviral_target_group = NA)  %>%
-    select(evaluation_level,setting,booster_vax_scenario,antiviral_scenario,antiviral_target_group,
+    select(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,
            interventionCost, healthcareCostAverted, productivityLoss,
            outcome,count_outcomes)
   Combined = rbind(Combined,this_row)
@@ -66,9 +66,9 @@ simulationSummary <- function(outcomesAvertedEstimation,
                   count_outcomes = sum(count_outcomes),
                   productivityLoss = sum(productivityLoss),
                   .groups = "keep") %>%
-        mutate(antiviral_scenario = this_antiviral,
+        mutate(antiviral_type = this_antiviral,
                antiviral_target_group = this_antiviral_target) %>%
-        select(evaluation_level,setting,booster_vax_scenario,antiviral_scenario,antiviral_target_group,
+        select(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,
                interventionCost, healthcareCostAverted,productivityLoss,
                outcome,count_outcomes)
       Combined = rbind(Combined,this_row)
@@ -78,16 +78,16 @@ simulationSummary <- function(outcomesAvertedEstimation,
   ##add back "net"
   Combined_net = Combined_0 %>%
     filter(evaluation_level != "incremental") %>%
-    rename(antiviral_scenario = intervention,
+    rename(antiviral_type = intervention,
            antiviral_target_group = intervention_target_group) %>%
     mutate(
       antiviral_target_group = case_when(
-        antiviral_scenario %in% c("booster dose 2023-03-01","no intervention") ~ NA,
+        antiviral_type %in% c("booster dose 2023-03-01","no intervention") ~ NA,
         TRUE ~ antiviral_target_group
       ),
-      antiviral_scenario = case_when(
-        antiviral_scenario %in% c("booster dose 2023-03-01","no intervention") ~ "no antiviral",
-        TRUE ~ antiviral_scenario
+      antiviral_type = case_when(
+        antiviral_type %in% c("booster dose 2023-03-01","no intervention") ~ "no antiviral",
+        TRUE ~ antiviral_type
       ))
   Combined = rbind(Combined,Combined_net)
   

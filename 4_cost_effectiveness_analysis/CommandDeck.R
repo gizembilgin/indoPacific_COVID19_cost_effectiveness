@@ -12,7 +12,7 @@ source(paste(getwd(),"/(function)_CEA_worker.R",sep=""),local=TRUE)
 
 ### TOGGLES ####################################################################
 CEA_risk_group = this_risk_group = "adults_with_comorbidities"
-LIST_CEA_settings = list("PNG_low_beta")
+LIST_CEA_settings = list("PNG_low_beta","TLS")
 LIST_booster_vax_scenarios = list(
   "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
    ,"all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule"                    
@@ -94,21 +94,22 @@ system.time({
   }
 })
 #t = 102.11/99.80  seconds for 10 runs of societal/healthcare ; NB: using one cluster and antiviral model also running at the same time
+#32 minutes per setting for 100 runs
 #i.e., 3 hours per settings without parallel running
 parallel::stopCluster(CLUSTER)
 
 normality_tracker = data.frame()
 if (TOGGLE_numberOfRuns>10){
   for (this_setting in unique(CommandDeck_result_long$setting)){
-    for (this_antiviral_scenario in unique(CommandDeck_result_long$antiviral_scenario)){
+    for (this_antiviral_type in unique(CommandDeck_result_long$antiviral_type)){
       for (this_booster_scenario in unique(CommandDeck_result_long$booster_vax_scenario)){
        
         check_normality_df = CommandDeck_result_long %>%
           filter(setting == this_setting &
-                   antiviral_scenario == this_antiviral_scenario &
+                   antiviral_type == this_antiviral_type &
                    booster_vax_scenario == this_booster_scenario)
         this_row = data.frame(setting = this_setting,
-                              antiviral_scenario = this_antiviral_scenario,
+                              antiviral_type = this_antiviral_type,
                               booster_vax_scenario = this_booster_scenario,
                               interventionCost = FALSE,
                               healthcareCostAverted = FALSE,
@@ -152,13 +153,13 @@ CommandDeck_result = CommandDeck_result_long %>%
   )) 
 if(TOGGLE_numberOfRuns == 1){
   CommandDeck_result = CommandDeck_result %>%
-    group_by(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable) %>%
+    group_by(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,variable_type,variable) %>%
     summarise(mean = mean(value_raw),
               .groups = "keep"
     )  
 } else{
   CommandDeck_result = CommandDeck_result %>%
-    group_by(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable) %>%
+    group_by(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,variable_type,variable) %>%
     summarise(mean = mean(value_raw),
               sd = sd(value_raw),
               LPI = mean(value_raw)-qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
@@ -183,7 +184,7 @@ if(TOGGLE_numberOfRuns == 1){
              sd_cost = sd)
     
     workshop = workshop_outcome %>%
-      left_join(workshop_cost,by = join_by(setting, booster_vax_scenario, antiviral_scenario)) %>%
+      left_join(workshop_cost,by = join_by(evaluation_level,setting, booster_vax_scenario, antiviral_type,antiviral_target_group)) %>%
       mutate(
         mean = mean_cost/mean_outcome,
         sd = mean_cost/mean_outcome * sqrt(
@@ -195,7 +196,7 @@ if(TOGGLE_numberOfRuns == 1){
       mutate(variable_type = "ICER",
              variable = paste("cost_per_",outcome,"_averted",sep=""),
              variable = gsub("QALYs","QALY",variable)) %>%
-      select(setting,booster_vax_scenario,antiviral_scenario,variable_type,variable,mean,sd,LPI,UPI)
+      select(setting,booster_vax_scenario,antiviral_type,variable_type,variable,mean,sd,LPI,UPI)
     
     CommandDeck_result = CommandDeck_result %>%
       filter(variable_type != "ICER")
