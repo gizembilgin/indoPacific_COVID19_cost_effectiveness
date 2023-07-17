@@ -1,50 +1,51 @@
 ### outcomesAverted_estimator
-
-#check = TRANSLATED_antiviral_simulations %>% group_by(evaluation_group,setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group) %>% summarise(n= n()) #all 1 row
-check = TRANSLATED_antiviral_simulations %>% group_by(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group) %>% summarise(n= n())
-check_2 = check %>% filter(n == 1)
-check_3 = check %>% filter(n >1)
-unique(check_2$outcome); unique(check_3$outcome)
-unique(check_2$booster_vax_scenario);unique(check_3$booster_vax_scenario)
-unique(check_2$intervention);unique(check_3$intervention)
-unique(check_2$intervention_target_group);unique(check_3$intervention_target_group)
-unique(check_2$age_group); unique(check_3$age_group)
-
-check_4 = TRANSLATED_antiviral_simulations %>% filter(outcome %in% c("mild","total_cases")) %>% select(evaluation_group,outcome)
-unique(check_4)
-check_4 = TRANSLATED_antiviral_simulations %>% filter(age_group %in% c("0 to 4","5 to 9","10 to 17")) %>% select(evaluation_group,age_group)
-unique(check_4)
-check_4 = TRANSLATED_antiviral_simulations %>% filter(intervention %in% c( "booster dose 2023-03-01" )) %>% select(evaluation_group,intervention)
-unique(check_4)
-
-#finding exact missing rows
-check_5 = TRANSLATED_antiviral_simulations %>% 
-  pivot_wider(names_from = "evaluation_group", values_from = "count_outcomes_averted") %>%
-  filter((is.na(net) & is.na(pop_level)) | 
-           (is.na(net) & is.na(pop_level) == FALSE) | 
-           (is.na(net) == FALSE & is.na(pop_level))) %>%
+## CHECKED: same number of rows/outcomes for 'net' and 'incremental' evaluation levels
+check = TRANSLATED_antiviral_simulations %>% 
+  pivot_wider(names_from = "evaluation_level", values_from = "count_outcomes") %>%
   
-  #we expect no 'pop_level' which is actually intervention level for ages 0-17
-  filter(!(is.na(pop_level) & intervention %in% c( "molunipiravir 2023-01-01",          "nirmatrelvir_ritonavir 2023-01-01"))) %>%
+  #find the rows where missing either net or incremental value
+  filter((is.na(net) & is.na(incremental)) | 
+           (is.na(net) & is.na(incremental) == FALSE) | 
+           (is.na(net) == FALSE & is.na(incremental))) %>%
   
-  # we don't need hosp_after_antivirals for 'net' as will be the same as pop_level
+  #we expect no incremental effect of antivirals in ages 0-17 who are ineligible for antivirals
+  filter(!(is.na(incremental) & age_group %in% c("0 to 4", "5 to 9", "10 to 17") & intervention %in% c( "molunipiravir 2023-01-01","nirmatrelvir_ritonavir 2023-01-01"))) %>%
+  
+  #we expect no incremental effect of antivirals on mild disease or number of cases
+  filter(!(is.na(incremental) & outcome %in% c("mild","total_cases") & intervention %in% c( "molunipiravir 2023-01-01","nirmatrelvir_ritonavir 2023-01-01"))) %>%
+  
+  # we haven't collected net hosp_after_antivirals as this will be the same as incremental hosp_after_antivirals
   filter(!(is.na(net) & outcome == "hosp_after_antivirals")) %>%
   
-  #don't need "no intervention" for pop_level
-  filter(!(is.na(pop_level & intervention == "no intervention")))
+  #don't need "no intervention" for incremental
+  filter(!(is.na(incremental & intervention == "no intervention")))
+nrow(check) == 0
+#_______________________________________________________________________________
 
 
-### check how net vs incremental stored
-workshop = TRANSLATED_antiviral_simulations %>% 
-  select(evaluation_group,booster_vax_scenario,intervention,intervention_target_group)
-workshop = unique(workshop)
-View(workshop)
+## CHECKED: incremental aligns with differences between net scenarios
+outcomes_averted %>% group_by(evaluation_level) %>% summarise(n= n())
+# evaluation_level     n
+# incremental        102
+# net                105
+# n = 3 extra rows for no booster, no antiviral scenario
 
+workshop = outcomes_averted %>%
+  filter(evaluation_level == "net")
+null_row = workshop %>% 
+  filter(booster_vax_scenario == "no booster dose" & antiviral_type == "no antiviral") %>%
+  ungroup() %>%
+  select(-booster_vax_scenario,-antiviral_type,-antiviral_target_group) %>%
+  rename(baseline = count_outcomes)
+workshop = workshop %>%
+  left_join(null_row, by = join_by(evaluation_level,setting,outcome)) %>%
+  mutate(incremental = baseline - count_outcomes) %>%
+  ungroup() %>%
+  select(-count_outcomes,-baseline,-evaluation_level) %>%
+  #join back incremental
+  left_join(outcomes_averted[outcomes_averted$evaluation_level == "incremental",], by = join_by(setting,outcome,booster_vax_scenario,antiviral_type,antiviral_target_group,antiviral_target_group))
 
-### check results
-#outcomes_averted
-nothing_net = outcomes_averted$count_outcomes_averted
-net = outcomes_averted %>%
-  filter(evaluation_group == "net")
-  
-#QALY breakdown
+workshop  = workshop %>% filter(round(incremental,digits=2) != round(count_outcomes,digits=2))
+#completely don't agree when DECISION_sampling_strategy = "empirical_distribution" as separate samples from the empirical distribution of 'net' and 'incremental'
+#agree (with below exception) when DECISION_sampling_strategy = "single_run"
+nrow(workshop)

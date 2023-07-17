@@ -2,14 +2,15 @@
 ##Note: run for default booster dose strategy and antiviral strategy, go back to (run)_deterministic_results.R to extract more results
 ## make reactive so doesn't reload when different number of param selected (line 74)
 
-INPUT_include_setting = c("PNG")
+
+INPUT_include_setting = c("PNG","TLS")
 INPUT_perspective = "healthcare"
 INPUT_include_outcomes = "QALYs"
 INPUT_parameters = c(
-  # "Antiviral schedule price ($25-530)",
-  # "Antiviral wastage (0-60%)"          ,
-  # "Inpatient costs (±50%)"              ,
-  # "Discounting rate (0-5%)"              ,
+   "Antiviral schedule price ($25-530)",
+   "Antiviral wastage (0-60%)"          ,
+   "Inpatient costs (±50%)"              ,
+   "Discounting rate (0-5%)"              ,
   "RAT price ($1-5)"                      ,
   "RAT wastage factor (3-12)"              ,
   "Cost per extra LOS (±50%)"               ,
@@ -32,7 +33,8 @@ tornado_variable_of_interest = paste("cost_per_",
                                      "_averted",
                                      sep ="")
 tornado_result = tornado_result %>%
-  filter(antiviral_scenario != "no antiviral" &
+  filter(evaluation_level == "incremental") %>%
+  filter(antiviral_type != "no antiviral" &
            variable == tornado_variable_of_interest &
            setting %in% INPUT_include_setting &
            perspective %in% INPUT_perspective) 
@@ -41,7 +43,8 @@ plot_list = list()
 
 for (this_setting in unique(tornado_result$setting)){
   to_plot = tornado_result %>%
-    filter(setting == this_setting)
+    filter(setting == this_setting &   
+            label %in% INPUT_parameters)
   
   if (this_setting == "FJI"){this_setting_GDP = 5316.7}
   if (this_setting == "IDN"){this_setting_GDP = 4788.0}
@@ -81,9 +84,8 @@ for (this_setting in unique(tornado_result$setting)){
   require(ggtext)
   options(scipen=999) #turn off scientific notation
   
-  #REACTIVE CHANGE OF PLOT STARTS HERE
   plot_list[[length(plot_list)+1]] = ggplot() + 
-    geom_rect(data = df_2[df_2$label %in% INPUT_parameters,], #THIS IS THE MAIN EXPECTED CHANGE
+    geom_rect(data = df_2,
               aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
     geom_hline(yintercept = base.value) +
     theme_bw() + 
@@ -99,7 +101,7 @@ for (this_setting in unique(tornado_result$setting)){
   if (INPUT_include_GDP == "Y"){
     plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
     geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
-    annotate("text", x = 4, y = this_setting_GDP*0.65, label = "GDP per capita")
+    annotate("text", x = 4, y = this_setting_GDP*0.8, label = "GDP per capita")
   }
 }
 

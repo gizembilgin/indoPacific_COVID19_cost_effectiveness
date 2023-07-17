@@ -39,18 +39,6 @@ rm(RECORD_antiviral_model_simulations)
 
 workshop = MASTER_antiviral_simulations %>%
   filter(is.na(age_group) == FALSE) %>%
-  select(-country,-setting_beta) %>%
-  
-  #created shorten name to describe booster dose eligibility
-  mutate(booster_vax_scenario = case_when( 
-    vax_scenario == "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"  ~ "booster dose catch-up campaign for high-risk adults",           
-    vax_scenario == "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster" ~ "booster dose catch-up campaign for all adults",                       
-    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults" ~ "booster to all adults, prioritised to high-risk adults",                                                           
-    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all adults previously willing to be vaccinated",                      
-    vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all high-risk adults previously willing to be vaccinated",  
-    vax_scenario == "all willing adults vaccinated with a primary schedule" ~ "no booster dose"           
-  )) %>%
-  filter(is.na(booster_vax_scenario) == FALSE) %>%
   
   #DECISION - CEA of antivirals for a whole year (as of 01/01/2023)
   filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%
@@ -145,19 +133,7 @@ if (nrow(shapiro_tracker)>0){warning(paste(nrow(shapiro_tracker),"rows of count 
 ## Step Three: check interventions doses delivered normally distributed
 workshop = MASTER_antiviral_simulations %>%
   filter(is.na(age_group) == TRUE) %>%
-  filter(evaluation_group == "pop_level") %>%
-  select(-country,-setting_beta) %>%
-  
-  #created shorten name to describe booster dose eligibility
-  mutate(booster_vax_scenario = case_when( 
-    vax_scenario == "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"  ~ "booster dose catch-up campaign for high-risk adults",           
-    vax_scenario == "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster" ~ "booster dose catch-up campaign for all adults",                       
-    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults" ~ "booster to all adults, prioritised to high-risk adults",                                                           
-    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all adults previously willing to be vaccinated",                      
-    vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all high-risk adults previously willing to be vaccinated",  
-    vax_scenario == "all willing adults vaccinated with a primary schedule" ~ "no booster dose"           
-  )) %>%
-  filter(is.na(booster_vax_scenario) == FALSE) %>%
+  filter(evaluation_level == "pop_level") %>%
   
   #DECISION - CEA for antivirals as of 01/01/2023 
   filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%
@@ -220,18 +196,7 @@ if (nrow(shapiro_tracker)>0){warning(paste(nrow(shapiro_tracker),"rows of interv
 ## Step Four: healthcare outcomes averted normally distributed
 workshop = MASTER_antiviral_simulations %>%
   filter(is.na(age_group) == TRUE) %>%
-  filter(evaluation_group == "pop_level") %>%
-  
-  #created shorten name to describe booster dose eligibility
-  mutate(booster_vax_scenario = case_when( 
-    vax_scenario == "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"  ~ "booster dose catch-up campaign for high-risk adults",           
-    vax_scenario == "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster" ~ "booster dose catch-up campaign for all adults",                       
-    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults" ~ "booster to all adults, prioritised to high-risk adults",                                                           
-    vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all adults previously willing to be vaccinated",                      
-    vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all high-risk adults previously willing to be vaccinated",  
-    vax_scenario == "all willing adults vaccinated with a primary schedule" ~ "no booster dose"           
-  )) %>%
-  filter(is.na(booster_vax_scenario) == FALSE) %>%
+  filter(evaluation_level == "pop_level") %>%
   
   #DECISION - CEA for antivirals as of 01/01/2023 
   filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%

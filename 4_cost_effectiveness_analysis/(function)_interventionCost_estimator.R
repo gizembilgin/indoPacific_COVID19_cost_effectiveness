@@ -1,56 +1,24 @@
 
-interventionCost_estimator <- function(LIST_CEA_settings,
-                                       MASTER_antiviral_simulations,
-                                       TORNADO_PLOT_OVERRIDE,
-                                       antiviral_cost_scenario = "low_generic_cost",
-                                       wastage_rate_antiviralSchedule = 0,
-                                       toggle_uncertainty = TOGGLE_uncertainty,
-                                       fitted_distributions = local_fitted_distributions){
+interventionCost_estimator <- function(
+    LIST_CEA_settings,
+    MASTER_antiviral_simulations,
+    TORNADO_PLOT_OVERRIDE,
+    antiviral_cost_scenario = "low_generic_cost",
+    wastage_rate_antiviralSchedule = 0,
+    toggle_uncertainty = TOGGLE_uncertainty,
+    fitted_distributions = local_fitted_distributions
+    ){
   
   #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
   #     but we include wastage rates for all other components.
   #     These wastage rates then need to be converted to wastage factors by 1/(1-wastage_rate)
   
   
-  ### Load RECORD_antiviral_model_simulations ####################################
-  # We would like a data set with the following columns:
-  # setting, booster_vax_scenario, intervention, intervention target group, intervention_doses_delivered
-  
-  ## Step Two: subset 
+  ### PART ONE: load antiviral simulation ######################################
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
-    filter(is.na(age_group) == TRUE) %>%
-    filter(evaluation_group == "pop_level") %>%
-    select(-country,-setting_beta) %>%
-    
-    #created shorten name to describe booster dose eligibility
-    mutate(booster_vax_scenario = case_when( 
-      vax_scenario == "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"  ~ "booster dose catch-up campaign for high-risk adults",           
-      vax_scenario == "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster" ~ "booster dose catch-up campaign for all adults",                       
-      vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults" ~ "booster to all adults, prioritised to high-risk adults",                                                           
-      vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all adults previously willing to be vaccinated",                      
-      vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all high-risk adults previously willing to be vaccinated",  
-      vax_scenario == "all willing adults vaccinated with a primary schedule" ~ "no booster dose"           
-    )) %>%
-    filter(is.na(booster_vax_scenario) == FALSE) %>%
-    
-    #DECISION - CEA for antivirals as of 01/01/2023 
-    filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%
-    mutate(intervention = case_when(
-      intervention == "vaccine" ~ "booster dose 2023-03-01",
-      antiviral_type == "molunipiravir" ~ "molunipiravir 2023-01-01",
-      antiviral_type == "nirmatrelvir_ritonavir" ~ "nirmatrelvir_ritonavir 2023-01-01"
-    )) %>%
-    
-    mutate(intervention_target_group = 
-             case_when(
-               intervention %in% c("molunipiravir 2023-01-01","nirmatrelvir_ritonavir 2023-01-01") ~ antiviral_target_group,
-               booster_vax_scenario %in% c("booster dose catch-up campaign for high-risk adults","booster to all high-risk adults previously willing to be vaccinated") ~ vax_scenario_risk_group,
-               booster_vax_scenario %in% c("booster dose catch-up campaign for all adults","booster to all adults, prioritised to high-risk adults", "booster to all adults previously willing to be vaccinated") ~ "all_adults"
-             )) %>%
-    
-    #ensure one value per simulation
-    filter(result == "n" & outcome == "death") %>%
-    
+    filter(is.na(age_group) == TRUE) %>%   #select overall value of intervention doses delivered, not age-specific
+    filter(evaluation_level == "incremental") %>% #the incremental number of doses delivered will be the same for "net" and "pop_level"
+    filter(outcome == "death") %>% #ensure one value per simulation, NB: we don't care about the outcome, only the intervention_doses_delivered column
     select(setting, booster_vax_scenario, intervention, intervention_target_group,intervention_doses_delivered)
   
   if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
@@ -58,8 +26,7 @@ interventionCost_estimator <- function(LIST_CEA_settings,
   
   
   
-  
-  ### Calculate intervention costs ##############################################
+  ### PART TWO: calculate intervention costs ###################################
   interventionCost_estimates = data.frame()
   
   for (this_setting in LIST_CEA_settings){
@@ -127,15 +94,15 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     #(B/E) wastage_rate_antiviralSchedule - built in as a function parameter
 
     #(C/E) price_per_RAT
-    price_per_RAT = 2.225 #Median price across 8 products listed on UNICEF catalogue 
+    price_per_RAT = 2.225 #Median price across 8 products listed on UNICEF catalog 
     
     #(D/E) wastage_factor_RAT
     wastage_factor_RAT = 6
     
     #(E/E) operational_cost
     #WHO CHOICE estimates provide the distribution for individual costs, therefore sample from this distribution for the number of individuals and sum across
-    op_fitted_distributions = fitted_distributions %>% filter(parameter == "outpatient_visit_cost" &
-                                                                setting == this_setting)
+    op_fitted_distributions = fitted_distributions %>% 
+      filter(parameter == "outpatient_visit_cost" & setting == this_setting)
     
     antiviral_estimates = TRANSLATED_antiviral_simulations  %>%
       filter(intervention != "booster dose 2023-03-01") %>%
@@ -166,7 +133,6 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     }
     
     #calculate!
-    
     static_costs = price_per_antiviralDose*(1/(1-wastage_rate_antiviralSchedule)) +
       price_per_RAT*wastage_factor_RAT
     
@@ -176,8 +142,8 @@ interventionCost_estimator <- function(LIST_CEA_settings,
     
     interventionCost_estimates = rbind(interventionCost_estimates,antiviral_estimates)
     #___________________________________________________________________________
-    
   }
+  ##############################################################################
   
   return(interventionCost_estimates)
 }

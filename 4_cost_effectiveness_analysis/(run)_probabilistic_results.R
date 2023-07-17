@@ -8,7 +8,7 @@
 probab_CommandDeck_result_long = probab_CommandDeck_result = data.frame()
 
 #66 runs in total (2*11*3), need to time one run!
-for (this_discounting_rate in seq(0,0.1,by=0.01)){
+for (this_discounting_rate in seq(0,0.05,by=0.01)){
   for (this_perspective in c("healthcare","societal")){
     for (this_antiviral_cost_scenario in c("low_generic_cost","middle_income_cost", "high_income_cost")){
   
@@ -20,24 +20,18 @@ for (this_discounting_rate in seq(0,0.1,by=0.01)){
           
           TOGGLE_longCOVID = "off",
           TOGGLE_uncertainty = "rand",
-          TOGGLE_numberOfRuns = 1000,
-          TOGGLE_clusterNumber = 4,
+          TOGGLE_numberOfRuns = 100, #1000 eventually
+          TOGGLE_clusterNumber = 5,  #4 or 5? test and time! (workshop - timing probabilistic model runs by number of cores)
           DECISION_save_result = "N"
         )
 
       source(paste(getwd(),"/CommandDeck.R",sep=""))
       
-      rows = CommandDeck_result %>%
-        mutate(discounting_rate = this_discounting_rate,
-               antiviral_cost = this_antiviral_cost_scenario,
-               perspective = this_perspective) 
-      probab_CommandDeck_result = rbind(probab_CommandDeck_result,rows)
+      probab_CommandDeck_result = rbind(probab_CommandDeck_result,
+                                        CommandDeck_result)
       
-      rows = CommandDeck_result_long %>%
-        mutate(discounting_rate = this_discounting_rate,
-               antiviral_cost = this_antiviral_cost_scenario,
-               perspective = this_perspective) 
-      probab_CommandDeck_result_long = rbind(probab_CommandDeck_result_long,rows)
+      probab_CommandDeck_result_long = rbind(probab_CommandDeck_result_long,
+                                             CommandDeck_result_long)
       
     }
   }
@@ -52,6 +46,10 @@ source(paste(getwd(),"/(run)_cost_acceptibility_by_WTP.R",sep=""),local=TRUE)
 probab_result = list(CommandDeck_result_long = CommandDeck_result_long,
                      CommandDeck_result = CommandDeck_result,
                      CEAC_dataframe = CEAC_dataframe)
+temp_name = ''
+time = Sys.time()
+time = gsub(':','-',time)
+time = paste(temp_name,time,sep='')
 
-save(probab_result,file = "x_results/probab_result.Rdata")
+save(probab_result,file = paste0("x_results/probab_result",time,".Rdata"))
 #_______________________________________________________________________________

@@ -1,57 +1,27 @@
 
-healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
-                                             MASTER_antiviral_simulations,
-                                             TORNADO_PLOT_OVERRIDE,
-                                             toggle_uncertainty = TOGGLE_uncertainty,
-                                             fitted_distributions = local_fitted_distributions){
+healthCareCostsAverted_estimator <- function(
+    LIST_CEA_settings,
+    MASTER_antiviral_simulations,
+    TORNADO_PLOT_OVERRIDE,
+    toggle_uncertainty = TOGGLE_uncertainty,
+    fitted_distributions = local_fitted_distributions
+    ){
   
-  ### Load RECORD_antiviral_model_simulations ####################################
-  # We would like a data set with the following columns:
-  # setting, booster_vax_scenario, outcome, count_outcomes
-  
-  ## Step Two: subset 
+  ### PART ONE: load antiviral simulation ######################################
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
-    filter(is.na(age_group) == TRUE) %>%
-    filter(evaluation_group == "pop_level") %>%
-    
-    #created shorten name to describe booster dose eligibility
-    mutate(booster_vax_scenario = case_when( 
-      vax_scenario == "catchup campaign for high-risk adults: assume booster to high-risk adults who have previously completed their primary schedule but have not recieved a booster"  ~ "booster dose catch-up campaign for high-risk adults",           
-      vax_scenario == "catchup campaign for all adults: assume booster to all adults who have previously completed their primary schedule but have not recieved a booster" ~ "booster dose catch-up campaign for all adults",                       
-      vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: prioritise delivery to high-risk adults" ~ "booster to all adults, prioritised to high-risk adults",                                                           
-      vax_scenario == "all willing adults vaccinated with a primary schedule plus booster dose: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all adults previously willing to be vaccinated",                      
-      vax_scenario == "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule" ~ "booster to all high-risk adults previously willing to be vaccinated",  
-      vax_scenario == "all willing adults vaccinated with a primary schedule" ~ "no booster dose"           
-    )) %>%
-    filter(is.na(booster_vax_scenario) == FALSE) %>%
-    
-    #DECISION - CEA for antivirals as of 01/01/2023 
-    filter(intervention %in% c('vaccine','antiviral 2023-01-01')) %>%
-    mutate(intervention = case_when(
-      intervention == "vaccine" ~ "booster dose 2023-03-01",
-      antiviral_type == "molunipiravir" ~ "molunipiravir 2023-01-01",
-      antiviral_type == "nirmatrelvir_ritonavir" ~ "nirmatrelvir_ritonavir 2023-01-01"
-    )) %>%
-    
-    mutate(intervention_target_group = 
-             case_when(
-               intervention %in% c("molunipiravir 2023-01-01","nirmatrelvir_ritonavir 2023-01-01") ~ antiviral_target_group,
-               booster_vax_scenario %in% c("booster dose catch-up campaign for high-risk adults","booster to all high-risk adults previously willing to be vaccinated") ~ vax_scenario_risk_group,
-               booster_vax_scenario %in% c("booster dose catch-up campaign for all adults","booster to all adults, prioritised to high-risk adults", "booster to all adults previously willing to be vaccinated") ~ "all_adults"
-             )) %>%
-    
-    filter(result %in% c("n")) %>%
+    filter(is.na(age_group) == TRUE) %>% #don't care about age-specific incidence since we don't have age-specific costs for access to healthcare
     rename(count_outcomes = value) %>%
     filter(outcome %in% c("hosp","hosp_after_antivirals","mild")) %>%
+    select(evaluation_level,setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
     
-    select(setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
-    
-  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
+  if (nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),]) #intervention_target_group is understandably NA 
+      != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
   ##############################################################################
   
   
-  ## Reduced LOS (outcome == "hosp_after_antivirals")
-  #analytically propogating error, see scanned proof 12/05/2023 in 1_derivation
+  
+  ### <intermission>  Reduced LOS (outcome == "hosp_after_antivirals") #########
+  #analytically propagating error, see scanned proof 12/05/2023 in 1_derivation
   X = cost_per_extra_LOS_MEAN = 0.09
   sdX = cost_per_extra_LOS_SD = 0.01
   
@@ -87,20 +57,24 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
     reduced_LOS_estimates$estimate = reduced_LOS_estimates$count_outcomes * (exp(X) - 1) * Y
   }
   
-
+  #adding reduced LOS to TRANSLATED_antiviral_simulations for this cost to be calculated alongside reduced cost due to hospital admissions prevented
   workshop = reduced_LOS_estimates %>%
     mutate(count_outcomes = estimate,
            outcome = "hosp") %>%
-    select(-estimate)
+    select(-estimate,-evaluation_level)
+
+  workshop = crossing(workshop,evaluation_level = c("incremental","net")) #incremental and net will be the same!
+  workshop$count_outcomes[workshop$evaluation_level == "net"] = workshop$count_outcomes[workshop$evaluation_level == "net"] * -1 #net healthcare cost will be net hosp + net outpatient - reduced LOS
+  
   TRANSLATED_antiviral_simulations = TRANSLATED_antiviral_simulations[TRANSLATED_antiviral_simulations$outcome %in% c("hosp","mild"),]
   TRANSLATED_antiviral_simulations =   rbind(TRANSLATED_antiviral_simulations,workshop) %>%
-    group_by(setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(evaluation_level,setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(count_outcomes = sum(count_outcomes), .groups="keep") #including hosp $ from reduced LOS of inpatients who recieved antivirals with other inpatients
   ##############################################################################
   
   
   
-  ### Calculate healthcare costs ##############################################
+  ### PART TWO: calculating healthcare costs ###################################
   load(file = "2_inputs/hosp_adm.Rdata")
   
   ##inputs
@@ -187,22 +161,22 @@ healthCareCostsAverted_estimator <- function(LIST_CEA_settings,
       }
     }
   }
-  #___________________________________________________________________________
+  ##############################################################################
 
   
   
   ### Export result  ###########################################################
-  healthcareCosts_averted = cost_estimates %>%
-    group_by(setting,booster_vax_scenario,intervention,intervention_target_group) %>%
-    summarise(cost = sum(cost), .groups= "keep")
-  
   healthcareCosts_breakdown = cost_estimates %>%
-    select(setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
-  
+    select(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
   # ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
-  #   facet_grid(booster_vax_scenario ~.)
+  #   facet_grid(booster_vax_scenario ~.)  
+  
+  healthcareCosts_averted = healthcareCosts_breakdown %>%
+    group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
+    summarise(cost = sum(cost), .groups= "keep")
   
   result = list(healthcareCosts_averted = healthcareCosts_averted,
                 healthcareCosts_breakdown = healthcareCosts_breakdown)  
+  
   return(result)
 }
