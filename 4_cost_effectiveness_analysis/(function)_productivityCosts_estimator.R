@@ -30,11 +30,11 @@ productivityCosts_estimator <- function(
   
   
   ### PART THREE: apply productivity losses by outcome #########################
-  productivity_loss_breakdown = TRANSLATED_antiviral_simulations %>%
-    filter(outcome %in% unique(productivity_loss_df$outcome)) %>%
-    left_join(productivity_loss_df, by = c("setting","age_group","outcome")) %>%
-    group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,outcome) %>%
-    summarise(cost = sum(productivity_loss), .groups = "keep")
+  # productivity_loss_breakdown = TRANSLATED_antiviral_simulations %>%
+  #   filter(outcome %in% unique(productivity_loss_df$outcome)) %>%
+  #   left_join(productivity_loss_df, by = c("setting","age_group","outcome")) %>%
+  #   group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,outcome) %>%
+  #   summarise(cost = sum(productivity_loss), .groups = "keep")
   
   productivity_loss_breakdown = TRANSLATED_antiviral_simulations %>%
     filter(outcome %in% unique(productivity_loss_df$outcome)) %>%
