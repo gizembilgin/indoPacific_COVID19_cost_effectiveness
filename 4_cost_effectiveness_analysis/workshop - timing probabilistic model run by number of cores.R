@@ -1,6 +1,6 @@
 
 this_perspective = "healthcare"
-this_antiviral_scenario = "middle_income_cost"
+this_antiviral_cost_scenario = "middle_income_cost"
 this_discounting_rate = 0.03
 
 timing_df = data.frame()
