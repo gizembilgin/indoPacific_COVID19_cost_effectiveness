@@ -62,41 +62,60 @@ queue = list(
 )
 
 tornado_result = data.frame()
+CommandDeck_CONTROLS = list()
 
-for (this_perspective in c("healthcare","societal")){
-  for (ticket in 1:length(queue)){
-    CommandDeck_CONTROLS = queue[[ticket]]
-    CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                  list(
-                                    LIST_booster_vax_scenarios = list(
-                                      "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
-                                    ),
-                                    LIST_antiviral_elig_groups = list("adults_with_comorbidities"),
-                                    LIST_antiviral_types = list("nirmatrelvir_ritonavir"),
-                                    TOGGLE_uncertainty = "fixed",
-                                    TOGGLE_antiviral_cost_scenario = "middle_income_cost",
-                                    TOGGLE_perspective = this_perspective
-                                  )
-    )
-    
-    if(!("TOGGLE_discounting_rate" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                                                                                    list(TOGGLE_discounting_rate = 0.03))}
-    if(!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                                                                             list(TOGGLE_longCOVID = "off"))}
-    
-    source(paste(getwd(),"/CommandDeck.R",sep=""))
-    
-    rows = CommandDeck_result %>%
-      filter(variable_type == "ICER") %>%
-      mutate(label = CommandDeck_CONTROLS$label,
-             direction = CommandDeck_CONTROLS$direction,
-             perspective = this_perspective) 
-    tornado_result = rbind(tornado_result,rows)
-    
+for (this_antiviral_type in c("molunipiravir","nirmatrelvir_ritonavir")){
+  for (this_perspective in c("healthcare","societal")){
+    for (ticket in 1:length(queue)){
+      CommandDeck_CONTROLS = queue[[ticket]]
+      CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                    list(
+                                      LIST_booster_vax_scenarios = list(
+                                        "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
+                                      ),
+                                      LIST_antiviral_elig_groups = list("adults_with_comorbidities"),
+                                      LIST_antiviral_types = list(this_antiviral_type),
+                                      TOGGLE_uncertainty = "fixed",
+                                      TOGGLE_antiviral_cost_scenario = "middle_income_cost",
+                                      TOGGLE_perspective = this_perspective
+                                    )
+      )
+      
+      if(!("TOGGLE_discounting_rate" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                                                                                      list(TOGGLE_discounting_rate = 0.03))}
+      if(!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                                                                               list(TOGGLE_longCOVID = "off"))}
+      
+      source(paste(getwd(),"/CommandDeck.R",sep=""))
+      
+      rows = CommandDeck_result %>%
+        filter(variable_type == "ICER") %>%
+        mutate(label = CommandDeck_CONTROLS$label,
+               direction = CommandDeck_CONTROLS$direction,
+               perspective = this_perspective) 
+      tornado_result = rbind(tornado_result,rows)
+      
+    }
   }
 }
 
+
 CommandDeck_CONTROLS = list()
+
+tornado_result = tornado_result %>%
+  mutate(
+    setting = case_when(
+      setting == "FJI" ~ "Fiji",
+      setting == "IDN" ~ "Indonesia",
+      setting == "PNG" ~ "Papua New Guinea",
+      setting == "TLS" ~ "Timor-Leste",
+      TRUE ~ setting
+    ),
+    antiviral_type = gsub(" 2023-01-01","",antiviral_type),
+
+    perspective = paste(perspective," perspective",sep = "")      
+  )
+
 
 save(tornado_result,file = "x_results/tornado_result.Rdata")
 #_______________________________________________________________________________
