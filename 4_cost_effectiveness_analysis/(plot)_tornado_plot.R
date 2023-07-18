@@ -1,11 +1,12 @@
 ### PLOT
 ##Note: run for default booster dose strategy and antiviral strategy, go back to (run)_deterministic_results.R to extract more results
 ## make reactive so doesn't reload when different number of param selected (line 74)
+require(ggpubr)
 
-
-INPUT_include_setting = c("PNG","TLS")
-INPUT_perspective = "healthcare"
+INPUT_include_setting = c("Papua New Guinea", "Timor-Leste")
+INPUT_perspective = "healthcare perspective"
 INPUT_include_outcomes = "QALYs"
+INPUT_antiviral_type = "molunipiravir"
 INPUT_parameters = c(
    "Antiviral schedule price ($25-530)",
    "Antiviral wastage (0-60%)"          ,
@@ -34,7 +35,7 @@ tornado_variable_of_interest = paste("cost_per_",
                                      sep ="")
 tornado_result = tornado_result %>%
   filter(evaluation_level == "incremental") %>%
-  filter(antiviral_type != "no antiviral" &
+  filter(antiviral_type %in% c("no antiviral",INPUT_antiviral_type) &
            variable == tornado_variable_of_interest &
            setting %in% INPUT_include_setting &
            perspective %in% INPUT_perspective) 
