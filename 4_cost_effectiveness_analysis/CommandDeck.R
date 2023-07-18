@@ -196,8 +196,7 @@ if(TOGGLE_numberOfRuns == 1){
         UPI = mean + qt(.975,df=(TOGGLE_numberOfRuns-1))*sd*sqrt(1+(1/TOGGLE_numberOfRuns))
       ) %>%
       mutate(variable_type = "ICER",
-             variable = paste("cost_per_",outcome,"_averted",sep=""),
-             variable = gsub("QALYs","QALY",variable)) %>%
+             variable = paste("cost_per_",outcome,"_averted",sep="")) %>%
       select(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,variable_type,variable,mean,sd,LPI,UPI)
     
     CommandDeck_result = CommandDeck_result %>%
@@ -222,14 +221,14 @@ CommandDeck_result_long = CommandDeck_result_long %>%
          discounting_rate = TOGGLE_discounting_rate ,
          antiviral_cost = TOGGLE_antiviral_cost_scenario)
 
+CommandDeck_result_list = list(CommandDeck_result_long = CommandDeck_result_long,
+                               CommandDeck_result = CommandDeck_result)
+
 if (DECISION_save_result == "Y"){
-  CommandDeck_result_list = list(CommandDeck_result_long = CommandDeck_result_long,
-                                 CommandDeck_result = CommandDeck_result)
   temp_name = ''
   time = Sys.time()
   time = gsub(':','-',time)
   time = paste(temp_name,time,sep='')
-  
   save(CommandDeck_result_list, file = paste("x_results/CommandDeck_result_list_",this_risk_group,"_",TOGGLE_perspective,"_perspective_",time,".Rdata",sep=''))
 }
 
