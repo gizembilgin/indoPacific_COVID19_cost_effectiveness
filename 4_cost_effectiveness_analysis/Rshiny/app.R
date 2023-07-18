@@ -18,81 +18,12 @@ if (length(list_poss_Rdata) > 0) {
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
   load(file = paste0(rootpath,"/x_results/", latest_file))
 }
-
+CommandDeck_result_long <- probab_result$CommandDeck_result_long
+CommandDeck_result      <- probab_result$CommandDeck_result
+CEAC_dataframe          <- probab_result$CEAC_dataframe
 
 ### load latest det results
 load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
-
-
-### aligning results with buttons
-CommandDeck_result_long = probab_result$CommandDeck_result_long %>%
-  filter(evaluation_level == "incremental") %>%
-  mutate(
-    setting = case_when(
-      setting == "FJI" ~ "Fiji",
-      setting == "IDN" ~ "Indonesia",
-      setting == "PNG" ~ "Papua New Guinea",
-      setting == "TLS" ~ "Timor-Leste",
-      TRUE ~ setting
-    ),
-    booster_vax_scenario = case_when(
-      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
-      booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
-      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults who have previously completed their primary schedule but have not recieved a booster"  ,
-      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults who have previously completed their primary schedule but have not recieved a booster"   ,
-      booster_vax_scenario == "no booster dose" ~ "no booster",
-      TRUE ~ booster_vax_scenario
-    ),
-    
-    antiviral_type = gsub(" 2023-01-01","",antiviral_type),
-    antiviral_target_group = gsub("_"," ",antiviral_target_group),
-    antiviral_target_group = case_when(
-      antiviral_type == "no antiviral" ~ antiviral_type,
-      TRUE ~ antiviral_target_group
-    ),
-
-    perspective = paste(perspective," perspective",sep = ""),      
-    discounting_rate = discounting_rate * 100
-  ) 
-
-
-CommandDeck_result = probab_result$CommandDeck_result %>%
-  filter(evaluation_level == "incremental") %>%
-  mutate(
-    setting = case_when(
-      setting == "FJI" ~ "Fiji",
-      setting == "IDN" ~ "Indonesia",
-      setting == "PNG" ~ "Papua New Guinea",
-      setting == "TLS" ~ "Timor-Leste",
-      TRUE ~ setting
-    ),
-    booster_vax_scenario = case_when(
-      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
-      booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
-      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults who have previously completed their primary schedule but have not recieved a booster"  ,
-      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults who have previously completed their primary schedule but have not recieved a booster"   ,
-      booster_vax_scenario == "no booster dose" ~ "no booster",
-      TRUE ~ booster_vax_scenario
-    ),
-    
-    antiviral_type = gsub(" 2023-01-01","",antiviral_type),
-    antiviral_target_group = gsub("_"," ",antiviral_target_group),
-    antiviral_target_group = case_when(
-      antiviral_type == "no antiviral" ~ antiviral_type,
-      TRUE ~ antiviral_target_group
-    ),
-    
-    perspective = paste(perspective," perspective",sep = ""),      
-    discounting_rate = discounting_rate * 100
-  ) %>%
-  rename(outcome = variable) %>%
-  mutate(
-    outcome = gsub("cost_per_", "", outcome),
-    outcome = gsub("_averted", "", outcome)
-  ) 
-CommandDeck_result$outcome[CommandDeck_result$outcome == "QALY"] <- "QALYs"
-
-CEAC_dataframe <- probab_result$CEAC_dataframe
 #_______________________________________________________________________________
 
 
