@@ -6,6 +6,7 @@ CEA_worker <- function(
     LIST_antiviral_elig_groups,
     LIST_antiviral_types,
     DECISION_sampling_strategy,
+    DECISION_include_net,
     TOGGLE_uncertainty,
     TOGGLE_longCOVID,
     TOGGLE_discounting_rate,
@@ -35,7 +36,8 @@ CEA_worker <- function(
                                                                   LIST_antiviral_elig_groups,
                                                                   LIST_antiviral_types,
                                                                   sampling_strategy = DECISION_sampling_strategy,
-                                                                  toggle_uncertainty = TOGGLE_uncertainty)
+                                                                  toggle_uncertainty = TOGGLE_uncertainty,
+                                                                  decision_include_net = DECISION_include_net)
     LIST_CEA_settings_mod = gsub("PNG_low_beta","PNG",LIST_CEA_settings)
     
     ###(2/3) Calculate QALYs, intervention costs, and healthcare costs averted
@@ -73,7 +75,8 @@ CEA_worker <- function(
     
     
     ###(3/3) CEA per setting
-    this_result <- simulationSummary(outcomesAvertedEstimation,
+    this_result <- simulationSummary(DECISION_include_net,
+                                     outcomesAvertedEstimation,
                                      interventionCost_estimates,
                                      healthcareCostEstimation,
                                      productivityCosts) %>%
