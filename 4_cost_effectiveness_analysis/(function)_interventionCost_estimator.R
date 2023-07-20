@@ -105,17 +105,18 @@ interventionCost_estimator <- function(
       filter(parameter == "outpatient_visit_cost" & setting == this_setting)
     
     antiviral_estimates = TRANSLATED_antiviral_simulations  %>%
+      filter(setting == this_setting) %>%
       filter(intervention != "booster dose 2023-03-01") %>%
       mutate(operational_cost = 0)
     
     if (toggle_uncertainty == "rand"){
-      for (row in 1:nrow(antiviral_estimates)){
-        this_sample = data.frame(est = rlnorm (antiviral_estimates$intervention_doses_delivered[row],meanlog = op_fitted_distributions$param1, sdlog = op_fitted_distributions$param2)) %>%
+      for (row_num in 1:nrow(antiviral_estimates)){
+        this_sample = data.frame(est = rlnorm (antiviral_estimates$intervention_doses_delivered[row_num],meanlog = op_fitted_distributions$param1, sdlog = op_fitted_distributions$param2)) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
           ))
-        antiviral_estimates$operational_cost[row] = sum(this_sample$est)
+        antiviral_estimates$operational_cost[row_num] = sum(this_sample$est)
       }
       rm(this_sample)
 
