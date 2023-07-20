@@ -57,31 +57,3 @@ for (this_outcome in unique(CommandDeck_result_long$outcome)){
   }
 }
 
-CEAC_dataframe <- CEAC_dataframe %>%
-  mutate(
-    setting = case_when(
-      setting == "FJI" ~ "Fiji",
-      setting == "IDN" ~ "Indonesia",
-      setting == "PNG" ~ "Papua New Guinea",
-      setting == "TLS" ~ "Timor-Leste",
-      TRUE ~ setting
-    ),
-    booster_vax_scenario = case_when(
-      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
-      booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
-      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults who have previously completed their primary schedule but have not recieved a booster"  ,
-      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults who have previously completed their primary schedule but have not recieved a booster"   ,
-      booster_vax_scenario == "no booster dose" ~ "no booster",
-      TRUE ~ booster_vax_scenario
-    ),
-    
-    antiviral_type = gsub(" 2023-01-01","",antiviral_type),
-    antiviral_target_group = gsub("_"," ",antiviral_target_group),
-    antiviral_target_group = case_when(
-      antiviral_type == "no antiviral" ~ antiviral_type,
-      TRUE ~ antiviral_target_group
-    ),
-    
-    perspective = paste(perspective," perspective",sep = ""),      
-    discounting_rate = discounting_rate * 100
-  )
