@@ -4,7 +4,8 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings,
                                           LIST_antiviral_elig_groups,
                                           LIST_antiviral_types,
                                           sampling_strategy = "empirical_distribution",
-                                          toggle_uncertainty = TOGGLE_uncertainty){
+                                          toggle_uncertainty = TOGGLE_uncertainty,
+                                          decision_include_net = DECISION_include_net){
   
   rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
   MASTER_antiviral_simulations = data.frame()
@@ -105,7 +106,35 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings,
                booster_vax_scenario %in% c("booster dose catch-up campaign for all adults","booster to all adults, prioritised to high-risk adults", "booster to all adults previously willing to be vaccinated") ~ "all_adults"
              )) %>%
     
-    filter(result == "n")
+    filter(result == "n") %>%
+    select(setting,evaluation_level,booster_vax_scenario,vax_scenario_risk_group,intervention,intervention_target_group,intervention_doses_delivered,outcome,age_group,value)
+
+  if (decision_include_net == "N"){
+    sampled_df = sampled_df %>%
+      filter(evaluation_level != "net")
+  } else{
+    #<intermission 1/2 amending net> add back mild for scenarios with antivirals and no booster dose
+    #(antivirals don't affect mild presentations of disease, but mild presentations still add to the net QALYs!)
+    add_mild_to_net = sampled_df %>%
+      filter(outcome == "mild" & evaluation_level == "net" & booster_vax_scenario == "no booster dose")
+    structure = sampled_df %>%
+      select(intervention,intervention_target_group) %>%
+      filter(!(intervention %in% add_mild_to_net$intervention) &
+               intervention != "booster dose 2023-03-01")
+    structure = unique(structure)
+    add_mild_to_net = add_mild_to_net %>%
+      select(-intervention,-intervention_target_group)
+    add_mild_to_net = crossing(add_mild_to_net,structure)
+    sampled_df = rbind(sampled_df,add_mild_to_net)
+    
+    #<intermission 2/2 amending net> add back mild for scenarios with antivirals ALL booster strategies is.na(age_group)
+    add_mild_to_net = sampled_df %>%
+      filter(outcome == "mild" & evaluation_level == "net" & is.na(age_group) & booster_vax_scenario != "no booster dose")
+    add_mild_to_net = add_mild_to_net %>%
+      select(-intervention,-intervention_target_group)
+    add_mild_to_net = crossing(add_mild_to_net,structure)
+    sampled_df = rbind(sampled_df,add_mild_to_net)
+  }
 
   return(sampled_df)
 }
