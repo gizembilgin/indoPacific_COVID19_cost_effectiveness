@@ -41,6 +41,7 @@ for (this_DECISION_sampling_strategy in c("empirical_distribution","single_run")
     
   }
 }
+CommandDeck_CONTROLS = list()
 beep()
 
 #note: timings for 100 runs, 5 cores, 2 settings =
