@@ -128,7 +128,7 @@ plot(density(sampled_lognorm[sampled_lognorm<20]));mean(sampled_lognorm); max(sa
 plot(density(sampled_gamma[sampled_gamma<20]));mean(sampled_gamma); max(sampled_gamma); min(sampled_gamma); quantile(sampled_gamma,probs=c(0.05,0.5,0.95))
 #let's use the lognormal
 
-row = data.frame(parameter = "operation_cost_vaccine",
+this_row = data.frame(parameter = "operation_cost_vaccine",
                  setting = NA,
                  mean = mean,
                  distribution = "lognorm",
@@ -136,7 +136,7 @@ row = data.frame(parameter = "operation_cost_vaccine",
                  param2 = b,
                  param1_name = "meanlog",
                  param2_name = "sdlog")
-fitted_distributions = bind_rows(fitted_distributions,row)
+fitted_distributions = bind_rows(fitted_distributions,this_row)
 #_______________________________________________________________________________
 
 
@@ -208,7 +208,7 @@ plot(density(sampled_lognorm));mean(sampled_lognorm); max(sampled_lognorm); min(
 plot(density(sampled_gamma));mean(sampled_gamma); max(sampled_gamma); min(sampled_gamma); quantile(sampled_gamma,probs=c(0.05,0.5,0.95))
 
 #95% CI of rnorm fits the best
-row = data.frame(parameter = "reduced_LOS_days",
+this_row = data.frame(parameter = "reduced_LOS_days",
                  setting = NA,
                  mean = mean,
                  distribution = "norm",
@@ -216,7 +216,7 @@ row = data.frame(parameter = "reduced_LOS_days",
                  param2 = norm_est,
                  param1_name = "mean",
                  param2_name = "sd")
-fitted_distributions = bind_rows(fitted_distributions,row)
+fitted_distributions = bind_rows(fitted_distributions,this_row)
 #_______________________________________________________________________________
 
 save(fitted_distributions,file = "2_inputs/fitted_distributions.Rdata")
