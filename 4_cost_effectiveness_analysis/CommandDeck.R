@@ -32,31 +32,50 @@ LIST_antiviral_types = list(
 
 TOGGLE_perspective = "societal" #options: societal, healthcare
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 10#1000
-TOGGLE_clusterNumber = 5 #4
+TOGGLE_numberOfRuns = 100 #1000
+TOGGLE_clusterNumber = 5 #5
 TOGGLE_discounting_rate = 0.03
 TOGGLE_longCOVID = "off"
 TOGGLE_antiviral_cost_scenario = "middle_income_cost"# options: low_generic_cost,middle_income_cost, high_income_cost
 TORNADO_PLOT_OVERRIDE = list()
-DECISION_save_result = "N" #"Y"
-DECISION_sampling_strategy = "empirical_distribution" #options: "single_run" & "empirical_distribution", NB: need to force "single_run" for Net <-> incremental to align for SM table, otherwise sampling from distribution of both
+
+DECISION_save_result = "N" 
+#options: "Y", "N" - should this CEA run be saved? (line 250 of this program)
+DECISION_sampling_strategy = "empirical_distribution" 
+#options: "single_run" takes the results of a single run of the antiviral model
+#         "empirical_distribution" samples from the empirical distribution created by the all antiviral model runs available
 DECISION_CEA_agreement = "Y"
+#Options: "Y" calculates ICER from mean(cost)/mean(outcomes averted)
+#         "N" calculates the ICER per run, and then takes the mean of these values
+DECISION_include_net = "Y" 
+#Options: "Y" includes "net" values of QALYs and $ by booster dose and antiviral scenarios - this is for the supplementary material.
+#                 With this option, incremental values will be written over my the differences in sampled net scenarios. Sampled net and incremental values
+#                 will not align when DECISION_sampling_strategy "empirical_distribution" since the net and incremental values are sampled independently. 
+#         "N" only includes the incremental effects of booster doses and antiviral scenarios - this is for generating results for the R Shiny.
+#                 Including only incremental effects means that the distributions of inpatient costs, for example, are sampled less times.
+#                 This speeds up the model when running thousands of times.
 
 if (exists("CommandDeck_CONTROLS") == FALSE){CommandDeck_CONTROLS = list()}
 if (length(CommandDeck_CONTROLS)>0){
+  
   TORNADO_PLOT_OVERRIDE              = CommandDeck_CONTROLS
+  
   if("TOGGLE_perspective" %in% names(CommandDeck_CONTROLS))        {TOGGLE_perspective                 = CommandDeck_CONTROLS$TOGGLE_perspective}
   if("TOGGLE_uncertainty" %in% names(CommandDeck_CONTROLS))        {TOGGLE_uncertainty                 = CommandDeck_CONTROLS$TOGGLE_uncertainty}
   if("TOGGLE_numberOfRuns" %in% names(CommandDeck_CONTROLS))       {TOGGLE_numberOfRuns                = CommandDeck_CONTROLS$TOGGLE_numberOfRuns}  
   if("TOGGLE_clusterNumber" %in% names(CommandDeck_CONTROLS))      {TOGGLE_clusterNumber               = CommandDeck_CONTROLS$TOGGLE_clusterNumber}
-  if("DECISION_save_result" %in% names(CommandDeck_CONTROLS))      {DECISION_save_result               = CommandDeck_CONTROLS$DECISION_save_result}
-  if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)){LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios}
-  if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups}
-  if("LIST_antiviral_types" %in% names(CommandDeck_CONTROLS))      {LIST_antiviral_types               = CommandDeck_CONTROLS$LIST_antiviral_types}
   if("TOGGLE_discounting_rate" %in% names(CommandDeck_CONTROLS))   {TOGGLE_discounting_rate            = CommandDeck_CONTROLS$TOGGLE_discounting_rate}
   if("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))          {TOGGLE_longCOVID                   = CommandDeck_CONTROLS$TOGGLE_longCOVID}
   if("TOGGLE_antiviral_cost_scenario" %in% names(CommandDeck_CONTROLS)){TOGGLE_antiviral_cost_scenario = CommandDeck_CONTROLS$TOGGLE_antiviral_cost_scenario}
-  if("sampling_strategy" %in% names(CommandDeck_CONTROLS))             {DECISION_sampling_strategy         = CommandDeck_CONTROLS$sampling_strategy}
+  
+  if("DECISION_save_result" %in% names(CommandDeck_CONTROLS))      {DECISION_save_result               = CommandDeck_CONTROLS$DECISION_save_result}
+  if("DECISION_include_net" %in% names(CommandDeck_CONTROLS))      {DECISION_include_net               = CommandDeck_CONTROLS$DECISION_include_net}
+  if("DECISION_sampling_strategy" %in% names(CommandDeck_CONTROLS))             {DECISION_sampling_strategy         = CommandDeck_CONTROLS$DECISION_sampling_strategy}
+  
+  if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)){LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios}
+  if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups}
+  if("LIST_antiviral_types" %in% names(CommandDeck_CONTROLS))      {LIST_antiviral_types               = CommandDeck_CONTROLS$LIST_antiviral_types}
+
 }
 if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1;TOGGLE_clusterNumber = 1}
 ################################################################################
@@ -84,6 +103,7 @@ system.time({
       LIST_antiviral_elig_groups,
       LIST_antiviral_types,
       DECISION_sampling_strategy,
+      DECISION_include_net,
       TOGGLE_uncertainty,
       TOGGLE_longCOVID,
       TOGGLE_discounting_rate,
@@ -104,33 +124,36 @@ if (TOGGLE_numberOfRuns>10){
     for (this_antiviral_type in unique(CommandDeck_result_long$antiviral_type)){
       for (this_booster_scenario in unique(CommandDeck_result_long$booster_vax_scenario)){
        
-        check_normality_df = CommandDeck_result_long %>%
-          filter(setting == this_setting &
-                   antiviral_type == this_antiviral_type &
-                   booster_vax_scenario == this_booster_scenario)
-        this_row = data.frame(setting = this_setting,
-                              antiviral_type = this_antiviral_type,
-                              booster_vax_scenario = this_booster_scenario,
-                              interventionCost = FALSE,
-                              healthcareCostAverted = FALSE,
-                              QALYs = FALSE,
-                              hosp = FALSE,
-                              death = FALSE,
-                              productivityLoss = FALSE)
-        
-        if (nrow(check_normality_df)>0){
-          if (shapiro.test(check_normality_df$interventionCost)$p.value < 0.05){this_row$interventionCost = TRUE}
-          if (shapiro.test(check_normality_df$healthcareCostAverted)$p.value < 0.05){this_row$healthcareCostAverted = TRUE}
-          if (shapiro.test(check_normality_df$QALYs)$p.value < 0.05){this_row$QALYs = TRUE}
-          if (shapiro.test(check_normality_df$death)$p.value < 0.05){this_row$death = TRUE}
-          if(TOGGLE_perspective == "societal"){
-            if(shapiro.test(check_normality_df$productivityLoss)$p.value < 0.05){this_row$productivityLoss = TRUE}
+        if (!(this_booster_scenario == "no booster dose" & this_antiviral_type == "no antiviral")){
+          check_normality_df = CommandDeck_result_long %>%
+            filter(setting == this_setting &
+                     antiviral_type == this_antiviral_type &
+                     booster_vax_scenario == this_booster_scenario)
+          this_row = data.frame(setting = this_setting,
+                                antiviral_type = this_antiviral_type,
+                                booster_vax_scenario = this_booster_scenario,
+                                interventionCost = FALSE,
+                                healthcareCostAverted = FALSE,
+                                QALYs = FALSE,
+                                hosp = FALSE,
+                                death = FALSE,
+                                productivityLoss = FALSE)
+          
+          if (nrow(check_normality_df)>0){
+            if (shapiro.test(check_normality_df$interventionCost)$p.value < 0.05){this_row$interventionCost = TRUE}
+            if (shapiro.test(check_normality_df$healthcareCostAverted)$p.value < 0.05){this_row$healthcareCostAverted = TRUE}
+            if (shapiro.test(check_normality_df$QALYs)$p.value < 0.05){this_row$QALYs = TRUE}
+            if (shapiro.test(check_normality_df$death)$p.value < 0.05){this_row$death = TRUE}
+            if(TOGGLE_perspective == "societal"){
+              if(shapiro.test(check_normality_df$productivityLoss)$p.value < 0.05){this_row$productivityLoss = TRUE}
+            }
+            if(nrow(check_normality_df[check_normality_df$hosp>0,])){
+              if (shapiro.test(check_normality_df$hosp)$p.value < 0.05){this_row$hosp = TRUE}
+            }
           }
-          if(nrow(check_normality_df[check_normality_df$hosp>0,])){
-            if (shapiro.test(check_normality_df$hosp)$p.value < 0.05){this_row$hosp = TRUE}
-          }
+          normality_tracker = rbind(normality_tracker,this_row)
         }
-        normality_tracker = rbind(normality_tracker,this_row)
+        
       }
     }
   }
@@ -139,7 +162,11 @@ if (TOGGLE_numberOfRuns>10){
 
 #calculating 'expected' of each
 CommandDeck_result = CommandDeck_result_long %>%
-  mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
+  mutate(netCost = 
+           case_when(
+             evaluation_level == "incremental" ~ healthcareCostAverted + productivityLoss - interventionCost, #healthCostAverted and productivityLoss averted but interventioncost spent
+             evaluation_level == "net" ~ healthcareCostAverted + productivityLoss + interventionCost
+             ),
          cost_per_QALY_averted = netCost/QALYs,
          cost_per_death_averted = netCost/death,
          cost_per_hosp_averted = netCost/hosp) %>%
@@ -215,7 +242,11 @@ CommandDeck_result_long = CommandDeck_result_long %>%
   pivot_longer(cols = c("QALYs","death","hosp"),
                names_to = "outcome",
                values_to = "count_outcomes") %>%
-  mutate(netCost = interventionCost - healthcareCostAverted - productivityLoss,
+  mutate(netCost =
+           case_when(
+             evaluation_level == "incremental" ~ healthcareCostAverted + productivityLoss - interventionCost, #healthCostAverted and productivityLoss averted but interventioncost spent
+             evaluation_level == "net" ~ healthcareCostAverted + productivityLoss + interventionCost
+           ),
          cost_per_outcome_averted = netCost / count_outcomes,
          perspective = TOGGLE_perspective,
          discounting_rate = TOGGLE_discounting_rate ,
