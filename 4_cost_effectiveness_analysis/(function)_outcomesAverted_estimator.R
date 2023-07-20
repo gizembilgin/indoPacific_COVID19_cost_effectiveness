@@ -35,20 +35,6 @@ outcomesAverted_estimator <- function(
   
   if (nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),]) #intervention_target_group is understandably NA 
       != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
-  
-  #add back mild for scenarios with antivirals but no booster dose
-  #(antivirals don't affect mild presentations of disease, but mild presentations still add to the net QALYs!)
-  add_mild_to_net = TRANSLATED_antiviral_simulations %>%
-    filter(outcome == "mild" & evaluation_level == "net" & booster_vax_scenario == "no booster dose")
-  structure = TRANSLATED_antiviral_simulations %>%
-    select(intervention,intervention_target_group) %>%
-    filter(!(intervention %in% add_mild_to_net$intervention) &
-             intervention != "booster dose 2023-03-01")
-  structure = unique(structure)
-  add_mild_to_net = add_mild_to_net %>%
-    select(-intervention,-intervention_target_group)
-  add_mild_to_net = crossing(add_mild_to_net,structure)
-  TRANSLATED_antiviral_simulations = rbind(TRANSLATED_antiviral_simulations,add_mild_to_net)
   ##############################################################################
   
   
