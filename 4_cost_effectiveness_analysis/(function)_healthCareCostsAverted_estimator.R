@@ -42,14 +42,14 @@ healthCareCostsAverted_estimator <- function(
     mutate(estimate = 0)
   
   if (toggle_uncertainty == "rand"){
-    for (row in 1:nrow(reduced_LOS_estimates)){
+    for (row_num in 1:nrow(reduced_LOS_estimates)){
       #sampling reduced LOS per hospitalised individual who had received antivirals
-      this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes[row],mean = new_mean, sd = new_sd)) %>%
+      this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes[row_num],mean = new_mean, sd = new_sd)) %>%
         mutate(est = case_when(
           est <0 ~ 0,
           TRUE ~ est
         ))
-      reduced_LOS_estimates$estimate[row] = sum(this_sample$est)
+      reduced_LOS_estimates$estimate[row_num] = sum(this_sample$est)
     }
     rm(this_sample)
     
@@ -61,11 +61,14 @@ healthCareCostsAverted_estimator <- function(
   workshop = reduced_LOS_estimates %>%
     mutate(count_outcomes = estimate,
            outcome = "hosp") %>%
-    select(-estimate,-evaluation_level)
+    select(-estimate)
 
-  workshop = crossing(workshop,evaluation_level = c("incremental","net")) #incremental and net will be the same!
-  workshop$count_outcomes[workshop$evaluation_level == "net"] = workshop$count_outcomes[workshop$evaluation_level == "net"] * -1 #net healthcare cost will be net hosp + net outpatient - reduced LOS
-  
+  if ("net" %in% unique(MASTER_antiviral_simulations$evaluation_level)){
+    workshop = workshop %>% select(-evaluation_level)
+    workshop = crossing(workshop,evaluation_level = c("incremental","net")) #incremental and net will be the same!
+    workshop$count_outcomes[workshop$evaluation_level == "net"] = workshop$count_outcomes[workshop$evaluation_level == "net"] * -1 #net healthcare cost will be net hosp + net outpatient - reduced LOS
+  }
+
   TRANSLATED_antiviral_simulations = TRANSLATED_antiviral_simulations[TRANSLATED_antiviral_simulations$outcome %in% c("hosp","mild"),]
   TRANSLATED_antiviral_simulations =   rbind(TRANSLATED_antiviral_simulations,workshop) %>%
     group_by(evaluation_level,setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
@@ -119,31 +122,31 @@ healthCareCostsAverted_estimator <- function(
   
   if (toggle_uncertainty == "rand"){
     #sampling cost of each outpatient visit and each hospital admission
-    for (row in 1:nrow(cost_estimates)){
-      if (cost_estimates$patient_type[row] == "inpatient"){
-        if (cost_estimates$count_outcomes[row]<0){multiplier = -1
+    for (row_num in 1:nrow(cost_estimates)){
+      if (cost_estimates$patient_type[row_num] == "inpatient"){
+        if (cost_estimates$count_outcomes[row_num]<0){multiplier = -1
         } else{multiplier = 1}
-        this_sample = data.frame(est = rnorm(abs(cost_estimates$count_outcomes[row]), mean = cost_estimates$param1[row], sd = cost_estimates$param2[row])) %>%
+        this_sample = data.frame(est = rnorm(abs(cost_estimates$count_outcomes[row_num]), mean = cost_estimates$param1[row_num], sd = cost_estimates$param2[row_num])) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
           ))
-        cost_estimates$cost[row] = sum(this_sample$est)*multiplier
+        cost_estimates$cost[row_num] = sum(this_sample$est)*multiplier
         
         if (length(TORNADO_PLOT_OVERRIDE)>0){
-          if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$inpatient}
+          if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row_num] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$inpatient}
         }
         
-      } else if (cost_estimates$patient_type[row] == "outpatient"){
-        this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes[row], meanlog = cost_estimates$param1[row], sdlog = cost_estimates$param2[row])) %>%
+      } else if (cost_estimates$patient_type[row_num] == "outpatient"){
+        this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes[row_num], meanlog = cost_estimates$param1[row_num], sdlog = cost_estimates$param2[row_num])) %>%
           mutate(est = case_when(
             est <0 ~ 0,
             TRUE ~ est
           ))
-        cost_estimates$cost[row] = sum(this_sample$est)
+        cost_estimates$cost[row_num] = sum(this_sample$est)
         
         if (length(TORNADO_PLOT_OVERRIDE)>0){
-          if("outpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$outpatient}
+          if("outpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row_num] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$outpatient}
         }
       }
       rm(this_sample)
@@ -168,8 +171,8 @@ healthCareCostsAverted_estimator <- function(
   ### Export result  ###########################################################
   healthcareCosts_breakdown = cost_estimates %>%
     select(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,patient_type,cost)
-  # ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
-  #   facet_grid(booster_vax_scenario ~.)  
+  ggplot(healthcareCosts_breakdown) + geom_col(aes(x=patient_type,y=cost)) +
+    facet_grid(booster_vax_scenario ~.)
   
   healthcareCosts_averted = healthcareCosts_breakdown %>%
     group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
