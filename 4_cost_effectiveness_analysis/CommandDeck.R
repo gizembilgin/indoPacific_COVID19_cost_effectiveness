@@ -70,8 +70,9 @@ if (length(CommandDeck_CONTROLS)>0){
   
   if("DECISION_save_result" %in% names(CommandDeck_CONTROLS))      {DECISION_save_result               = CommandDeck_CONTROLS$DECISION_save_result}
   if("DECISION_include_net" %in% names(CommandDeck_CONTROLS))      {DECISION_include_net               = CommandDeck_CONTROLS$DECISION_include_net}
-  if("DECISION_sampling_strategy" %in% names(CommandDeck_CONTROLS))             {DECISION_sampling_strategy         = CommandDeck_CONTROLS$DECISION_sampling_strategy}
+  if("DECISION_sampling_strategy" %in% names(CommandDeck_CONTROLS)){DECISION_sampling_strategy         = CommandDeck_CONTROLS$DECISION_sampling_strategy}
   
+  if("LIST_CEA_settings" %in% names(CommandDeck_CONTROLS))         {LIST_CEA_settings                  = CommandDeck_CONTROLS$LIST_CEA_settings}
   if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)){LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios}
   if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups}
   if("LIST_antiviral_types" %in% names(CommandDeck_CONTROLS))      {LIST_antiviral_types               = CommandDeck_CONTROLS$LIST_antiviral_types}
@@ -164,7 +165,7 @@ if (TOGGLE_numberOfRuns>10){
 CommandDeck_result = CommandDeck_result_long %>%
   mutate(netCost = 
            case_when(
-             evaluation_level == "incremental" ~ healthcareCostAverted + productivityLoss - interventionCost, #healthCostAverted and productivityLoss averted but interventioncost spent
+             evaluation_level == "incremental" ~ interventionCost - healthcareCostAverted - productivityLoss , #healthCostAverted and productivityLoss averted but interventioncost spent
              evaluation_level == "net" ~ healthcareCostAverted + productivityLoss + interventionCost
              ),
          cost_per_QALY_averted = netCost/QALYs,
@@ -244,7 +245,7 @@ CommandDeck_result_long = CommandDeck_result_long %>%
                values_to = "count_outcomes") %>%
   mutate(netCost =
            case_when(
-             evaluation_level == "incremental" ~ healthcareCostAverted + productivityLoss - interventionCost, #healthCostAverted and productivityLoss averted but interventioncost spent
+             evaluation_level == "incremental" ~ interventionCost - healthcareCostAverted - productivityLoss , #healthCostAverted and productivityLoss averted but interventioncost spent
              evaluation_level == "net" ~ healthcareCostAverted + productivityLoss + interventionCost
            ),
          cost_per_outcome_averted = netCost / count_outcomes,
