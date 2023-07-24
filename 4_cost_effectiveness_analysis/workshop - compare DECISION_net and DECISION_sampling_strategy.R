@@ -3,8 +3,8 @@
 ICER_plane_df = data.frame()
 tracking_times_df = data.frame()
 
-for (this_DECISION_sampling_strategy in c("empirical_distribution","single_run")){
-  for (this_DECISION_include_net in c("Y","N")){
+for (this_DECISION_include_net in c("N","Y")){
+  for (this_DECISION_sampling_strategy in c("empirical_distribution","single_run")){
     
     time.start = proc.time()[[3]]
     
@@ -22,6 +22,11 @@ for (this_DECISION_sampling_strategy in c("empirical_distribution","single_run")
         DECISION_sampling_strategy = this_DECISION_sampling_strategy,
         DECISION_include_net = this_DECISION_include_net
       )
+    
+    if (this_DECISION_include_net == "Y"){
+      CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                    list(LIST_CEA_settings = LIST_CEA_settings[!(LIST_CEA_settings == "IDN")]))
+    }
     
     source(paste(getwd(),"/CommandDeck.R",sep=""))
     
