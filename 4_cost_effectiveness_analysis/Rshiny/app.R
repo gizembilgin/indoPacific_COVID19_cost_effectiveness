@@ -1,5 +1,5 @@
 require(beepr); require(parallel); require(foreach); require(ids); require(readr); require(ggplot2); require(tidyverse); 
-require(shiny); require(gridExtra); require(beepr)
+require(shiny); require(gridExtra); require(ggpubr)
 options(scipen = 1000)
 
 
@@ -82,70 +82,82 @@ if (nrow(check)==0){stop("something wrong with CHOICES")}
 ui <- fluidPage(
   
   titlePanel("Interactive cost-effectiveness analysis of COVID-19 oral antivirals and booster doses in the Indo-Pacific"),
+  h6("This R Shiny accompanies the working paper <doi link once submitted>"),
   sidebarLayout(
     
-    sidebarPanel(
+    sidebarPanel( width = 3,
       #COMEBACK - make correspond to Figure/Table # in the paper/SM 
       selectInput("INPUT_select_figure","Select figure:",
                   choices = list("Incremental table" = 1, 
                                  "Incremental plane" = 2,
                                  "WTP curve" = 3,
-                                 "Tornado plot" = 4), selected = 1),
+                                 "Tornado plot" = 4), selected = 2),
+      selectInput("INPUT_antiviral_type",
+                  label = "Select antiviral type",
+                  choices = CHOICES_antiviral_type,
+                  selected = "nirmatrelvir_ritonavir"),
+      
       checkboxGroupInput("INPUT_include_setting","Settings to include:",
-                         choices = CHOICES_include_setting),
-      radioButtons("INPUT_antiviral_type",
-                   label = "Antiviral type?",
-                   choices = CHOICES_antiviral_type,
-                   selected = "nirmatrelvir_ritonavir"),
+                         choices = CHOICES_include_setting,
+                         selected = CHOICES_include_setting),
+
       
       
       ### Incremental table
       conditionalPanel(
         condition = "input.INPUT_select_figure == 1", 
         
-        checkboxGroupInput("INPUT1_include_booster_vax_scenario","Booster strategies to include:",
-                           choices = CHOICES_booster_vax_scenario), 
-        checkboxGroupInput("INPUT1_include_antiviral_target_group","Antiviral strategies to include:",
-                           choices = CHOICES_antiviral_target_group), 
         radioButtons("INPUT1_perspective",
                      label = "Perspective:", 
                      choices = CHOICES_perspective,
                      selected = "healthcare perspective"),
-        sliderInput("INPUT1_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 10),
-        radioButtons("INPUT1_antiviral_cost", label = h3("Antiviral cost:"),
+        radioButtons("INPUT1_antiviral_cost", label = "Antiviral cost:",
                      choices = list("low generic cost" = "low_generic_cost",
                                     "middle income cost" = "middle_income_cost", 
                                     "high income cost" = "high_income_cost"), 
                      selected = "middle_income_cost"),
         
-        checkboxGroupInput("INPUT1_include_outcomes","Include outcomes:",
+        checkboxGroupInput("INPUT1_include_outcomes","Outcome(s):",
                            choices = CHOICES_outcomes,
-                           selected = "QALYs"),
+                           selected = "QALYs"),       
+        selectInput("INPUT1_include_booster_vax_scenario","Booster strategies to include:",
+                    choices = CHOICES_booster_vax_scenario,
+                    multiple = TRUE,
+                    selected = c( "high risk adults", "no booster")), 
+        selectInput("INPUT1_include_antiviral_target_group","Antiviral strategies to include:",
+                    choices = CHOICES_antiviral_target_group,
+                    selected = "adults with comorbidities",
+                    multiple = TRUE), 
+       
+        sliderInput("INPUT1_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 5),
         radioButtons("INPUT1_include_net","Include net columns?",
                      choices = c("Yes",
                                  "No"))
       ),
-      
+
       
       ### Incremental plane
       conditionalPanel(
         condition = "input.INPUT_select_figure == 2", 
-        
-        checkboxGroupInput("INPUT2_include_booster_vax_scenario","Booster strategies to include:",
-                           choices = CHOICES_booster_vax_scenario), 
-        checkboxGroupInput("INPUT2_include_antiviral_target_group","Antiviral strategies to include:",
-                           choices = CHOICES_antiviral_target_group), 
         radioButtons("INPUT2_perspective","Perspective:",
                      choices = CHOICES_perspective),
-        sliderInput("INPUT2_discounting_rate",h4("Discounting rate (%):"),
-                    value = 3, min = 0, max = 10),
-        radioButtons("INPUT2_antiviral_cost", label = h4("Antiviral cost:"),
+        radioButtons("INPUT2_antiviral_cost", label = "Antiviral cost:",
                      choices = CHOICES_antiviral_cost, 
                      selected = "middle_income_cost"),
         radioButtons("INPUT2_include_outcomes","Outcome:",
-                     choices = CHOICES_outcomes)
-        
+                     choices = CHOICES_outcomes),      
+        selectInput("INPUT2_include_booster_vax_scenario","Booster strategies to include:",
+                           choices = CHOICES_booster_vax_scenario,
+                    multiple = TRUE,
+                    selected = c( "high risk adults", "no booster")), 
+        selectInput("INPUT2_include_antiviral_target_group","Antiviral strategies to include:",
+                           choices = CHOICES_antiviral_target_group,
+                    selected = "adults with comorbidities",
+                    multiple = TRUE), 
+        sliderInput("INPUT2_discounting_rate","Discounting rate (%):",
+                    value = 3, min = 0, max = 5)
 
+        
       ),   
       
       
@@ -153,64 +165,66 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.INPUT_select_figure == 3", 
         
+        radioButtons("INPUT3_perspective","Perspective:", CHOICES_perspective),       
         radioButtons("INPUT3_include_outcomes","Outcome:",
                      choices = CHOICES_outcomes),
-        radioButtons("INPUT3_perspective","Perspective:", CHOICES_perspective),
         
         selectInput("INPUT3_parameter_to_vary","Select parameter to vary:",
                     choices = list("Discounting rate" = 1, 
                                    "Antiviral cost" = 2,
                                    "Booster strategy" = 3,
-                                   "Antiviral Strategy" = 4), selected = 1),
+                                   "Antiviral Strategy" = 4), selected = 3),
         
         conditionalPanel( ## Vary discounting rate
           condition = "input.INPUT3_parameter_to_vary == 1",
           
+          radioButtons("INPUT3_1_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost),
           radioButtons("INPUT3_1_include_booster_vax_scenario","Booster strategy:",
                        choices = CHOICES_booster_vax_scenario), 
           radioButtons("INPUT3_1_include_antiviral_target_group","Antiviral strategy:",
                        choices = CHOICES_antiviral_target_group), 
           checkboxGroupInput("INPUT3_1_discounting_rate","Discounting rate (%):",
-                             choices = seq(0,10,by=1)),
-          radioButtons("INPUT3_1_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost)
+                             choices = seq(0,5,by=1))
           
         ),
         
         conditionalPanel( ## Vary antiviral cost
           condition = "input.INPUT3_parameter_to_vary == 2",
           
+          checkboxGroupInput("INPUT3_2_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost),
           radioButtons("INPUT3_2_include_booster_vax_scenario","Booster strategy:",
                        choices = CHOICES_booster_vax_scenario), 
           radioButtons("INPUT3_2_include_antiviral_target_group","Antiviral strategy:",
                        choices = CHOICES_antiviral_target_group), 
-          sliderInput("INPUT3_2_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 10),
-          checkboxGroupInput("INPUT3_2_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost)
+          sliderInput("INPUT3_2_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 5)
           
         ),
         
         conditionalPanel( ## Vary booster vaccine scenario
           condition = "input.INPUT3_parameter_to_vary == 3",
           
+          radioButtons("INPUT3_3_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost),
           checkboxGroupInput("INPUT3_3_include_booster_vax_scenario","Booster strategies to include:",
                              choices = CHOICES_booster_vax_scenario), 
           radioButtons("INPUT3_3_include_antiviral_target_group","Antiviral strategy:",
                        choices = CHOICES_antiviral_target_group), 
-          sliderInput("INPUT3_3_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 10),
-          radioButtons("INPUT3_3_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost)
+          sliderInput("INPUT3_3_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 5)
           
         ),
         
         conditionalPanel( ## Vary antiviral scenario
           condition = "input.INPUT3_parameter_to_vary == 4",
           
+          radioButtons("INPUT3_4_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost),
           radioButtons("INPUT3_4_include_booster_vax_scenario","Booster strategy:",
                        choices = CHOICES_booster_vax_scenario), 
           checkboxGroupInput("INPUT3_4_include_antiviral_target_group","Antiviral strategies to include:",
                              choices = CHOICES_antiviral_target_group), 
-          sliderInput("INPUT3_4_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 10),
-          radioButtons("INPUT3_4_antiviral_cost","Antiviral cost:", CHOICES_antiviral_cost)
+          sliderInput("INPUT3_4_discounting_rate","Discounting rate (%):", value = 3, min = 0, max = 5)
           
         ),
+        
+        actionButton("update_plot","Update plot"),
         
       ), 
       
@@ -234,27 +248,23 @@ ui <- fluidPage(
     ),
     
     
-    mainPanel(
+    mainPanel( width = 9,
       
       conditionalPanel(
         condition = "input.INPUT_select_figure == 1",
-        textOutput("testing_1"),
         dataTableOutput("OUTPUT_ICER_table")
       ),
       conditionalPanel(
         condition = "input.INPUT_select_figure == 2",
-        textOutput("testing_2"),
-        plotOutput("OUTPUT_incremental_plane")
+        plotOutput("OUTPUT_incremental_plane",height = "800px")
       ),
       conditionalPanel(
         condition = "input.INPUT_select_figure == 3",
-        textOutput("testing_3"),
-        plotOutput("OUTPUT_WTP_curve")
+        plotOutput("OUTPUT_WTP_curve",height = "800px")
       ),
       conditionalPanel(
         condition = "input.INPUT_select_figure == 4",
-        textOutput("testing_4"),
-        plotOutput("OUTPUT_tornado_plot")
+        plotOutput("OUTPUT_tornado_plot",height = "800px")
       )
     )
   )
@@ -333,7 +343,7 @@ server <- function(input, output, session) {
                    antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type))
       }) 
       
-      dataInput3 <- reactive({
+      dataInput3 <- eventReactive( input$update_plot, {
         if (input$INPUT3_parameter_to_vary == 1){
           CEAC_dataframe %>%
             filter(outcome == input$INPUT3_include_outcomes &
@@ -392,24 +402,7 @@ server <- function(input, output, session) {
         
       })
       
-      output$testing_1 <- renderText({
-        to_plot <- dataInput1()
-        paste("Rows:", nrow(to_plot))
-      })
-      output$testing_2 <- renderText({
-        to_plot <- dataInput2()
-        paste("Rows:", nrow(to_plot))
-      })
-      output$testing_3 <- renderText({
-        to_plot <- dataInput3()
-        paste("Rows:", nrow(to_plot))
-      
-      })
-      output$testing_4 <- renderText({
-        to_plot <- dataInput4()
-        paste("Rows:", nrow(to_plot))
-      })
-      
+   
       output$OUTPUT_ICER_table <- renderDataTable({
         to_plot <- dataInput1()
         if (nrow(to_plot)>0){
@@ -422,29 +415,21 @@ server <- function(input, output, session) {
         to_plot <- dataInput2()
         
         if (nrow(to_plot)>1){
-          ### Create plots
+
           plot_list = list()
           for (this_setting in input$INPUT_include_setting){
             to_plot_setting = to_plot[to_plot$setting == this_setting,]
-            if (length(input$INPUT2_include_antiviral_target_group)>1){
-              plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-                geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(antiviral_target_group))) +
-                labs(color="antiviral strategy")
-            } else if (length(input$INPUT2_include_booster_vax_scenario)>1){
-              plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-                geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(booster_vax_scenario))) +
-                labs(color="booster strategy")
-            } else{
-              plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-                geom_point(aes(x=netCost,y=count_outcomes))
-            }
-            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
+            
+            plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+              geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(booster_vax_scenario),shape = as.factor(antiviral_target_group))) +
+              labs(shape="antiviral strategy",
+                   color = "booster strategy") +
               ylab("QALYs averted") +
               xlab("net cost (2022 USD)") +
               theme_bw() +
               theme(legend.position="bottom") +
-              labs(title = this_setting) #+
-            #ylim(0,max(to_plot_setting$count_outcomes))
+              labs(title = this_setting) +
+              guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
             
           }
           plot_list
@@ -453,21 +438,14 @@ server <- function(input, output, session) {
           if(length(plot_list) == 2){row_num = 1; col_num = 2}
           if(length(plot_list) > 2){row_num = 2; col_num = 2}
           
-          grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
+          #grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
+          plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+          print(plot)
         }
+
         
-        ### Arrange plots based no number of settings
-        # if (length(plot_list) == 1){
-        #   plot_list
-        # } else if (length(plot_list) == 2){
-        #   ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
-        # } else if (length(plot_list) == 3){
-        #   ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
-        # } else if (length(plot_list) == 4){
-        #   ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
-        # }
-        
-      })
+      }, res = 96)
+      
       
       output$OUTPUT_WTP_curve <- renderPlot({
         
@@ -477,7 +455,7 @@ server <- function(input, output, session) {
           
           xmax = to_plot %>% 
             group_by(setting,booster_vax_scenario,antiviral_target_group) %>%
-            filter(probability >=1) %>%
+            filter(round(probability,digits=2) >=0.99) %>%
             summarise(min = min(WTP), .groups = "keep") %>%
             ungroup()
           xmax = max(xmax$min)
@@ -527,31 +505,23 @@ server <- function(input, output, session) {
               theme_bw() +
               theme(legend.position="bottom") +
               labs(title = this_setting) +
-              xlim(xmin,xmax) + 
+              #xlim(xmin,xmax) + 
               guides(colour = guide_legend(nrow = n_options_selected))
             
           }
-          plot_list
           
           if(length(plot_list) == 1){row_num = 1; col_num = 1}
           if(length(plot_list) == 2){row_num = 1; col_num = 2}
           if(length(plot_list) > 2){row_num = 2; col_num = 2}
 
-          grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
+          #grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
+          plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+          print(plot)
         }
         
-        ### Arrange plots based no number of settings
-        # if (length(plot_list) == 1){
-        #   plot_list
-        # } else if (length(plot_list) == 2){
-        #   ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
-        # } else if (length(plot_list) == 3){
-        #   ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
-        # } else if (length(plot_list) == 4){
-        #   ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
-        # }
+
         
-      })
+      }, res = 96)
       
       
       
@@ -622,7 +592,8 @@ server <- function(input, output, session) {
             if (input$INPUT4_include_GDP == "Yes"){
               plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
                 geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
-                annotate("text", x = 4, y = this_setting_GDP*0.8, label = "GDP per capita")
+                annotate("text", x = 4, y = this_setting_GDP*0.9, label = "GDP per capita",
+                         angle = 90)
             }
           }
           plot_list
@@ -631,21 +602,12 @@ server <- function(input, output, session) {
           if(length(plot_list) == 2){row_num = 1; col_num = 2}
           if(length(plot_list) > 2){row_num = 2; col_num = 2}
           
-          grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
+          #grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
+          plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+          print(plot)
         }
         
-        ### Arrange plots based no number of settings
-        # if (length(plot_list) == 1){
-        #   plot_list
-        # } else if (length(plot_list) == 2){
-        #   ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
-        # } else if (length(plot_list) == 3){
-        #   ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
-        # } else if (length(plot_list) == 4){
-        #   ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
-        # }
-        
-      })
+      }, res = 96)
 
   
 }
