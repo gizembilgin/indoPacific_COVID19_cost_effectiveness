@@ -1,19 +1,24 @@
 options(scipen = 1000); require(ggpubr)
 
 
-INPUT_include_setting = c("PNG","TLS")
+INPUT_include_setting = c("Papua New Guinea")
 INPUT_include_outcome = "QALYs"
-INPUT_perspective = "healthcare"
+INPUT_perspective = "healthcare perspective"
 
 INPUT_parameter_to_vary = "booster_strategy" 
 
 #R SHINY conditional UI, check boxes for one and button for all others
-INPUT_discounting_rate = 0.03
+INPUT_discounting_rate = 3
 INPUT_antiviral_cost = "low_generic_cost"
-INPUT_include_booster_vax_scenario = "booster to all high-risk adults previously willing to be vaccinated"
-INPUT_include_antiviral_type = c("nirmatrelvir_ritonavir 2023-01-01")
+INPUT_include_booster_vax_scenario = "high risk adults"
+# [1] "all adults who have previously completed their primary schedule but have not recieved a booster"      
+# [2] "high-risk adults who have previously completed their primary schedule but have not recieved a booster"
+# [3] "all adults"                                                                                           
+# [4] "high risk adults"                                                                                     
+# [5] "no booster
+INPUT_include_antiviral_type = c("nirmatrelvir_ritonavir")
 INPUT_include_antiviral_type = c(INPUT_include_antiviral_type,"no antiviral")
-INPUT_include_antiviral_target_group = c("adults_with_comorbidities")
+INPUT_include_antiviral_target_group = c("adults with comorbidities")
 
 
 
@@ -28,7 +33,7 @@ this_workshop = CEAC_dataframe %>% filter(outcome == INPUT_include_outcomes &
                                             antiviral_target_group %in% INPUT_include_antiviral_target_group)
 xmax = this_workshop %>% 
   group_by(setting,booster_vax_scenario,antiviral_target_group) %>%
-  filter(probability >=1) %>%
+  filter(round(probability,digits=2) >=0.99) %>%
   summarise(min = min(WTP), .groups = "keep") %>%
   ungroup()
 xmax = max(xmax$min)

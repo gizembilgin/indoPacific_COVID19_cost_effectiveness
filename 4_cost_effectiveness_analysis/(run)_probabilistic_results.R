@@ -20,8 +20,8 @@ for (this_discounting_rate in seq(0,0.05,by=0.01)){
           
           TOGGLE_longCOVID = "off",
           TOGGLE_uncertainty = "rand",
-          TOGGLE_numberOfRuns = 100, #1000 eventually
-          TOGGLE_clusterNumber = 5,  #4 or 5? test and time! (workshop - timing probabilistic model runs by number of cores)
+          TOGGLE_numberOfRuns = 10, #1000 eventually
+          TOGGLE_clusterNumber = 2,  #4 or 5? test and time! (workshop - timing probabilistic model runs by number of cores)
           DECISION_save_result = "N"
         )
 
@@ -106,10 +106,17 @@ CommandDeck_result = probab_CommandDeck_result %>%
   ) 
 CommandDeck_result$outcome[CommandDeck_result$outcome == "QALY"] <- "QALYs"
 
+CEAC_dataframe = CommandDeck_result_long %>%
+  filter(evaluation_level == "incremental" &
+           cost_per_outcome_averted != -Inf &
+           cost_per_outcome_averted != Inf) %>%
+  group_by(outcome,setting,perspective,discounting_rate,antiviral_cost,booster_vax_scenario,antiviral_type,antiviral_target_group) %>%
+  arrange(cost_per_outcome_averted) %>%
+  mutate(row_number = row_number(),
+         probability = row_number/TOGGLE_numberOfRuns) %>%
+  rename(WTP = cost_per_outcome_averted) %>%
+  select(outcome,setting,perspective,discounting_rate,antiviral_cost,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP)
 
-
-
-source(paste(getwd(),"/(run)_cost_acceptibility_by_WTP.R",sep=""),local=TRUE)
 
 probab_result = list(CommandDeck_result_long = CommandDeck_result_long,
                      CommandDeck_result = CommandDeck_result,
