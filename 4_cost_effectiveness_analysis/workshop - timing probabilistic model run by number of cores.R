@@ -1,39 +1,104 @@
 
-this_perspective = "healthcare"
-this_antiviral_cost_scenario = "middle_income_cost"
-this_discounting_rate = 0.03
 
-timing_df = data.frame()
+timing_df = ICER_plane_df = data.frame()
 
-for (num_cores in c(5,4,3,2,1)){
-  if (!(num_cores %in% timing_df$cores)){
-    time.start=proc.time()[[3]] #let's see how long this runs for
-    
-    CommandDeck_CONTROLS =
-      list(
-        LIST_perspectives = this_perspective,
-        LIST_discounting_rate = this_discounting_rate,
-        LIST_antiviral_cost_scenario = this_antiviral_cost_scenario,
-        
-        TOGGLE_longCOVID = "off",
-        TOGGLE_uncertainty = "rand",
-        TOGGLE_numberOfRuns = 100, #1000 eventually
-        TOGGLE_clusterNumber = num_cores,  #4 or 5? test and time!
-        DECISION_save_result = "N"
-      )
-    
-    source(paste(getwd(),"/CommandDeck.R",sep=""))
-    
-    time.end=proc.time()[[3]]
-    
-    time_this_run = time.end-time.start
-    this_row = data.frame(cores = num_cores, 
-                          time_seconds = time_this_run,
-                          time_minutes = time_this_run/60)
-    timing_df = rbind(timing_df,this_row)
+for (this_DECISION_include_net in c("N","Y")){
+  for (num_cores in c(2,3,4,5)){
+    if (!(num_cores %in% timing_df$cores & this_DECISION_include_net %in% timing_df$DECISION_include_net)){
+      time.start=proc.time()[[3]] #let's see how long this runs for
+      
+      CommandDeck_CONTROLS =
+        list(
+          LIST_perspectives = list("healthcare","societal"),
+          LIST_discounting_rate = c(0.00,0.03,0.05),
+          LIST_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost", "high_income_cost"),
+          
+          TOGGLE_longCOVID = "off",
+          TOGGLE_uncertainty = "rand",
+          TOGGLE_numberOfRuns = 120, #1000 eventually
+          TOGGLE_clusterNumber = num_cores,  #4 or 5? test and time!
+          DECISION_save_result = "N",
+          DECISION_sampling_strategy = "single_run",
+          DECISION_include_net = this_DECISION_include_net
+        )
+      
+      if (this_DECISION_include_net == "Y"){
+        CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                      list(LIST_CEA_settings = LIST_CEA_settings[!(LIST_CEA_settings == "IDN")]))
+      }
+      
+      source(paste(getwd(),"/CommandDeck.R",sep=""))
+      
+      time.end=proc.time()[[3]]
+      time_this_run = time.end-time.start
+      this_row = data.frame(DECISION_include_net = this_DECISION_include_net,
+                            cores = num_cores, 
+                            time_seconds = time_this_run,
+                            time_minutes = time_this_run/60,
+                            time_hours   = time_this_run/(60*60))
+      
+      CommandDeck_result_long = CommandDeck_result_long %>%
+        mutate( DECISION_include_net = this_DECISION_include_net)
+      
+      ICER_plane_df = rbind(ICER_plane_df, CommandDeck_result_long)
+      timing_df = rbind(timing_df,this_row)
+    }
   }
 }
-
+CommandDeck_CONTROLS = list()
+beep()
 # cores time_seconds time_minutes
 # 5       962.73     16.04550
 # 4      1075.00     17.91667
+
+# DECISION_include_net cores time_seconds time_minutes time_hours
+# 1                    N     5     10322.01     172.0335   2.867225 -> 48 hours for 1000
+# 2                    N     4      9466.69     157.7782   2.629636 -> 44 hours for 1000
+# 3                    N     3      8705.08     145.0847   2.418078
+
+
+
+require(ggpubr);options(scipen = 1000)
+to_plot = ICER_plane_df %>%
+  filter(evaluation_level == "incremental") %>%
+  filter(outcome == "QALYs" &
+           booster_vax_scenario %in% c("booster to all high-risk adults previously willing to be vaccinated") &
+           antiviral_type %in% c("nirmatrelvir_ritonavir 2023-01-01") &
+           antiviral_target_group == "adults_with_comorbidities") %>%
+  mutate(label = paste(DECISION_include_net))
+
+ggplot(to_plot[to_plot$setting == "TLS",]) +
+  geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(label))) +
+  ylab("QALYs averted") +
+  xlab("net cost (2022 USD)") +
+  theme_bw() + 
+  theme(legend.position="bottom") +
+  facet_grid(label ~.)
+
+plot_list = list()
+for (this_setting in unique(ICER_plane_df$setting)){
+  to_plot_setting = to_plot[to_plot$setting == this_setting,]
+  
+  plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+    geom_point(aes(x=netCost,y=count_outcomes,color=as.factor(label))) 
+  
+  plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
+    ylab("QALYs averted") +
+    xlab("net cost (2022 USD)") +
+    theme_bw() + 
+    theme(legend.position="bottom") +
+    labs(title = this_setting) +
+    ylim(0,max(to_plot_setting$count_outcomes))
+  
+}
+
+### Arrange plots based no number of settings
+if (length(plot_list) == 1){
+  plot_list
+} else if (length(plot_list) == 2){
+  ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
+} else if (length(plot_list) == 3){
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
+} else if (length(plot_list) == 4){
+  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
+}
