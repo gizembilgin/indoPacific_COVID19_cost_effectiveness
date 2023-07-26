@@ -92,12 +92,12 @@ CEAC_dataframe = CommandDeck_result_long %>%
   filter(evaluation_level == "incremental" &
            cost_per_outcome_averted != -Inf &
            cost_per_outcome_averted != Inf) %>%
-  group_by(outcome,setting,perspective,discounting_rate,antiviral_cost,booster_vax_scenario,antiviral_type,antiviral_target_group) %>%
+  group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group) %>%
   arrange(cost_per_outcome_averted) %>%
   mutate(row_number = row_number(),
          probability = row_number/TOGGLE_numberOfRuns) %>%
   rename(WTP = cost_per_outcome_averted) %>%
-  select(outcome,setting,perspective,discounting_rate,antiviral_cost,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP)
+  select(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP)
 
 
 probab_result = list(CommandDeck_result_long = CommandDeck_result_long,
