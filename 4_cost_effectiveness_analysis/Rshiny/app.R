@@ -31,58 +31,59 @@ load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
 
 
 ##### CONFIGURE CHOICES ########################################################
-CHOICES_include_setting = c("Fiji", "Indonesia", "Papua New Guinea", "Timor-Leste")
-CHOICES_antiviral_type = list("molunipiravir" = "molunipiravir",
-                              "nirmatrelvir_ritonavir" = "nirmatrelvir_ritonavir")
-CHOICES_perspective = list("healthcare perspective" = "healthcare perspective",
-                           "societal perspective" = "societal perspective" )
-CHOICES_antiviral_cost = list("low generic cost" = "low_generic_cost",
-                              "middle income cost" = "middle_income_cost", 
-                              "high income cost" = "high_income_cost")
-CHOICES_outcomes = list("QALYs" = "QALYs",
-                        "death" = "death",
-                        "hosp" = "hosp")
-CHOICES_booster_vax_scenario = c("high risk adults"
-                                 , "all adults"
-                                 , "all adults who have previously completed their primary schedule but have not recieved a booster"
-                                 , "high-risk adults who have previously completed their primary schedule but have not recieved a booster"
-                                 , "no booster"
-)
-CHOICES_antiviral_target_group = c("all adults", 
-                                   "adults with comorbidities", 
-                                   "unvaccinated adults",
-                                   "no antiviral")
-CHOICES_discounting = list("0%" = 0,
-                           "1%" = 1,
-                           "2%" = 2,
-                           "3%" = 3,
-                           "4%" = 4,
-                           "5%" = 5)
-CHOICES_tornado_plot_parameters = c(
-  "Antiviral schedule price ($25-530)",
-  "Antiviral wastage (0-60%)"          ,
-  "Inpatient costs (±50%)"              ,
-  "Discounting rate (0-5%)"              ,
-  "RAT price ($1-5)"                      ,
-  "RAT wastage factor (3-12)"              ,
-  "Cost per extra LOS (±50%)"               ,
-  "Reduced LOS (±50%)"                       ,
-  "Antiviral operational costs (±50%)"       ,
-  "Booster operational cost ($0.21-$13.04)"  ,
-  "Long COVID (off/on)"                      ,
-  "Booster price ($0.50-$3.00)"              ,
-  "Booster wastage (0-50%)"                  ,
-  "Outpatient costs (±50%)"                  ,
-  "Injection Equipment wastage (0-50%)"      ,
-  "Injection Equipment price ($0.025-$0.050)"
+CHOICES = list(
+  antiviral_cost = list("low generic cost" = "low_generic_cost",
+                                "middle income cost" = "middle_income_cost", 
+                                "high income cost" = "high_income_cost"),
+  antiviral_target_group = c("all adults", 
+                             "adults with comorbidities", 
+                             "unvaccinated adults",
+                             "no antiviral"),
+  antiviral_type = list("molunipiravir" = "molunipiravir",
+                        "nirmatrelvir_ritonavir" = "nirmatrelvir_ritonavir"),
+  booster_vax_scenario = c("high risk adults"
+                           , "all adults"
+                           , "all adults who have previously completed their primary schedule but have not recieved a booster"
+                           , "high-risk adults who have previously completed their primary schedule but have not recieved a booster"
+                           , "no booster"),
+  discounting = list("0%" = 0,
+                     "1%" = 1,
+                     "2%" = 2,
+                     "3%" = 3,
+                     "4%" = 4,
+                     "5%" = 5),
+  outcome = list("QALYs" = "QALYs",
+                  "death" = "death",
+                  "hosp" = "hosp"),
+  perspective = list("healthcare perspective" = "healthcare perspective",
+                     "societal perspective" = "societal perspective" ),
+  setting = c("Fiji", "Indonesia", "Papua New Guinea", "Timor-Leste"),
+  tornado_plot_parameters = c(
+    "Antiviral schedule price ($25-530)",
+    "Antiviral wastage (0-60%)"          ,
+    "Inpatient costs (±50%)"              ,
+    "Discounting rate (0-5%)"              ,
+    "RAT price ($1-5)"                      ,
+    "RAT wastage factor (3-12)"              ,
+    "Cost per extra LOS (±50%)"               ,
+    "Reduced LOS (±50%)"                       ,
+    "Antiviral operational costs (±50%)"       ,
+    "Booster operational cost ($0.21-$13.04)"  ,
+    "Long COVID (off/on)"                      ,
+    "Booster price ($0.50-$3.00)"              ,
+    "Booster wastage (0-50%)"                  ,
+    "Outpatient costs (±50%)"                  ,
+    "Injection Equipment wastage (0-50%)"      ,
+    "Injection Equipment price ($0.025-$0.050)"
+  )
 )
 
 check = CommandDeck_result_long %>%
-  filter(setting %in% CHOICES_include_setting &
-           booster_vax_scenario %in% CHOICES_booster_vax_scenario & 
-           antiviral_target_group %in% CHOICES_antiviral_target_group & 
-           antiviral_type %in% CHOICES_antiviral_type &
-           outcome %in% CHOICES_outcomes &
+  filter(setting %in% CHOICES$setting &
+           booster_vax_scenario %in% CHOICES$booster_vax_scenario & 
+           antiviral_target_group %in% CHOICES$antiviral_target_group & 
+           antiviral_type %in% CHOICES$antiviral_type &
+           outcome %in% CHOICES$outcome &
            perspective %in% c("healthcare perspective","societal perspective") )
 if (nrow(check)==0){stop("something wrong with CHOICES")}
 ################################################################################
@@ -106,15 +107,15 @@ ui <- fluidPage(
                                              "Deterministic sensitivity analysis" = 2), 
                               selected = 1),
                   checkboxGroupInput("INPUT_include_setting","Settings to include:",
-                                     choices = CHOICES_include_setting,
-                                     selected = CHOICES_include_setting),
+                                     choices = CHOICES$setting,
+                                     selected = CHOICES$setting),
                   radioButtons("INPUT_antiviral_type",
                                label = "Antiviral type:",
-                               choices = CHOICES_antiviral_type,
+                               choices = CHOICES$antiviral_type,
                                selected = "nirmatrelvir_ritonavir"),
                   radioButtons("INPUT_perspective",
                                label = "Perspective:", 
-                               choices = CHOICES_perspective,
+                               choices = CHOICES$perspective,
                                selected = "healthcare perspective"),
                   
                   ### Probabilistic sensitivity analysis
@@ -122,23 +123,23 @@ ui <- fluidPage(
                     condition = "input.INPUT_select_sentitivity_analysis == 1", 
                     
                     checkboxGroupInput("INPUT1_antiviral_cost", label = "Antiviral cost:",
-                                 choices = CHOICES_antiviral_cost, 
+                                 choices = CHOICES$antiviral_cost, 
                                  selected = "middle_income_cost"),
                     selectInput("INPUT1_include_outcomes","Outcome(s):",
-                                choices = CHOICES_outcomes,
+                                choices = CHOICES$outcome,
                                 multiple = TRUE,
                                 selected = "QALYs"), 
                     selectInput("INPUT1_include_booster_vax_scenario","Booster strategies to include:",
-                                choices = CHOICES_booster_vax_scenario,
+                                choices = CHOICES$booster_vax_scenario,
                                 multiple = TRUE,
                                 selected = c( "all adults","high risk adults", "no booster")), 
                     selectInput("INPUT1_include_antiviral_target_group","Antiviral strategies to include:",
-                                choices = CHOICES_antiviral_target_group,
+                                choices = CHOICES$antiviral_target_group,
                                 selected = "adults with comorbidities",
                                 multiple = TRUE), 
                     selectInput("INPUT1_discounting_rate",
                                 "Discounting rate (%):",
-                                choices = CHOICES_discounting,
+                                choices = CHOICES$discounting,
                                 selected = 3,
                                 multiple = TRUE),
 
@@ -160,10 +161,10 @@ ui <- fluidPage(
                   conditionalPanel(
                     condition = "input.INPUT_select_sentitivity_analysis == 2", 
                       radioButtons("INPUT4_include_outcomes","Outcome:",
-                                   choices = CHOICES_outcomes),
+                                   choices = CHOICES$outcome),
                       checkboxGroupInput("INPUT4_parameters","Parameters to display:",
-                                         choices = CHOICES_tornado_plot_parameters,
-                                         selected = CHOICES_tornado_plot_parameters ), 
+                                         choices = CHOICES$tornado_plot_parameters,
+                                         selected = CHOICES$tornado_plot_parameters ), 
                       radioButtons("INPUT4_include_GDP","Include GDP as a line?",
                                    choices = c("Yes",
                                                "No")),
