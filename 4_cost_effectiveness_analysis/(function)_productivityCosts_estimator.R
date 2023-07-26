@@ -4,20 +4,19 @@
 productivityCosts_estimator <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
-    toggle_discounting_rate = 0.03, 
+    list_discounting_rate = 0.03, 
     this_risk_group = "adults_with_comorbidities"
 ){
   
   ### PART ONE: loading productivity loss estimates#############################
-  if (!(toggle_discounting_rate %in% seq(0,0.1,by = 0.01))){
+  if (length(list_discounting_rate[!list_discounting_rate %in% seq(0,0.1,by = 0.01)])>0){
     stop('Go back to (mech shop) productivity loss and ensure that productivity losses by this discounting rate are calculated')
   }
   
   load(file = "2_inputs/productivity_loss_reference_df.Rdata")
   productivity_loss_df <- productivity_loss_reference_df %>%
-    filter(discounting_rate == toggle_discounting_rate) %>%
-    ungroup() %>%
-    select(-discounting_rate)
+    filter(discounting_rate %in% list_discounting_rate) %>%
+    ungroup() 
   ##############################################################################
   
   
@@ -38,18 +37,19 @@ productivityCosts_estimator <- function(
   
   productivity_loss_breakdown = TRANSLATED_antiviral_simulations %>%
     filter(outcome %in% unique(productivity_loss_df$outcome)) %>%
-    left_join(productivity_loss_df, by = c("setting","age_group","outcome")) %>%
+    left_join(productivity_loss_df, by = c("setting","age_group","outcome"),
+              relationship = "many-to-many") %>% #if length(list_discounting_rate)>1
     mutate(productivity_loss = productivity_loss * value,
            productivity_loss_category = case_when(
              outcome == "death" ~ "death",
              TRUE ~ "illness")) %>%
-    group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group,productivity_loss_category) %>%
+    group_by(evaluation_level,discounting_rate,setting,booster_vax_scenario,intervention,intervention_target_group,productivity_loss_category) %>%
     summarise(cost = sum(productivity_loss), .groups = "keep")
   ##############################################################################
   
 
   productivity_loss = productivity_loss_breakdown %>%
-    group_by(evaluation_level,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(evaluation_level,discounting_rate,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(cost = sum(cost), .groups = "keep")
   
   return(productivity_loss)

@@ -6,14 +6,14 @@ simulationSummary <- function(DECISION_include_net,
                             healthcareCostEstimation,
                             productivityCosts)
 {
-  colnames(outcomesAvertedEstimation$outcomes_averted)
+  #colnames(outcomesAvertedEstimation$outcomes_averted)
   #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"   "antiviral_type"     "antiviral_target_group" "count_outcomes" (12/07/2023)
   #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"    "intervention"          "intervention_target_group "count_outcomes" (14/07/2023) 
   
-  colnames(interventionCost_estimates) #need to copy for both evaluation_levels
+  #colnames(interventionCost_estimates) #need to copy for both evaluation_levels
   #"setting"                   "booster_vax_scenario"      "intervention"              "intervention_target_group" "cost"  
   
-  colnames(healthcareCostEstimation$healthcareCosts_averted); colnames(productivityCosts) #both the same!
+  #colnames(healthcareCostEstimation$healthcareCosts_averted); colnames(productivityCosts) #both the same!
   #"evaluation_level" "setting"                   "booster_vax_scenario"      "intervention"              "intervention_target_group" "cost"   
   
   
@@ -27,7 +27,8 @@ simulationSummary <- function(DECISION_include_net,
                         intervention = "no intervention",
                         intervention_target_group = NA,
                         cost = 0,
-                        evaluation_level = "net")
+                        evaluation_level = "net",
+                        antiviral_cost_scenario = NA)
     Combined_0 = rbind(Combined_0,null_row)
   }
   Combined_0 = Combined_0%>%
@@ -38,7 +39,7 @@ simulationSummary <- function(DECISION_include_net,
               relationship = "many-to-many") #because of outcomes
   if (nrow(productivityCosts)>0){
     Combined_0 = Combined_0 %>%
-      left_join(productivityCosts, by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group)) %>%
+      left_join(productivityCosts, by = join_by(evaluation_level,discounting_rate,setting, booster_vax_scenario, intervention, intervention_target_group)) %>%
       rename(productivityLoss = cost)
   } else{
     Combined_0 = Combined_0 %>%
@@ -60,7 +61,7 @@ simulationSummary <- function(DECISION_include_net,
       filter(intervention == "booster dose 2023-03-01") %>%
       mutate(antiviral_type = "no antiviral",
              antiviral_target_group = NA)  %>%
-      select(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,
+      select(evaluation_level,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,
              interventionCost, healthcareCostAverted, productivityLoss,
              outcome,count_outcomes)
     Combined = rbind(Combined,this_row)
@@ -69,10 +70,18 @@ simulationSummary <- function(DECISION_include_net,
     for (this_antiviral in unique(Combined_1$intervention[Combined_1$intervention != "booster dose 2023-03-01"])){     # cycle through the types of antivirals
       for (this_antiviral_target in unique(Combined_1$intervention_target_group)){                                     # cycle through antiviral target groups
         
+        #booster component
+        booster_component =  Combined_1 %>% 
+          filter(intervention %in% c("booster dose 2023-03-01")) %>%
+          select(-antiviral_cost_scenario)
+        booster_component = crossing(booster_component,
+                            antiviral_cost_scenario = unique(Combined_1$antiviral_cost_scenario[is.na(Combined_1$antiviral_cost_scenario)==FALSE]))
+        
         this_row = Combined_1 %>% 
-          filter(intervention %in% c("booster dose 2023-03-01",this_antiviral)) %>%
+          filter(intervention %in% this_antiviral) 
+        this_row = rbind(this_row,booster_component) %>%
           filter(intervention_target_group == this_antiviral_target | intervention == "booster dose 2023-03-01") %>%
-          group_by(evaluation_level,setting,booster_vax_scenario,outcome) %>%
+          group_by(evaluation_level,discounting_rate,antiviral_cost_scenario,setting,booster_vax_scenario,outcome) %>%
           summarise(interventionCost = sum(interventionCost),
                     healthcareCostAverted = sum(healthcareCostAverted),
                     count_outcomes = sum(count_outcomes),
@@ -80,7 +89,7 @@ simulationSummary <- function(DECISION_include_net,
                     .groups = "keep") %>%
           mutate(antiviral_type = this_antiviral,
                  antiviral_target_group = this_antiviral_target) %>%
-          select(evaluation_level,setting,booster_vax_scenario,antiviral_type,antiviral_target_group,
+          select(evaluation_level,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,
                  interventionCost, healthcareCostAverted,productivityLoss,
                  outcome,count_outcomes)
         Combined = rbind(Combined,this_row)
@@ -113,12 +122,12 @@ simulationSummary <- function(DECISION_include_net,
     null_row = Combined %>% 
       filter(booster_vax_scenario == "no booster dose" & antiviral_type == "no antiviral") %>%
       ungroup() %>%
-      select(-booster_vax_scenario,-antiviral_type,-antiviral_target_group) %>%
+      select(-booster_vax_scenario,-antiviral_type,-antiviral_target_group,-antiviral_cost_scenario) %>%
       rename(baseline = value)
     
     workshop_incremental = Combined %>%
       rename(net = value) %>%
-      left_join(null_row,by = join_by(setting, evaluation_level, parameter)) %>%
+      left_join(null_row,by = join_by(setting, discounting_rate,evaluation_level, parameter)) %>%
       mutate(incremental_derived = baseline - net) %>%
       ungroup() %>%
       mutate(evaluation_level = "incremental") %>%
@@ -131,7 +140,7 @@ simulationSummary <- function(DECISION_include_net,
   }
 
  
-  rm(Combined_0,Combined_1,Combined_net,this_row)
+  rm(Combined_0)
   
   return(Combined)
 }

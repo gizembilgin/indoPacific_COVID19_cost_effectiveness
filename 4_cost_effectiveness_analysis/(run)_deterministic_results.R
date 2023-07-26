@@ -53,8 +53,8 @@ queue = list(
   
   
   ## (3/3) other toggles
-  list(TOGGLE_discounting_rate = 0.0, label = "Discounting rate (0-5%)",direction = "lower"),
-  list(TOGGLE_discounting_rate = 0.05, label = "Discounting rate (0-5%)",direction = "upper"),
+  list(LIST_discounting_rate = 0.0, label = "Discounting rate (0-5%)",direction = "lower"),
+  list(LIST_discounting_rate = 0.05, label = "Discounting rate (0-5%)",direction = "upper"),
   
   list(TOGGLE_longCOVID = "off", label = "Long COVID (off/on)",direction = "lower"),
   list(TOGGLE_longCOVID = "on", label = "Long COVID (off/on)",direction = "upper")
@@ -65,37 +65,35 @@ tornado_result = data.frame()
 CommandDeck_CONTROLS = list()
 
 for (this_antiviral_type in c("molunipiravir","nirmatrelvir_ritonavir")){
-  for (this_perspective in c("healthcare","societal")){
-    for (ticket in 1:length(queue)){
-      CommandDeck_CONTROLS = queue[[ticket]]
-      CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                    list(
-                                      LIST_booster_vax_scenarios = list(
-                                        "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
-                                      ),
-                                      LIST_antiviral_elig_groups = list("adults_with_comorbidities"),
-                                      LIST_antiviral_types = list(this_antiviral_type),
-                                      TOGGLE_uncertainty = "fixed",
-                                      TOGGLE_antiviral_cost_scenario = "middle_income_cost",
-                                      TOGGLE_perspective = this_perspective
-                                    )
-      )
-      
-      if(!("TOGGLE_discounting_rate" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                                                                                      list(TOGGLE_discounting_rate = 0.03))}
-      if(!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                                                                               list(TOGGLE_longCOVID = "off"))}
-      
-      source(paste(getwd(),"/CommandDeck.R",sep=""))
-      
-      rows = CommandDeck_result %>%
-        filter(variable_type == "ICER") %>%
-        mutate(label = CommandDeck_CONTROLS$label,
-               direction = CommandDeck_CONTROLS$direction,
-               perspective = this_perspective) 
-      tornado_result = rbind(tornado_result,rows)
-      
-    }
+  for (ticket in 1:length(queue)){
+    CommandDeck_CONTROLS = queue[[ticket]]
+    CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                  list(
+                                    DECISION_include_net = "N",
+                                    LIST_booster_vax_scenarios = list(
+                                      "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
+                                    ),
+                                    LIST_antiviral_elig_groups = list("adults_with_comorbidities"),
+                                    LIST_antiviral_types = list(this_antiviral_type),
+                                    TOGGLE_uncertainty = "fixed",
+                                    LIST_antiviral_cost_scenario = "middle_income_cost",
+                                    LIST_perspectives = c("healthcare","societal")
+                                  )
+    )
+    
+    if(!("LIST_discounting_rate" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                                                                                    list(LIST_discounting_rate = 0.03))}
+    if(!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+                                                                                             list(TOGGLE_longCOVID = "off"))}
+    
+    source(paste(getwd(),"/CommandDeck.R",sep=""))
+    
+    rows = CommandDeck_result %>%
+      filter(variable_type == "ICER") %>%
+      mutate(label = CommandDeck_CONTROLS$label,
+             direction = CommandDeck_CONTROLS$direction) 
+    tornado_result = rbind(tornado_result,rows)
+    
   }
 }
 

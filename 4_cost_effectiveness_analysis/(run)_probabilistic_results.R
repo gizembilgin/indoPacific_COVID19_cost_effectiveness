@@ -5,42 +5,24 @@
 ##Note: will use LIST_CEA_settings,LIST_booster_vax_scenarios,LIST_antiviral_elig_groups,LIST_antiviral_types from CommandDeck (line 15)
 
 
-probab_CommandDeck_result_long = probab_CommandDeck_result = data.frame()
+CommandDeck_CONTROLS =
+  list(
+    LIST_perspectives = c("healthcare","societal"),
+    LIST_discounting_rate = seq(0,0.05,by=0.01),
+    LIST_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost", "high_income_cost"),
+    
+    TOGGLE_longCOVID = "off",
+    TOGGLE_uncertainty = "rand",
+    TOGGLE_numberOfRuns = 10, #1000 eventually
+    TOGGLE_clusterNumber = 2,  #4 or 5? test and time! (workshop - timing probabilistic model runs by number of cores)
+    DECISION_save_result = "N"
+  )
 
-#66 runs in total (2*11*3), need to time one run!
-for (this_discounting_rate in seq(0,0.05,by=0.01)){
-  for (this_perspective in c("healthcare","societal")){
-    for (this_antiviral_cost_scenario in c("low_generic_cost","middle_income_cost", "high_income_cost")){
-  
-      CommandDeck_CONTROLS =
-        list(
-          TOGGLE_perspective = this_perspective,
-          TOGGLE_discounting_rate = this_discounting_rate,
-          TOGGLE_antiviral_cost_scenario = this_antiviral_cost_scenario,
-          
-          TOGGLE_longCOVID = "off",
-          TOGGLE_uncertainty = "rand",
-          TOGGLE_numberOfRuns = 10, #1000 eventually
-          TOGGLE_clusterNumber = 2,  #4 or 5? test and time! (workshop - timing probabilistic model runs by number of cores)
-          DECISION_save_result = "N"
-        )
-
-      source(paste(getwd(),"/CommandDeck.R",sep=""))
-      
-      probab_CommandDeck_result = rbind(probab_CommandDeck_result,
-                                        CommandDeck_result)
-      
-      probab_CommandDeck_result_long = rbind(probab_CommandDeck_result_long,
-                                             CommandDeck_result_long)
-      
-    }
-  }
-}
-
+source(paste(getwd(),"/CommandDeck.R",sep=""))
 CommandDeck_CONTROLS = list()
 
 # aligning results with buttons
-CommandDeck_result_long = probab_CommandDeck_result_long %>%
+CommandDeck_result_long = CommandDeck_result_long %>%
   filter(evaluation_level == "incremental") %>%
   mutate(
     setting = case_when(
@@ -70,7 +52,7 @@ CommandDeck_result_long = probab_CommandDeck_result_long %>%
     discounting_rate = discounting_rate * 100
   ) 
 
-CommandDeck_result = probab_CommandDeck_result %>%
+CommandDeck_result = CommandDeck_result %>%
   filter(evaluation_level == "incremental") %>%
   mutate(
     setting = case_when(

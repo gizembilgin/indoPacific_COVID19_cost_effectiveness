@@ -2,6 +2,7 @@ CEA_worker <- function(
     numberOfRunsPerCluster,
     CEA_risk_group,
     LIST_CEA_settings,
+    LIST_perspectives,
     LIST_booster_vax_scenarios,
     LIST_antiviral_elig_groups,
     LIST_antiviral_types,
@@ -9,8 +10,8 @@ CEA_worker <- function(
     DECISION_include_net,
     TOGGLE_uncertainty,
     TOGGLE_longCOVID,
-    TOGGLE_discounting_rate,
-    TOGGLE_antiviral_cost_scenario,
+    LIST_discounting_rate,
+    LIST_antiviral_cost_scenario,
     TORNADO_PLOT_OVERRIDE
 ){
   
@@ -44,7 +45,7 @@ CEA_worker <- function(
     outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings_mod,
                                                            MASTER_antiviral_simulations,
                                                            toggle_longCOVID = TOGGLE_longCOVID,
-                                                           toggle_discounting_rate = TOGGLE_discounting_rate)
+                                                           list_discounting_rate = as.numeric(LIST_discounting_rate))
     # 0.63 seconds
     #list including QALY_breakdown by evaluation_level,setting,outcome_source,booster_vax_scenario,antiviral_type,antiviral_target_group,count_outcomes; and 
     #               outcomes_averted by evaluation_level,setting,outcome {QALYs,deaths,hospitalisations},booster_vax_scenario,antiviral_type,antiviral_target_group,count_outcomes
@@ -52,7 +53,7 @@ CEA_worker <- function(
     interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings_mod,
                                                              MASTER_antiviral_simulations,
                                                              TORNADO_PLOT_OVERRIDE,
-                                                             antiviral_cost_scenario = TOGGLE_antiviral_cost_scenario,
+                                                             LIST_antiviral_cost_scenario,
                                                              toggle_uncertainty = TOGGLE_uncertainty)
     # 217.43  seconds for all combinations, 3.06 for one booster + one antiviral
     
@@ -62,11 +63,11 @@ CEA_worker <- function(
                                                                  toggle_uncertainty = TOGGLE_uncertainty)
     # 7.82 seconds for all combinations, 0.39 for one booster + one antiviral
     
-    if (TOGGLE_perspective == "societal"){
+    if ("societal" %in% LIST_perspectives){
       productivityCosts <- productivityCosts_estimator (
         LIST_CEA_settings_mod,
         MASTER_antiviral_simulations,
-        toggle_discounting_rate = TOGGLE_discounting_rate,
+        list_discounting_rate = as.numeric(LIST_discounting_rate),
         this_risk_group = CEA_risk_group
       )
     } else{
@@ -81,9 +82,25 @@ CEA_worker <- function(
                                      healthcareCostEstimation,
                                      productivityCosts) %>%
       mutate(run_ID = random_id(n = 1, bytes = 8))
+    
+    #expand out to perspectives
+    this_result = crossing(this_result,perspective = LIST_perspectives) %>%
+      mutate(productivityLoss = case_when(
+        perspective == "healthcare" ~ 0,
+        perspective == "societal" ~ productivityLoss
+      ))
+    
     CommandDeck_result_long = rbind(CommandDeck_result_long,this_result)
     
   }
+  
+  expand = CommandDeck_result_long %>% #5% of object size - COMEBACK can delay this step if memory becomes an issue
+    filter(is.na(antiviral_cost_scenario)) %>%
+    select(-antiviral_cost_scenario)
+  expand = crossing(expand,
+                    antiviral_cost_scenario = LIST_antiviral_cost_scenario)
+  CommandDeck_result_long = bind_rows(CommandDeck_result_long[is.na(CommandDeck_result_long$antiviral_cost_scenario) == FALSE,],
+                                      expand)
   
   return(CommandDeck_result_long)
 }

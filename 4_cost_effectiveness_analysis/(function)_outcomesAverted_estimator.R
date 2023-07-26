@@ -8,7 +8,7 @@ outcomesAverted_estimator <- function(
     MASTER_antiviral_simulations,
     ARRAY_additional_outcomes = c("death","hosp"),
     toggle_longCOVID = "off",
-    toggle_discounting_rate = 0.03, #NB: limitation can only change discounting of YLL of fatal cases, not YLD of critical cases due to restrictions of underlying data
+    list_discounting_rate = 0.03, #NB: limitation can only change discounting of YLL of fatal cases, not YLD of critical cases due to restrictions of underlying data
     this_risk_group = "adults_with_comorbidities"
     ){
 
@@ -16,12 +16,18 @@ outcomesAverted_estimator <- function(
   load(file = "2_inputs/QALY_estimates.Rdata")
   QALY_estimates = QALY_estimates %>%
     filter(setting %in% LIST_CEA_settings &
-             (discounting_rate == toggle_discounting_rate | is.na(discounting_rate))) %>%
-    select(-discounting_rate)
+             (discounting_rate %in% list_discounting_rate | is.na(discounting_rate)))
   if (toggle_longCOVID == "off"){
     QALY_estimates = QALY_estimates %>% 
       filter(outcome != "total_cases")
   }
+  expand = QALY_estimates %>%
+    filter(is.na(discounting_rate)) %>%
+    select(-discounting_rate)
+  expand = crossing(expand,
+                    discounting_rate = list_discounting_rate)
+  QALY_estimates = rbind(QALY_estimates[is.na(QALY_estimates$discounting_rate) == FALSE,],
+                         expand)
   ##############################################################################
   
   
@@ -41,19 +47,20 @@ outcomesAverted_estimator <- function(
   
   ### PART THREE: calculating QALYs ############################################
   QALY_breakdown = TRANSLATED_antiviral_simulations %>%
-    left_join(QALY_estimates, by = c("setting","outcome","age_group")) %>%
+    left_join(QALY_estimates, by = c("setting","outcome","age_group"),
+              relationship = "many-to-many") %>% #if multiple discounting_rate options
     filter(is.na(QALYs) == FALSE) %>%
     mutate(count_outcomes = count_outcomes * QALYs) %>%
     select(-QALYs) %>%
     mutate(outcome_source = outcome,
            outcome = "QALYs") %>%
-    group_by(evaluation_level,setting,outcome,outcome_source,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(evaluation_level,discounting_rate,setting,outcome,outcome_source,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(count_outcomes = sum(count_outcomes),
               .groups = "keep")
   
   outcomes_averted = QALY_breakdown %>%
     #collapsing outcome and age_group to calculate QALYs
-    group_by(evaluation_level,setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(evaluation_level,discounting_rate,setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(count_outcomes = sum(count_outcomes),
               .groups = "keep") 
   
@@ -73,9 +80,12 @@ outcomesAverted_estimator <- function(
     additional_outcomes = TRANSLATED_antiviral_simulations %>%
       filter(outcome %in% ARRAY_additional_outcomes) %>%
       #collapsing outcome and age_group 
-      group_by(evaluation_level, setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
+      group_by(evaluation_level,setting,outcome,booster_vax_scenario,intervention,intervention_target_group) %>%
       summarise(count_outcomes = sum(count_outcomes),
                 .groups = "keep")
+    #COMEBACK - could fiddle with expanding later if this makes the data too large
+    additional_outcomes = crossing(additional_outcomes,
+                                   discounting_rate = list_discounting_rate)
     
     outcomes_averted = rbind(outcomes_averted,additional_outcomes)
   }

@@ -11,9 +11,9 @@ for (num_cores in c(5,4,3,2,1)){
     
     CommandDeck_CONTROLS =
       list(
-        TOGGLE_perspective = this_perspective,
-        TOGGLE_discounting_rate = this_discounting_rate,
-        TOGGLE_antiviral_cost_scenario = this_antiviral_cost_scenario,
+        LIST_perspectives = this_perspective,
+        LIST_discounting_rate = this_discounting_rate,
+        LIST_antiviral_cost_scenario = this_antiviral_cost_scenario,
         
         TOGGLE_longCOVID = "off",
         TOGGLE_uncertainty = "rand",

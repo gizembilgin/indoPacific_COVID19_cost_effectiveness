@@ -10,14 +10,14 @@ for (this_DECISION_include_net in c("N","Y")){
     
     CommandDeck_CONTROLS =
       list(
-        TOGGLE_perspective = "healthcare",
-        TOGGLE_discounting_rate = 0.03,
-        TOGGLE_antiviral_cost_scenario = "middle_income_cost",
+        LIST_perspectives = "healthcare",
+        LIST_discounting_rate = 0.03,
+        LIST_antiviral_cost_scenario = "middle_income_cost",
         
         TOGGLE_longCOVID = "off",
         TOGGLE_uncertainty = "rand",
         TOGGLE_numberOfRuns = 100, 
-        TOGGLE_clusterNumber = 5, 
+        TOGGLE_clusterNumber = 4, 
         DECISION_save_result = "N",
         DECISION_sampling_strategy = this_DECISION_sampling_strategy,
         DECISION_include_net = this_DECISION_include_net
@@ -55,6 +55,14 @@ beep()
 # 388.97     6.482833      empirical_distribution                   N
 # 1546.76    25.779333                single_run                    Y
 # 412.12     6.868667                 single_run                    N
+
+#note: timings for 100 runs, 4 cores, 4 setting (N net) and 3 settings (Y net):
+# tracking_times_df
+# time_second time_minutes DECISION_sampling_strategy DECISION_include_net
+# 1    15211.85    253.53083     empirical_distribution                    N
+# 2    15036.53    250.60883                 single_run                    N
+# 3     1896.98     31.61633     empirical_distribution                    Y
+# 4     1837.45     30.62417                 single_run                    Y
 
 require(ggpubr);options(scipen = 1000)
 to_plot = ICER_plane_df %>%

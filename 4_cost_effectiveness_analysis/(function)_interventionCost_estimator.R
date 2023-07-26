@@ -3,7 +3,7 @@ interventionCost_estimator <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
     TORNADO_PLOT_OVERRIDE,
-    antiviral_cost_scenario = "low_generic_cost",
+    LIST_antiviral_cost_scenario = "low_generic_cost",
     wastage_rate_antiviralSchedule = 0,
     toggle_uncertainty = TOGGLE_uncertainty,
     fitted_distributions = local_fitted_distributions
@@ -77,29 +77,20 @@ interventionCost_estimator <- function(
       mutate(cost = intervention_doses_delivered * (operational_cost + static_costs)) %>%
       select(setting,booster_vax_scenario,intervention,intervention_target_group,cost)
     
-    interventionCost_estimates = rbind(interventionCost_estimates,vax_estimates)
+    interventionCost_estimates = bind_rows(interventionCost_estimates,vax_estimates)
     #___________________________________________________________________________
     
     
     ## Antiviral dose costs
-    #(A/E) price_per_antiviralDose
-    if (antiviral_cost_scenario == "low_generic_cost"){
-      price_per_antiviralDose = 25 # Pfizer agreement for LMIC
-    } else if (antiviral_cost_scenario == "middle_income_cost"){
-      price_per_antiviralDose = 250 # Malaysian government
-    } else if(antiviral_cost_scenario == "high_income_cost"){
-      price_per_antiviralDose = 530 # US government
-    }
+    #(A/E) wastage_rate_antiviralSchedule - built in as a function parameter
     
-    #(B/E) wastage_rate_antiviralSchedule - built in as a function parameter
-
-    #(C/E) price_per_RAT
+    #(B/E) price_per_RAT
     price_per_RAT = 2.225 #Median price across 8 products listed on UNICEF catalog 
     
-    #(D/E) wastage_factor_RAT
+    #(C/E) wastage_factor_RAT
     wastage_factor_RAT = 6
     
-    #(E/E) operational_cost
+    #(D/E) operational_cost
     #WHO CHOICE estimates provide the distribution for individual costs, therefore sample from this distribution for the number of individuals and sum across
     op_fitted_distributions = fitted_distributions %>% 
       filter(parameter == "outpatient_visit_cost" & setting == this_setting)
@@ -119,29 +110,46 @@ interventionCost_estimator <- function(
         antiviral_estimates$operational_cost[row_num] = sum(this_sample$est)
       }
       rm(this_sample)
-
+      
     } else if (toggle_uncertainty == "fixed"){
       antiviral_estimates$operational_cost = antiviral_estimates$intervention_doses_delivered * op_fitted_distributions$mean
     }
-
-    #use any overrides for tornado plot
-    if (length(TORNADO_PLOT_OVERRIDE)>0){
-      if("price_per_antiviralDose" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_antiviralDose = TORNADO_PLOT_OVERRIDE$price_per_antiviralDose}
-      if("wastage_rate_antiviralSchedule" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_antiviralSchedule = TORNADO_PLOT_OVERRIDE$wastage_rate_antiviralSchedule}
-      if("price_per_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_RAT = TORNADO_PLOT_OVERRIDE$price_per_RAT}
-      if("wastage_factor_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_factor_RAT = TORNADO_PLOT_OVERRIDE$wastage_factor_RAT}
-      if("antiviral_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$operational_cost * TORNADO_PLOT_OVERRIDE$antiviral_operational_cost}
+    
+    static_costs = data.frame()
+    for (this_antiviral_cost_scenario in LIST_antiviral_cost_scenario){
+        #(E/E) price_per_antiviralDose
+        if (this_antiviral_cost_scenario == "low_generic_cost"){
+          price_per_antiviralDose = 25 # Pfizer agreement for LMIC
+        } else if (this_antiviral_cost_scenario == "middle_income_cost"){
+          price_per_antiviralDose = 250 # Malaysian government
+        } else if(this_antiviral_cost_scenario == "high_income_cost"){
+          price_per_antiviralDose = 530 # US government
+        }
+      #use any overrides for tornado plot
+      if (length(TORNADO_PLOT_OVERRIDE)>0){
+        if("price_per_antiviralDose" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_antiviralDose = TORNADO_PLOT_OVERRIDE$price_per_antiviralDose}
+        if("wastage_rate_antiviralSchedule" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_antiviralSchedule = TORNADO_PLOT_OVERRIDE$wastage_rate_antiviralSchedule}
+        if("price_per_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_RAT = TORNADO_PLOT_OVERRIDE$price_per_RAT}
+        if("wastage_factor_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_factor_RAT = TORNADO_PLOT_OVERRIDE$wastage_factor_RAT}
+        if("antiviral_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$operational_cost * TORNADO_PLOT_OVERRIDE$antiviral_operational_cost}
+      }
+      
+      #calculate!
+      this_static_cost = price_per_antiviralDose*(1/(1-wastage_rate_antiviralSchedule)) +
+        price_per_RAT*wastage_factor_RAT
+      this_static_cost = data.frame(static_cost = this_static_cost,
+                                antiviral_cost_scenario = this_antiviral_cost_scenario)
+      static_costs = rbind(static_costs,this_static_cost)
     }
+
     
-    #calculate!
-    static_costs = price_per_antiviralDose*(1/(1-wastage_rate_antiviralSchedule)) +
-      price_per_RAT*wastage_factor_RAT
+    antiviral_estimates = crossing(antiviral_estimates,
+                                   antiviral_cost_scenario = LIST_antiviral_cost_scenario) %>%
+      left_join(static_costs, by = "antiviral_cost_scenario") %>%
+      mutate(cost = operational_cost + intervention_doses_delivered * static_cost) %>%
+      select(setting,antiviral_cost_scenario,booster_vax_scenario,intervention,intervention_target_group,cost)
     
-    antiviral_estimates = antiviral_estimates  %>%
-      mutate(cost = operational_cost + intervention_doses_delivered * static_costs) %>%
-      select(setting,booster_vax_scenario,intervention,intervention_target_group,cost)
-    
-    interventionCost_estimates = rbind(interventionCost_estimates,antiviral_estimates)
+    interventionCost_estimates = bind_rows(interventionCost_estimates,antiviral_estimates)
     #___________________________________________________________________________
   }
   ##############################################################################

@@ -35,7 +35,7 @@ tornado_variable_of_interest = paste("cost_per_",
                                      sep ="")
 tornado_result = tornado_result %>%
   filter(evaluation_level == "incremental") %>%
-  filter(antiviral_type %in% c("no antiviral",INPUT_antiviral_type) &
+  filter(antiviral_type == INPUT_antiviral_type  &
            variable == tornado_variable_of_interest &
            setting %in% INPUT_include_setting &
            perspective %in% INPUT_perspective) 
