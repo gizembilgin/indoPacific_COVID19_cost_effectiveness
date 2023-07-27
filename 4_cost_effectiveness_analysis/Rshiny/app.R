@@ -1,4 +1,4 @@
-require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(tidyverse); require(shiny)
+require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(tidyverse); require(shiny);require(shinyWidgets)
 options(scipen = 1000)
 
 
@@ -32,7 +32,7 @@ load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
 
 ##### CONFIGURE CHOICES ########################################################
 CHOICES = list(
-  antiviral_cost = list("low generic cost" = "low_generic_cost",
+  antiviral_cost_scenario = list("low generic cost" = "low_generic_cost",
                                 "middle income cost" = "middle_income_cost", 
                                 "high income cost" = "high_income_cost"),
   antiviral_target_group = c("all adults", 
@@ -109,11 +109,11 @@ ui <- fluidPage(
                   checkboxGroupInput("INPUT_include_setting","Settings to include:",
                                      choices = CHOICES$setting,
                                      selected = CHOICES$setting),
-                  radioButtons("INPUT_antiviral_type",
+                  radioGroupButtons("INPUT_antiviral_type",
                                label = "Antiviral type:",
                                choices = CHOICES$antiviral_type,
                                selected = "nirmatrelvir_ritonavir"),
-                  radioButtons("INPUT_perspective",
+                  radioGroupButtons("INPUT_perspective",
                                label = "Perspective:", 
                                choices = CHOICES$perspective,
                                selected = "healthcare perspective"),
@@ -122,8 +122,8 @@ ui <- fluidPage(
                   conditionalPanel(
                     condition = "input.INPUT_select_sentitivity_analysis == 1", 
                     
-                    checkboxGroupInput("INPUT1_antiviral_cost", label = "Antiviral cost:",
-                                 choices = CHOICES$antiviral_cost, 
+                    checkboxGroupInput("INPUT1_antiviral_cost_scenario", label = "Antiviral cost:",
+                                 choices = CHOICES$antiviral_cost_scenario, 
                                  selected = "middle_income_cost"),
                     selectInput("INPUT1_include_outcomes","Outcome(s):",
                                 choices = CHOICES$outcome,
@@ -146,13 +146,14 @@ ui <- fluidPage(
                     ### Special conditions for individual figures
                     conditionalPanel(
                       condition = "input.tabset == 'ICER table'", 
-                      radioButtons("INPUT1_include_net","Include net columns?",
+                      radioGroupButtons("INPUT1_include_net","Include net columns?",
                                    choices = c("Yes",
                                                "No"))
                     ),
                     conditionalPanel(
                       condition = "input.tabset == 'Willingness to pay curve' ", 
-                      actionButton("update_plot","Update plot"),
+                      actionButton(inputId = "update_plot",
+                                   label = "Update plot"),
                     ), 
 
                   ),
@@ -165,7 +166,7 @@ ui <- fluidPage(
                       checkboxGroupInput("INPUT4_parameters","Parameters to display:",
                                          choices = CHOICES$tornado_plot_parameters,
                                          selected = CHOICES$tornado_plot_parameters ), 
-                      radioButtons("INPUT4_include_GDP","Include GDP as a line?",
+                     radioGroupButtons("INPUT4_include_GDP","Include GDP as a line?",
                                    choices = c("Yes",
                                                "No")),
                   )
@@ -207,7 +208,7 @@ server <- function(input, output, session) {
       filter(setting %in% input$INPUT_include_setting &
                perspective %in% input$INPUT_perspective &
                discounting_rate %in% input$INPUT1_discounting_rate &
-               antiviral_cost %in% input$INPUT1_antiviral_cost &
+               antiviral_cost_scenario %in% input$INPUT1_antiviral_cost_scenario &
                booster_vax_scenario %in% input$INPUT1_include_booster_vax_scenario &
                antiviral_target_group %in% input$INPUT1_include_antiviral_target_group &
                antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type) &
@@ -258,25 +259,13 @@ server <- function(input, output, session) {
                setting %in% input$INPUT_include_setting &
                perspective == input$INPUT_perspective  &
                discounting_rate == input$INPUT1_discounting_rate &
-               antiviral_cost == input$INPUT1_antiviral_cost &
+               antiviral_cost_scenario == input$INPUT1_antiviral_cost_scenario &
                booster_vax_scenario %in% input$INPUT1_include_booster_vax_scenario &
                antiviral_target_group %in% input$INPUT1_include_antiviral_target_group & 
                antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type))
   }) 
   
-  dataInput_WTPcurve <- eventReactive( input$update_plot, {
-      CEAC_dataframe %>%
-        filter(outcome == input$INPUT1_include_outcomes &
-                 setting %in% input$INPUT_include_setting &
-                 perspective %in% input$INPUT_perspective &
-                 discounting_rate %in% input$INPUT1_discounting_rate &
-                 antiviral_cost %in% input$INPUT1_antiviral_cost &
-                 booster_vax_scenario %in% input$INPUT1_include_booster_vax_scenario &
-                 antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type) &
-                 antiviral_target_group %in% input$INPUT1_include_antiviral_target_group)
 
-    
-  }) 
   
   dataInput_TornadoPlot <- reactive({
     tornado_variable_of_interest = paste("cost_per_",
@@ -336,80 +325,102 @@ server <- function(input, output, session) {
     
   }, res = 96)
   
+  dataInput_WTPcurve <-     eventReactive(input$update_plot,{
+    CEAC_dataframe %>%
+      filter(outcome == input$INPUT1_include_outcomes &
+               setting %in% input$INPUT_include_setting &
+               perspective %in% input$INPUT_perspective &
+               discounting_rate %in% input$INPUT1_discounting_rate &
+               antiviral_cost_scenario %in% input$INPUT1_antiviral_cost_scenario &
+               booster_vax_scenario %in% input$INPUT1_include_booster_vax_scenario &
+               antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type) &
+               antiviral_target_group %in% input$INPUT1_include_antiviral_target_group)
+  }) 
   
   output$OUTPUT_WTP_curve <- renderPlot({
     
     to_plot <- dataInput_WTPcurve()
-    
-    if (nrow(to_plot)>1){
-      
-      xmax = to_plot %>% 
-        group_by(setting,booster_vax_scenario,antiviral_target_group) %>%
-        filter(round(probability,digits=2) >=0.99) %>%
+    if (nrow(to_plot) > 1) {
+      xmax = to_plot %>%
+        group_by(setting, booster_vax_scenario, antiviral_target_group) %>%
+        filter(round(probability, digits = 2) >= 0.99) %>%
         summarise(min = min(WTP), .groups = "keep") %>%
         ungroup()
       xmax = max(xmax$min)
       
-      xmin = to_plot %>% 
-        group_by(setting,booster_vax_scenario,antiviral_target_group) %>%
-        filter(probability == min(probability,na.rm=TRUE)) %>%
+      xmin = to_plot %>%
+        group_by(setting, booster_vax_scenario, antiviral_target_group) %>%
+        filter(probability == min(probability, na.rm = TRUE)) %>%
         summarise(max = max(WTP), .groups = "keep") %>%
         ungroup()
       xmin = min(xmin$max)
       
       plot_list = list()
-      for (this_setting in input$INPUT_include_setting){
-        to_plot_setting = to_plot[to_plot$setting == this_setting,]
+      for (this_setting in input$INPUT_include_setting) {
+        to_plot_setting = to_plot[to_plot$setting == this_setting, ]
         
-        if (input$INPUT3_parameter_to_vary == 4){
-          plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-            geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_target_group))) +
-            labs(color="antiviral strategy") 
-          n_options_selected = length(unique(to_plot_setting$antiviral_target_group))
-          
-        } else if (input$INPUT3_parameter_to_vary == 3){
-          plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-            geom_point(aes(x=WTP,y=probability,color=as.factor(booster_vax_scenario))) +
-            labs(color="booster strategy")
-          n_options_selected = length(unique(to_plot_setting$booster_vax_scenario))
-          
-        } else if (input$INPUT3_parameter_to_vary == 1){
-          plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-            geom_point(aes(x=WTP,y=probability,color=as.factor(discounting_rate))) +
-            labs(color="discounting rate")
-          n_options_selected = length(unique(to_plot_setting$discounting_rate))
-          
-        } else if (input$INPUT3_parameter_to_vary == 2){
-          plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-            geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_cost))) +
-            labs(color="antiviral cost")
-          n_options_selected = length(unique(to_plot_setting$antiviral_cost))
-          
-        } else{
-          plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-            geom_point(aes(x=WTP,y=probability)) 
-        }
+        # if (input$INPUT3_parameter_to_vary == 4){
+        #   plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+        #     geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_target_group))) +
+        #     labs(color="antiviral strategy")
+        #   n_options_selected = length(unique(to_plot_setting$antiviral_target_group))
+        #
+        # } else if (input$INPUT3_parameter_to_vary == 3){
+        #   plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+        #     geom_point(aes(x=WTP,y=probability,color=as.factor(booster_vax_scenario))) +
+        #     labs(color="booster strategy")
+        #   n_options_selected = length(unique(to_plot_setting$booster_vax_scenario))
+        #
+        # } else if (input$INPUT3_parameter_to_vary == 1){
+        #   plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+        #     geom_point(aes(x=WTP,y=probability,color=as.factor(discounting_rate))) +
+        #     labs(color="discounting rate")
+        #   n_options_selected = length(unique(to_plot_setting$discounting_rate))
+        #
+        # } else if (input$INPUT3_parameter_to_vary == 2){
+        #   plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
+        #     geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_cost_scenario))) +
+        #     labs(color="antiviral cost")
+        #   n_options_selected = length(unique(to_plot_setting$antiviral_cost_scenario))
+        #
+        # } else{
+        plot_list[[length(plot_list) + 1]] = ggplot(to_plot_setting) +
+          geom_point(aes(x = WTP, y = probability))
+        #}
         plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
           xlab("Willingness to pay ($/QALY)") +
           ylab("Probability cost-effective") +
           theme_bw() +
-          theme(legend.position="bottom") +
+          theme(legend.position = "bottom") +
           labs(title = this_setting) +
-          #xlim(xmin,xmax) + 
+          #xlim(xmin,xmax) +
           guides(colour = guide_legend(nrow = n_options_selected))
         
       }
       
-      if(length(plot_list) == 1){row_num = 1; col_num = 1}
-      if(length(plot_list) == 2){row_num = 1; col_num = 2}
-      if(length(plot_list) > 2){row_num = 2; col_num = 2}
+      if (length(plot_list) == 1) {
+        row_num = 1
+        col_num = 1
+      }
+      if (length(plot_list) == 2) {
+        row_num = 1
+        col_num = 2
+      }
+      if (length(plot_list) > 2) {
+        row_num = 2
+        col_num = 2
+      }
       
       #grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
-      plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+      plot = ggarrange(
+        plotlist = plot_list,
+        ncol = col_num,
+        nrow = row_num,
+        common.legend = TRUE,
+        legend = "bottom"
+      )
       print(plot)
     }
-    
-    
     
   }, res = 96)
   
