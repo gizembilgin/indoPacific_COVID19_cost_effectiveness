@@ -153,13 +153,17 @@ ui <- fluidPage(
                     ),
                     conditionalPanel(
                       condition = "input.tabset == 'Willingness to pay curve' | input.tabset == 'Incremental plane'", 
-                      uiOutput("switch_shape_and_colour")
+                      uiOutput("switch_shape_and_colour"),
                     ), 
                     conditionalPanel(
                       condition = "input.tabset == 'Willingness to pay curve' ", 
                       checkboxInput("INPUT_fix_xaxis","Fix x-axis between settings",value = FALSE),
                       actionButton(inputId = "update_plot",
                                    label = "Update plot"),
+                    ), 
+                    conditionalPanel(
+                      condition = "input.tabset == 'Willingness to pay curve' | input.tabset == 'Incremental plane'", 
+                      textOutput("warning_on_unvax_Fijian"),
                     ), 
 
 
@@ -300,6 +304,12 @@ server <- function(input, output, session) {
     if(length(plot_list) > 2) {row_num = 2; col_num = 2}
     plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
   }
+  
+  output$warning_on_unvax_Fijian <- renderText({
+    if("Fiji" %in% input$INPUT_include_setting & "unvaccinated adults" %in% input$INPUT_include_antiviral_target_group){
+      validate("\nNote: Due to Fiji's high vaccine coverage rates, 'no antiviral' and 'unvaccinated adults' antiviral target simulations overlap")
+    }
+  })
   ##############################################################################
   
   
