@@ -1,4 +1,5 @@
-require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse); require(shiny); require(shinyWidgets); require(reactlog)
+require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse)
+require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
 options(scipen = 1000) #turn off scientific notation
 
 
@@ -151,14 +152,15 @@ ui <- fluidPage(
                                    choices = c("Yes","No"))
                     ),
                     conditionalPanel(
+                      condition = "input.tabset == 'Willingness to pay curve' | input.tabset == 'Incremental plane'", 
+                      uiOutput("switch_shape_and_colour")
+                    ), 
+                    conditionalPanel(
                       condition = "input.tabset == 'Willingness to pay curve' ", 
                       actionButton(inputId = "update_plot",
                                    label = "Update plot"),
                     ), 
-                    conditionalPanel(
-                      condition = "input.tabset == 'Willingness to pay curve' | input.tabset == 'Incremental plane'", 
-                      uiOutput("switch_shape_and_colour")
-                    ), 
+
 
                   ),
                   
@@ -175,6 +177,8 @@ ui <- fluidPage(
     
     ### Outputs ################################################################
     mainPanel( width = 9,
+               
+               waiter::useWaiter(),
                conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 'probab'",
                                 tabsetPanel(
                                   id = "tabset",
@@ -219,6 +223,15 @@ server <- function(input, output, session) {
           antiviral_target_group %in% input$INPUT_include_antiviral_target_group &
           antiviral_type %in% c("no antiviral", input$INPUT_antiviral_type)
       )
+  }
+  
+  #function to create waiter spinner while waiting for plot to load
+  call_waiter <- function(this_output){
+    waiter::Waiter$new(
+      id = this_output,
+      html = spin_3(), 
+      color = transparent(.5)
+    )$show()
   }
   
   #reactive containing the INPUTs with multiple values selected
@@ -288,11 +301,11 @@ server <- function(input, output, session) {
       filter(outcome %in% input$INPUT_include_outcomes)
   }) 
   
-  dataInput_WTPcurve <- eventReactive(input$update_plot,{
+  dataInput_WTPcurve <- reactive({
     subset_data_to_widgets(CEAC_dataframe)%>%
       filter(outcome %in% input$INPUT_include_outcomes)
-  }) 
-  
+  })
+
   dataInput_ICER_table <- reactive({
     this_ICER_table = subset_data_to_widgets(ICER_table) %>%
       filter(outcome %in% c("netCost",input$INPUT_include_outcomes)) %>%
@@ -329,6 +342,8 @@ server <- function(input, output, session) {
   #(1/3) Incremental Plane
   PLOT_incremental_plane <- reactive({
     
+    call_waiter("OUTPUT_incremental_plane")
+    
     validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_IncrementalPlane()
     
@@ -356,8 +371,11 @@ server <- function(input, output, session) {
   
     
   #(2/3) WTP curve
-   PLOT_WTP_curve <- reactive({
+   #PLOT_WTP_curve <- reactive({
+  PLOT_WTP_curve <- eventReactive({input$update_plot|is.null(input$INPUT_switch_shape_and_colour) == FALSE},{
     
+    call_waiter("OUTPUT_WTP_curve")
+     
     validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_WTPcurve()
     
@@ -396,12 +414,15 @@ server <- function(input, output, session) {
       consolidate_plot_list(plot_list)
     }
   })
+   
   output$OUTPUT_WTP_curve <- renderPlot({print(PLOT_WTP_curve())}, res = 96)
   #_____________________________________________________________________________
   
   
   #(3/3) Tornado plot
   PLOT_tornado_plot <- reactive({
+    
+    call_waiter("OUTPUT_tornado_plot")
    
     to_plot <- dataInput_TornadoPlot() %>%  ungroup() 
     isolate_base_value <- to_plot[to_plot$direction == "lower" &  to_plot$label == "Long COVID (off/on)", ]
