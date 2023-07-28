@@ -157,6 +157,7 @@ ui <- fluidPage(
                     ), 
                     conditionalPanel(
                       condition = "input.tabset == 'Willingness to pay curve' ", 
+                      checkboxInput("INPUT_fix_xaxis","Fix x-axis between settings",value = FALSE),
                       actionButton(inputId = "update_plot",
                                    label = "Update plot"),
                     ), 
@@ -383,7 +384,7 @@ server <- function(input, output, session) {
     
   #(2/3) WTP curve
    #PLOT_WTP_curve <- reactive({
-  PLOT_WTP_curve <- eventReactive({input$update_plot|is.null(input$INPUT_switch_shape_and_colour) == FALSE},{
+  PLOT_WTP_curve <- eventReactive({input$update_plot|is.null(input$INPUT_switch_shape_and_colour) == FALSE | input$INPUT_fix_xaxis},{
     
     call_waiter("OUTPUT_WTP_curve")
      
@@ -392,21 +393,7 @@ server <- function(input, output, session) {
     
     if (nrow(to_plot) > 1) {
       plot_list = list()
-      
-      # xmax = to_plot %>%
-      #   group_by(setting, booster_vax_scenario, antiviral_target_group) %>%
-      #   filter(round(probability, digits = 2) >= 0.99) %>%
-      #   summarise(min = min(WTP), .groups = "keep") %>%
-      #   ungroup()
-      # xmax = max(xmax$min)
-      # 
-      # xmin = to_plot %>%
-      #   group_by(setting, booster_vax_scenario, antiviral_target_group) %>%
-      #   filter(probability == min(probability, na.rm = TRUE)) %>%
-      #   summarise(max = max(WTP), .groups = "keep") %>%
-      #   ungroup()
-      # xmin = min(xmin$max)
-      
+
       for (this_setting in input$INPUT_include_setting) {
         
         plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
@@ -417,9 +404,13 @@ server <- function(input, output, session) {
           ylab("Probability cost-effective") +
           theme_bw() +
           theme(legend.position = "bottom") +
-          labs(title = this_setting) +
-          #xlim(xmin,xmax) +
+          labs(title = this_setting)  +
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
+        
+        if(input$INPUT_fix_xaxis == TRUE){
+          plot_list[[length(plot_list)]] =  plot_list[[length(plot_list)]] +
+            xlim(min(to_plot$WTP),max(to_plot$WTP))
+        }
       }
       
       consolidate_plot_list(plot_list)
