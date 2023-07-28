@@ -1,6 +1,5 @@
-require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(tidyverse); require(shiny);require(shinyWidgets)
-options(scipen = 1000)
-
+require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse); require(shiny);require(shinyWidgets)
+options(scipen = 1000) #turn off scientific notation
 
 
 ##### LOAD LATEST RESULTS ######################################################
@@ -22,6 +21,7 @@ if (length(list_poss_Rdata) > 0) {
 CommandDeck_result_long <- probab_result$CommandDeck_result_long
 CommandDeck_result      <- probab_result$CommandDeck_result
 CEAC_dataframe          <- probab_result$CEAC_dataframe
+ICER_table              <- probab_result$ICER_table
 
 ### load latest deterministic results
 load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
@@ -85,7 +85,7 @@ check = CommandDeck_result_long %>%
            antiviral_type %in% CHOICES$antiviral_type &
            outcome %in% CHOICES$outcome &
            perspective %in% c("healthcare perspective","societal perspective") )
-if (nrow(check)==0){stop("something wrong with CHOICES")}
+if (nrow(check)==0){stop("no rows of CommandDeck_result_long with these CHOICES")}
 ################################################################################
 
 
@@ -100,13 +100,14 @@ ui <- fluidPage(
   
   sidebarLayout(
 
-    ### Toggles  
+    ### Widgets ################################################################  
     sidebarPanel( width = 3,
                   ###Available in all plots
-                  selectInput("INPUT_select_sentitivity_analysis","Select sensitivity analysis:",
-                              choices = list("Probabilistic sensitivity analysis" = 1, 
-                                             "Deterministic sensitivity analysis" = 2), 
-                              selected = 1),
+                  selectInput(inputId = "INPUT_select_sentitivity_analysis",
+                              label = "Select sensitivity analysis:",
+                              choices = list("Probabilistic sensitivity analysis" = "probab", 
+                                             "Deterministic sensitivity analysis" = "det"), 
+                              selected = "probab"),
                   checkboxGroupInput("INPUT_include_setting","Settings to include:",
                                      choices = CHOICES$setting,
                                      selected = CHOICES$setting),
@@ -124,9 +125,8 @@ ui <- fluidPage(
                   
                   ### Probabilistic sensitivity analysis
                   conditionalPanel(
-                    condition = "input.INPUT_select_sentitivity_analysis == 1", 
+                    condition = "input.INPUT_select_sentitivity_analysis == 'probab'", 
 
-                    
                     checkboxGroupInput("INPUT_antiviral_cost_scenario", label = "Antiviral cost:",
                                  choices = CHOICES$antiviral_cost_scenario,
                                  selected = "middle_income_cost"),
@@ -148,8 +148,7 @@ ui <- fluidPage(
                     conditionalPanel(
                       condition = "input.tabset == 'ICER table'", 
                       radioGroupButtons("INPUT_include_net","Include net columns?",
-                                   choices = c("Yes",
-                                               "No"))
+                                   choices = c("Yes","No"))
                     ),
                     conditionalPanel(
                       condition = "input.tabset == 'Willingness to pay curve' ", 
@@ -165,20 +164,18 @@ ui <- fluidPage(
                   
                   ### Deterministic sensitivity analysis
                   conditionalPanel(
-                    condition = "input.INPUT_select_sentitivity_analysis == 2", 
+                    condition = "input.INPUT_select_sentitivity_analysis == 'det'", 
                       checkboxGroupInput("INPUT_parameters","Parameters to display:",
                                          choices = CHOICES$tornado_plot_parameters,
                                          selected = CHOICES$tornado_plot_parameters ), 
                      radioGroupButtons("INPUT_include_GDP","Include GDP as a line?",
-                                   choices = c("Yes",
-                                               "No")),
+                                   choices = c("Yes","No")),
                   )
     ),
     
-    
+    ### Outputs ################################################################
     mainPanel( width = 9,
-               
-               conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 1",
+               conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 'probab'",
                                 tabsetPanel(
                                   id = "tabset",
                                   tabPanel("Incremental plane",
@@ -188,14 +185,13 @@ ui <- fluidPage(
                                   tabPanel("ICER table", 
                                            dataTableOutput("OUTPUT_ICER_table"))
                                 )),
-               conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 2",
+               conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 'det'",
                                 tabsetPanel(tabPanel(
                                   "Tornado plot",
                                   plotOutput("OUTPUT_tornado_plot", height = "800px")
                                 )))
     )
   )
-  
 )
 ################################################################################
 
@@ -205,45 +201,100 @@ ui <- fluidPage(
 ##### SERVER DEFINITION ########################################################
 server <- function(input, output, session) {
   
-  # output$test <- renderText({
-  #   str(input$INPUT_switch_shape_and_colour)
-  #   }) 
+   # output$test <- renderText({
+   #   input$INPUT_select_sentitivity_analysis == "probab"
+   #   }) 
+  
+  ### functions and multi-use reactive ########################################
+  #function which subsets data to the widgets displayed for probabilistic sensitivity analysis
+  subset_data_to_widgets <- function(df){
+    df %>%
+      filter(
+        setting %in% input$INPUT_include_setting &
+          perspective %in% input$INPUT_perspective  &
+          discounting_rate %in% input$INPUT_discounting_rate &
+          antiviral_cost_scenario %in% input$INPUT_antiviral_cost_scenario &
+          booster_vax_scenario %in% input$INPUT_include_booster_vax_scenario &
+          antiviral_target_group %in% input$INPUT_include_antiviral_target_group &
+          antiviral_type %in% c("no antiviral", input$INPUT_antiviral_type)
+      )
+  }
+  
+  #reactive containing the INPUTs with multiple values selected
+  plot_dimensions <- reactive({
+    plot_dimension_vector = c()
+    
+    if (length(input$INPUT_antiviral_cost_scenario)>1)       {plot_dimension_vector = c(plot_dimension_vector,"antiviral_cost_scenario")}
+    if (length(input$INPUT_discounting_rate)>1)              {plot_dimension_vector = c(plot_dimension_vector,"discounting_rate")}
+    if (length(input$INPUT_include_antiviral_target_group)>1){plot_dimension_vector = c(plot_dimension_vector,"antiviral_target_group")}
+    if (length(input$INPUT_include_booster_vax_scenario)>1)  {plot_dimension_vector = c(plot_dimension_vector,"booster_vax_scenario")}
+    
+    plot_dimension_vector
+  }) 
+  
+  #function to configure aesthetic of ggplot() by plot_dimensions() reactive
+  apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
+    
+    if (length(plot_dimensions)==2 & is.null(input$INPUT_switch_shape_and_colour) == FALSE){
+      if (input$INPUT_switch_shape_and_colour){
+        plot_dimensions <- isolate(rev(plot_dimensions))
+      }
+    }
+    
+    if (length(plot_dimensions) == 0){
+      this_plot = ggplot(df) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]))
+    } else if (length(plot_dimensions) == 1){
+      this_plot = ggplot(df) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
+        labs(color = paste(gsub("_"," ", plot_dimensions[1])))
+    } else if (length(plot_dimensions) == 2){
+      this_plot = ggplot(df) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]]))) +
+        labs(color = paste(gsub("_"," ", plot_dimensions[1])),
+             shape = paste(gsub("_"," ", plot_dimensions[2])))
+    }
+    
+    return(this_plot)
+  }
+  
+  #widget to switch variables controlling shape & colour
+  output$switch_shape_and_colour <- renderUI({
+    if(length(plot_dimensions()) == 2){
+      materialSwitch(inputId = "INPUT_switch_shape_and_colour",
+                     label = "Switch shape & colour",
+                     value = FALSE)
+    }
+  })
+  
+  #text to display when too many dimensions have been selected
+  too_many_dimensions_text = "You have selected too many plot dimensions.\nPlease select multiple values for a maximum of two of the following variables: antiviral cost, booster strategies, antiviral strategies, discounting rate"
+  
+  #function to consolidate plot_list into one figure
+  consolidate_plot_list <- function(plot_list){
+    if(length(plot_list) == 1){row_num = 1; col_num = 1}
+    if(length(plot_list) == 2){row_num = 1; col_num = 2}
+    if(length(plot_list) > 2) {row_num = 2; col_num = 2}
+    plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+  }
+  ##############################################################################
+  
+  
   
   ### dataInputs ###############################################################
   dataInput_IncrementalPlane <- reactive({
-    CommandDeck_result_long %>%
-      filter(outcome %in% input$INPUT_include_outcomes &
-               setting %in% input$INPUT_include_setting &
-               perspective %in% input$INPUT_perspective  &
-               discounting_rate %in% input$INPUT_discounting_rate &
-               antiviral_cost_scenario %in% input$INPUT_antiviral_cost_scenario &
-               booster_vax_scenario %in% input$INPUT_include_booster_vax_scenario &
-               antiviral_target_group %in% input$INPUT_include_antiviral_target_group & 
-               antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type))
+    subset_data_to_widgets(CommandDeck_result_long)%>%
+      filter(outcome %in% input$INPUT_include_outcomes)
   }) 
   
   dataInput_WTPcurve <- eventReactive(input$update_plot,{
-    CEAC_dataframe %>%
-      filter(outcome %in% input$INPUT_include_outcomes &
-               setting %in% input$INPUT_include_setting &
-               perspective %in% input$INPUT_perspective &
-               discounting_rate %in% input$INPUT_discounting_rate &
-               antiviral_cost_scenario %in% input$INPUT_antiviral_cost_scenario &
-               booster_vax_scenario %in% input$INPUT_include_booster_vax_scenario &
-               antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type) &
-               antiviral_target_group %in% input$INPUT_include_antiviral_target_group)
+    subset_data_to_widgets(CEAC_dataframe)%>%
+      filter(outcome %in% input$INPUT_include_outcomes)
   }) 
   
   output$OUTPUT_ICER_table <- renderDataTable({
-    this_ICER_table = ICER_table %>%
-      filter(setting %in% input$INPUT_include_setting &
-               perspective %in% input$INPUT_perspective &
-               discounting_rate %in% input$INPUT_discounting_rate &
-               antiviral_cost_scenario %in% input$INPUT_antiviral_cost_scenario &
-               booster_vax_scenario %in% input$INPUT_include_booster_vax_scenario &
-               antiviral_target_group %in% input$INPUT_include_antiviral_target_group &
-               antiviral_type %in% c("no antiviral",input$INPUT_antiviral_type) &
-               outcome %in% c("netCost",input$INPUT_include_outcomes )) %>%
+    this_ICER_table = subset_data_to_widgets(ICER_table) %>%
+      filter(outcome %in% c("netCost",input$INPUT_include_outcomes)) %>%
       select(setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_target_group,count_outcome_averted,net_cost,ICER,LPI_ICER,UPI_ICER) 
     
     if(nrow(this_ICER_table)>0 & input$INPUT_include_net == "No"){
@@ -272,103 +323,45 @@ server <- function(input, output, session) {
   
   
   
-  ###<intermission>
-  plot_dimensions <- reactive({
-    plot_dimension_vector = c()
-    if (length(input$INPUT_antiviral_cost_scenario)>1)       {plot_dimension_vector = c(plot_dimension_vector,"antiviral_cost_scenario")}
-    if (length(input$INPUT_discounting_rate)>1)              {plot_dimension_vector = c(plot_dimension_vector,"discounting_rate")}
-    if (length(input$INPUT_include_antiviral_target_group)>1){plot_dimension_vector = c(plot_dimension_vector,"antiviral_target_group")}
-    if (length(input$INPUT_include_booster_vax_scenario)>1)  {plot_dimension_vector = c(plot_dimension_vector,"booster_vax_scenario")}
-    
-    plot_dimension_vector
-
-  }) 
-
-  apply_plot_dimensions <- function(data_set,aes_x,aes_y,plot_dimensions){
-    
-     if (length(plot_dimensions)==2 & is.null(input$INPUT_switch_shape_and_colour) == FALSE){
-        if (input$INPUT_switch_shape_and_colour){
-          plot_dimensions <- isolate(rev(plot_dimensions))
-        }
-     }
-    
-    if (length(plot_dimensions) == 0){
-      this_plot = ggplot(data_set) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]))
-    } else if (length(plot_dimensions) == 1){
-      this_plot = ggplot(data_set) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1])))
-    } else if (length(plot_dimensions) == 2){
-      this_plot = ggplot(data_set) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]]))) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1])),
-             shape = paste(gsub("_"," ", plot_dimensions[2])))
-    }
-    
-
-
-    return(this_plot)
-  }
-  
-  output$switch_shape_and_colour <- renderUI({
-    if(length(plot_dimensions()) == 2){
-      materialSwitch(inputId = "INPUT_switch_shape_and_colour",
-                   label = "Switch shape & colour",
-                   value = FALSE)
-    }
-  })
-
-  
-  
-  ###(2/4) IncrementalPlane
-
+  ### defining plot outputs  ####################################################
+  #(1/3) Incremental Plane
   output$OUTPUT_incremental_plane <- renderPlot({
     
-    validate(need(length(plot_dimensions())<=2, 'You have selected too many plot dimensions.\nPlease select multiple values for a maximum of two of the following variables: antiviral cost, booster strategies, antiviral strategies, discounting rate'))
-    #req(length(plot_dimensions())<=2)
-    
+    validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_IncrementalPlane()
     
     if (nrow(to_plot)>1){
-      
       plot_list = list()
-      for (this_setting in input$INPUT_include_setting){
       
-        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(data_set = to_plot[to_plot$setting == this_setting,],
-                                                               aes_x="netCost",
-                                                               aes_y="count_outcomes",
-                                                               plot_dimensions = plot_dimensions())  +
+      for (this_setting in input$INPUT_include_setting){
+        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
+                                                                  aes_x="netCost",
+                                                                  aes_y="count_outcomes",
+                                                                  plot_dimensions = plot_dimensions())  +
           ylab(paste(input$INPUT_include_outcomes,"averted")) +
           xlab("net cost (2022 USD)") +
           theme_bw() +
           theme(legend.position="bottom") +
           labs(title = this_setting) +
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
-        
       }
       
-      #arrange
-      if(length(plot_list) == 1){row_num = 1; col_num = 1}
-      if(length(plot_list) == 2){row_num = 1; col_num = 2}
-      if(length(plot_list) > 2) {row_num = 2; col_num = 2}
-      plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+      plot <- consolidate_plot_list(plot_list)
       print(plot)
     }
-    
-    
   }, res = 96)
-
+  #_____________________________________________________________________________
   
-  
-  
-  ###(3/4) WTP curve
-  output$OUTPUT_WTP_curve <- renderPlot({
-    validate(need(length(plot_dimensions())<=2, 'You have selected too many plot dimensions.\nPlease select multiple values for a maximum of two of the following variables: antiviral cost, booster strategies, antiviral strategies, discounting rate'))
     
+  #(2/3) WTP curve
+  output$OUTPUT_WTP_curve <- renderPlot({
+    
+    validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_WTPcurve()
     
     if (nrow(to_plot) > 1) {
+      plot_list = list()
+      
       # xmax = to_plot %>%
       #   group_by(setting, booster_vax_scenario, antiviral_target_group) %>%
       #   filter(round(probability, digits = 2) >= 0.99) %>%
@@ -383,13 +376,12 @@ server <- function(input, output, session) {
       #   ungroup()
       # xmin = min(xmin$max)
       
-      plot_list = list()
       for (this_setting in input$INPUT_include_setting) {
         
-        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(data_set = to_plot[to_plot$setting == this_setting,],
-                                                               aes_x="WTP",
-                                                               aes_y="probability",
-                                                               plot_dimensions = plot_dimensions())  +
+        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
+                                                                  aes_x="WTP",
+                                                                  aes_y="probability",
+                                                                  plot_dimensions = plot_dimensions())  +
           xlab(paste("Willingness to pay ($/",input$INPUT_include_outcomes,")",sep="")) +
           ylab("Probability cost-effective") +
           theme_bw() +
@@ -397,46 +389,40 @@ server <- function(input, output, session) {
           labs(title = this_setting) +
           #xlim(xmin,xmax) +
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
-        
-
       }
       
-      #arrange
-      if(length(plot_list) == 1){row_num = 1; col_num = 1}
-      if(length(plot_list) == 2){row_num = 1; col_num = 2}
-      if(length(plot_list) > 2) {row_num = 2; col_num = 2}
-      plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+      plot <- consolidate_plot_list(plot_list)
       print(plot)
     }
-    
   }, res = 96)
+  #_____________________________________________________________________________
   
   
-  ###(4/4) Tornado plot
+  #(3/3) Tornado plot
   output$OUTPUT_tornado_plot <- renderPlot({
-    to_plot <- dataInput_TornadoPlot()
+   
+    to_plot <- dataInput_TornadoPlot() %>%  ungroup() 
+    isolate_base_value <- to_plot[to_plot$direction == "lower" &  to_plot$label == "Long COVID (off/on)", ]
+    to_plot <- to_plot %>% filter(label %in% input$INPUT_parameters)
+    #NB: saved isolate_base_value before subsetting to INPUT_parameters to allow any number of parameters (don't have to include long COVID)
     
     if (nrow(to_plot)>1){
       
       plot_list = list()
       for (this_setting in input$INPUT_include_setting){
         to_plot_this_setting = to_plot %>%
-          ungroup() %>%
-          filter(setting == this_setting &   
-                   label %in% input$INPUT_parameters)
+          filter(setting == this_setting)
+        base.value <- isolate_base_value %>% filter(setting == this_setting)
+        base.value <- base.value$mean
         
         if (this_setting == "FJI"){this_setting_GDP = 5316.7}
         if (this_setting == "IDN"){this_setting_GDP = 4788.0}
         if (this_setting == "PNG"){this_setting_GDP = 3020.3}
         if (this_setting == "TLS"){this_setting_GDP = 2358.4}
-        
-        base.value <- to_plot_this_setting$mean[to_plot_this_setting$direction == "lower" & 
-                                                  to_plot_this_setting$label == "Long COVID (off/on)" ] # final value was baseline estimates
-        
+
         # width of columns in plot (value between 0 and 1)
         width <- 0.95
         order_parameters <- to_plot_this_setting %>%
-          select(label,mean,direction) %>%
           group_by(label) %>%
           summarise(LB = min(mean),
                     UB = max(mean)) %>%
@@ -460,9 +446,6 @@ server <- function(input, output, session) {
                  xmax=as.numeric(label)+width/2)
         
         # create plot
-        require(ggtext)
-        options(scipen=999) #turn off scientific notation
-        
         plot_list[[length(plot_list)+1]] = ggplot() + 
           geom_rect(data = df_2,
                     aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
@@ -480,23 +463,16 @@ server <- function(input, output, session) {
         if (input$INPUT_include_GDP == "Yes"){
           plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
             geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
-            annotate("text", x = 4, y = this_setting_GDP*0.9, label = "GDP per capita",
-                     angle = 90)
+            annotate("text", x = 4, y = this_setting_GDP*0.9, label = "GDP per capita", angle = 90)
         }
       }
       plot_list
       
-      if(length(plot_list) == 1){row_num = 1; col_num = 1}
-      if(length(plot_list) == 2){row_num = 1; col_num = 2}
-      if(length(plot_list) > 2){row_num = 2; col_num = 2}
-      
-      #grid.arrange(grobs = plot_list,nrow = row_num, ncol = col_num)
-      plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+      plot <- consolidate_plot_list(plot_list)
       print(plot)
     }
-    
   }, res = 96)
-  
+  #_____________________________________________________________________________
   
 }
 
