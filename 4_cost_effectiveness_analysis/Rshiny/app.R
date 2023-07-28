@@ -1,4 +1,4 @@
-require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse); require(shiny);require(shinyWidgets)
+require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse); require(shiny); require(shinyWidgets); require(reactlog)
 options(scipen = 1000) #turn off scientific notation
 
 
@@ -189,7 +189,8 @@ ui <- fluidPage(
                                 tabsetPanel(tabPanel(
                                   "Tornado plot",
                                   plotOutput("OUTPUT_tornado_plot", height = "800px")
-                                )))
+                                ))),
+               downloadButton("download")
     )
   )
 )
@@ -292,7 +293,7 @@ server <- function(input, output, session) {
       filter(outcome %in% input$INPUT_include_outcomes)
   }) 
   
-  output$OUTPUT_ICER_table <- renderDataTable({
+  dataInput_ICER_table <- reactive({
     this_ICER_table = subset_data_to_widgets(ICER_table) %>%
       filter(outcome %in% c("netCost",input$INPUT_include_outcomes)) %>%
       select(setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_target_group,count_outcome_averted,net_cost,ICER,LPI_ICER,UPI_ICER) 
@@ -305,6 +306,7 @@ server <- function(input, output, session) {
     
     this_ICER_table
   }) 
+  output$OUTPUT_ICER_table <- renderDataTable({dataInput_ICER_table()})
   
   dataInput_TornadoPlot <- reactive({
     tornado_variable_of_interest = paste("cost_per_",
@@ -325,7 +327,7 @@ server <- function(input, output, session) {
   
   ### defining plot outputs  ####################################################
   #(1/3) Incremental Plane
-  output$OUTPUT_incremental_plane <- renderPlot({
+  PLOT_incremental_plane <- reactive({
     
     validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_IncrementalPlane()
@@ -346,15 +348,15 @@ server <- function(input, output, session) {
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
       }
       
-      plot <- consolidate_plot_list(plot_list)
-      print(plot)
+      consolidate_plot_list(plot_list)
     }
-  }, res = 96)
+  })
+  output$OUTPUT_incremental_plane <- renderPlot({print(PLOT_incremental_plane())}, res = 96)
   #_____________________________________________________________________________
   
     
   #(2/3) WTP curve
-  output$OUTPUT_WTP_curve <- renderPlot({
+   PLOT_WTP_curve <- reactive({
     
     validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_WTPcurve()
@@ -391,15 +393,15 @@ server <- function(input, output, session) {
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
       }
       
-      plot <- consolidate_plot_list(plot_list)
-      print(plot)
+      consolidate_plot_list(plot_list)
     }
-  }, res = 96)
+  })
+  output$OUTPUT_WTP_curve <- renderPlot({print(PLOT_WTP_curve())}, res = 96)
   #_____________________________________________________________________________
   
   
   #(3/3) Tornado plot
-  output$OUTPUT_tornado_plot <- renderPlot({
+  PLOT_tornado_plot <- reactive({
    
     to_plot <- dataInput_TornadoPlot() %>%  ungroup() 
     isolate_base_value <- to_plot[to_plot$direction == "lower" &  to_plot$label == "Long COVID (off/on)", ]
@@ -466,12 +468,40 @@ server <- function(input, output, session) {
             annotate("text", x = 4, y = this_setting_GDP*0.9, label = "GDP per capita", angle = 90)
         }
       }
-      plot_list
       
-      plot <- consolidate_plot_list(plot_list)
-      print(plot)
+      consolidate_plot_list(plot_list)
     }
-  }, res = 96)
+  })
+  output$OUTPUT_tornado_plot <- renderPlot({print(PLOT_tornado_plot())}, res = 96)
+  #_____________________________________________________________________________
+  
+  
+  ### defining download options ################################################
+  configure_downloaded_figure <- function(result,this_PLOT){
+    jpeg(result)
+    print(this_PLOT)
+    dev.off()
+  }
+  output$download <-  downloadHandler(
+    
+    filename = function() {
+      temp_name = ''
+      time = Sys.time()
+      time = gsub(':','-',time)
+      time = paste(temp_name,time,sep='')
+      
+      if (input$INPUT_select_sentitivity_analysis == 'det') { paste(time, "tornado_plot.png")
+      } else if (input$tabset == 'ICER table') {              paste0(time, " ", input$tabset, ".csv")
+      } else {                                                paste0(time, " ", input$tabset, ".png")}
+    },
+    
+    content = function(result) {
+      if (input$INPUT_select_sentitivity_analysis == 'det'){ configure_downloaded_figure(result,PLOT_tornado_plot())
+      } else if (input$tabset == 'Incremental plane'){       configure_downloaded_figure(result,PLOT_incremental_plane())
+      } else if (input$tabset == 'Willingness to pay curve'){configure_downloaded_figure(result,PLOT_WTP_curve())
+      } else if (input$tabset == 'ICER table'){              write.csv(dataInput_ICER_table(), result)}
+    }
+  )
   #_____________________________________________________________________________
   
 }
