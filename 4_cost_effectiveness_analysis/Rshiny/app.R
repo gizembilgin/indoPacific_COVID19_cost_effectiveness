@@ -179,6 +179,15 @@ ui <- fluidPage(
     mainPanel( width = 9,
                
                waiter::useWaiter(),
+               
+               fluidRow(
+                 conditionalPanel(condition = "input.tabset != 'ICER table' || input.INPUT_select_sentitivity_analysis == 'det'",
+                                  column(1,numericInputIcon(inputId = "plot_height", label = "Plot height:", min = 100, max = 2000, value = 800,step =100)),
+                                  column(1,numericInputIcon(inputId = "plot_width", label = "Plot width:", min = 100, max = 2000, value = 1200,step =100))
+                                  ),
+                 column(10,downloadButton("download"),style = "margin-top: 25px;")
+                 ),
+               
                conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 'probab'",
                                 tabsetPanel(
                                   id = "tabset",
@@ -194,7 +203,6 @@ ui <- fluidPage(
                                   "Tornado plot",
                                   plotOutput("OUTPUT_tornado_plot", height = "800px")
                                 ))),
-               downloadButton("download")
     )
   )
 )
@@ -366,7 +374,10 @@ server <- function(input, output, session) {
       consolidate_plot_list(plot_list)
     }
   })
-  output$OUTPUT_incremental_plane <- renderPlot({print(PLOT_incremental_plane())}, res = 96)
+  output$OUTPUT_incremental_plane <- renderPlot({print(PLOT_incremental_plane())}, 
+                                                res = 96, 
+                                                width = function() input$plot_width,
+                                                height = function() input$plot_height)
   #_____________________________________________________________________________
   
     
@@ -415,7 +426,9 @@ server <- function(input, output, session) {
     }
   })
    
-  output$OUTPUT_WTP_curve <- renderPlot({print(PLOT_WTP_curve())}, res = 96)
+  output$OUTPUT_WTP_curve <- renderPlot({print(PLOT_WTP_curve())}, res = 96, 
+                                        width = function() input$plot_width,
+                                        height = function() input$plot_height)
   #_____________________________________________________________________________
   
   
@@ -493,13 +506,20 @@ server <- function(input, output, session) {
       consolidate_plot_list(plot_list)
     }
   })
-  output$OUTPUT_tornado_plot <- renderPlot({print(PLOT_tornado_plot())}, res = 96)
+  output$OUTPUT_tornado_plot <- renderPlot({print(PLOT_tornado_plot())}, res = 96, 
+                                           width = function() input$plot_width,
+                                           height = function() input$plot_height)
   #_____________________________________________________________________________
   
   
   ### defining download options ################################################
   configure_downloaded_figure <- function(result,this_PLOT){
-    jpeg(result)
+    #NB: I have chosen to output figures as pdfs as these are vector-based objects
+    pdf(result,
+        #pdf heights are in inches :(, hence this work around!
+        width = input$plot_width/96,
+        height = input$plot_height/96
+         )
     print(this_PLOT)
     dev.off()
   }
@@ -511,9 +531,9 @@ server <- function(input, output, session) {
       time = gsub(':','-',time)
       time = paste(temp_name,time,sep='')
       
-      if (input$INPUT_select_sentitivity_analysis == 'det') { paste(time, "tornado_plot.png")
+      if (input$INPUT_select_sentitivity_analysis == 'det') { paste(time, "tornado_plot.pdf")
       } else if (input$tabset == 'ICER table') {              paste0(time, " ", input$tabset, ".csv")
-      } else {                                                paste0(time, " ", input$tabset, ".png")}
+      } else {                                                paste0(time, " ", input$tabset, ".pdf")}
     },
     
     content = function(result) {
