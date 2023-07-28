@@ -451,10 +451,10 @@ server <- function(input, output, session) {
         base.value <- isolate_base_value %>% filter(setting == this_setting)
         base.value <- base.value$mean
         
-        if (this_setting == "FJI"){this_setting_GDP = 5316.7}
-        if (this_setting == "IDN"){this_setting_GDP = 4788.0}
-        if (this_setting == "PNG"){this_setting_GDP = 3020.3}
-        if (this_setting == "TLS"){this_setting_GDP = 2358.4}
+        if (this_setting == "Fiji"){this_setting_GDP = 5316.7;annotate_multiple = 0.9}
+        if (this_setting == "Indonesia"){this_setting_GDP = 4788.0;annotate_multiple = 0.9}
+        if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3;annotate_multiple = 0.9}
+        if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4;annotate_multiple = 0.85}
 
         # width of columns in plot (value between 0 and 1)
         width <- 0.95
@@ -498,8 +498,10 @@ server <- function(input, output, session) {
         
         if (input$INPUT_include_GDP == "Yes"){
           plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+            #geom_hline(aes(yintercept = this_setting_GDP, color = 'GDP per capita'),linetype='dashed') +
             geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
-            annotate("text", x = 4, y = this_setting_GDP*0.9, label = "GDP per capita", angle = 90)
+            annotate("text", x = 4, y = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
+    
         }
       }
       
