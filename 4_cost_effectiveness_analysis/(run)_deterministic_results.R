@@ -64,20 +64,19 @@ queue = list(
 tornado_result = data.frame()
 CommandDeck_CONTROLS = list()
 
-for (this_antiviral_type in c("molunipiravir","nirmatrelvir_ritonavir")){
-  for (ticket in 1:length(queue)){
+for (ticket in 1:length(queue)){
     CommandDeck_CONTROLS = queue[[ticket]]
     CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
                                   list(
-                                    DECISION_include_net = "N",
-                                    LIST_booster_vax_scenarios = list(
-                                      "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
-                                    ),
-                                    LIST_antiviral_elig_groups = list("adults_with_comorbidities"),
-                                    LIST_antiviral_types = list(this_antiviral_type),
+                                    LIST_CEA_settings = list("PNG_low_beta","TLS","FJI","IDN"),
+                                    LIST_perspectives = c("healthcare","societal"),
+                                    LIST_antiviral_cost_scenario = c("middle_income_cost"),
                                     TOGGLE_uncertainty = "fixed",
-                                    LIST_antiviral_cost_scenario = "middle_income_cost",
-                                    LIST_perspectives = c("healthcare","societal")
+                                    TOGGLE_numberOfRuns = 1, 
+                                    TOGGLE_clusterNumber = 1,
+                                    DECISION_save_result = "N",
+                                    DECISION_include_net = "N",
+                                    DECISION_sampling_strategy = "single_run"
                                   )
     )
     
@@ -94,8 +93,8 @@ for (this_antiviral_type in c("molunipiravir","nirmatrelvir_ritonavir")){
              direction = CommandDeck_CONTROLS$direction) 
     tornado_result = rbind(tornado_result,rows)
     
-  }
 }
+
 
 
 CommandDeck_CONTROLS = list()
@@ -109,7 +108,22 @@ tornado_result = tornado_result %>%
       setting == "TLS" ~ "Timor-Leste",
       TRUE ~ setting
     ),
+    
+    booster_vax_scenario = case_when(
+      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
+      booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
+      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults who have previously completed their primary schedule but have not recieved a booster"  ,
+      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults who have previously completed their primary schedule but have not recieved a booster"   ,
+      booster_vax_scenario == "no booster dose" ~ "no booster",
+      TRUE ~ booster_vax_scenario
+    ),
+    
     antiviral_type = gsub(" 2023-01-01","",antiviral_type),
+    antiviral_target_group = gsub("_"," ",antiviral_target_group),
+    antiviral_target_group = case_when(
+      antiviral_type == "no antiviral" ~ antiviral_type,
+      TRUE ~ antiviral_target_group
+    ),
 
     perspective = paste(perspective," perspective",sep = "")      
   )
