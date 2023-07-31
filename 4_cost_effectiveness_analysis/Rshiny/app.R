@@ -1,7 +1,7 @@
 require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse)
 require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
 options(scipen = 1000) #turn off scientific notation
-
+#rm(list = ls())
 
 ##### LOAD LATEST RESULTS ######################################################
 ### load latest probabilistic results
@@ -33,9 +33,9 @@ load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
 
 ##### CONFIGURE CHOICES ########################################################
 CHOICES = list(
-  antiviral_cost_scenario = list("low generic cost" = "low_generic_cost",
-                                "middle income cost" = "middle_income_cost", 
-                                "high income cost" = "high_income_cost"),
+  antiviral_cost_scenario = list("low generic cost ($25 USD per schedule)" = "low_generic_cost",
+                                "middle income cost ($250 USD per schedule)" = "middle_income_cost", 
+                                "high income cost ($530 USD per schedule)" = "high_income_cost"),
   antiviral_target_group = c("all adults", 
                              "adults with comorbidities", 
                              "unvaccinated adults",
@@ -131,14 +131,20 @@ ui <- fluidPage(
                     checkboxGroupInput("INPUT_antiviral_cost_scenario", label = "Antiviral cost:",
                                  choices = CHOICES$antiviral_cost_scenario,
                                  selected = "middle_income_cost"),
-                    selectInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
+                    # selectInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
+                    #             choices = CHOICES$booster_vax_scenario,
+                    #             multiple = TRUE,
+                    #             selected = c( "all adults","high risk adults", "no booster")), 
+                    checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
                                 choices = CHOICES$booster_vax_scenario,
-                                multiple = TRUE,
                                 selected = c( "all adults","high risk adults", "no booster")), 
-                    selectInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
+                    # selectInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
+                    #             choices = CHOICES$antiviral_target_group,
+                    #             selected = "adults with comorbidities",
+                    #             multiple = TRUE), 
+                    checkboxGroupInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
                                 choices = CHOICES$antiviral_target_group,
-                                selected = "adults with comorbidities",
-                                multiple = TRUE), 
+                                selected = "adults with comorbidities"), 
                     selectInput("INPUT_discounting_rate",
                                 "Discounting rate (%):",
                                 choices = CHOICES$discounting,
@@ -335,6 +341,7 @@ server <- function(input, output, session) {
     }
     colnames(this_ICER_table)[colnames(this_ICER_table) == "count_outcome_averted"]<- paste(input$INPUT_include_outcomes,"averted")
     colnames(this_ICER_table) <- gsub("_"," ",colnames(this_ICER_table))
+    colnames(this_ICER_table) <- gsub("booster vax scenario","booster eligibility",colnames(this_ICER_table))
     
     this_ICER_table
   }) 
