@@ -3,33 +3,6 @@ require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
 options(scipen = 1000) #turn off scientific notation
 #rm(list = ls())
 
-##### LOAD LATEST RESULTS ######################################################
-### load latest probabilistic results
-rootpath = str_replace(getwd(), "Rshiny","")
-list_poss_Rdata = list.files(
-  path = "x_results/",
-  pattern = "probab_result*"
-)
-if (length(list_poss_Rdata) > 0) {
-  list_poss_Rdata_details = double()
-  for (j in 1:length(list_poss_Rdata)) {
-    list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste0(rootpath,'/x_results/', list_poss_Rdata[[j]]))$mtime)
-  }
-  latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(file = paste0(rootpath,"/x_results/", latest_file))
-}
-CommandDeck_result_long <- probab_result$CommandDeck_result_long
-#CommandDeck_result      <- probab_result$CommandDeck_result
-CEAC_dataframe          <- probab_result$CEAC_dataframe
-ICER_table              <- probab_result$ICER_table
-rm(probab_result)
-
-### load latest deterministic results
-load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
-################################################################################
-
-
 
 
 ##### CONFIGURE CHOICES ########################################################
@@ -98,7 +71,7 @@ rm(check)
 ui <- fluidPage(
   
   titlePanel("Interactive cost-effectiveness analysis of COVID-19 oral antivirals and booster doses in the Indo-Pacific"),
-  h6("This R Shiny accompanies the working paper <doi link once submitted>"),
+  h6("This R Shiny accompanies the working paper <doi link once submitted>. Please note that this application may take a minute or two to load the underlying simulations."),
   #textOutput("test"),
   
   sidebarLayout(
@@ -228,8 +201,39 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # output$test <- renderText({
-  #   input$INPUT_select_sentitivity_analysis == "probab"
-  #   }) 
+  #   rootpath
+  #   })
+  
+  
+  ### load latest results ######################################################
+  # load latest probabilistic results
+  rootpath = str_replace(getwd(), "/Rshiny","")
+  list_poss_Rdata = list.files(
+    path = paste0(rootpath,"/x_results/"),
+    pattern = "probab_result*"
+  )
+  if (length(list_poss_Rdata) > 0) {
+    list_poss_Rdata_details = double()
+    for (j in 1:length(list_poss_Rdata)) {
+      list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                      file.info(paste0(rootpath,'/x_results/', list_poss_Rdata[[j]]))$mtime)
+    }
+    latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+    load(file = paste0(rootpath,"/x_results/",latest_file))
+  } else{
+    stop("no underlying simulations to load!")
+  }
+  CommandDeck_result_long <- probab_result$CommandDeck_result_long
+  #CommandDeck_result     <- probab_result$CommandDeck_result
+  CEAC_dataframe          <- probab_result$CEAC_dataframe
+  ICER_table              <- probab_result$ICER_table
+  rm(probab_result)
+  
+  # load latest deterministic results
+  load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
+  ################################################################################
+  
+  
   
   ### functions and multi-use reactive ########################################
   # function which subsets data to the widgets displayed for probabilistic sensitivity analysis
