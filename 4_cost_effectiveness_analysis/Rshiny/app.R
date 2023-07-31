@@ -1,8 +1,8 @@
+#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/"))
 require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse)
 require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
 options(scipen = 1000) #turn off scientific notation
-#rm(list = ls())
-
+rm(list = ls())
 
 
 ##### CONFIGURE CHOICES ########################################################
@@ -52,16 +52,6 @@ CHOICES = list(
     "Injection Equipment price ($0.025-$0.050)"
   )
 )
-
-check = CommandDeck_result_long %>%
-  filter(setting %in% CHOICES$setting &
-           booster_vax_scenario %in% CHOICES$booster_vax_scenario & 
-           antiviral_target_group %in% CHOICES$antiviral_target_group & 
-           antiviral_type %in% CHOICES$antiviral_type &
-           outcome %in% CHOICES$outcome &
-           perspective %in% c("healthcare perspective","societal perspective") )
-if (nrow(check)==0){stop("no rows of CommandDeck_result_long with these CHOICES")}
-rm(check)
 ################################################################################
 
 
@@ -98,7 +88,9 @@ ui <- fluidPage(
                   radioGroupButtons("INPUT_include_outcomes","Outcome:",
                                     choices = CHOICES$outcome,
                                     selected = "QALYs"), 
-                  
+                  uiOutput("booster_strategy"),
+                  uiOutput("antiviral_strategy"),
+                                    
                   ### Probabilistic sensitivity analysis
                   conditionalPanel(
                     condition = "input.INPUT_select_sentitivity_analysis == 'probab'", 
@@ -106,20 +98,7 @@ ui <- fluidPage(
                     checkboxGroupInput("INPUT_antiviral_cost_scenario", label = "Antiviral cost:",
                                  choices = CHOICES$antiviral_cost_scenario,
                                  selected = "middle_income_cost"),
-                    # selectInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
-                    #             choices = CHOICES$booster_vax_scenario,
-                    #             multiple = TRUE,
-                    #             selected = c( "all adults","high risk adults", "no booster")), 
-                    checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
-                                choices = CHOICES$booster_vax_scenario,
-                                selected = c( "all adults","high risk adults", "no booster")), 
-                    # selectInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
-                    #             choices = CHOICES$antiviral_target_group,
-                    #             selected = "adults with comorbidities",
-                    #             multiple = TRUE), 
-                    checkboxGroupInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
-                                choices = CHOICES$antiviral_target_group,
-                                selected = "adults with comorbidities"), 
+
                     selectInput("INPUT_discounting_rate",
                                 "Discounting rate (%):",
                                 choices = CHOICES$discounting,
@@ -306,6 +285,30 @@ server <- function(input, output, session) {
     }
   })
   
+  #widget for booster and oral antiviral eligibility strategies
+  output$booster_strategy <- renderUI({
+    if(input$INPUT_select_sentitivity_analysis == 'probab'){
+      checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
+                         choices = CHOICES$booster_vax_scenario,
+                         selected = c( "all adults","high risk adults", "no booster")) 
+    } else{
+      radioButtons("INPUT_include_booster_vax_scenario","Booster strategies to include:",
+                         choices = CHOICES$booster_vax_scenario,
+                         selected = c( "all adults"))
+    }
+  })
+  output$antiviral_strategy <- renderUI({
+    if(input$INPUT_select_sentitivity_analysis == 'probab'){
+       checkboxGroupInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
+                         choices = CHOICES$antiviral_target_group,
+                         selected = "adults with comorbidities") 
+    } else{
+        radioButtons("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
+                   choices = CHOICES$antiviral_target_group,
+                   selected = "adults with comorbidities") 
+    }
+  })
+  
   # function to consolidate plot_list into one figure
   consolidate_plot_list <- function(plot_list){
     if(length(plot_list) == 1){row_num = 1; col_num = 1}
@@ -361,10 +364,12 @@ server <- function(input, output, session) {
                                          sep ="")
     tornado_result %>%
       filter(evaluation_level == "incremental") %>%
-      filter(antiviral_type %in%  input$INPUT_antiviral_type & 
+      filter(antiviral_type %in% c("no antiviral", input$INPUT_antiviral_type) & 
                variable %in%  tornado_variable_of_interest &
                setting %in% input$INPUT_include_setting &
-               perspective %in% input$INPUT_perspective) 
+               perspective %in% input$INPUT_perspective  &
+               booster_vax_scenario %in% input$INPUT_include_booster_vax_scenario &
+               antiviral_target_group %in% input$INPUT_include_antiviral_target_group) 
   })
   ##############################################################################
   
@@ -452,7 +457,8 @@ server <- function(input, output, session) {
   PLOT_tornado_plot <- reactive({
     
     call_waiter("OUTPUT_tornado_plot")
-   
+    
+    #validate(need(length(plot_dimensions())<1, "Please select only one booster strategy and one antiviral strategy"))
     to_plot <- dataInput_TornadoPlot() %>%  ungroup() 
     isolate_base_value <- to_plot[to_plot$direction == "lower" &  to_plot$label == "Long COVID (off/on)", ]
     to_plot <- to_plot %>% filter(label %in% input$INPUT_parameters)
