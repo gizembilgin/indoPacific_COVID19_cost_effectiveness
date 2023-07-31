@@ -118,15 +118,7 @@ ui <- fluidPage(
                     conditionalPanel(
                       condition = "input.tabset == 'Willingness to pay curve' ", 
                       checkboxInput("INPUT_fix_xaxis","Fix x-axis between settings",value = FALSE),
-                      actionButton(inputId = "update_plot",
-                                   label = "Update plot"),
                     ), 
-                    conditionalPanel(
-                      condition = "input.tabset == 'Willingness to pay curve' | input.tabset == 'Incremental plane'", 
-                      textOutput("warning_on_unvax_Fijian"),
-                    ), 
-
-
                   ),
                   
                   ### Deterministic sensitivity analysis
@@ -134,10 +126,19 @@ ui <- fluidPage(
                     condition = "input.INPUT_select_sentitivity_analysis == 'det'", 
                       checkboxGroupInput("INPUT_parameters","Parameters to display:",
                                          choices = CHOICES$tornado_plot_parameters,
-                                         selected = CHOICES$tornado_plot_parameters ), 
-                     radioGroupButtons("INPUT_include_GDP","Include GDP as a line?",
-                                   choices = c("Yes","No")),
-                  )
+                                         selected = CHOICES$tornado_plot_parameters )
+                  ),
+                  conditionalPanel(
+                    condition = "input.INPUT_select_sentitivity_analysis == 'det' | input.tabset == 'Willingness to pay curve' ", 
+                    uiOutput("GDP_line_toggle")
+                  ),
+                  conditionalPanel(
+                    condition = "input.INPUT_select_sentitivity_analysis == 'probab' & (input.tabset == 'Willingness to pay curve' | input.tabset == 'Incremental plane')", 
+                    textOutput("warning_on_unvax_Fijian"),
+                    actionButton(inputId = "update_plot",
+                                 label = "Update plot")
+                  ), 
+                  
     ),
     
     ### Outputs ################################################################
@@ -309,6 +310,16 @@ server <- function(input, output, session) {
     }
   })
   
+  #widget for GDP line
+  output$GDP_line_toggle <- renderUI({
+    if(input$INPUT_select_sentitivity_analysis == 'probab'){
+      checkboxInput("INPUT_include_GDP","Include GDP as a dashed line",value = TRUE)
+    } else{
+      radioGroupButtons("INPUT_include_GDP","Include GDP as a line?",
+                        choices = c("Yes","No"))
+    }
+  })
+  
   # function to consolidate plot_list into one figure
   consolidate_plot_list <- function(plot_list){
     if(length(plot_list) == 1){row_num = 1; col_num = 1}
@@ -393,7 +404,7 @@ server <- function(input, output, session) {
                                                                   aes_y="count_outcomes",
                                                                   plot_dimensions = plot_dimensions())  +
           ylab(paste(input$INPUT_include_outcomes,"averted")) +
-          xlab("net cost (2022 USD)") +
+          xlab("incremental cost (2022 USD)") +
           theme_bw() +
           theme(legend.position="bottom") +
           labs(title = this_setting) +
@@ -413,7 +424,7 @@ server <- function(input, output, session) {
     
   #(2/3) WTP curve
    #PLOT_WTP_curve <- reactive({
-  PLOT_WTP_curve <- eventReactive({input$update_plot|is.null(input$INPUT_switch_shape_and_colour) == FALSE | input$INPUT_fix_xaxis},{
+  PLOT_WTP_curve <- eventReactive({input$update_plot|is.null(input$INPUT_switch_shape_and_colour) == FALSE | input$INPUT_fix_xaxis | input$INPUT_include_GDP},{
     
     call_waiter("OUTPUT_WTP_curve")
      
@@ -424,6 +435,11 @@ server <- function(input, output, session) {
       plot_list = list()
 
       for (this_setting in input$INPUT_include_setting) {
+        
+        if (this_setting == "Fiji"){this_setting_GDP = 5316.7;annotate_multiple = 0.9}
+        if (this_setting == "Indonesia"){this_setting_GDP = 4788.0;annotate_multiple = 0.9}
+        if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3;annotate_multiple = 0.9}
+        if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4;annotate_multiple = 0.85}
         
         plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
                                                                   aes_x="WTP",
@@ -439,6 +455,12 @@ server <- function(input, output, session) {
         if(input$INPUT_fix_xaxis == TRUE){
           plot_list[[length(plot_list)]] =  plot_list[[length(plot_list)]] +
             xlim(min(to_plot$WTP),max(to_plot$WTP))
+        }
+        if (input$INPUT_include_GDP == TRUE){
+          plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+            geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype='dashed') #+
+            #annotate("text", y = 0.25, x = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
+          #very difficult NOT to get text to overlap something with range of WTP
         }
       }
       
