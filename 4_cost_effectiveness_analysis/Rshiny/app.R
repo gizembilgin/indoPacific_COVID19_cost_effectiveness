@@ -20,9 +20,10 @@ if (length(list_poss_Rdata) > 0) {
   load(file = paste0(rootpath,"/x_results/", latest_file))
 }
 CommandDeck_result_long <- probab_result$CommandDeck_result_long
-CommandDeck_result      <- probab_result$CommandDeck_result
+#CommandDeck_result      <- probab_result$CommandDeck_result
 CEAC_dataframe          <- probab_result$CEAC_dataframe
 ICER_table              <- probab_result$ICER_table
+rm(probab_result)
 
 ### load latest deterministic results
 load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
@@ -87,6 +88,7 @@ check = CommandDeck_result_long %>%
            outcome %in% CHOICES$outcome &
            perspective %in% c("healthcare perspective","societal perspective") )
 if (nrow(check)==0){stop("no rows of CommandDeck_result_long with these CHOICES")}
+rm(check)
 ################################################################################
 
 
@@ -225,12 +227,12 @@ ui <- fluidPage(
 ##### SERVER DEFINITION ########################################################
 server <- function(input, output, session) {
   
-   # output$test <- renderText({
-   #   input$INPUT_select_sentitivity_analysis == "probab"
-   #   }) 
+  # output$test <- renderText({
+  #   input$INPUT_select_sentitivity_analysis == "probab"
+  #   }) 
   
   ### functions and multi-use reactive ########################################
-  #function which subsets data to the widgets displayed for probabilistic sensitivity analysis
+  # function which subsets data to the widgets displayed for probabilistic sensitivity analysis
   subset_data_to_widgets <- function(df){
     df %>%
       filter(
@@ -244,7 +246,7 @@ server <- function(input, output, session) {
       )
   }
   
-  #function to create waiter spinner while waiting for plot to load
+  # function to create waiter spinner while waiting for plot to load
   call_waiter <- function(this_output){
     waiter::Waiter$new(
       id = this_output,
@@ -253,7 +255,7 @@ server <- function(input, output, session) {
     )$show()
   }
   
-  #reactive containing the INPUTs with multiple values selected
+  # reactive containing the INPUTs with multiple values selected
   plot_dimensions <- reactive({
     plot_dimension_vector = c()
     
@@ -265,7 +267,7 @@ server <- function(input, output, session) {
     plot_dimension_vector
   }) 
   
-  #function to configure aesthetic of ggplot() by plot_dimensions() reactive
+  # function to configure aesthetic of ggplot() by plot_dimensions() reactive
   apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
     
     if (length(plot_dimensions)==2 & is.null(input$INPUT_switch_shape_and_colour) == FALSE){
@@ -291,7 +293,7 @@ server <- function(input, output, session) {
     return(this_plot)
   }
   
-  #widget to switch variables controlling shape & colour
+  # widget to switch variables controlling shape & colour
   output$switch_shape_and_colour <- renderUI({
     if(length(plot_dimensions()) == 2){
       materialSwitch(inputId = "INPUT_switch_shape_and_colour",
@@ -300,10 +302,7 @@ server <- function(input, output, session) {
     }
   })
   
-  #text to display when too many dimensions have been selected
-  too_many_dimensions_text = "You have selected too many plot dimensions.\nPlease select multiple values for a maximum of two of the following variables: antiviral cost, booster strategies, antiviral strategies, discounting rate"
-  
-  #function to consolidate plot_list into one figure
+  # function to consolidate plot_list into one figure
   consolidate_plot_list <- function(plot_list){
     if(length(plot_list) == 1){row_num = 1; col_num = 1}
     if(length(plot_list) == 2){row_num = 1; col_num = 2}
@@ -311,6 +310,10 @@ server <- function(input, output, session) {
     plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
   }
   
+  # text to display when too many dimensions have been selected
+  too_many_dimensions_text = "You have selected too many plot dimensions.\nPlease select multiple values for a maximum of two of the following variables: antiviral cost, booster strategies, antiviral strategies, discounting rate"
+  
+  # text to display when unvaccinated FJI points obscured by overlapping no antiviral points
   output$warning_on_unvax_Fijian <- renderText({
     if("Fiji" %in% input$INPUT_include_setting & "unvaccinated adults" %in% input$INPUT_include_antiviral_target_group){
       validate("\nNote: Due to Fiji's high vaccine coverage rates, 'no antiviral' and 'unvaccinated adults' antiviral target simulations overlap")
@@ -358,7 +361,6 @@ server <- function(input, output, session) {
                variable %in%  tornado_variable_of_interest &
                setting %in% input$INPUT_include_setting &
                perspective %in% input$INPUT_perspective) 
-    
   })
   ##############################################################################
   
@@ -392,6 +394,7 @@ server <- function(input, output, session) {
       consolidate_plot_list(plot_list)
     }
   })
+  
   output$OUTPUT_incremental_plane <- renderPlot({print(PLOT_incremental_plane())}, 
                                                 res = 96, 
                                                 width = function() input$plot_width,
@@ -434,7 +437,8 @@ server <- function(input, output, session) {
     }
   })
    
-  output$OUTPUT_WTP_curve <- renderPlot({print(PLOT_WTP_curve())}, res = 96, 
+  output$OUTPUT_WTP_curve <- renderPlot({print(PLOT_WTP_curve())}, 
+                                        res = 96, 
                                         width = function() input$plot_width,
                                         height = function() input$plot_height)
   #_____________________________________________________________________________
@@ -516,7 +520,9 @@ server <- function(input, output, session) {
       consolidate_plot_list(plot_list)
     }
   })
-  output$OUTPUT_tornado_plot <- renderPlot({print(PLOT_tornado_plot())}, res = 96, 
+  
+  output$OUTPUT_tornado_plot <- renderPlot({print(PLOT_tornado_plot())}, 
+                                           res = 96, 
                                            width = function() input$plot_width,
                                            height = function() input$plot_height)
   #_____________________________________________________________________________
@@ -533,8 +539,9 @@ server <- function(input, output, session) {
     print(this_PLOT)
     dev.off()
   }
+  
   output$download <-  downloadHandler(
-    
+  
     filename = function() {
       temp_name = ''
       time = Sys.time()
@@ -557,4 +564,6 @@ server <- function(input, output, session) {
   
 }
 
-shinyApp(ui, server)
+
+
+shinyApp(ui, server) #run application!
