@@ -10,6 +10,7 @@ for (this_DECISION_include_net in c("Y")){
       
       CommandDeck_CONTROLS =
         list(
+          LIST_CEA_settings = list("PNG_low_beta","TLS","FJI","IDN"),
           LIST_perspectives = list("healthcare","societal"),
           LIST_discounting_rate = c(0.03), #for NET run
           LIST_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost", "high_income_cost"),
@@ -22,11 +23,6 @@ for (this_DECISION_include_net in c("Y")){
           DECISION_sampling_strategy = "single_run",
           DECISION_include_net = this_DECISION_include_net
         )
-      
-      if (this_DECISION_include_net == "Y"){
-        CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                      list(LIST_CEA_settings = LIST_CEA_settings[!(LIST_CEA_settings == "IDN")]))
-      }
       
       source(paste(getwd(),"/CommandDeck.R",sep=""))
       
