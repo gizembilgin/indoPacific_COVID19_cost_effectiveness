@@ -388,7 +388,7 @@ server <- function(input, output, session) {
   
   ### defining plot outputs  ####################################################
   #(1/3) Incremental Plane
-  PLOT_incremental_plane <- reactive({
+  PLOT_incremental_plane <- eventReactive({input$update_plot|is.null(input$INPUT_switch_shape_and_colour) == FALSE},{
     
     call_waiter("OUTPUT_incremental_plane")
     
