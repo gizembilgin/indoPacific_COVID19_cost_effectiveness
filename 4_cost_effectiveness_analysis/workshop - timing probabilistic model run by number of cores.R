@@ -4,19 +4,19 @@ timing_df = ICER_plane_df = data.frame()
 
 #for (this_DECISION_include_net in c("N","Y")){
 for (this_DECISION_include_net in c("Y")){
-  for (num_cores in c(1,2,3,4,5)){
+  for (num_cores in c(1,2,3,4)){
     if (!(num_cores %in% timing_df$cores & this_DECISION_include_net %in% timing_df$DECISION_include_net)){
       time.start=proc.time()[[3]] #let's see how long this runs for
       
       CommandDeck_CONTROLS =
         list(
           LIST_perspectives = list("healthcare","societal"),
-          LIST_discounting_rate = c(0.00,0.03,0.05),
+          LIST_discounting_rate = c(0.03), #for NET run
           LIST_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost", "high_income_cost"),
           
           TOGGLE_longCOVID = "off",
           TOGGLE_uncertainty = "rand",
-          TOGGLE_numberOfRuns = 120, #1000 eventually
+          TOGGLE_numberOfRuns = 6, #1000 eventually
           TOGGLE_clusterNumber = num_cores,  #4 or 5? test and time!
           DECISION_save_result = "N",
           DECISION_sampling_strategy = "single_run",
@@ -43,6 +43,12 @@ for (this_DECISION_include_net in c("Y")){
       
       ICER_plane_df = rbind(ICER_plane_df, CommandDeck_result_long)
       timing_df = rbind(timing_df,this_row)
+      
+      temp_name = ''
+      time = Sys.time()
+      time = gsub(':','-',time)
+      time = paste(temp_name,time,sep='')
+      write.csv(timing_df, file = paste("x_results/",time,"timing_df.csv"))
     }
   }
 }
