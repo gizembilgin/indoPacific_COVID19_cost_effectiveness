@@ -77,7 +77,7 @@ interventionCost_estimator <- function(
       mutate(cost = intervention_doses_delivered * (operational_cost + static_costs)) %>%
       select(setting,booster_vax_scenario,intervention,intervention_target_group,cost)
     
-    interventionCost_estimates = bind_rows(interventionCost_estimates,vax_estimates)
+    interventionCost_estimates = bind_rows(interventionCost_estimates,vax_estimates); rm(vax_estimates)
     #___________________________________________________________________________
     
     
@@ -108,8 +108,8 @@ interventionCost_estimator <- function(
             TRUE ~ est
           ))
         antiviral_estimates$operational_cost[row_num] = sum(this_sample$est)
+        rm(this_sample)
       }
-      rm(this_sample)
       
     } else if (toggle_uncertainty == "fixed"){
       antiviral_estimates$operational_cost = antiviral_estimates$intervention_doses_delivered * op_fitted_distributions$mean
@@ -139,7 +139,7 @@ interventionCost_estimator <- function(
         price_per_RAT*wastage_factor_RAT
       this_static_cost = data.frame(static_cost = this_static_cost,
                                 antiviral_cost_scenario = this_antiviral_cost_scenario)
-      static_costs = rbind(static_costs,this_static_cost)
+      static_costs = rbind(static_costs,this_static_cost); rm(this_static_cost)
     }
 
     
@@ -149,9 +149,10 @@ interventionCost_estimator <- function(
       mutate(cost = operational_cost + intervention_doses_delivered * static_cost) %>%
       select(setting,antiviral_cost_scenario,booster_vax_scenario,intervention,intervention_target_group,cost)
     
-    interventionCost_estimates = bind_rows(interventionCost_estimates,antiviral_estimates)
+    interventionCost_estimates = bind_rows(interventionCost_estimates,antiviral_estimates); rm(antiviral_estimates)
     #___________________________________________________________________________
   }
+  rm(TRANSLATED_antiviral_simulations)
   ##############################################################################
   
   return(interventionCost_estimates)

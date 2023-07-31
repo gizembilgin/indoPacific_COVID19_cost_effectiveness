@@ -17,6 +17,7 @@ productivityCosts_estimator <- function(
   productivity_loss_df <- productivity_loss_reference_df %>%
     filter(discounting_rate %in% list_discounting_rate) %>%
     ungroup() 
+  rm(productivity_loss_reference_df)
   ##############################################################################
   
   

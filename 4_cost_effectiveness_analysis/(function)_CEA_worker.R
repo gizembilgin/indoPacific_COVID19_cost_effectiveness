@@ -73,7 +73,7 @@ CEA_worker <- function(
     } else{
       productivityCosts <- data.frame()
     }
-    
+    rm(MASTER_antiviral_simulations)
     
     ###(3/3) CEA per setting
     this_result <- simulationSummary(DECISION_include_net,
@@ -82,6 +82,7 @@ CEA_worker <- function(
                                      healthcareCostEstimation,
                                      productivityCosts) %>%
       mutate(run_ID = random_id(n = 1, bytes = 8))
+    rm(outcomesAvertedEstimation,interventionCost_estimates,healthcareCostEstimation,productivityCosts)
     
     #expand out to perspectives
     this_result = crossing(this_result,perspective = LIST_perspectives) %>%
@@ -89,9 +90,9 @@ CEA_worker <- function(
         perspective == "healthcare" ~ 0,
         perspective == "societal" ~ productivityLoss
       ))
-    
+
     CommandDeck_result_long = rbind(CommandDeck_result_long,this_result)
-    
+    rm(this_result)
   }
   
   expand = CommandDeck_result_long %>% #5% of object size - COMEBACK can delay this step if memory becomes an issue
@@ -101,6 +102,7 @@ CEA_worker <- function(
                     antiviral_cost_scenario = LIST_antiviral_cost_scenario)
   CommandDeck_result_long = bind_rows(CommandDeck_result_long[is.na(CommandDeck_result_long$antiviral_cost_scenario) == FALSE,],
                                       expand)
+  rm(expand)
   
   return(CommandDeck_result_long)
 }

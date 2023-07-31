@@ -21,6 +21,7 @@ simulationSummary <- function(DECISION_include_net,
   ### PART ONE: Join all data sets together! ###################################
   Combined_0 = crossing(interventionCost_estimates,
                         evaluation_level = unique(outcomesAvertedEstimation$outcomes_averted$evaluation_level)) 
+  rm(interventionCost_estimates)
   if ("net" %in% unique(outcomesAvertedEstimation$outcomes_averted$evaluation_level)){
     null_row = crossing(setting = unique(Combined_0$setting),
                         booster_vax_scenario = "no booster dose",
@@ -37,10 +38,12 @@ simulationSummary <- function(DECISION_include_net,
     rename(healthcareCostAverted = cost) %>%
     left_join(outcomesAvertedEstimation$outcomes_averted,by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group),
               relationship = "many-to-many") #because of outcomes
+  rm(outcomesAvertedEstimation,healthcareCostEstimation)
   if (nrow(productivityCosts)>0){
     Combined_0 = Combined_0 %>%
       left_join(productivityCosts, by = join_by(evaluation_level,discounting_rate,setting, booster_vax_scenario, intervention, intervention_target_group)) %>%
       rename(productivityLoss = cost)
+    rm(productivityCosts)
   } else{
     Combined_0 = Combined_0 %>%
       mutate(productivityLoss = 0)
@@ -54,6 +57,7 @@ simulationSummary <- function(DECISION_include_net,
     #NB: the incremental effect of booster doses and antiviral scenarios were kept separate in (antiviral) run, let's combine back all combination!  
     Combined_1 = Combined_0 %>% 
       filter(evaluation_level == "incremental")
+    rm(Combined_0)
     
     Combined = data.frame()
     ##vax no antiviral
@@ -95,6 +99,7 @@ simulationSummary <- function(DECISION_include_net,
         Combined = rbind(Combined,this_row)
       }
     }
+    rm(Combined_1,this_row)
     
     #make wider because makes object 60% smaller
     Combined  = Combined %>% pivot_wider(values_from = "count_outcomes", names_from = "outcome")
@@ -117,6 +122,7 @@ simulationSummary <- function(DECISION_include_net,
       pivot_longer(cols = c("interventionCost"  ,"healthcareCostAverted",    "productivityLoss" , "QALYs","death","hosp"),
                    names_to = "parameter",
                    values_to = "value")
+    rm(Combined_0)
     
     #Let's derive incremental from the difference between net scenarios
     null_row = Combined %>% 
@@ -137,10 +143,8 @@ simulationSummary <- function(DECISION_include_net,
     
     Combined = rbind(Combined,workshop_incremental) %>%
       pivot_wider(values_from = "value", names_from = "parameter")
+    rm(workshop_incremental,null_row)
   }
-
- 
-  rm(Combined_0)
   
   return(Combined)
 }
