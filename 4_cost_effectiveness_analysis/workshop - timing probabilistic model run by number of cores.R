@@ -2,8 +2,9 @@
 
 timing_df = ICER_plane_df = data.frame()
 
-for (this_DECISION_include_net in c("N","Y")){
-  for (num_cores in c(2,3,4,5)){
+#for (this_DECISION_include_net in c("N","Y")){
+for (this_DECISION_include_net in c("Y")){
+  for (num_cores in c(1,2,3,4,5)){
     if (!(num_cores %in% timing_df$cores & this_DECISION_include_net %in% timing_df$DECISION_include_net)){
       time.start=proc.time()[[3]] #let's see how long this runs for
       
@@ -47,16 +48,17 @@ for (this_DECISION_include_net in c("N","Y")){
 }
 CommandDeck_CONTROLS = list()
 beep()
-# cores time_seconds time_minutes
-# 5       962.73     16.04550
-# 4      1075.00     17.91667
 
+# TOGGLE_numberOfRuns == 120
 # DECISION_include_net cores time_seconds time_minutes time_hours
-# 1                    N     5     10322.01     172.0335   2.867225 -> 48 hours for 1000
-# 2                    N     4      9466.69     157.7782   2.629636 -> 44 hours for 1000
-# 3                    N     3      8705.08     145.0847   2.418078
+# 1                    N     2     18356.14     305.9357   5.098928
+# 2                    N     3     17782.15     296.3692   4.939486 #best choice!!!
+# 3                    N     4     18645.44     310.7573   5.179289
+# 4                    N     5     20860.31     347.6718   5.794531
+# > timing_df$time_hours/120*1000
+# 42.49106 41.16238 43.16074 48.28775
 
-
+#NB: 30 minutes for one Y CEA run, i.e., 20 days!!
 
 require(ggpubr);options(scipen = 1000)
 to_plot = ICER_plane_df %>%
