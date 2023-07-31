@@ -1,0 +1,10 @@
+name: rshiny
+title:
+username: gizemmayisbilgin
+account: gizemmayisbilgin
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9530926
+bundleId: 7513123
+url: https://gizemmayisbilgin.shinyapps.io/rshiny/
+version: 1
