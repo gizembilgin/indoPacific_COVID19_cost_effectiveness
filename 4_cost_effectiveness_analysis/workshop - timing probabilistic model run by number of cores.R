@@ -19,7 +19,6 @@ for (this_DECISION_include_net in c("Y")){
           TOGGLE_uncertainty = "rand",
           TOGGLE_numberOfRuns = 120, #1000 eventually
           TOGGLE_clusterNumber = num_cores,  #4 or 5? test and time!
-          DECISION_save_result = "N",
           DECISION_sampling_strategy = "single_run",
           DECISION_include_net = this_DECISION_include_net
         )
@@ -65,6 +64,14 @@ beep()
 # 1                    Y     1     10974.44     182.9073   3.048456
 # 2                    Y     2     11121.25     185.3542   3.089236
 # 3                    Y     3     10980.80     183.0133   3.050222
+
+#After stopping sampling > 1 million times from a normal distribution
+# DECISION_include_net	cores	time_seconds	time_minutes	time_hours	time_1000
+# Y	                        2	958.36	      15.97266667	0.266211111	  2.218425926
+# Y	                        3	738.63	      12.3105	    0.205175	    1.709791667
+# Y	                        4	650.76	      10.846	    0.180766667	  1.506388889
+# Y	                        5	551.27	      9.187833333	0.153130556	  1.276087963
+
 
 require(ggpubr);options(scipen = 1000)
 to_plot = ICER_plane_df %>%
