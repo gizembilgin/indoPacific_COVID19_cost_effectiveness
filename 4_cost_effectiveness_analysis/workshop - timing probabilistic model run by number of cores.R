@@ -4,7 +4,7 @@ timing_df = ICER_plane_df = data.frame()
 
 #for (this_DECISION_include_net in c("N","Y")){
 for (this_DECISION_include_net in c("Y")){
-  for (num_cores in c(1,2,3,4)){
+  for (num_cores in c(2,3,4,5)){
     if (!(num_cores %in% timing_df$cores & this_DECISION_include_net %in% timing_df$DECISION_include_net)){
       time.start=proc.time()[[3]] #let's see how long this runs for
       
@@ -17,7 +17,7 @@ for (this_DECISION_include_net in c("Y")){
           
           TOGGLE_longCOVID = "off",
           TOGGLE_uncertainty = "rand",
-          TOGGLE_numberOfRuns = 6, #1000 eventually
+          TOGGLE_numberOfRuns = 120, #1000 eventually
           TOGGLE_clusterNumber = num_cores,  #4 or 5? test and time!
           DECISION_save_result = "N",
           DECISION_sampling_strategy = "single_run",
