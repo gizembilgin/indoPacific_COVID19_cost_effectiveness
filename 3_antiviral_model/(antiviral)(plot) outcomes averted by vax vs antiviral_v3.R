@@ -10,11 +10,11 @@ LIST_results = list("doses_per_outcome_averted","percentage" )
 TOGGLE_print = "on"
 TOGGLE_antiviral_type = "nirmatrelvir_ritonavir"
 
-risk_groups_to_plot = c("adults_with_comorbidities","pregnant_women")
+risk_groups_to_plot = c("adults_with_comorbidities")
 if (plot_name == "figure_S2_4"){risk_groups_to_plot = "pregnant_women"}
 
-#settings_to_plot = c("PNG_high_beta","PNG_low_beta")
-settings_to_plot = c("TLS","PNG_low_beta","FJI","IDN")
+settings_to_plot = c("PNG_high_beta","PNG_low_beta")
+#settings_to_plot = c("TLS","PNG_low_beta","FJI","IDN")
 
 
 if (plot_name ==  "figure_S3_2_3"){

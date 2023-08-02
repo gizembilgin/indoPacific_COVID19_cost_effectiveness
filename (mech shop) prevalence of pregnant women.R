@@ -6,6 +6,7 @@
 
 setting_list = c("SLE","PNG","TLS","IDN","FJI","SLB","PHL")
 prevalence_pregnancy = data.frame()
+prevalence_pregnancy_summary = data.frame()
 
 for (ticket in 1:length(setting_list)){
   this_setting = setting_list[ticket]
@@ -105,6 +106,14 @@ for (ticket in 1:length(setting_list)){
       mutate(ASFR = ASFR * female_prop) %>%
       select(age,ASFR) 
     
+   ASFR_population = ASFR %>%
+      left_join(pop_together) %>%
+      mutate(prop = population/sum(population),
+             interim = prop * ASFR) %>%
+     group_by(country_long,Time) %>%
+     summarise(ASFR = sum(interim))
+   prevalence_pregnancy_summary = rbind(prevalence_pregnancy_summary,ASFR_population)
+    
     ### adapt ASFR to model age groups         
     pop_conversion = pop_orig %>%
       filter(country == this_setting) %>%
@@ -145,12 +154,12 @@ for (ticket in 1:length(setting_list)){
     labs(title="") 
 }
 
-ggplot(data=prevalence_pregnancy) + 
+ggplot(data=prevalence_pregnancy[prevalence_pregnancy$country %in% c("FJI","IDN","PNG","TLS"),]) + 
   geom_point(aes(x=prop*100,y=age_group,color=as.factor(country))) +
   # xlim(0,1) +
   xlab("Age-specific fertility ratio (%)") + 
   ylab("model age groups") + 
   labs(title="") 
 
-
-save(prevalence_pregnancy, file = "1_inputs/prevalence_pregnancy.Rdata")
+prevalence_pregnancy_summary
+#save(prevalence_pregnancy, file = "1_inputs/prevalence_pregnancy.Rdata")
