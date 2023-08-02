@@ -60,7 +60,11 @@ beep()
 # > timing_df$time_hours/120*1000
 # 42.49106 41.16238 43.16074 48.28775
 
-#NB: 30 minutes for one Y CEA run, i.e., 20 days!!
+#NB: 30 minutes for one Y CEA run, i.e., 20 days!! Let's stop sampling from a normal distribution if there is >1 million
+# DECISION_include_net cores time_seconds time_minutes time_hours
+# 1                    Y     1     10974.44     182.9073   3.048456
+# 2                    Y     2     11121.25     185.3542   3.089236
+# 3                    Y     3     10980.80     183.0133   3.050222
 
 require(ggpubr);options(scipen = 1000)
 to_plot = ICER_plane_df %>%

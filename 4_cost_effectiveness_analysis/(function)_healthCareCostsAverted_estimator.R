@@ -4,7 +4,8 @@ healthCareCostsAverted_estimator <- function(
     MASTER_antiviral_simulations,
     TORNADO_PLOT_OVERRIDE,
     toggle_uncertainty = TOGGLE_uncertainty,
-    fitted_distributions = local_fitted_distributions
+    fitted_distributions = local_fitted_distributions,
+    cutoff_sampling = 1000000 #cutoff number at which we do not sample from the distribution
     ){
   
   ### PART ONE: load antiviral simulation ######################################
@@ -44,13 +45,17 @@ healthCareCostsAverted_estimator <- function(
   if (toggle_uncertainty == "rand"){
     for (row_num in 1:nrow(reduced_LOS_estimates)){
       #sampling reduced LOS per hospitalised individual who had received antivirals
-      this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes[row_num],mean = new_mean, sd = new_sd)) %>%
-        mutate(est = case_when(
-          est <0 ~ 0,
-          TRUE ~ est
-        ))
-      reduced_LOS_estimates$estimate[row_num] = sum(this_sample$est)
-      rm(this_sample)
+      if (reduced_LOS_estimates$count_outcomes[row_num] < cutoff_sampling){ #if sampling less than a million times
+        this_sample = data.frame(est = rnorm (reduced_LOS_estimates$count_outcomes[row_num],mean = new_mean, sd = new_sd)) %>%
+          mutate(est = case_when(
+            est <0 ~ 0,
+            TRUE ~ est
+          ))
+        reduced_LOS_estimates$estimate[row_num] = sum(this_sample$est)
+        rm(this_sample)
+      } else{
+        reduced_LOS_estimates$estimate[row_num] = reduced_LOS_estimates$count_outcomes[row_num] * new_mean
+      }
     }
     
   } else if (toggle_uncertainty == "fixed"){
@@ -128,31 +133,40 @@ healthCareCostsAverted_estimator <- function(
     for (row_num in 1:nrow(cost_estimates)){
       if (cost_estimates$patient_type[row_num] == "inpatient"){
         if (cost_estimates$count_outcomes[row_num]<0){multiplier = -1
-        } else{multiplier = 1}
-        this_sample = data.frame(est = rnorm(abs(cost_estimates$count_outcomes[row_num]), mean = cost_estimates$param1[row_num], sd = cost_estimates$param2[row_num])) %>%
-          mutate(est = case_when(
-            est <0 ~ 0,
-            TRUE ~ est
-          ))
-        cost_estimates$cost[row_num] = sum(this_sample$est)*multiplier
+        } else {multiplier = 1}
         
-        if (length(TORNADO_PLOT_OVERRIDE)>0){
-          if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row_num] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$inpatient}
+        if (cost_estimates$count_outcomes[row_num] < cutoff_sampling){ #if sampling less than a million times
+          this_sample = data.frame(est = rnorm(abs(cost_estimates$count_outcomes[row_num]), mean = cost_estimates$param1[row_num], sd = cost_estimates$param2[row_num])) %>%
+            mutate(est = case_when(
+              est <0 ~ 0,
+              TRUE ~ est
+            ))
+          cost_estimates$cost[row_num] = sum(this_sample$est)*multiplier
+          rm(this_sample)
+        } else{
+          cost_estimates$cost[row_num] = cost_estimates$count_outcomes[row_num] * cost_estimates$mean_cost[row_num] * multiplier
         }
-        rm(this_sample)
-        
+      
+        if (length(TORNADO_PLOT_OVERRIDE)>0){
+          if("inpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row_num] = cost_estimates$cost[row_num] *TORNADO_PLOT_OVERRIDE$inpatient}
+        }
+
       } else if (cost_estimates$patient_type[row_num] == "outpatient"){
-        this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes[row_num], meanlog = cost_estimates$param1[row_num], sdlog = cost_estimates$param2[row_num])) %>%
-          mutate(est = case_when(
-            est <0 ~ 0,
-            TRUE ~ est
-          ))
-        cost_estimates$cost[row_num] = sum(this_sample$est)
+        if (cost_estimates$count_outcomes[row_num] < cutoff_sampling){ #if sampling less than a million times
+          this_sample = data.frame(est = rlnorm(cost_estimates$count_outcomes[row_num], meanlog = cost_estimates$param1[row_num], sdlog = cost_estimates$param2[row_num])) %>%
+            mutate(est = case_when(
+              est <0 ~ 0,
+              TRUE ~ est
+            ))
+          cost_estimates$cost[row_num] = sum(this_sample$est)
+          rm(this_sample)
+        } else{
+          cost_estimates$cost[row_num] = cost_estimates$count_outcomes[row_num] * cost_estimates$mean_cost[row_num]
+        }
         
         if (length(TORNADO_PLOT_OVERRIDE)>0){
-          if("outpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row_num] = sum(this_sample$est)*TORNADO_PLOT_OVERRIDE$outpatient}
+          if("outpatient" %in% names(TORNADO_PLOT_OVERRIDE)){cost_estimates$cost[row_num] = cost_estimates$cost[row_num]*TORNADO_PLOT_OVERRIDE$outpatient}
         }
-        rm(this_sample)
       }
     }
   } else if (toggle_uncertainty == "fixed"){

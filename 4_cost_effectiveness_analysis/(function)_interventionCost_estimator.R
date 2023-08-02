@@ -6,7 +6,8 @@ interventionCost_estimator <- function(
     LIST_antiviral_cost_scenario = "low_generic_cost",
     wastage_rate_antiviralSchedule = 0,
     toggle_uncertainty = TOGGLE_uncertainty,
-    fitted_distributions = local_fitted_distributions
+    fitted_distributions = local_fitted_distributions,
+    cutoff_sampling = 1000000 #cutoff number at which we do not sample from the distribution
     ){
   
   #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
@@ -102,13 +103,17 @@ interventionCost_estimator <- function(
     
     if (toggle_uncertainty == "rand"){
       for (row_num in 1:nrow(antiviral_estimates)){
-        this_sample = data.frame(est = rlnorm (antiviral_estimates$intervention_doses_delivered[row_num],meanlog = op_fitted_distributions$param1, sdlog = op_fitted_distributions$param2)) %>%
-          mutate(est = case_when(
-            est <0 ~ 0,
-            TRUE ~ est
-          ))
-        antiviral_estimates$operational_cost[row_num] = sum(this_sample$est)
-        rm(this_sample)
+        if (antiviral_estimates$intervention_doses_delivered[row_num]<cutoff_sampling){
+          this_sample = data.frame(est = rlnorm (antiviral_estimates$intervention_doses_delivered[row_num],meanlog = op_fitted_distributions$param1, sdlog = op_fitted_distributions$param2)) %>%
+            mutate(est = case_when(
+              est <0 ~ 0,
+              TRUE ~ est
+            ))
+          antiviral_estimates$operational_cost[row_num] = sum(this_sample$est)
+          rm(this_sample)
+        } else{
+          antiviral_estimates$operational_cost[row_num] = antiviral_estimates$intervention_doses_delivered[row_num]* op_fitted_distributions$mean
+        }
       }
       
     } else if (toggle_uncertainty == "fixed"){
