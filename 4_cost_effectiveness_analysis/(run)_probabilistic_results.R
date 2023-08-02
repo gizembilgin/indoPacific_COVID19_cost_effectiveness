@@ -5,6 +5,7 @@
 ##Note: will use LIST_CEA_settings,LIST_booster_vax_scenarios,LIST_antiviral_elig_groups,LIST_antiviral_types from CommandDeck (line 15)
 
 
+### RUN SIMULATIONS ############################################################
 CommandDeck_CONTROLS =
   list(
     LIST_CEA_settings = list("PNG_low_beta","TLS","FJI","IDN"),
@@ -15,18 +16,20 @@ CommandDeck_CONTROLS =
     TOGGLE_longCOVID = "off",
     TOGGLE_uncertainty = "rand",
     TOGGLE_numberOfRuns = 1000, #1000 eventually
-    TOGGLE_clusterNumber = 4,  #4 or 5? test and time! (workshop - timing probabilistic model runs by number of cores)
-    DECISION_save_result = "N",
-    DECISION_include_net = "N",
+    TOGGLE_clusterNumber = 5,  #3 based on test and time! (workshop - timing probabilistic model runs by number of cores)
+    DECISION_include_net = "Y",
     DECISION_sampling_strategy = "single_run"
   )
 
 source(paste(getwd(),"/CommandDeck.R",sep=""))
 CommandDeck_CONTROLS = list()
+################################################################################
 
+
+
+### process results for R Shiny ################################################
 # aligning results with buttons
 CommandDeck_result_long = CommandDeck_result_long %>%
-  filter(evaluation_level == "incremental") %>%
   mutate(
     setting = case_when(
       setting == "FJI" ~ "Fiji",
@@ -54,9 +57,10 @@ CommandDeck_result_long = CommandDeck_result_long %>%
     perspective = paste(perspective," perspective",sep = ""),      
     discounting_rate = discounting_rate * 100
   ) 
+#_____________________________________________
+
 
 CommandDeck_result = CommandDeck_result %>%
-  filter(evaluation_level == "incremental") %>%
   mutate(
     setting = case_when(
       setting == "FJI" ~ "Fiji",
@@ -90,6 +94,8 @@ CommandDeck_result = CommandDeck_result %>%
     outcome = gsub("_averted", "", outcome)
   ) 
 CommandDeck_result$outcome[CommandDeck_result$outcome == "QALY"] <- "QALYs"
+#_____________________________________________
+
 
 CEAC_dataframe = CommandDeck_result_long %>%
   filter(evaluation_level == "incremental" &
@@ -101,8 +107,11 @@ CEAC_dataframe = CommandDeck_result_long %>%
          probability = row_number/TOGGLE_numberOfRuns) %>%
   rename(WTP = cost_per_outcome_averted) %>%
   select(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP)
+#_____________________________________________
+
 
 ICER_table = CommandDeck_result %>%
+  filter(evaluation_level == "incremental") %>%
   ungroup() %>%
   filter(variable_type %in% c("ICER","outcome") | outcome == "netCost") %>%
   select(-sd,-evaluation_level)
@@ -131,17 +140,42 @@ ICER_table = ICER_table %>%
   ) %>%
   ungroup() %>%
   select(perspective,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,outcome,count_outcome_averted,net_cost,ICER,LPI_ICER,UPI_ICER)
+################################################################################
 
 
 
-probab_result = list(CommandDeck_result_long = CommandDeck_result_long,
-                     CommandDeck_result = CommandDeck_result,
-                     CEAC_dataframe = CEAC_dataframe,
-                     ICER_table = ICER_table)
+### save complete results ######################################################
 temp_name = ''
 time = Sys.time()
 time = gsub(':','-',time)
 time = paste(temp_name,time,sep='')
 
-save(probab_result,file = paste0("x_results/probab_result",time,".Rdata"))
-#_______________________________________________________________________________
+complete_results = list(CommandDeck_result_long = CommandDeck_result_long,
+                        CommandDeck_result = CommandDeck_result,
+                        CEAC_dataframe = CEAC_dataframe,
+                        ICER_table = ICER_table)
+
+if (DECISION_include_net == "N"){
+  #save outside of GitHub repositry since > 100 MB
+  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/incremental_complete_CEA_result",time,".Rdata"))
+  
+  #breakdown into chunks that CAN live in the GitHub repositry
+  save(ICER_table              ,file = paste0("x_results/ICER_table",time,".Rdata"))
+  save(CommandDeck_result      ,file = paste0("x_results/CommandDeck_result",time,".Rdata"))
+  
+  #>100 MB
+  CEAC_dataframe_part1 = CEAC_dataframe %>% filter(setting %in% c("Indonesia","Fiji"))
+  CEAC_dataframe_part2 = CEAC_dataframe %>% filter(!(setting %in% c("Indonesia","Fiji")))
+  save(CEAC_dataframe_part1,file = paste0("x_results/CEAC_dataframe_1_",time,".Rdata"))
+  save(CEAC_dataframe_part2,file = paste0("x_results/CEAC_dataframe_2_",time,".Rdata"))
+  
+  CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
+  CommandDeck_result_long_part2 = CommandDeck_result_long %>% filter(!(setting %in% c("Indonesia","Fiji")))
+  save(CommandDeck_result_long_part1,file = paste0("x_results/CommandDeck_result_long_1_",time,".Rdata"))
+  save(CommandDeck_result_long_part2,file = paste0("x_results/CommandDeck_result_long_2_",time,".Rdata"))
+
+} else{
+  #save outside of GitHub repositry since > 100 MB
+  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/net_complete_CEA_result",time,".Rdata"))
+}
+################################################################################
