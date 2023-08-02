@@ -34,13 +34,11 @@ LIST_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost", "high_
 LIST_discounting_rate = c(0.00,0.03,0.05) #options(0-0.1)
 
 TOGGLE_uncertainty = "rand" #fixed or rand
-TOGGLE_numberOfRuns = 20 #1000
-TOGGLE_clusterNumber = 5 #5
+TOGGLE_numberOfRuns = 1 #1000
+TOGGLE_clusterNumber = 1 #5
 TOGGLE_longCOVID = "off"
 TORNADO_PLOT_OVERRIDE = list()
 
-DECISION_save_result = "N" 
-#options: "Y", "N" - should this CEA run be saved? (line 250 of this program)
 DECISION_sampling_strategy = "single_run" 
 #options: "single_run" takes the results of a single run of the antiviral model
 #         "empirical_distribution" samples from the empirical distribution created by the all antiviral model runs available
@@ -68,7 +66,6 @@ if (length(CommandDeck_CONTROLS)>0){
   if("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))          {TOGGLE_longCOVID                   = CommandDeck_CONTROLS$TOGGLE_longCOVID}
   if("LIST_antiviral_cost_scenario" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_cost_scenario = CommandDeck_CONTROLS$LIST_antiviral_cost_scenario}
   
-  if("DECISION_save_result" %in% names(CommandDeck_CONTROLS))      {DECISION_save_result               = CommandDeck_CONTROLS$DECISION_save_result}
   if("DECISION_include_net" %in% names(CommandDeck_CONTROLS))      {DECISION_include_net               = CommandDeck_CONTROLS$DECISION_include_net}
   if("DECISION_sampling_strategy" %in% names(CommandDeck_CONTROLS)){DECISION_sampling_strategy         = CommandDeck_CONTROLS$DECISION_sampling_strategy}
   
@@ -262,15 +259,3 @@ CommandDeck_result_long = CommandDeck_result_long %>%
   select(evaluation_level,perspective,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,
          interventionCost,healthcareCostAverted,productivityLoss,netCost,
          outcome,count_outcomes,cost_per_outcome_averted,discounting_rate,run_ID)
-
-CommandDeck_result_list = list(CommandDeck_result_long = CommandDeck_result_long,
-                               CommandDeck_result = CommandDeck_result)
-
-if (DECISION_save_result == "Y"){
-  temp_name = ''
-  time = Sys.time()
-  time = gsub(':','-',time)
-  time = paste(temp_name,time,sep='')
-  save(CommandDeck_result_list, file = paste("x_results/CommandDeck_result_list_",this_risk_group,"_",time,".Rdata",sep=''))
-}
-

@@ -18,7 +18,6 @@ for (this_DECISION_include_net in c("N","Y")){
         TOGGLE_uncertainty = "rand",
         TOGGLE_numberOfRuns = 100, 
         TOGGLE_clusterNumber = 4, 
-        DECISION_save_result = "N",
         DECISION_sampling_strategy = this_DECISION_sampling_strategy,
         DECISION_include_net = this_DECISION_include_net
       )

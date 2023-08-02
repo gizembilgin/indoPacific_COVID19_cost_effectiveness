@@ -74,7 +74,6 @@ for (ticket in 1:length(queue)){
                                     TOGGLE_uncertainty = "fixed",
                                     TOGGLE_numberOfRuns = 1, 
                                     TOGGLE_clusterNumber = 1,
-                                    DECISION_save_result = "N",
                                     DECISION_include_net = "N",
                                     DECISION_sampling_strategy = "single_run"
                                   )
