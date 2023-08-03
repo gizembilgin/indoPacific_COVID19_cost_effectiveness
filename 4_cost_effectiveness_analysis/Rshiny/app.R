@@ -187,30 +187,29 @@ server <- function(input, output, session) {
   
   ### load latest results ######################################################
   # load latest probabilistic results
-  rootpath = str_replace(getwd(), "/Rshiny","")
   list_poss_Rdata = list.files(
-    path = paste0(rootpath,"/x_results/"),
+    path = "x_results/",
     pattern = "ICER_table*"
   )
   if (length(list_poss_Rdata) > 0) {
     list_poss_Rdata_details = double()
     for (j in 1:length(list_poss_Rdata)) {
       list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste0(rootpath,'/x_results/', list_poss_Rdata[[j]]))$mtime)
+                                      file.info(paste0('x_results/', list_poss_Rdata[[j]]))$mtime)
     }
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-    load(file = paste0(rootpath,"/x_results/",latest_file)) #loading ICER table
+    load(file = paste0("x_results/",latest_file)) #loading ICER table
     
     time_of_result <- gsub("ICER_table","",latest_file)
     
     #load CommandDeck_result_long
-    load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_1_",time_of_result)) 
-    load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result)) 
+    load(file = paste0("x_results/CommandDeck_result_long_1_",time_of_result)) 
+    load(file = paste0("x_results/CommandDeck_result_long_2_",time_of_result)) 
     CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
     
     #load CEAC_dataframe
-    load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
-    load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
+    load(file = paste0("x_results/CEAC_dataframe_1_",time_of_result))
+    load(file = paste0("x_results/CEAC_dataframe_2_",time_of_result))
     CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
 
   } else{
@@ -218,7 +217,7 @@ server <- function(input, output, session) {
   }
 
   # load latest deterministic results
-  load(file = paste0(rootpath,"/x_results/tornado_result.Rdata"))
+  load(file = paste0("x_results/tornado_result.Rdata"))
   ################################################################################
   
   

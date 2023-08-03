@@ -16,7 +16,7 @@ CommandDeck_CONTROLS =
     TOGGLE_longCOVID = "off",
     TOGGLE_uncertainty = "rand",
     TOGGLE_numberOfRuns = 1000, #1000 eventually
-    TOGGLE_clusterNumber = 5,  #3 based on test and time! (workshop - timing probabilistic model runs by number of cores)
+    TOGGLE_clusterNumber = 2,  #3 based on test and time! (workshop - timing probabilistic model runs by number of cores)
     DECISION_include_net = "Y",
     DECISION_sampling_strategy = "single_run"
   )
@@ -160,19 +160,19 @@ if (DECISION_include_net == "N"){
   save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/incremental_complete_CEA_result",time,".Rdata"))
   
   #breakdown into chunks that CAN live in the GitHub repositry
-  save(ICER_table              ,file = paste0("x_results/ICER_table",time,".Rdata"))
-  save(CommandDeck_result      ,file = paste0("x_results/CommandDeck_result",time,".Rdata"))
+  save(ICER_table              ,file = paste0("Rshiny/x_results/ICER_table",time,".Rdata"))
+  save(CommandDeck_result      ,file = paste0("Rshiny/x_results/CommandDeck_result",time,".Rdata"))
   
   #>100 MB
   CEAC_dataframe_part1 = CEAC_dataframe %>% filter(setting %in% c("Indonesia","Fiji"))
   CEAC_dataframe_part2 = CEAC_dataframe %>% filter(!(setting %in% c("Indonesia","Fiji")))
-  save(CEAC_dataframe_part1,file = paste0("x_results/CEAC_dataframe_1_",time,".Rdata"))
-  save(CEAC_dataframe_part2,file = paste0("x_results/CEAC_dataframe_2_",time,".Rdata"))
+  save(CEAC_dataframe_part1,file = paste0("Rshiny/x_results/CEAC_dataframe_1_",time,".Rdata"))
+  save(CEAC_dataframe_part2,file = paste0("Rshiny/x_results/CEAC_dataframe_2_",time,".Rdata"))
   
   CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
   CommandDeck_result_long_part2 = CommandDeck_result_long %>% filter(!(setting %in% c("Indonesia","Fiji")))
-  save(CommandDeck_result_long_part1,file = paste0("x_results/CommandDeck_result_long_1_",time,".Rdata"))
-  save(CommandDeck_result_long_part2,file = paste0("x_results/CommandDeck_result_long_2_",time,".Rdata"))
+  save(CommandDeck_result_long_part1,file = paste0("Rshiny/x_results/CommandDeck_result_long_1_",time,".Rdata"))
+  save(CommandDeck_result_long_part2,file = paste0("Rshiny/x_results/CommandDeck_result_long_2_",time,".Rdata"))
 
 } else{
   #save outside of GitHub repositry since > 100 MB
