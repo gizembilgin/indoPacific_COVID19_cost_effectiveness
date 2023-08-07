@@ -171,12 +171,13 @@ if (DECISION_include_net == "N"){
   
   # object.size(CEAC_dataframe)  # 1184081984 bytes
   CEAC_dataframe = CEAC_dataframe %>%
-    mutate(probability = round(probability,digits=2)) %>%
-    filter(probability %in% seq(0.02,1,by=0.02)) %>% #even numbers only!
+    mutate(probability = ceiling(probability/0.05)*0.05) %>%
+    #mutate(probability = round(probability,digits=2)) %>%
+    #filter(probability %in% seq(0.02,1,by=0.02)) %>% #even numbers only!
     group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
     summarise(WTP = mean(WTP),
               .groups = "keep")
-  #5% of size of CEAC_dataframe -> 121 megabytes
+  #2.5% of size of CEAC_dataframe -> 60 megabytes
   save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
   
   CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
@@ -216,19 +217,19 @@ if (DECISION_include_net == "N"){
 #   }
 #   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
 #   load(file = paste0(rootpath,"/x_results/",latest_file)) #loading ICER table
-#   
+# 
 #   time_of_result <- gsub("ICER_table","",latest_file)
-#   
+# 
 #   #load CommandDeck_result_long
 #   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_1_",time_of_result))
 #   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result))
 #   CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
-#   
+# 
 #   #load CEAC_dataframe
 #   load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
 #   load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
 #   CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
-#   
+# 
 # } else{
 #   stop("no underlying simulations to load!")
 # }

@@ -1,6 +1,6 @@
-#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/"))
 require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse)
 require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
+#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/")); beep()
 options(scipen = 1000) #turn off scientific notation
 rm(list = ls())
 
@@ -425,7 +425,7 @@ server <- function(input, output, session) {
           labs(title = this_setting) +
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
       }
-      
+      rm(to_plot)
       consolidate_plot_list(plot_list)
     }
   })
@@ -478,7 +478,7 @@ server <- function(input, output, session) {
           #very difficult NOT to get text to overlap something with range of WTP
         }
       }
-      
+      rm(to_plot)
       consolidate_plot_list(plot_list)
     }
   })
@@ -539,6 +539,7 @@ server <- function(input, output, session) {
                  ymax=pmax(value, base.value),
                  xmin=as.numeric(label)-width/2,
                  xmax=as.numeric(label)+width/2)
+        rm(to_plot_this_setting)
         
         # create plot
         plot_list[[length(plot_list)+1]] = ggplot() + 
@@ -554,6 +555,7 @@ server <- function(input, output, session) {
                              labels = order_parameters) +
           coord_flip() +
           labs(title = this_setting)
+        rm(df_2)
         
         if (input$INPUT_include_GDP == "Yes"){
           plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
@@ -563,9 +565,10 @@ server <- function(input, output, session) {
     
         }
       }
-      
+      rm(to_plot)
       consolidate_plot_list(plot_list)
     }
+    
   })
   
   output$OUTPUT_tornado_plot <- renderPlot({print(PLOT_tornado_plot())}, 
