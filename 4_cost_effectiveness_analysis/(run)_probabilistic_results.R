@@ -172,10 +172,11 @@ if (DECISION_include_net == "N"){
   # object.size(CEAC_dataframe)  # 1184081984 bytes
   CEAC_dataframe = CEAC_dataframe %>%
     mutate(probability = round(probability,digits=2)) %>%
+    filter(probability %in% seq(0.02,1,by=0.02)) %>% #even numbers only!
     group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
     summarise(WTP = mean(WTP),
               .groups = "keep")
-  #10% of size of CEAC_dataframe -> 121 megabytes
+  #5% of size of CEAC_dataframe -> 121 megabytes
   save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
   
   CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
@@ -186,12 +187,12 @@ if (DECISION_include_net == "N"){
   
   #object.size(CommandDeck_result_long) # 1852500856 bytes
   sampled_df = sample(unique(CommandDeck_result_long$run_ID),
-                      size = 100,
+                      size = 50,
                       replace = FALSE)
   CommandDeck_result_long = CommandDeck_result_long %>%
     filter(run_ID %in% sampled_df)
   save(CommandDeck_result_long,file = paste0("Rshiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
-  #10% of size of CommandDeck_result_long -> 185 megabytes
+  #5% of size of CommandDeck_result_long -> 185 megabytes
   
 } else{
   #save outside of GitHub repositry since > 100 MB
