@@ -170,7 +170,7 @@ if (DECISION_include_net == "N"){
   save(CEAC_dataframe_part2,file = paste0("Rshiny/x_results/CEAC_dataframe_2_",time_of_result,".Rdata"))
   
   # object.size(CEAC_dataframe)  # 1184081984 bytes
-  CEAC_dataframe = CEAC_dataframe %>%
+  CEAC_dataframe = CEAC_dataframe[CEAC_dataframe$outcome == "QALYs",] %>%
     mutate(probability = ceiling(probability/0.05)*0.05) %>%
     #mutate(probability = round(probability,digits=2)) %>%
     #filter(probability %in% seq(0.02,1,by=0.02)) %>% #even numbers only!
