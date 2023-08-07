@@ -170,13 +170,13 @@ if (DECISION_include_net == "N"){
   save(CEAC_dataframe_part2,file = paste0("Rshiny/x_results/CEAC_dataframe_2_",time_of_result,".Rdata"))
   
   # object.size(CEAC_dataframe)  # 1184081984 bytes
-  CEAC_dataframe_reduced = CEAC_dataframe %>%
+  CEAC_dataframe = CEAC_dataframe %>%
     mutate(probability = round(probability,digits=2)) %>%
-    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,
-             .groups = "keep") %>%
-    summarise(WTP = mean(WTP))
+    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
+    summarise(WTP = mean(WTP),
+              .groups = "keep")
   #10% of size of CEAC_dataframe -> 121 megabytes
-  save(CEAC_dataframe_reduced,file = paste0("Rshiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
+  save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
   
   CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
   CommandDeck_result_long_part2 = CommandDeck_result_long %>% filter(!(setting %in% c("Indonesia","Fiji")))
@@ -188,9 +188,9 @@ if (DECISION_include_net == "N"){
   sampled_df = sample(unique(CommandDeck_result_long$run_ID),
                       size = 100,
                       replace = FALSE)
-  CommandDeck_result_long_reduced = CommandDeck_result_long %>%
+  CommandDeck_result_long = CommandDeck_result_long %>%
     filter(run_ID %in% sampled_df)
-  save(CommandDeck_result_long_reduced,file = paste0("Rshiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
+  save(CommandDeck_result_long,file = paste0("Rshiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
   #10% of size of CommandDeck_result_long -> 185 megabytes
   
 } else{
