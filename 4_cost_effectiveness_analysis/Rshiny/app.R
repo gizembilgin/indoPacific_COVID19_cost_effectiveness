@@ -445,16 +445,18 @@ server <- function(input, output, session) {
      
     validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_WTPcurve()
+    to_plot_xmin = min(to_plot$WTP)
+    to_plot_xmax = max(to_plot$WTP)
     
     if (nrow(to_plot) > 1) {
       plot_list = list()
 
       for (this_setting in input$INPUT_include_setting) {
         
-        if (this_setting == "Fiji"){this_setting_GDP = 5316.7;annotate_multiple = 0.9}
-        if (this_setting == "Indonesia"){this_setting_GDP = 4788.0;annotate_multiple = 0.9}
-        if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3;annotate_multiple = 0.9}
-        if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4;annotate_multiple = 0.85}
+        if (this_setting == "Fiji"){this_setting_GDP = 5316.7
+        } else if (this_setting == "Indonesia"){this_setting_GDP = 4788.0
+        } else if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3
+        } else if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4}
         
         plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
                                                                   aes_x="WTP",
@@ -469,7 +471,7 @@ server <- function(input, output, session) {
         
         if(input$INPUT_fix_xaxis == TRUE){
           plot_list[[length(plot_list)]] =  plot_list[[length(plot_list)]] +
-            xlim(min(to_plot$WTP),max(to_plot$WTP))
+            xlim(to_plot_xmin,to_plot_xmax)
         }
         if (input$INPUT_include_GDP == TRUE){
           plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
