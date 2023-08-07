@@ -146,9 +146,9 @@ ICER_table = ICER_table %>%
 
 ### save complete results ######################################################
 temp_name = ''
-time = Sys.time()
-time = gsub(':','-',time)
-time = paste(temp_name,time,sep='')
+time_of_result = Sys.time()
+time_of_result = gsub(':','-',time_of_result)
+time_of_result = paste(temp_name,time_of_result,sep='')
 
 complete_results = list(CommandDeck_result_long = CommandDeck_result_long,
                         CommandDeck_result = CommandDeck_result,
@@ -157,25 +157,77 @@ complete_results = list(CommandDeck_result_long = CommandDeck_result_long,
 
 if (DECISION_include_net == "N"){
   #save outside of GitHub repositry since > 100 MB
-  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/incremental_complete_CEA_result",time,".Rdata"))
+  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/incremental_complete_CEA_result",time_of_result,".Rdata"))
   
   #breakdown into chunks that CAN live in the GitHub repositry
-  save(ICER_table              ,file = paste0("Rshiny/x_results/ICER_table",time,".Rdata"))
-  save(CommandDeck_result      ,file = paste0("Rshiny/x_results/CommandDeck_result",time,".Rdata"))
+  save(ICER_table              ,file = paste0("Rshiny/x_results/ICER_table",time_of_result,".Rdata"))
+  save(CommandDeck_result      ,file = paste0("Rshiny/x_results/CommandDeck_result",time_of_result,".Rdata"))
   
   #>100 MB
   CEAC_dataframe_part1 = CEAC_dataframe %>% filter(setting %in% c("Indonesia","Fiji"))
   CEAC_dataframe_part2 = CEAC_dataframe %>% filter(!(setting %in% c("Indonesia","Fiji")))
-  save(CEAC_dataframe_part1,file = paste0("Rshiny/x_results/CEAC_dataframe_1_",time,".Rdata"))
-  save(CEAC_dataframe_part2,file = paste0("Rshiny/x_results/CEAC_dataframe_2_",time,".Rdata"))
+  save(CEAC_dataframe_part1,file = paste0("Rshiny/x_results/CEAC_dataframe_1_",time_of_result,".Rdata"))
+  save(CEAC_dataframe_part2,file = paste0("Rshiny/x_results/CEAC_dataframe_2_",time_of_result,".Rdata"))
+  
+  # object.size(CEAC_dataframe)  # 1184081984 bytes
+  CEAC_dataframe_reduced = CEAC_dataframe %>%
+    mutate(probability = round(probability,digits=2)) %>%
+    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,
+             .groups = "keep") %>%
+    summarise(WTP = mean(WTP))
+  #10% of size of CEAC_dataframe -> 121 megabytes
+  save(CEAC_dataframe_reduced,file = paste0("Rshiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
   
   CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
   CommandDeck_result_long_part2 = CommandDeck_result_long %>% filter(!(setting %in% c("Indonesia","Fiji")))
-  save(CommandDeck_result_long_part1,file = paste0("Rshiny/x_results/CommandDeck_result_long_1_",time,".Rdata"))
-  save(CommandDeck_result_long_part2,file = paste0("Rshiny/x_results/CommandDeck_result_long_2_",time,".Rdata"))
+  save(CommandDeck_result_long_part1,file = paste0("Rshiny/x_results/CommandDeck_result_long_1_",time_of_result,".Rdata"))
+  save(CommandDeck_result_long_part2,file = paste0("Rshiny/x_results/CommandDeck_result_long_2_",time_of_result,".Rdata"))
 
+  
+  #object.size(CommandDeck_result_long) # 1852500856 bytes
+  sampled_df = sample(unique(CommandDeck_result_long$run_ID),
+                      size = 100,
+                      replace = FALSE)
+  CommandDeck_result_long_reduced = CommandDeck_result_long %>%
+    filter(run_ID %in% sampled_df)
+  save(CommandDeck_result_long_reduced,file = paste0("Rshiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
+  #10% of size of CommandDeck_result_long -> 185 megabytes
+  
 } else{
   #save outside of GitHub repositry since > 100 MB
-  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/net_complete_CEA_result",time,".Rdata"))
+  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/net_complete_CEA_result",time_of_result,".Rdata"))
 }
 ################################################################################
+
+
+
+###Load latest results for troubleshooting
+# rootpath = paste0(getwd(), "/Rshiny","")
+# list_poss_Rdata = list.files(
+#   path = paste0(rootpath,"/x_results/"),
+#   pattern = "ICER_table*"
+# )
+# if (length(list_poss_Rdata) > 0) {
+#   list_poss_Rdata_details = double()
+#   for (j in 1:length(list_poss_Rdata)) {
+#     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+#                                     file.info(paste0(rootpath,'/x_results/', list_poss_Rdata[[j]]))$mtime)
+#   }
+#   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+#   load(file = paste0(rootpath,"/x_results/",latest_file)) #loading ICER table
+#   
+#   time_of_result <- gsub("ICER_table","",latest_file)
+#   
+#   #load CommandDeck_result_long
+#   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_1_",time_of_result))
+#   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result))
+#   CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
+#   
+#   #load CEAC_dataframe
+#   load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
+#   load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
+#   CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
+#   
+# } else{
+#   stop("no underlying simulations to load!")
+# }

@@ -62,7 +62,7 @@ ui <- fluidPage(
   
   titlePanel("Interactive cost-effectiveness analysis of COVID-19 oral antivirals and booster doses in the Indo-Pacific"),
   h6("This R Shiny accompanies the working paper <doi link once submitted>. Please note that this application may take a minute or two to load the underlying simulations."),
-  #textOutput("test"),
+  textOutput("test"),
   
   sidebarLayout(
 
@@ -180,13 +180,15 @@ ui <- fluidPage(
 ##### SERVER DEFINITION ########################################################
 server <- function(input, output, session) {
   
-  # output$test <- renderText({
-  #   rootpath
-  #   })
+  output$test <- renderText({
+    paste0("is_local = ",is_local)
+    })
   
   
   ### load latest results ######################################################
   # load latest probabilistic results
+  is_local <- Sys.getenv('SHINY_PORT') == ""
+  
   list_poss_Rdata = list.files(
     path = "x_results/",
     pattern = "ICER_table*"
@@ -202,15 +204,21 @@ server <- function(input, output, session) {
     
     time_of_result <- gsub("ICER_table","",latest_file)
     
-    #load CommandDeck_result_long
-    load(file = paste0("x_results/CommandDeck_result_long_1_",time_of_result)) 
-    load(file = paste0("x_results/CommandDeck_result_long_2_",time_of_result)) 
-    CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
-    
-    #load CEAC_dataframe
-    load(file = paste0("x_results/CEAC_dataframe_1_",time_of_result))
-    load(file = paste0("x_results/CEAC_dataframe_2_",time_of_result))
-    CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
+    if (is_local == TRUE){
+      #load CommandDeck_result_long
+      load(file = paste0("x_results/CommandDeck_result_long_1_",time_of_result)) 
+      load(file = paste0("x_results/CommandDeck_result_long_2_",time_of_result)) 
+      CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
+      
+      #load CEAC_dataframe
+      load(file = paste0("x_results/CEAC_dataframe_1_",time_of_result))
+      load(file = paste0("x_results/CEAC_dataframe_2_",time_of_result))
+      CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
+    } else{
+      load(file = paste0("x_results/CEAC_dataframe_reduced_",time_of_result))
+      load(file = paste0("x_results/CommandDeck_result_long_reduced_",time_of_result))
+    }
+
 
   } else{
     stop("no underlying simulations to load!")
