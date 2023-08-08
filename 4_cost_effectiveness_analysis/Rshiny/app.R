@@ -1,6 +1,6 @@
 require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse)
 require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
-#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/")); beep()
+#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/")); rsconnect::configureApp("APPNAME", size="xlarge"); beep()
 options(scipen = 1000) #turn off scientific notation
 rm(list = ls())
 
@@ -62,6 +62,7 @@ ui <- fluidPage(
   
   titlePanel("Interactive cost-effectiveness analysis of COVID-19 oral antivirals and booster doses in the Indo-Pacific"),
   h6("This R Shiny accompanies the working paper <doi link once submitted>. Please note that this application may take a minute or two to load the underlying simulations."),
+  textOutput("cloud_specific_text"),
   textOutput("test"),
   
   sidebarLayout(
@@ -181,15 +182,20 @@ ui <- fluidPage(
 ##### SERVER DEFINITION ########################################################
 server <- function(input, output, session) {
   
+  is_local <- Sys.getenv('SHINY_PORT') == "" #boolean of whether this shiny is being hosted locally or on posit.co
+  
   # output$test <- renderText({
   #   paste0("is_local = ",is_local)
   #   })
+  output$cloud_specific_text <- renderText({
+      if (is_local == FALSE){
+        paste("This hosted version of the R Shiny contains a subset of model simulations due to restrictions on RAM. We expect that this subset of simulations is still representative of the paper's results. For access to all 1000 model simulations please download the full R Shiny from our GitHub <link>")
+      }
+      })
   
   
   ### load latest results ######################################################
   # load latest probabilistic results
-  is_local <- Sys.getenv('SHINY_PORT') == ""
-  
   list_poss_Rdata = list.files(
     path = "x_results/",
     pattern = "ICER_table*"
