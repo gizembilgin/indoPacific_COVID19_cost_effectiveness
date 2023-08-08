@@ -181,9 +181,9 @@ ui <- fluidPage(
 ##### SERVER DEFINITION ########################################################
 server <- function(input, output, session) {
   
-  output$test <- renderText({
-    paste0("is_local = ",is_local)
-    })
+  # output$test <- renderText({
+  #   paste0("is_local = ",is_local)
+  #   })
   
   
   ### load latest results ######################################################
@@ -440,11 +440,12 @@ server <- function(input, output, session) {
           xlim(min(min(workshop$netCost),0), 
                max(max(workshop$netCost),0)) + 
           ylim(min(min(workshop$count_outcomes),0), 
-                max(max(workshop$count_outcomes),0)) +
+               max(max(workshop$count_outcomes),0)) +
           theme_bw() +
           theme(legend.position="bottom") +
           labs(title = this_setting) +
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
+        
       }
       rm(to_plot,workshop)
       consolidate_plot_list(plot_list)
@@ -474,35 +475,38 @@ server <- function(input, output, session) {
     if (nrow(to_plot) > 1) {
       plot_list = list()
 
-      for (this_setting in input$INPUT_include_setting) {
-        
-        if (this_setting == "Fiji"){this_setting_GDP = 5316.7
-        } else if (this_setting == "Indonesia"){this_setting_GDP = 4788.0
-        } else if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3
-        } else if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4}
-        
-        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
-                                                                  aes_x="WTP",
-                                                                  aes_y="probability",
-                                                                  plot_dimensions = plot_dimensions())  +
-          xlab(paste("Willingness to pay ($/",input$INPUT_include_outcomes,")",sep="")) +
-          ylab("Probability cost-effective") +
-          theme_bw() +
-          theme(legend.position = "bottom") +
-          labs(title = this_setting)  +
-          guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
-        
-        if(input$INPUT_fix_xaxis == TRUE){
-          plot_list[[length(plot_list)]] =  plot_list[[length(plot_list)]] +
-            xlim(to_plot_xmin,to_plot_xmax)
+      #withProgress({ #the slow part of the plot is the sub-setting of the data frame NOT the plotting
+        for (this_setting in input$INPUT_include_setting) {
+          
+          if (this_setting == "Fiji"){this_setting_GDP = 5316.7
+          } else if (this_setting == "Indonesia"){this_setting_GDP = 4788.0
+          } else if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3
+          } else if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4}
+          
+          plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
+                                                                    aes_x="WTP",
+                                                                    aes_y="probability",
+                                                                    plot_dimensions = plot_dimensions())  +
+            xlab(paste("Willingness to pay ($/",input$INPUT_include_outcomes,")",sep="")) +
+            ylab("Probability cost-effective") +
+            theme_bw() +
+            theme(legend.position = "bottom") +
+            labs(title = this_setting)  +
+            guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
+          
+          if(input$INPUT_fix_xaxis == TRUE){
+            plot_list[[length(plot_list)]] =  plot_list[[length(plot_list)]] +
+              xlim(to_plot_xmin,to_plot_xmax)
+          }
+          if (input$INPUT_include_GDP == TRUE){
+            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+              geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype='dashed') #+
+              #annotate("text", y = 0.25, x = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
+            #very difficult NOT to get text to overlap something with range of WTP
+          }
+          #incProgress(1 / length(input$INPUT_include_setting), message = paste("plotting",this_setting))
         }
-        if (input$INPUT_include_GDP == TRUE){
-          plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
-            geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype='dashed') #+
-            #annotate("text", y = 0.25, x = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
-          #very difficult NOT to get text to overlap something with range of WTP
-        }
-      }
+      #})
       rm(to_plot)
       consolidate_plot_list(plot_list)
     }
