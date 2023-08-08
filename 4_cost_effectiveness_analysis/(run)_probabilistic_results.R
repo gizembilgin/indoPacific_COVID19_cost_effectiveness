@@ -41,8 +41,8 @@ CommandDeck_result_long = CommandDeck_result_long %>%
     booster_vax_scenario = case_when(
       booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
       booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
-      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults who have previously completed their primary schedule but have not recieved a booster"  ,
-      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults who have previously completed their primary schedule but have not recieved a booster"   ,
+      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults (catch-up campaign)"  ,
+      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults (catch-up campaign)"   ,
       booster_vax_scenario == "no booster dose" ~ "no booster",
       TRUE ~ booster_vax_scenario
     ),
@@ -72,8 +72,8 @@ CommandDeck_result = CommandDeck_result %>%
     booster_vax_scenario = case_when(
       booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
       booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
-      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults who have previously completed their primary schedule but have not recieved a booster"  ,
-      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults who have previously completed their primary schedule but have not recieved a booster"   ,
+      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults (catch-up campaign)"  ,
+      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults (catch-up campaign)",
       booster_vax_scenario == "no booster dose" ~ "no booster",
       TRUE ~ booster_vax_scenario
     ),
@@ -164,10 +164,13 @@ if (DECISION_include_net == "N"){
   save(CommandDeck_result      ,file = paste0("Rshiny/x_results/CommandDeck_result",time_of_result,".Rdata"))
   
   #>100 MB
-  CEAC_dataframe_part1 = CEAC_dataframe %>% filter(setting %in% c("Indonesia","Fiji"))
-  CEAC_dataframe_part2 = CEAC_dataframe %>% filter(!(setting %in% c("Indonesia","Fiji")))
-  save(CEAC_dataframe_part1,file = paste0("Rshiny/x_results/CEAC_dataframe_1_",time_of_result,".Rdata"))
-  save(CEAC_dataframe_part2,file = paste0("Rshiny/x_results/CEAC_dataframe_2_",time_of_result,".Rdata"))
+  CEAC_dataframe = CEAC_dataframe %>%
+    mutate(probability = round(probability,digits=2)) %>%
+    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
+    summarise(WTP = mean(WTP),
+              .groups = "keep") %>%
+    ungroup()
+  save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_",time_of_result,".Rdata"))
   
   # object.size(CEAC_dataframe)  # 1184081984 bytes
   CEAC_dataframe = CEAC_dataframe[CEAC_dataframe$outcome == "QALYs",] %>%
@@ -176,7 +179,8 @@ if (DECISION_include_net == "N"){
     #filter(probability %in% seq(0.02,1,by=0.02)) %>% #even numbers only!
     group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
     summarise(WTP = mean(WTP),
-              .groups = "keep")
+              .groups = "keep") %>%
+    ungroup()
   #2.5% of size of CEAC_dataframe -> 60 megabytes
   save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
   
@@ -225,10 +229,10 @@ if (DECISION_include_net == "N"){
 #   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result))
 #   CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
 # 
-#   #load CEAC_dataframe
-#   load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
-#   load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
-#   CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
+  # #load CEAC_dataframe
+  # load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
+  # load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
+  # CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
 # 
 # } else{
 #   stop("no underlying simulations to load!")
