@@ -309,7 +309,7 @@ server <- function(input, output, session) {
           "all adults (catch-up campaign)"  = "#00CC33",
           "high risk adults" = "#0099CC",
           "high-risk adults (catch-up campaign)" = "#00CCFF",
-          "no booster"  = "#CCCCCC"))
+          "no booster"  = "#999999"))
     }
     return(this_plot)
   }
