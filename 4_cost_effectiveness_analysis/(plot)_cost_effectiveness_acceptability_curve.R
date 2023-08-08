@@ -9,7 +9,7 @@ INPUT_parameter_to_vary = "booster_strategy"
 
 #R SHINY conditional UI, check boxes for one and button for all others
 INPUT_discounting_rate = 3
-INPUT_antiviral_cost = "low_generic_cost"
+INPUT_antiviral_cost_scenario = "low_generic_cost"
 INPUT_include_booster_vax_scenario = "high risk adults"
 # [1] "all adults who have previously completed their primary schedule but have not recieved a booster"      
 # [2] "high-risk adults who have previously completed their primary schedule but have not recieved a booster"
@@ -27,7 +27,7 @@ this_workshop = CEAC_dataframe %>% filter(outcome == INPUT_include_outcomes &
                                             setting %in% INPUT_include_setting &
                                             perspective == INPUT_perspective &
                                             discounting_rate == INPUT_discounting_rate &
-                                            antiviral_cost == INPUT_antiviral_cost &
+                                            antiviral_cost_scenario == INPUT_antiviral_cost_scenario &
                                             booster_vax_scenario %in% INPUT_include_booster_vax_scenario &
                                             antiviral_type %in% INPUT_include_antiviral_type & 
                                             antiviral_target_group %in% INPUT_include_antiviral_target_group)
@@ -46,7 +46,7 @@ xmin = this_workshop %>%
 xmin = min(xmin$max)
 
 n_options_selected = max(length(INPUT_discounting_rate),
-                         length(INPUT_antiviral_cost),
+                         length(INPUT_antiviral_cost_scenario),
                          length(INPUT_include_booster_vax_scenario),
                          length(INPUT_include_antiviral_target_group))
 
@@ -65,9 +65,9 @@ for (this_setting in INPUT_include_setting){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
       geom_point(aes(x=WTP,y=probability,color=as.factor(discounting_rate))) +
       labs(color="discounting rate")
-  } else if (length(INPUT_antiviral_cost)>1){
+  } else if (length(INPUT_antiviral_cost_scenario)>1){
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
-      geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_cost))) +
+      geom_point(aes(x=WTP,y=probability,color=as.factor(antiviral_cost_scenario))) +
       labs(color="antiviral cost")
   } else{
     plot_list[[length(plot_list)+1]] = ggplot(to_plot_setting) +
