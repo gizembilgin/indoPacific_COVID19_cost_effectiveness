@@ -18,8 +18,8 @@ CHOICES = list(
                         "nirmatrelvir_ritonavir" = "nirmatrelvir_ritonavir"),
   booster_vax_scenario = c("high risk adults"
                            , "all adults"
-                           , "all adults who have previously completed their primary schedule but have not recieved a booster"
-                           , "high-risk adults who have previously completed their primary schedule but have not recieved a booster"
+                           ,"high-risk adults (catch-up campaign)"
+                           , "all adults (catch-up campaign)"  
                            , "no booster"),
   discounting = list("0%" = 0,
                      "1%" = 1,
@@ -77,14 +77,15 @@ ui <- fluidPage(
                   checkboxGroupInput("INPUT_include_setting","Settings to include:",
                                      choices = CHOICES$setting,
                                      selected = CHOICES$setting),
+                  checkboxGroupButtons(inputId = "INPUT_perspective",
+                                    label = "Perspective(s):", 
+                                    choices = CHOICES$perspective,
+                                    selected = "healthcare perspective",
+                                    justified = TRUE),
                   radioGroupButtons("INPUT_antiviral_type",
                                label = "Antiviral type:",
                                choices = CHOICES$antiviral_type,
                                selected = "nirmatrelvir_ritonavir"),
-                  radioGroupButtons("INPUT_perspective",
-                               label = "Perspective:", 
-                               choices = CHOICES$perspective,
-                               selected = "healthcare perspective"),
                   radioGroupButtons("INPUT_include_outcomes","Outcome:",
                                     choices = CHOICES$outcome,
                                     selected = "QALYs"), 
@@ -211,9 +212,7 @@ server <- function(input, output, session) {
       CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
       
       #load CEAC_dataframe
-      load(file = paste0("x_results/CEAC_dataframe_1_",time_of_result))
-      load(file = paste0("x_results/CEAC_dataframe_2_",time_of_result))
-      CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
+      load(file = paste0("x_results/CEAC_dataframe_",time_of_result))
     } else{
       load(file = paste0("x_results/CEAC_dataframe_reduced_",time_of_result))
       load(file = paste0("x_results/CommandDeck_result_long_reduced_",time_of_result))
@@ -269,6 +268,9 @@ server <- function(input, output, session) {
   # function to configure aesthetic of ggplot() by plot_dimensions() reactive
   apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
     
+    if (length(input$INPUT_perspective)>1){ this_point_size = 1  
+    } else{ this_point_size = 1.5}
+    
     if (length(plot_dimensions)==2 & is.null(input$INPUT_switch_shape_and_colour) == FALSE){
       if (input$INPUT_switch_shape_and_colour){
         plot_dimensions <- isolate(rev(plot_dimensions))
@@ -277,18 +279,32 @@ server <- function(input, output, session) {
     
     if (length(plot_dimensions) == 0){
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]))
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]),size = this_point_size)
     } else if (length(plot_dimensions) == 1){
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]])),size = this_point_size) +
         labs(color = paste(gsub("_"," ", plot_dimensions[1])))
+      
     } else if (length(plot_dimensions) == 2){
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]]))) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]])),size = this_point_size) +
         labs(color = paste(gsub("_"," ", plot_dimensions[1])),
              shape = paste(gsub("_"," ", plot_dimensions[2])))
     }
     
+    if (length(input$INPUT_perspective)>1){
+      this_plot = this_plot + 
+        facet_grid(perspective ~.) 
+    }
+    if (plot_dimensions[1] == "booster_vax_scenario"){
+      this_plot <- this_plot +
+        scale_colour_manual(values = c(
+          "all adults" = "#669933",
+          "all adults (catch-up campaign)"  = "#00CC33",
+          "high risk adults" = "#0099CC",
+          "high-risk adults (catch-up campaign)" = "#00CCFF",
+          "no booster"  = "#CCCCCC"))
+    }
     return(this_plot)
   }
   
@@ -414,18 +430,23 @@ server <- function(input, output, session) {
       plot_list = list()
       
       for (this_setting in input$INPUT_include_setting){
-        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
+        workshop =  to_plot[to_plot$setting == this_setting,]
+        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = workshop,
                                                                   aes_x="netCost",
                                                                   aes_y="count_outcomes",
                                                                   plot_dimensions = plot_dimensions())  +
           ylab(paste(input$INPUT_include_outcomes,"averted")) +
           xlab("incremental cost (2022 USD)") +
+          xlim(min(min(workshop$netCost),0), 
+               max(max(workshop$netCost),0)) + 
+          ylim(min(min(workshop$count_outcomes),0), 
+                max(max(workshop$count_outcomes),0)) +
           theme_bw() +
           theme(legend.position="bottom") +
           labs(title = this_setting) +
           guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
       }
-      rm(to_plot)
+      rm(to_plot,workshop)
       consolidate_plot_list(plot_list)
     }
   })
@@ -445,8 +466,10 @@ server <- function(input, output, session) {
      
     validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_WTPcurve()
-    to_plot_xmin = min(to_plot$WTP)
-    to_plot_xmax = max(to_plot$WTP)
+    if(input$INPUT_fix_xaxis == TRUE){
+      to_plot_xmin = min(to_plot$WTP)
+      to_plot_xmax = max(to_plot$WTP)
+    }
     
     if (nrow(to_plot) > 1) {
       plot_list = list()
@@ -532,7 +555,7 @@ server <- function(input, output, session) {
         
         # get data frame in shape for ggplot and geom_rect
         df_2 <- to_plot_this_setting %>%
-          select(label,mean,direction) %>% 
+          select(perspective,label,mean,direction) %>% 
           rename(value = mean) %>%
           ungroup() %>%
           # create the columns for geom_rect
@@ -557,7 +580,7 @@ server <- function(input, output, session) {
                              labels = order_parameters) +
           coord_flip() +
           labs(title = this_setting)
-        rm(df_2)
+
         
         if (input$INPUT_include_GDP == "Yes"){
           plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
@@ -565,6 +588,15 @@ server <- function(input, output, session) {
             geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
             annotate("text", x = 4, y = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
     
+        } else{
+          plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
+            ylim(min(min(df_2$ymin),0),
+                 max(max(df_2$ymax),0))
+        }
+        rm(df_2)
+        if (length(input$INPUT_perspective)>1){
+          plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+            facet_grid(perspective ~.) 
         }
       }
       rm(to_plot)
