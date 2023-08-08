@@ -1,0 +1,10 @@
+name: indoPacific_COVID19_costEffectivenessAnalysis
+title:
+username: gizemmayisbilgin
+account: gizemmayisbilgin
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9570119
+bundleId: 7542582
+url: https://gizemmayisbilgin.shinyapps.io/indoPacific_COVID19_costEffectivenessAnalysis/
+version: 1

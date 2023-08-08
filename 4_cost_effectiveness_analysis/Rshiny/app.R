@@ -1,6 +1,6 @@
 require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse)
 require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
-#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/")); beep()
+#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/"), appName = "indoPacific_COVID19_costEffectivenessAnalysis"); beep()
 options(scipen = 1000) #turn off scientific notation
 rm(list = ls())
 
