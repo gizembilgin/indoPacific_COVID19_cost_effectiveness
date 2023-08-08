@@ -61,8 +61,7 @@ CHOICES = list(
 ui <- fluidPage(
   
   titlePanel("Interactive cost-effectiveness analysis of COVID-19 oral antivirals and booster doses in the Indo-Pacific"),
-  h6("This R Shiny accompanies the working paper <doi link once submitted>. Please note that this application may take a minute or two to load the underlying simulations."),
-  textOutput("cloud_specific_text"),
+  h6(textOutput("shiny_description")),
   textOutput("test"),
   
   sidebarLayout(
@@ -81,8 +80,7 @@ ui <- fluidPage(
                   checkboxGroupButtons(inputId = "INPUT_perspective",
                                     label = "Perspective(s):", 
                                     choices = CHOICES$perspective,
-                                    selected = "healthcare perspective",
-                                    justified = TRUE),
+                                    selected = "healthcare perspective"),
                   radioGroupButtons("INPUT_antiviral_type",
                                label = "Antiviral type:",
                                choices = CHOICES$antiviral_type,
@@ -187,11 +185,17 @@ server <- function(input, output, session) {
   # output$test <- renderText({
   #   paste0("is_local = ",is_local)
   #   })
-  output$cloud_specific_text <- renderText({
+  
+  output$shiny_description <- renderText({
+    string_to_print = c("This R Shiny accompanies the working paper <doi link once submitted>.")
       if (is_local == FALSE){
-        paste("This hosted version of the R Shiny contains a subset of model simulations due to restrictions on RAM. We expect that this subset of simulations is still representative of the paper's results. For access to all 1000 model simulations please download the full R Shiny from our GitHub <link>")
+        string_to_print = c(string_to_print,
+                            "This hosted version of the R Shiny contains a subset of model simulations due to restrictions on virtual RAM. We expect that this subset of simulations is representative of the paper's results. For access to complete model simulations please download the full R Shiny available from <GitHub link>")
+      } else{
+        string_to_print = c(string_to_print,"Please note that this application may take a minute or two to load the underlying simulations.")
       }
-      })
+    string_to_print
+  })
   
   
   ### load latest results ######################################################
