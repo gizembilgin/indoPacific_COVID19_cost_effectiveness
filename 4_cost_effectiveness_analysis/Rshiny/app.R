@@ -7,9 +7,9 @@ rm(list = ls())
 
 ##### CONFIGURE CHOICES ########################################################
 CHOICES = list(
-  antiviral_cost_scenario = list("low generic cost ($25 USD per schedule)" = "low_generic_cost",
-                                "middle income cost ($250 USD per schedule)" = "middle_income_cost", 
-                                "high income cost ($530 USD per schedule)" = "high_income_cost"),
+  antiviral_cost_scenario = list("low generic reference price ($25 USD per schedule)" = "low generic reference price ($25 USD per schedule)",
+                                "middle-income reference price ($250 USD per schedule)" = "middle-income reference price ($250 USD per schedule)" , 
+                                "high-income reference price ($530 USD per schedule)" = "high-income reference price ($530 USD per schedule)"),
   antiviral_target_group = c("all adults", 
                              "adults with comorbidities", 
                              "unvaccinated adults",
@@ -97,7 +97,7 @@ ui <- fluidPage(
 
                     checkboxGroupInput("INPUT_antiviral_cost_scenario", label = "Antiviral cost:",
                                  choices = CHOICES$antiviral_cost_scenario,
-                                 selected = "middle_income_cost"),
+                                 selected = "middle-income reference price ($250 USD per schedule)"),
 
                     selectInput("INPUT_discounting_rate",
                                 "Discounting rate (%):",
@@ -296,25 +296,31 @@ server <- function(input, output, session) {
         labs(color = paste(gsub("_"," ", plot_dimensions[1])))
       
     } else if (length(plot_dimensions) == 2){
-      this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]])),size = this_point_size) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1])),
-             shape = paste(gsub("_"," ", plot_dimensions[2])))
+      if (aes_x == "WTP"){
+        this_plot = ggplot(df) +
+          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
+          labs(color = paste(gsub("_"," ", plot_dimensions[1]))) +
+          facet_grid(.data[[plot_dimensions[2]]]~.)
+      } else{
+        this_plot = ggplot(df) +
+          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]]))) +
+          labs(color = paste(gsub("_"," ", plot_dimensions[1])),
+               shape = paste(gsub("_"," ", plot_dimensions[2])))
+      }
     }
     
     if (length(input$INPUT_perspective)>1){
       this_plot = this_plot + 
         facet_grid(perspective ~.) 
     }
-    if (plot_dimensions[1] == "booster_vax_scenario"){
-      this_plot <- this_plot +
-        scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
-        # scale_colour_manual(values = c(
-        #   "all adults" = "#669933",
-        #   "all adults (catch-up campaign)"  = "#00CC33",
-        #   "high risk adults" = "#0099CC",
-        #   "high-risk adults (catch-up campaign)" = "#00CCFF",
-        #   "no booster"  = "#999999"))
+    if (length(plot_dimensions) == 0){
+      if (plot_dimensions[1] == "booster_vax_scenario"){
+        this_plot <- this_plot +
+          scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
+      } else if (plot_dimensions[1] == "antiviral_cost_scenario"){
+        this_plot <- this_plot +
+          scale_color_manual(values = wesanderson::wes_palette( name="FantasticFox1"))
+      }
     }
     return(this_plot)
   }

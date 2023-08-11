@@ -56,7 +56,14 @@ CommandDeck_result_long = CommandDeck_result_long %>%
     
     perspective = paste(perspective," perspective",sep = ""),      
     discounting_rate = discounting_rate * 100
-  ) 
+  ) %>%
+  mutate(antiviral_cost_scenario = 
+           case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
+                     antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
+                     antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"))
+CommandDeck_result_long$antiviral_cost_scenario <- factor(CommandDeck_result_long$antiviral_cost_scenario, levels = rev(c("low generic reference price ($25 USD per schedule)",
+                                                                                          "middle-income reference price ($250 USD per schedule)",
+                                                                                          "high-income reference price ($530 USD per schedule)")))
 #_____________________________________________
 
 
@@ -92,7 +99,14 @@ CommandDeck_result = CommandDeck_result %>%
   mutate(
     outcome = gsub("cost_per_", "", outcome),
     outcome = gsub("_averted", "", outcome)
-  ) 
+  ) %>%
+  mutate(antiviral_cost_scenario = 
+           case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
+                     antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
+                     antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"))
+CommandDeck_result$antiviral_cost_scenario <- factor(CommandDeck_result$antiviral_cost_scenario, levels = rev(c("low generic reference price ($25 USD per schedule)",
+                                                                                                                          "middle-income reference price ($250 USD per schedule)",
+                                                                                                                          "high-income reference price ($530 USD per schedule)")))
 CommandDeck_result$outcome[CommandDeck_result$outcome == "QALY"] <- "QALYs"
 #_____________________________________________
 
@@ -106,7 +120,7 @@ CEAC_dataframe = CommandDeck_result_long %>%
   mutate(row_number = row_number(),
          probability = row_number/TOGGLE_numberOfRuns) %>%
   rename(WTP = cost_per_outcome_averted) %>%
-  select(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP)
+  select(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP) 
 #_____________________________________________
 
 
@@ -208,32 +222,23 @@ if (DECISION_include_net == "N"){
 
 
 ###Load latest results for troubleshooting
-# rootpath = paste0(getwd(), "/Rshiny","")
-# list_poss_Rdata = list.files(
-#   path = paste0(rootpath,"/x_results/"),
-#   pattern = "ICER_table*"
-# )
-# if (length(list_poss_Rdata) > 0) {
-#   list_poss_Rdata_details = double()
-#   for (j in 1:length(list_poss_Rdata)) {
-#     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-#                                     file.info(paste0(rootpath,'/x_results/', list_poss_Rdata[[j]]))$mtime)
-#   }
-#   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-#   load(file = paste0(rootpath,"/x_results/",latest_file)) #loading ICER table
+# rootpath = paste0(getwd(), "/Rshiny", "")
+# list_poss_Rdata = list.files(path = paste0(rootpath, "/x_results/"),
+#                              pattern = "ICER_table*")
+# list_poss_Rdata_details = double()
+# for (j in 1:length(list_poss_Rdata)) {
+#  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+#                                  file.info(paste0(rootpath,'/x_results/', list_poss_Rdata[[j]]))$mtime)
+# }
+# latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+# load(file = paste0(rootpath,"/x_results/",latest_file)) #loading ICER table
 # 
-#   time_of_result <- gsub("ICER_table","",latest_file)
+# time_of_result <- gsub("ICER_table","",latest_file)
 # 
-#   #load CommandDeck_result_long
-#   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_1_",time_of_result))
-#   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result))
-#   CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
+# #load CommandDeck_result_long
+# load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_1_",time_of_result))
+#  load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result))
+#  CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
 # 
 # #load CEAC_dataframe
-# load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
-# load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
-# CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
-# 
-# } else{
-#   stop("no underlying simulations to load!")
-# }
+# load(file = paste0(rootpath,"/x_results/CEAC_dataframe_",time_of_result))
