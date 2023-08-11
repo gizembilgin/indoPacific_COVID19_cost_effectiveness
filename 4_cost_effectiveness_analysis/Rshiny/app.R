@@ -1,4 +1,4 @@
-require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(ggtext); require(tidyverse)
+require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(wesanderson);require(ggtext); require(tidyverse)
 require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
 #library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/"), appName = "indoPacific_COVID19_costEffectivenessAnalysis"); beep()
 options(scipen = 1000) #turn off scientific notation
@@ -308,12 +308,13 @@ server <- function(input, output, session) {
     }
     if (plot_dimensions[1] == "booster_vax_scenario"){
       this_plot <- this_plot +
-        scale_colour_manual(values = c(
-          "all adults" = "#669933",
-          "all adults (catch-up campaign)"  = "#00CC33",
-          "high risk adults" = "#0099CC",
-          "high-risk adults (catch-up campaign)" = "#00CCFF",
-          "no booster"  = "#999999"))
+        scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
+        # scale_colour_manual(values = c(
+        #   "all adults" = "#669933",
+        #   "all adults (catch-up campaign)"  = "#00CC33",
+        #   "high risk adults" = "#0099CC",
+        #   "high-risk adults (catch-up campaign)" = "#00CCFF",
+        #   "no booster"  = "#999999"))
     }
     return(this_plot)
   }
