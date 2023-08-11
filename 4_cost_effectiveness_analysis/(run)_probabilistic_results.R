@@ -229,10 +229,10 @@ if (DECISION_include_net == "N"){
 #   load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result))
 #   CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
 # 
-  # #load CEAC_dataframe
-  # load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
-  # load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
-  # CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
+# #load CEAC_dataframe
+# load(file = paste0(rootpath,"/x_results/CEAC_dataframe_1_",time_of_result))
+# load(file = paste0(rootpath,"/x_results/CEAC_dataframe_2_",time_of_result))
+# CEAC_dataframe = rbind(CEAC_dataframe_part1,CEAC_dataframe_part2); rm(CEAC_dataframe_part1,CEAC_dataframe_part2)
 # 
 # } else{
 #   stop("no underlying simulations to load!")
