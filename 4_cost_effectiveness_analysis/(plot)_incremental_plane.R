@@ -5,8 +5,8 @@ require(ggpubr);options(scipen = 1000)
 INPUT_include_setting = c("Papua New Guinea","Timor-Leste","Fiji","Indonesia")
 INPUT_include_booster_vax_scenario = c("high risk adults"
                                        , "all adults"
-                                       , "all adults who have previously completed their primary schedule but have not recieved a booster"
-                                       , "high-risk adults who have previously completed their primary schedule but have not recieved a booster"
+                                       , "all adults (catch-up campaign)"
+                                       , "high-risk adults (catch-up campaign)"
                                         )
 INPUT_antiviral_type = c() # c("nirmatrelvir_ritonavir")
 INPUT_antiviral_type = c(INPUT_antiviral_type,"no antiviral")
@@ -82,13 +82,14 @@ for (this_setting in INPUT_include_setting){
     theme_bw() +
     theme(legend.position="bottom") +
     labs(title = this_setting) +
-    guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) +
-    scale_colour_manual(values = c("all adults who have previously completed their primary schedule but have not recieved a booster" = "#00CC33",
-                                   "all adults" = "#669933",
-                                   "high risk adults" = "#0099CC",
-                                   "high-risk adults who have previously completed their primary schedule but have not recieved a booster" = "#00CCFF"
-                          
-                                   ))
+    guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) + 
+    scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
+    # scale_colour_manual(values = c("all adults (catch-up campaign)" = "chocolate1",
+    #                                "all adults" = "chocolate3",
+    #                                "high risk adults" = "orchid3",
+    #                                "high-risk adults (catch-up campaign)" = "orchid1"
+    #                       
+    #                                ))
 
 }
 
