@@ -149,7 +149,7 @@ print(consolidate_plot_list(plot_list))
 
 #let's create a table to summarise the impact of long COVID on the cost-effectiveness of booster doses
 if (INPUT_plot_name == "long_COVID"){
-  to_plot %>% 
+  table_S4_1 = to_plot %>% 
     group_by(evaluation_level, perspective, discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,
              antiviral_type,antiviral_target_group,long_COVID,outcome) %>%
     summarise(
@@ -168,7 +168,7 @@ if (INPUT_plot_name == "long_COVID"){
                 names_from = long_COVID,
                 names_prefix = "long_COVID_") 
   
-  write.csv(to_plot, "x_results/table_S4.1.csv")
+  write.csv(table_S4_1, "x_results/table_S4.1.csv")
 
 }
 
