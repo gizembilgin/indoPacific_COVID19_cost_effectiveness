@@ -403,10 +403,11 @@ server <- function(input, output, session) {
   dataInput_ICER_table <- reactive({
     this_ICER_table = subset_data_to_widgets(ICER_table) %>%
       filter(outcome %in% c("netCost",input$INPUT_include_outcomes)) %>%
-      select(setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_target_group,count_outcome_averted,net_cost,ICER,LPI_ICER,UPI_ICER) 
+      rename(incremental_cost = net_cost) %>%
+      select(setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_target_group,count_outcome_averted,incremental_cost,ICER,LPI_ICER,UPI_ICER) 
     
     if(nrow(this_ICER_table)>0 & input$INPUT_include_net == "No"){
-      this_ICER_table = this_ICER_table %>% select(-net_cost,-count_outcome_averted)
+      this_ICER_table = this_ICER_table %>% select(-incremental_cost,-count_outcome_averted)
     }
     colnames(this_ICER_table)[colnames(this_ICER_table) == "count_outcome_averted"]<- paste(input$INPUT_include_outcomes,"averted")
     colnames(this_ICER_table) <- gsub("_"," ",colnames(this_ICER_table))
