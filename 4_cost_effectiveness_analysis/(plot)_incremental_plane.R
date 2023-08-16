@@ -167,6 +167,8 @@ if (INPUT_plot_name == "long_COVID"){
     pivot_wider(values_from = expected_count_outcome,
                 names_from = long_COVID,
                 names_prefix = "long_COVID_") 
+  
+  write.csv(to_plot, "x_results/table_S4.1.csv")
 
 }
 
