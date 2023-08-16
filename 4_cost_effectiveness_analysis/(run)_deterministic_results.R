@@ -1,5 +1,4 @@
 ### RUN SCENARIOS FOR TORNADO PLOT
-##Note: will use LIST_CEA_settings from CommandDeck (line 15)
 
 
 queue = list(
