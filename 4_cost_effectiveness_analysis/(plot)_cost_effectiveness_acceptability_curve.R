@@ -35,7 +35,7 @@ if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
     load(file = paste("Rshiny/x_results/", latest_file, sep = ''))
   } else{
-    stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
+    stop(paste("no results to load!"))
   }
 } else if (INPUT_plot_name == "antiviral_wastage_rate"){
   load(file = "Rshiny/x_results/antiviral_wastage_results.Rdata")
