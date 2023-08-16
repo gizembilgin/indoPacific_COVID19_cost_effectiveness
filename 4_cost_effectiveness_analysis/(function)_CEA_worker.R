@@ -77,10 +77,10 @@ CEA_worker <- function(
     
     ###(3/3) CEA per setting
     this_result <- simulationSummary(DECISION_include_net,
-                                     outcomesAvertedEstimation,
+                                     outcomesAvertedEstimation$outcomes_averted,
                                      interventionCost_estimates,
-                                     healthcareCostEstimation,
-                                     productivityCosts) %>%
+                                     healthcareCostEstimation$healthcareCosts_averted,
+                                     productivityCosts$productivity_loss) %>%
       mutate(run_ID = random_id(n = 1, bytes = 8))
     rm(outcomesAvertedEstimation,interventionCost_estimates,healthcareCostEstimation,productivityCosts)
     

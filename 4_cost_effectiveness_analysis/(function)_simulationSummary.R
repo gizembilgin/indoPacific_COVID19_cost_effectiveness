@@ -20,9 +20,9 @@ simulationSummary <- function(DECISION_include_net,
   
   ### PART ONE: Join all data sets together! ###################################
   Combined_0 = crossing(interventionCost_estimates,
-                        evaluation_level = unique(outcomesAvertedEstimation$outcomes_averted$evaluation_level)) 
+                        evaluation_level = unique(outcomesAvertedEstimation$evaluation_level)) 
   rm(interventionCost_estimates)
-  if ("net" %in% unique(outcomesAvertedEstimation$outcomes_averted$evaluation_level)){
+  if ("net" %in% unique(outcomesAvertedEstimation$evaluation_level)){
     null_row = crossing(setting = unique(Combined_0$setting),
                         booster_vax_scenario = "no booster dose",
                         intervention = "no intervention",
@@ -34,9 +34,9 @@ simulationSummary <- function(DECISION_include_net,
   }
   Combined_0 = Combined_0%>%
     rename(interventionCost = cost) %>%
-    left_join(healthcareCostEstimation$healthcareCosts_averted, by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group)) %>%
+    left_join(healthcareCostEstimation, by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group)) %>%
     rename(healthcareCostAverted = cost) %>%
-    left_join(outcomesAvertedEstimation$outcomes_averted,by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group),
+    left_join(outcomesAvertedEstimation,by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group),
               relationship = "many-to-many") #because of outcomes
   rm(outcomesAvertedEstimation,healthcareCostEstimation)
   if (nrow(productivityCosts)>0){
