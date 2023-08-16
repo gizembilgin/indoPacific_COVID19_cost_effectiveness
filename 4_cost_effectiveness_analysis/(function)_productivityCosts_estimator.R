@@ -41,9 +41,11 @@ productivityCosts_estimator <- function(
     left_join(productivity_loss_df, by = c("setting","age_group","outcome"),
               relationship = "many-to-many") %>% #if length(list_discounting_rate)>1
     mutate(productivity_loss = productivity_loss * value,
-           productivity_loss_category = case_when(
-             outcome == "death" ~ "death",
-             TRUE ~ "illness")) %>%
+           productivity_loss_category = outcome
+           # productivity_loss_category = case_when(
+           #   outcome == "death" ~ "death",
+           #   TRUE ~ "illness")
+           ) %>%
     group_by(evaluation_level,discounting_rate,setting,booster_vax_scenario,intervention,intervention_target_group,productivity_loss_category) %>%
     summarise(cost = sum(productivity_loss), .groups = "keep")
   ##############################################################################
@@ -53,6 +55,9 @@ productivityCosts_estimator <- function(
     group_by(evaluation_level,discounting_rate,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
     summarise(cost = sum(cost), .groups = "keep")
   
-  return(productivity_loss)
+  result = list(productivity_loss = productivity_loss,
+                productivity_loss_breakdown = productivity_loss_breakdown)  
+  
+  return(result)
   #interestingly higher cost due to illness than death!
 }
