@@ -97,7 +97,9 @@ antiviral_wastage_results = antiviral_wastage_results %>%
     antiviral_cost_scenario = 
            case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
                      antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
-                     antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)")
+                     antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"),
+    
+    discounting_rate = discounting_rate *100
     )
 
 antiviral_wastage_results$antiviral_cost_scenario <- factor(antiviral_wastage_results$antiviral_cost_scenario, levels = rev(c("low generic reference price ($25 USD per schedule)",
