@@ -1,18 +1,46 @@
 options(scipen = 1000); require(ggpubr)
 
+INPUT_plot_name = "antiviral_wastage_rate" # options: static_plot, reduced_static_plot (hosted R Shiny), antiviral_wastage_rate (SM Figure S4.6)
+
 
 INPUT_include_setting = c("Fiji","Indonesia","Papua New Guinea","Timor-Leste")
 INPUT_include_outcome = "QALYs"
 INPUT_perspective = "healthcare perspective"
 INPUT_discounting_rate = 3
-INPUT_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost","high_income_cost")
-INPUT_include_booster_vax_scenario = c("all adults","high risk adults","no booster")
+INPUT_antiviral_cost_scenario = c("low generic reference price ($25 USD per schedule)","middle-income reference price ($250 USD per schedule)","high-income reference price ($530 USD per schedule)")
+INPUT_include_booster_vax_scenario = c("no booster")
 INPUT_antiviral_type = c("nirmatrelvir_ritonavir")
 INPUT_antiviral_type = c(INPUT_include_antiviral_type,"no antiviral")
 INPUT_include_antiviral_target_group = c("adults with comorbidities")
 INPUT_fix_xaxis = TRUE
 INPUT_include_GDP = TRUE
 
+
+if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
+  #load(file = "Rshiny/x_results/CEAC_dataframe_2023-07-30 11-16-57.Rdata")
+  
+  if (INPUT_plot_name == "static_plot"){
+    this_pattern = "CEAC_dataframe_20*"
+  } else if (INPUT_plot_name == "reduced_static_plot"){
+    this_pattern = "CEAC_dataframe_reduced_*"
+  }
+  
+  list_poss_Rdata = list.files(path = "Rshiny/x_results/",pattern = this_pattern)
+  if (length(list_poss_Rdata) > 0) {
+    list_poss_Rdata_details = double()
+    for (j in 1:length(list_poss_Rdata)) {
+      list_poss_Rdata_details = rbind(list_poss_Rdata_details,
+                                      file.info(paste("Rshiny/x_results/", list_poss_Rdata[[j]], sep = ''))$mtime)
+    }
+    latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
+    load(file = paste("Rshiny/x_results/", latest_file, sep = ''))
+  } else{
+    stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
+  }
+} else if (INPUT_plot_name == "antiviral_wastage_rate"){
+  load(file = "Rshiny/x_results/antiviral_wastage_results.Rdata")
+  CEAC_dataframe = antiviral_wastage_results
+}
 
 
 ### load functions
@@ -40,9 +68,17 @@ apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
     this_plot = ggplot(df) +
       geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]))
   } else if (length(plot_dimensions) == 1){
-    this_plot = ggplot(df) +
-      geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
-      labs(color = paste(gsub("_"," ", plot_dimensions[1])))
+    if("antiviral_wastage_rate" %in% colnames(df)){
+      this_plot = ggplot(df) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
+        labs(color = paste(gsub("_"," ", plot_dimensions[1]))) +
+        facet_grid(paste0(antiviral_wastage_rate*100,"%")~.)
+    } else{
+      this_plot = ggplot(df) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
+        labs(color = paste(gsub("_"," ", plot_dimensions[1])))
+    }
+    
   } else if (length(plot_dimensions) == 2){
     if (aes_x == "WTP" & plot_dimensions[2] == "booster_vax_scenario"){
       this_plot = ggplot(df) +
