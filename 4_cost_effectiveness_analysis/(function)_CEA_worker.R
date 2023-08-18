@@ -67,6 +67,7 @@ CEA_worker <- function(
       productivityCosts <- productivityCosts_estimator (
         LIST_CEA_settings_mod,
         MASTER_antiviral_simulations,
+        TORNADO_PLOT_OVERRIDE,
         list_discounting_rate = as.numeric(LIST_discounting_rate),
         this_risk_group = CEA_risk_group
       )

@@ -49,7 +49,9 @@ CHOICES = list(
     "Booster wastage (0-50%)"                  ,
     "Outpatient costs (±50%)"                  ,
     "Injection Equipment wastage (0-50%)"      ,
-    "Injection Equipment price ($0.025-$0.050)"
+    "Injection Equipment price ($0.025-$0.050)",
+    "Productivity loss due to illness (±50%)",
+    "Productivity loss due to death (±50%)"
   )
 )
 ################################################################################

@@ -56,7 +56,14 @@ queue = list(
   list(LIST_discounting_rate = 0.05, label = "Discounting rate (0-5%)",direction = "upper"),
   
   list(TOGGLE_longCOVID = "off", label = "Long COVID (off/on)",direction = "lower"),
-  list(TOGGLE_longCOVID = "on", label = "Long COVID (off/on)",direction = "upper")
+  list(TOGGLE_longCOVID = "on", label = "Long COVID (off/on)",direction = "upper"),
+  
+  list(productivity_loss_illness = 0.5, label = "Productivity loss due to illness (±50%)",direction = "lower"),
+  list(productivity_loss_illness = 1.5, label = "Productivity loss due to illness (±50%)",direction = "upper"),
+  
+  list(productivity_loss_death = 0.5, label = "Productivity loss due to death (±50%)",direction = "lower"),
+  list(productivity_loss_death = 1.5, label = "Productivity loss due to death (±50%)",direction = "upper")
+  
   
 )
 
@@ -128,4 +135,5 @@ tornado_result = tornado_result %>%
 
 
 save(tornado_result,file = "Rshiny/x_results/tornado_result.Rdata")
+beep()
 #_______________________________________________________________________________

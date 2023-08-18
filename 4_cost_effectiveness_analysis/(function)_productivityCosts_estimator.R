@@ -4,6 +4,7 @@
 productivityCosts_estimator <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
+    TORNADO_PLOT_OVERRIDE,
     list_discounting_rate = 0.03, 
     this_risk_group = "adults_with_comorbidities"
 ){
@@ -18,6 +19,14 @@ productivityCosts_estimator <- function(
     filter(discounting_rate %in% list_discounting_rate) %>%
     ungroup() 
   rm(productivity_loss_reference_df)
+  if (length(TORNADO_PLOT_OVERRIDE)>0){
+    if ("productivity_loss_illness" %in% names(TORNADO_PLOT_OVERRIDE)) {
+      productivity_loss_df$productivity_loss[productivity_loss_df$outcome != "death"] = productivity_loss_df$productivity_loss[productivity_loss_df$outcome != "death"] * TORNADO_PLOT_OVERRIDE$productivity_loss_illness
+    }
+    if ("productivity_loss_death" %in% names(TORNADO_PLOT_OVERRIDE)) {
+      productivity_loss_df$productivity_loss[productivity_loss_df$outcome == "death"] = productivity_loss_df$productivity_loss[productivity_loss_df$outcome == "death"] * TORNADO_PLOT_OVERRIDE$productivity_loss_death
+    }
+  }
   ##############################################################################
   
   
