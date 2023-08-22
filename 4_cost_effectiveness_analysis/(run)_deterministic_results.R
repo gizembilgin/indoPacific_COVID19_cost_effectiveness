@@ -117,8 +117,8 @@ tornado_result = tornado_result %>%
     booster_vax_scenario = case_when(
       booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
       booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
-      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults who have previously completed their primary schedule but have not recieved a booster"  ,
-      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults who have previously completed their primary schedule but have not recieved a booster"   ,
+      booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults (catch-up campaign)"  ,
+      booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults (catch-up campaign)",
       booster_vax_scenario == "no booster dose" ~ "no booster",
       TRUE ~ booster_vax_scenario
     ),
@@ -131,7 +131,8 @@ tornado_result = tornado_result %>%
     ),
 
     perspective = paste(perspective," perspective",sep = "")      
-  )
+  ) %>%
+  filter(!(antiviral_type ==  "molunipiravir" & variable == "cost_per_hosp_averted")) #these results don't make any sense as molnupiravir is not effective against hospitalisation
 
 
 save(tornado_result,file = "Rshiny/x_results/tornado_result.Rdata")
