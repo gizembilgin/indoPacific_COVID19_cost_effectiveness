@@ -315,13 +315,20 @@ server <- function(input, output, session) {
       this_plot = this_plot + 
         facet_grid(perspective ~.) 
     }
-    if (length(plot_dimensions) == 0){
+    if (length(plot_dimensions) != 0){
       if (plot_dimensions[1] == "booster_vax_scenario"){
         this_plot <- this_plot +
           scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
       } else if (plot_dimensions[1] == "antiviral_cost_scenario"){
         this_plot <- this_plot +
           scale_color_manual(values = wesanderson::wes_palette( name="FantasticFox1"))
+      } else if (plot_dimensions[1] == "antiviral_target_group"){
+        this_plot <- this_plot +
+          scale_colour_manual(values = 
+                                c("all adults" = "#619CFF", 
+                                  "adults with comorbidities" = "#00BA38", 
+                                  "unvaccinated adults" = "#F8766D" ,
+                                  "no antiviral" = "#999999"))
       }
     }
     return(this_plot)
@@ -331,7 +338,7 @@ server <- function(input, output, session) {
   output$switch_shape_and_colour <- renderUI({
     if(length(plot_dimensions()) == 2){
       materialSwitch(inputId = "INPUT_switch_shape_and_colour",
-                     label = "Switch shape & colour",
+                     label = "Switch shape/facet & colour",
                      value = FALSE)
     }
   })
@@ -363,9 +370,9 @@ server <- function(input, output, session) {
   #widget for GDP line
   output$GDP_line_toggle <- renderUI({
     if(input$INPUT_select_sentitivity_analysis == 'probab'){
-      checkboxInput("INPUT_include_GDP","Include GDP as a dashed line",value = TRUE)
+      checkboxInput("INPUT_include_GDP","Include GDP per capita as a dashed line",value = TRUE)
     } else{
-      radioGroupButtons("INPUT_include_GDP","Include GDP as a line?",
+      radioGroupButtons("INPUT_include_GDP","Include GDP per capita as a line?",
                         choices = c("Yes","No"))
     }
   })
@@ -375,7 +382,8 @@ server <- function(input, output, session) {
     if(length(plot_list) == 1){row_num = 1; col_num = 1}
     if(length(plot_list) == 2){row_num = 1; col_num = 2}
     if(length(plot_list) > 2) {row_num = 2; col_num = 2}
-    plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+    plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom",
+                     legend.grob = get_legend(plot_list[[2]]))
   }
   
   # text to display when too many dimensions have been selected
@@ -556,71 +564,73 @@ server <- function(input, output, session) {
       for (this_setting in input$INPUT_include_setting){
         to_plot_this_setting = to_plot %>%
           filter(setting == this_setting)
-        base.value <- isolate_base_value %>% filter(setting == this_setting)
-        base.value <- base.value$mean
-        
-        if (this_setting == "Fiji"){this_setting_GDP = 5316.7;annotate_multiple = 0.9}
-        if (this_setting == "Indonesia"){this_setting_GDP = 4788.0;annotate_multiple = 0.9}
-        if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3;annotate_multiple = 0.9}
-        if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4;annotate_multiple = 0.85}
-
-        # width of columns in plot (value between 0 and 1)
-        width <- 0.95
-        order_parameters <- to_plot_this_setting %>%
-          group_by(label) %>%
-          summarise(LB = min(mean),
-                    UB = max(mean)) %>%
-          mutate(UL_Difference = UB - LB) %>% 
-          arrange(UL_Difference) %>%
-          mutate(label=factor(x=label, levels=label)) %>%
-          select(label) %>% 
-          unlist() %>% 
-          levels()
-        
-        # get data frame in shape for ggplot and geom_rect
-        df_2 <- to_plot_this_setting %>%
-          select(perspective,label,mean,direction) %>% 
-          rename(value = mean) %>%
-          ungroup() %>%
-          # create the columns for geom_rect
-          mutate(label=factor(label, levels=order_parameters),
-                 ymin=pmin(value, base.value),
-                 ymax=pmax(value, base.value),
-                 xmin=as.numeric(label)-width/2,
-                 xmax=as.numeric(label)+width/2)
-        rm(to_plot_this_setting)
-        
-        # create plot
-        plot_list[[length(plot_list)+1]] = ggplot() + 
-          geom_rect(data = df_2,
-                    aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
-          geom_hline(yintercept = base.value) +
-          theme_bw() + 
-          #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-          theme(axis.title.y=element_blank(), legend.position = 'bottom',
-                legend.title = element_blank())  +
-          ylab(paste("Cost per",gsub("QALYs","QALY",input$INPUT_include_outcomes),"averted (2022 USD)")) +
-          scale_x_continuous(breaks = c(1:length(order_parameters)), 
-                             labels = order_parameters) +
-          coord_flip() +
-          labs(title = this_setting)
-
-        
-        if (input$INPUT_include_GDP == "Yes"){
-          plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
-            #geom_hline(aes(yintercept = this_setting_GDP, color = 'GDP per capita'),linetype='dashed') +
-            geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
-            annotate("text", x = 4, y = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
-    
-        } else{
-          plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
-            ylim(min(min(df_2$ymin),0),
-                 max(max(df_2$ymax),0))
-        }
-        rm(df_2)
-        if (length(input$INPUT_perspective)>1){
-          plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
-            facet_grid(perspective ~.) 
+        if (nrow(to_plot_this_setting)>1){ #NB: FJI doesn't have unvax
+          base.value <- isolate_base_value %>% filter(setting == this_setting)
+          base.value <- base.value$mean
+          
+          if (this_setting == "Fiji"){this_setting_GDP = 5316.7;annotate_multiple = 0.9}
+          if (this_setting == "Indonesia"){this_setting_GDP = 4788.0;annotate_multiple = 0.9}
+          if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3;annotate_multiple = 0.9}
+          if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4;annotate_multiple = 0.85}
+          
+          # width of columns in plot (value between 0 and 1)
+          width <- 0.95
+          order_parameters <- to_plot_this_setting %>%
+            group_by(label) %>%
+            summarise(LB = min(mean),
+                      UB = max(mean)) %>%
+            mutate(UL_Difference = UB - LB) %>% 
+            arrange(UL_Difference) %>%
+            mutate(label=factor(x=label, levels=label)) %>%
+            select(label) %>% 
+            unlist() %>% 
+            levels()
+          
+          # get data frame in shape for ggplot and geom_rect
+          df_2 <- to_plot_this_setting %>%
+            select(perspective,label,mean,direction) %>% 
+            rename(value = mean) %>%
+            ungroup() %>%
+            # create the columns for geom_rect
+            mutate(label=factor(label, levels=order_parameters),
+                   ymin=pmin(value, base.value),
+                   ymax=pmax(value, base.value),
+                   xmin=as.numeric(label)-width/2,
+                   xmax=as.numeric(label)+width/2)
+          rm(to_plot_this_setting)
+          
+          # create plot
+          plot_list[[length(plot_list)+1]] = ggplot() + 
+            geom_rect(data = df_2,
+                      aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
+            geom_hline(yintercept = base.value) +
+            theme_bw() + 
+            #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
+            theme(axis.title.y=element_blank(), legend.position = 'bottom',
+                  legend.title = element_blank())  +
+            ylab(paste("Cost per",gsub("QALYs","QALY",input$INPUT_include_outcomes),"averted (2022 USD)")) +
+            scale_x_continuous(breaks = c(1:length(order_parameters)), 
+                               labels = order_parameters) +
+            coord_flip() +
+            labs(title = this_setting)
+          
+          
+          if (input$INPUT_include_GDP == "Yes"){
+            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+              #geom_hline(aes(yintercept = this_setting_GDP, color = 'GDP per capita'),linetype='dashed') +
+              geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
+              annotate("text", x = 4, y = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
+            
+          } else{
+            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
+              ylim(min(min(df_2$ymin),0),
+                   max(max(df_2$ymax),0))
+          }
+          rm(df_2)
+          if (length(input$INPUT_perspective)>1){
+            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+              facet_grid(perspective ~.) 
+          }
         }
       }
       rm(to_plot)
