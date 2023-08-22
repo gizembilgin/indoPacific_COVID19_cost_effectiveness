@@ -32,7 +32,7 @@ CEA_worker <- function(
   for (ticket in 1:numberOfRunsPerCluster){
     
     ###(1/3) Load antiviral model runs
-    MASTER_antiviral_simulations <- sample_compartmentalModel_run(LIST_CEA_settings,
+    MASTER_antiviral_simulations <- sample_transmission_model_runs (LIST_CEA_settings,
                                                                   LIST_booster_vax_scenarios,
                                                                   LIST_antiviral_elig_groups,
                                                                   LIST_antiviral_types,
@@ -42,7 +42,7 @@ CEA_worker <- function(
     LIST_CEA_settings_mod = gsub("PNG_low_beta","PNG",LIST_CEA_settings)
     
     ###(2/3) Calculate QALYs, intervention costs, and healthcare costs averted
-    outcomesAvertedEstimation <- outcomesAverted_estimator(LIST_CEA_settings_mod,
+    outcomesAvertedEstimation <- estimate_outcomes_averted(LIST_CEA_settings_mod,
                                                            MASTER_antiviral_simulations,
                                                            toggle_longCOVID = TOGGLE_longCOVID,
                                                            list_discounting_rate = as.numeric(LIST_discounting_rate))
@@ -50,14 +50,14 @@ CEA_worker <- function(
     #list including QALY_breakdown by evaluation_level,setting,outcome_source,booster_vax_scenario,antiviral_type,antiviral_target_group,count_outcomes; and 
     #               outcomes_averted by evaluation_level,setting,outcome {QALYs,deaths,hospitalisations},booster_vax_scenario,antiviral_type,antiviral_target_group,count_outcomes
     
-    interventionCost_estimates <- interventionCost_estimator(LIST_CEA_settings_mod,
+    interventionCost_estimates <- estimate_intervention_costs(LIST_CEA_settings_mod,
                                                              MASTER_antiviral_simulations,
                                                              TORNADO_PLOT_OVERRIDE,
                                                              LIST_antiviral_cost_scenario,
                                                              toggle_uncertainty = TOGGLE_uncertainty)
     # 217.43  seconds for all combinations, 3.06 for one booster + one antiviral
     
-    healthcareCostEstimation <- healthCareCostsAverted_estimator(LIST_CEA_settings_mod,
+    healthcareCostEstimation <- estimate_healthcare_costs_averted(LIST_CEA_settings_mod,
                                                                  MASTER_antiviral_simulations,
                                                                  TORNADO_PLOT_OVERRIDE,
                                                                  toggle_uncertainty = TOGGLE_uncertainty)
