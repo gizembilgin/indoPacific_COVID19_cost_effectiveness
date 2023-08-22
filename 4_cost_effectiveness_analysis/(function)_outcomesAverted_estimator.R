@@ -3,7 +3,7 @@
 #NB: There is no uncertainty in QALY conversion estimates as data sources are expert point estimates of:
 #       population (UN), life expectancy (UN), HRQoL (Robinson, Eber & Hammitt), and age_severity_specific_QALYs (Robinson, Eber & Hammitt)
 
-outcomesAverted_estimator <- function(
+estimate_outcomes_averted <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
     ARRAY_additional_outcomes = c("death","hosp"),
@@ -39,8 +39,9 @@ outcomesAverted_estimator <- function(
     filter(! (outcome %in% c("YLL","neonatal_deaths","booster_doses_delivered","ICU"))) %>%
     select(evaluation_level,setting, outcome, booster_vax_scenario, intervention, intervention_target_group, age_group,count_outcomes)
   
-  if (nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),]) #intervention_target_group is understandably NA 
-      != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
+  nrow_with_intervention <- nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),])  #intervention_target_group is understandably NA 
+  nrow_omitting_NA       <- nrow(na.omit(TRANSLATED_antiviral_simulations))
+  if (nrow_with_intervention != nrow_omitting_NA) stop("NA introduced in TRANSLATED_antiviral_simulations during estimate_outcomes_averted")
   ##############################################################################
   
   

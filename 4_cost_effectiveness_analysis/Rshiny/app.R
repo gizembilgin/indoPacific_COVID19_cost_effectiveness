@@ -232,7 +232,7 @@ server <- function(input, output, session) {
 
 
   } else{
-    stop("no underlying simulations to load!")
+    stop("Can't find underlying simulation to load!")
   }
 
   # load latest deterministic results

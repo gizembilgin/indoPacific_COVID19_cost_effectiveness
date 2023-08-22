@@ -30,7 +30,7 @@ if (length(list_poss_Rdata) > 0) {
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
   load(file = paste0(this_path, latest_file))
 } else{
-  stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
+  stop(paste("Can't find results",this_setting))
 }
 CommandDeck_result = complete_results$CommandDeck_result
 rm(complete_results)

@@ -46,7 +46,7 @@ if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
       CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
     }
   } else{
-    stop(paste("no results to load!"))
+    stop(paste("Can't find results",this_setting))
   }
 } else if (INPUT_plot_name == "long_COVID"){
   load(file = "Rshiny/x_results/long_COVID_results.Rdata")

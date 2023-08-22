@@ -1,5 +1,5 @@
 
-healthCareCostsAverted_estimator <- function(
+estimate_healthcare_costs_averted <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
     TORNADO_PLOT_OVERRIDE,
@@ -15,8 +15,9 @@ healthCareCostsAverted_estimator <- function(
     filter(outcome %in% c("hosp","hosp_after_antivirals","mild")) %>%
     select(evaluation_level,setting, outcome, booster_vax_scenario, intervention, intervention_target_group, count_outcomes)
     
-  if (nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),]) #intervention_target_group is understandably NA 
-      != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
+  nrow_with_intervention <- nrow(TRANSLATED_antiviral_simulations[!(TRANSLATED_antiviral_simulations$intervention == "no intervention" ),])  #intervention_target_group is understandably NA 
+  nrow_omitting_NA       <- nrow(na.omit(TRANSLATED_antiviral_simulations))
+  if (nrow_with_intervention != nrow_omitting_NA) stop("NA introduced in TRANSLATED_antiviral_simulations during estimate_healthcare_costs_averted")
   ##############################################################################
   
   

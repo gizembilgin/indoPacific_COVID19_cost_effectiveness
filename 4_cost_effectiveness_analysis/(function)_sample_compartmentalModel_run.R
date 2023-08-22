@@ -1,5 +1,5 @@
 
-sample_compartmentalModel_run <- function(LIST_CEA_settings,
+sample_transmission_model_runs <- function(LIST_CEA_settings,
                                           LIST_booster_vax_scenarios,
                                           LIST_antiviral_elig_groups,
                                           LIST_antiviral_types,
@@ -27,7 +27,7 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings,
       latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
       load(file = paste(rootpath, "x_results/", latest_file, sep = ''))
     } else{
-      stop(paste("no results for",this_setting,"with",this_risk_group,"see Translator"))
+      stop(paste("Can't find underlying transmission model results for",this_setting,"with",this_risk_group,"see sample_transmission_model_runs"))
     }
     
     if (this_setting == "PNG_low_beta"){this_setting = "PNG"}
@@ -60,7 +60,7 @@ sample_compartmentalModel_run <- function(LIST_CEA_settings,
     sampled_df = MASTER_antiviral_simulations %>%
       filter(run_ID %in% sampled_df$this_run)
   }
-  if (nrow(sampled_df) != nrow(MASTER_antiviral_simulations)/100){stop("Did you not run 100 simulations?")}
+  if (nrow(sampled_df) != nrow(MASTER_antiviral_simulations)/100){stop("Can't find 100 underlying transmission model simulations")}
 
   sampled_df = sampled_df %>%
     filter(vax_scenario %in% LIST_booster_vax_scenarios) %>%

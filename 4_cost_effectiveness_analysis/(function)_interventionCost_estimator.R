@@ -1,5 +1,5 @@
 
-interventionCost_estimator <- function(
+estimate_intervention_costs <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
     TORNADO_PLOT_OVERRIDE,
@@ -22,7 +22,7 @@ interventionCost_estimator <- function(
     filter(outcome == "death") %>% #ensure one value per simulation, NB: we don't care about the outcome, only the intervention_doses_delivered column
     select(setting, booster_vax_scenario, intervention, intervention_target_group,intervention_doses_delivered)
   
-  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))){stop("NA introduced")}
+  if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))) stop("NA introduced in TRANSLATED_antiviral_simulations during estimate_intervention_costs") 
   ##############################################################################
   
   
