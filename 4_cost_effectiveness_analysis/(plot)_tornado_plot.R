@@ -3,8 +3,10 @@
 ## make reactive so doesn't reload when different number of param selected (line 74)
 require(ggpubr)
 
-INPUT_include_setting = c("Papua New Guinea", "Timor-Leste")
+INPUT_include_setting = c("Papua New Guinea", "Timor-Leste","Fiji","Indonesia")
 INPUT_perspective = "healthcare perspective"
+INPUT_include_booster_vax_scenario = "no booster"
+INPUT_include_antiviral_target_group = "unvaccinated adults"
 INPUT_include_outcomes = "QALYs"
 INPUT_antiviral_type = "molunipiravir"
 INPUT_parameters = c(
@@ -28,7 +30,7 @@ INPUT_parameters = c(
 INPUT_include_GDP = "Y"
 
 
-load(file = "x_results/tornado_result.Rdata")
+load(file = "Rshiny/x_results/tornado_result.Rdata")
 tornado_variable_of_interest = paste("cost_per_",
                                      gsub("QALYs","QALY",INPUT_include_outcomes),
                                      "_averted",
@@ -38,7 +40,9 @@ tornado_result = tornado_result %>%
   filter(antiviral_type == INPUT_antiviral_type  &
            variable == tornado_variable_of_interest &
            setting %in% INPUT_include_setting &
-           perspective %in% INPUT_perspective) 
+           perspective %in% INPUT_perspective &
+           booster_vax_scenario %in% INPUT_include_booster_vax_scenario &
+           antiviral_target_group %in% INPUT_include_antiviral_target_group) 
 
 plot_list = list()
 
