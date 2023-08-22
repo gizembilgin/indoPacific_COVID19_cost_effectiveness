@@ -428,10 +428,9 @@ server <- function(input, output, session) {
   output$OUTPUT_ICER_table <- renderDataTable({dataInput_ICER_table()})
   
   dataInput_TornadoPlot <- reactive({
-    tornado_variable_of_interest = paste("cost_per_",
+    tornado_variable_of_interest = paste0("cost_per_",
                                          gsub("QALYs","QALY",input$INPUT_include_outcomes),
-                                         "_averted",
-                                         sep ="")
+                                         "_averted")
     tornado_result %>%
       filter(evaluation_level == "incremental") %>%
       filter(antiviral_type %in% c("no antiviral", input$INPUT_antiviral_type) & 

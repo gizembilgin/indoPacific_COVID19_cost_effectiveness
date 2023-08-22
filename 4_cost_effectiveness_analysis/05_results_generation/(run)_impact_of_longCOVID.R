@@ -71,7 +71,7 @@ long_COVID_results = long_COVID_results %>%
       TRUE ~ antiviral_target_group
     ),
     
-    perspective = paste(perspective," perspective",sep = ""),
+    perspective = paste0(perspective," perspective"),
     
     antiviral_cost_scenario = 
       case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",

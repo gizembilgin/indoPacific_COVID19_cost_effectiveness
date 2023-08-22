@@ -128,7 +128,7 @@ tornado_result = tornado_result %>%
       TRUE ~ antiviral_target_group
     ),
 
-    perspective = paste(perspective," perspective",sep = "")      
+    perspective = paste0(perspective," perspective")      
   ) %>%
   filter(!(antiviral_type ==  "molunipiravir" & variable == "cost_per_hosp_averted")) #these results don't make any sense as molnupiravir is not effective against hospitalisation
 

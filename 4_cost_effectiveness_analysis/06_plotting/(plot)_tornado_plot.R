@@ -31,10 +31,9 @@ INPUT_include_GDP = "Y"
 
 
 load(file = "07_shiny/x_results/tornado_result.Rdata")
-tornado_variable_of_interest = paste("cost_per_",
+tornado_variable_of_interest = paste0("cost_per_",
                                      gsub("QALYs","QALY",INPUT_include_outcomes),
-                                     "_averted",
-                                     sep ="")
+                                     "_averted")
 tornado_result = tornado_result %>%
   filter(evaluation_level == "incremental") %>%
   filter(antiviral_type == INPUT_antiviral_type  &

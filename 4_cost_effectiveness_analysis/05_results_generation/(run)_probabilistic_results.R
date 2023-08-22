@@ -54,7 +54,7 @@ CommandDeck_result_long = CommandDeck_result_long %>%
       TRUE ~ antiviral_target_group
     ),
     
-    perspective = paste(perspective," perspective",sep = ""),      
+    perspective = paste0(perspective," perspective"),      
     discounting_rate = discounting_rate * 100
   ) %>%
   mutate(antiviral_cost_scenario = 
@@ -92,7 +92,7 @@ CommandDeck_result = CommandDeck_result %>%
       TRUE ~ antiviral_target_group
     ),
     
-    perspective = paste(perspective," perspective",sep = ""),      
+    perspective = paste0(perspective," perspective"),      
     discounting_rate = discounting_rate * 100
   ) %>%
   rename(outcome = variable) %>%
