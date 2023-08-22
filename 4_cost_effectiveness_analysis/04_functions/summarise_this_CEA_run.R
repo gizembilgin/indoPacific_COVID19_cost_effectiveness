@@ -1,6 +1,6 @@
 
 
-simulationSummary <- function(DECISION_include_net,
+summarise_this_CEA_run <- function(DECISION_include_net,
                               outcomesAvertedEstimation,
                             interventionCost_estimates,
                             healthcareCostEstimation,

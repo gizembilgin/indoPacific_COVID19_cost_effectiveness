@@ -6,8 +6,7 @@ setting_list = c("FJI","IDN","PNG","TLS")
 ### PART ONE: loading QALY estimates############################################
 ## non-fatal QALYS 
 #Step One: load population distribution
-load(file = paste(gsub("4_cost_effectiveness_analysis","",getwd()),
-                  "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata",sep=''))
+load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
 
 pop_orig <- UN_pop_est %>% 
   rename(country_long = Location,
@@ -19,7 +18,7 @@ rm(UN_pop_est)
 #_______________________________________________________________________________
 
 #Step Two: load non-fatal QALYs by severity and age
-raw <- read.csv("2_inputs/age_severity_specific_QALYs.csv",header=TRUE) 
+raw <- read.csv("02_inputs/age_severity_specific_QALYs.csv",header=TRUE) 
 #ggplot(raw) + geom_line(aes(x=age,y=QALYs)) + facet_grid(severity ~ ., scale = "free_y")
 #_______________________________________________________________________________
 
@@ -41,8 +40,7 @@ QALYs_nonFatal = raw %>%
 #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
 # who would be subject during the remaining of their lives to the mortality rates of a given period."
 # https://population.un.org/wpp/Download/Standard/Mortality/
-load(file = paste(gsub("4_cost_effectiveness_analysis","",getwd()),
-                  "1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata",sep=''))
+load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
 
 UN_lifeExpect_est = UN_lifeExpect_est %>%
   rename(life_expectancy = ex,
@@ -53,7 +51,7 @@ UN_lifeExpect_est = UN_lifeExpect_est %>%
 #_______________________________________________________________________________
 
 #Step Two: convert life expectancy to QALYs using HRQoL estimates
-raw <- read.csv("2_inputs/age_specific_HRQoL_v2.csv",header=TRUE) 
+raw <- read.csv("02_inputs/age_specific_HRQoL_v2.csv",header=TRUE) 
 
 HRQoL = raw %>%
   left_join(UN_lifeExpect_est, by = c("age")) %>%
@@ -163,6 +161,6 @@ QALY_estimates = QALY_estimates %>%
 #   labs(fill="")+
 #   facet_grid(outcome ~ ., scale = "free_y")
 
-save(QALY_estimates, file = "2_inputs/QALY_estimates.Rdata")
+save(QALY_estimates, file = "02_inputs/QALY_estimates.Rdata")
 ##############################################################################
 ##############################################################################

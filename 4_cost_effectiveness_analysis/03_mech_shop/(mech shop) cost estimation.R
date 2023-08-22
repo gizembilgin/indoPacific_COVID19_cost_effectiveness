@@ -10,14 +10,13 @@ require(readr); require(ggplot2); require(tidyverse)
 #  "Inflation, consumer prices (annual %)"                    
 #  "Inflation, GDP deflator (annual %)"  
 
-list_poss_csv = list.files(path = "2_inputs",pattern = "World Bank extract*")
+list_poss_csv = list.files(path = "02_inputs",pattern = "World Bank extract*")
 list_poss_csv_details = double()
 for (i in 1:length(list_poss_csv)){
-  list_poss_csv_details = rbind(list_poss_csv_details,
-                                file.info(paste("2_inputs/",list_poss_csv[[i]],sep=""))$mtime)
+  list_poss_csv_details = rbind(list_poss_csv_details,file.info(paste0("02_inputs/",list_poss_csv[[i]]))$mtime)
 }
 latest_file = list_poss_csv[[which.max(list_poss_csv_details)]]
-raw <- read.csv(paste("2_inputs/",latest_file,sep=""),header=TRUE)
+raw <- read.csv(paste0("02_inputs/",latest_file),header=TRUE)
 
 workshop_WB = raw %>%
   pivot_longer(
@@ -35,7 +34,7 @@ workshop_WB = raw %>%
 
 ## (2/5) International Monetary Fund data on GDP deflator (latest April 2023)
 #https://www.imf.org/en/Publications/SPROLLS/world-economic-outlook-databases#sort=%40imfdate%20descending
-raw <- read.csv("2_inputs/IMF_data.csv",header=TRUE)
+raw <- read.csv("02_inputs/IMF_data.csv",header=TRUE)
 # "GDP_deflator"   
 # "PPP_conversion"
 
@@ -60,13 +59,13 @@ workshop_IMF = raw %>%
 #_______________________________________________________________________________
 
 ## (3/5) cost estimates
-cost_estimates <- read.csv("2_inputs/cost_estimates.csv",header=TRUE)
+cost_estimates <- read.csv("02_inputs/cost_estimates.csv",header=TRUE)
 #hospital_admission
 #operational_cost
 #_______________________________________________________________________________
 
 ## (4/5) WHO CHOICE estimates
-WHO_CHOICE_raw <- read.csv("2_inputs/WHO_CHOICE_estimates.csv",header=TRUE)  %>%
+WHO_CHOICE_raw <- read.csv("02_inputs/WHO_CHOICE_estimates.csv",header=TRUE)  %>%
   mutate(currency_short = case_when(
     currency == "2010 internal dollars (PPP $)" ~ "PPP",
     currency == "2010 National Currency Unit (NCU)" ~ "NCU",
@@ -76,7 +75,7 @@ WHO_CHOICE_raw <- read.csv("2_inputs/WHO_CHOICE_estimates.csv",header=TRUE)  %>%
 #_______________________________________________________________________________
 
 ## (5/5) exchange rates from national banks
-exchange_rates <- read.csv("2_inputs/exchange_rate.csv",header=TRUE)
+exchange_rates <- read.csv("02_inputs/exchange_rate.csv",header=TRUE)
 #_______________________________________________________________________________
 ################################################################################
 
@@ -251,7 +250,7 @@ hosp_adm
 #          variable estimate       sd currency year              source
 # hospital_admission  5847.48 4.144219      USD 2022 Nugraha et al. 2022
 
-hosp_adm_details <- read.csv("2_inputs/inpatient_cost_details.csv",header=TRUE)
+hosp_adm_details <- read.csv("02_inputs/inpatient_cost_details.csv",header=TRUE)
 # hosp_adm_details
 # variable               category percentage
 # 1      care_setting      Primary hospital  0.52780000
@@ -331,6 +330,6 @@ hosp_adm = hosp_adm %>%
 
 
 ### (4) SAVE ##########################################
-save(WHO_CHOICE_2022, file = "2_inputs/WHO_CHOICE_2022.Rdata")
-save(hosp_adm, file = "2_inputs/hosp_adm.Rdata")
-save(operational_cost, file = "2_inputs/operational_cost.Rdata")
+save(WHO_CHOICE_2022, file = "02_inputs/WHO_CHOICE_2022.Rdata")
+save(hosp_adm, file = "02_inputs/hosp_adm.Rdata")
+save(operational_cost, file = "02_inputs/operational_cost.Rdata")

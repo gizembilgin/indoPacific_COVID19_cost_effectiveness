@@ -142,7 +142,7 @@ fitted_distributions = bind_rows(fitted_distributions,this_row)
 
 
 ### PART TWO: Operational costs for antiviral delivery / cost per outpatient visit (WHO CHOICE estimates)
-load(file = "2_inputs/WHO_CHOICE_2022.Rdata")
+load(file = "02_inputs/WHO_CHOICE_2022.Rdata")
 workshop = WHO_CHOICE_2022 %>% 
   filter(currency_short == "USD" &
            patient_type == "outpatient" &
@@ -219,4 +219,4 @@ this_row = data.frame(parameter = "reduced_LOS_days",
 fitted_distributions = bind_rows(fitted_distributions,this_row)
 #_______________________________________________________________________________
 
-save(fitted_distributions,file = "2_inputs/fitted_distributions.Rdata")
+save(fitted_distributions,file = "02_inputs/fitted_distributions.Rdata")

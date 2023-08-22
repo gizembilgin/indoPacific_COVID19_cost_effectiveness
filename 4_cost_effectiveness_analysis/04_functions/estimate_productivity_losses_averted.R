@@ -1,7 +1,7 @@
 ### This function calculates the productivity losses due to illness and premature mortality 
 ### NB: no sampling for this cost category since underlying uncertainty not available for multiple informing data sources
 
-productivityCosts_estimator <- function(
+estimate_productivity_costs <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
     TORNADO_PLOT_OVERRIDE,
@@ -15,7 +15,7 @@ productivityCosts_estimator <- function(
          Go back to (mech shop) productivity loss and ensure that productivity losses by this discounting rate are calculated")
   }
   
-  load(file = "2_inputs/productivity_loss_reference_df.Rdata")
+  load(file = "02_inputs/productivity_loss_reference_df.Rdata")
   productivity_loss_df <- productivity_loss_reference_df %>%
     filter(discounting_rate %in% list_discounting_rate) %>%
     ungroup() 

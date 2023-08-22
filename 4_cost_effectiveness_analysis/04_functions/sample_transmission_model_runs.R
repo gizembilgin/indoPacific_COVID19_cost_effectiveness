@@ -22,10 +22,10 @@ sample_transmission_model_runs <- function(LIST_CEA_settings,
       list_poss_Rdata_details = double()
       for (j in 1:length(list_poss_Rdata)) {
         list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                        file.info(paste(rootpath, 'x_results/', list_poss_Rdata[[j]], sep = ''))$mtime)
+                                        file.info(paste0(rootpath, 'x_results/', list_poss_Rdata[[j]]))$mtime)
       }
       latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-      load(file = paste(rootpath, "x_results/", latest_file, sep = ''))
+      load(file = paste0(rootpath, "x_results/", latest_file))
     } else{
       stop(paste("Can't find underlying transmission model results for",this_setting,"with",this_risk_group,"see sample_transmission_model_runs"))
     }

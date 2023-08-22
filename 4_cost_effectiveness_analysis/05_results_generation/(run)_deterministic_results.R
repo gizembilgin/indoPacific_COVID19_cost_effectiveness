@@ -88,7 +88,7 @@ for (ticket in 1:length(queue)){
     if (!("LIST_discounting_rate" %in% names(CommandDeck_CONTROLS))) CommandDeck_CONTROLS = append(CommandDeck_CONTROLS, list(LIST_discounting_rate = 0.03))
     if (!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))) CommandDeck_CONTROLS = append(CommandDeck_CONTROLS, list(TOGGLE_longCOVID = "off"))
     
-    source(paste(getwd(),"/CommandDeck.R",sep=""))
+    source(paste0(getwd(),"/CommandDeck.R"))
     
     rows = CommandDeck_result %>%
       filter(variable_type == "ICER") %>%
@@ -133,6 +133,6 @@ tornado_result = tornado_result %>%
   filter(!(antiviral_type ==  "molunipiravir" & variable == "cost_per_hosp_averted")) #these results don't make any sense as molnupiravir is not effective against hospitalisation
 
 
-save(tornado_result,file = "Rshiny/x_results/tornado_result.Rdata")
+save(tornado_result,file = "07_shiny/x_results/tornado_result.Rdata")
 beep()
 #_______________________________________________________________________________

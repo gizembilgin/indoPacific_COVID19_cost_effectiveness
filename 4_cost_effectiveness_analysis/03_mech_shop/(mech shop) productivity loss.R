@@ -8,13 +8,12 @@ LIST_CEA_settings = c("PNG","TLS","FJI","IDN")
 
 
 ####  Importing key datasets ###################################################
-load(file = paste(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_pop_est.Rdata",sep=''))
-load(file = paste(gsub("4_cost_effectiveness_analysis","",getwd()),
-                  "1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata",sep=''))
-labour_force_participation_RAW <- read.csv("2_inputs/Labour force participation rate by age - ILO modelled estimates.csv",header=TRUE)
-annual_output_per_worker_RAW <- read.csv("2_inputs/Output per worker (GDP constant 2015 US $).csv",header=TRUE)
-age_specific_return_to_work_RAW <- read.csv("2_inputs/age_specific_return_to_work.csv",header=TRUE)
-return_to_work_RAW <- read.csv("2_inputs/return_to_work.csv",header=TRUE)
+load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
+load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
+labour_force_participation_RAW <- read.csv("02_inputs/Labour force participation rate by age - ILO modelled estimates.csv",header=TRUE)
+annual_output_per_worker_RAW <- read.csv("02_inputs/Output per worker (GDP constant 2015 US $).csv",header=TRUE)
+age_specific_return_to_work_RAW <- read.csv("02_inputs/age_specific_return_to_work.csv",header=TRUE)
+return_to_work_RAW <- read.csv("02_inputs/return_to_work.csv",header=TRUE)
 
 UN_lifeExpect_est = UN_lifeExpect_est %>%
   rename(life_expectancy = ex,
@@ -110,7 +109,7 @@ expected_daily_earnings = annual_output_per_worker %>%
   mutate(daily_earning = daily_earning * value/100) %>%
   select(setting,age_group,daily_earning)
 
-save(expected_daily_earnings, file = "2_inputs/expected_daily_earnings.Rdata")
+save(expected_daily_earnings, file = "02_inputs/expected_daily_earnings.Rdata")
 ################################################################################
 
 
@@ -511,7 +510,7 @@ productivity_lost = productivity_lost %>%
     ))
 
 productivity_loss_reference_df = bind_rows(remaining_lifetime_earnings,productivity_lost)
-save(productivity_loss_reference_df, file = "2_inputs/productivity_loss_reference_df.Rdata")
+save(productivity_loss_reference_df, file = "02_inputs/productivity_loss_reference_df.Rdata")
 
 to_plot = productivity_loss_reference_df %>%
   filter(setting == "IDN"

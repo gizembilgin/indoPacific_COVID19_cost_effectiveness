@@ -1,6 +1,6 @@
 require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(wesanderson);require(ggtext); require(tidyverse)
 require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
-#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/Rshiny/"), appName = "indoPacific_COVID19_costEffectivenessAnalysis"); beep()
+#library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/07_shiny/"), appName = "indoPacific_COVID19_costEffectivenessAnalysis"); beep()
 options(scipen = 1000) #turn off scientific notation
 rm(list = ls())
 
@@ -243,7 +243,7 @@ server <- function(input, output, session) {
   
   ### functions and multi-use reactive ########################################
   # function which subsets data to the widgets displayed for probabilistic sensitivity analysis
-  subset_data_to_widgets <- function(df){
+  subset_data_to_selected <- function(df){
     df %>%
       filter(
         setting %in% input$INPUT_include_setting &
@@ -266,7 +266,7 @@ server <- function(input, output, session) {
   }
   
   # reactive containing the INPUTs with multiple values selected
-  plot_dimensions <- reactive({
+  count_plot_dimensions <- reactive({
     plot_dimension_vector = c()
     
     if (length(input$INPUT_antiviral_cost_scenario)>1)       {plot_dimension_vector = c(plot_dimension_vector,"antiviral_cost_scenario")}
@@ -277,37 +277,37 @@ server <- function(input, output, session) {
     plot_dimension_vector
   }) 
   
-  # function to configure aesthetic of ggplot() by plot_dimensions() reactive
-  apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
+  # function to configure aesthetic of ggplot() by count_plot_dimensions() reactive
+  apply_plot_dimensions <- function(df,aes_x,aes_y,count_plot_dimensions){
     
     if (length(input$INPUT_perspective)>1){ this_point_size = 1  
     } else{ this_point_size = 1.5}
     
-    if (length(plot_dimensions)==2 & is.null(input$INPUT_switch_shape_and_colour) == FALSE){
+    if (length(count_plot_dimensions)==2 & is.null(input$INPUT_switch_shape_and_colour) == FALSE){
       if (input$INPUT_switch_shape_and_colour){
-        plot_dimensions <- isolate(rev(plot_dimensions))
+        count_plot_dimensions <- isolate(rev(count_plot_dimensions))
       }
     }
     
-    if (length(plot_dimensions) == 0){
+    if (length(count_plot_dimensions) == 0){
       this_plot = ggplot(df) +
         geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]),size = this_point_size)
-    } else if (length(plot_dimensions) == 1){
+    } else if (length(count_plot_dimensions) == 1){
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]])),size = this_point_size) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1])))
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]])),size = this_point_size) +
+        labs(color = paste(gsub("_"," ", count_plot_dimensions[1])))
       
-    } else if (length(plot_dimensions) == 2){
+    } else if (length(count_plot_dimensions) == 2){
       if (aes_x == "WTP"){
         this_plot = ggplot(df) +
-          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
-          labs(color = paste(gsub("_"," ", plot_dimensions[1]))) +
-          facet_grid(.data[[plot_dimensions[2]]]~.)
+          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]))) +
+          labs(color = paste(gsub("_"," ", count_plot_dimensions[1]))) +
+          facet_grid(.data[[count_plot_dimensions[2]]]~.)
       } else{
         this_plot = ggplot(df) +
-          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]]))) +
-          labs(color = paste(gsub("_"," ", plot_dimensions[1])),
-               shape = paste(gsub("_"," ", plot_dimensions[2])))
+          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]),shape = as.factor(.data[[count_plot_dimensions[2]]]))) +
+          labs(color = paste(gsub("_"," ", count_plot_dimensions[1])),
+               shape = paste(gsub("_"," ", count_plot_dimensions[2])))
       }
     }
     
@@ -315,14 +315,14 @@ server <- function(input, output, session) {
       this_plot = this_plot + 
         facet_grid(perspective ~.) 
     }
-    if (length(plot_dimensions) != 0){
-      if (plot_dimensions[1] == "booster_vax_scenario"){
+    if (length(count_plot_dimensions) != 0){
+      if (count_plot_dimensions[1] == "booster_vax_scenario"){
         this_plot <- this_plot +
           scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
-      } else if (plot_dimensions[1] == "antiviral_cost_scenario"){
+      } else if (count_plot_dimensions[1] == "antiviral_cost_scenario"){
         this_plot <- this_plot +
           scale_color_manual(values = wesanderson::wes_palette( name="FantasticFox1"))
-      } else if (plot_dimensions[1] == "antiviral_target_group"){
+      } else if (count_plot_dimensions[1] == "antiviral_target_group"){
         this_plot <- this_plot +
           scale_colour_manual(values = 
                                 c("all adults" = "#619CFF", 
@@ -336,7 +336,7 @@ server <- function(input, output, session) {
   
   # widget to switch variables controlling shape & colour
   output$switch_shape_and_colour <- renderUI({
-    if(length(plot_dimensions()) == 2){
+    if(length(count_plot_dimensions()) == 2){
       materialSwitch(inputId = "INPUT_switch_shape_and_colour",
                      label = "Switch shape/facet & colour",
                      value = FALSE)
@@ -401,17 +401,17 @@ server <- function(input, output, session) {
   
   ### dataInputs ###############################################################
   dataInput_IncrementalPlane <- reactive({
-    subset_data_to_widgets(CommandDeck_result_long)%>%
+    subset_data_to_selected(CommandDeck_result_long)%>%
       filter(outcome %in% input$INPUT_include_outcomes)
   }) 
   
   dataInput_WTPcurve <- reactive({
-    subset_data_to_widgets(CEAC_dataframe)%>%
+    subset_data_to_selected(CEAC_dataframe)%>%
       filter(outcome %in% input$INPUT_include_outcomes)
   })
 
   dataInput_ICER_table <- reactive({
-    this_ICER_table = subset_data_to_widgets(ICER_table) %>%
+    this_ICER_table = subset_data_to_selected(ICER_table) %>%
       filter(outcome %in% c("netCost",input$INPUT_include_outcomes)) %>%
       rename(incremental_cost = net_cost) %>%
       select(setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_target_group,count_outcome_averted,incremental_cost,ICER,LPI_ICER,UPI_ICER) 
@@ -451,7 +451,7 @@ server <- function(input, output, session) {
     
     call_waiter("OUTPUT_incremental_plane")
     
-    validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
+    validate(need(length(count_plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_IncrementalPlane()
     
     if (nrow(to_plot)>1){
@@ -462,7 +462,7 @@ server <- function(input, output, session) {
         plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = workshop,
                                                                   aes_x="netCost",
                                                                   aes_y="count_outcomes",
-                                                                  plot_dimensions = plot_dimensions())  +
+                                                                  count_plot_dimensions = count_plot_dimensions())  +
           ylab(paste(input$INPUT_include_outcomes,"averted")) +
           xlab("incremental cost (2022 USD)") +
           xlim(min(min(workshop$netCost),0), 
@@ -493,7 +493,7 @@ server <- function(input, output, session) {
     
     call_waiter("OUTPUT_WTP_curve")
      
-    validate(need(length(plot_dimensions())<=2, too_many_dimensions_text))
+    validate(need(length(count_plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_WTPcurve()
     if(input$INPUT_fix_xaxis == TRUE){
       to_plot_xmin = min(to_plot$WTP)
@@ -514,8 +514,8 @@ server <- function(input, output, session) {
           plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
                                                                     aes_x="WTP",
                                                                     aes_y="probability",
-                                                                    plot_dimensions = plot_dimensions())  +
-            xlab(paste("Willingness to pay ($/",input$INPUT_include_outcomes,")",sep="")) +
+                                                                    count_plot_dimensions = count_plot_dimensions())  +
+            xlab(paste0("Willingness to pay ($/",input$INPUT_include_outcomes,")")) +
             ylab("Probability cost-effective") +
             theme_bw() +
             theme(legend.position = "bottom") +
@@ -552,7 +552,7 @@ server <- function(input, output, session) {
     
     call_waiter("OUTPUT_tornado_plot")
     
-    #validate(need(length(plot_dimensions())<1, "Please select only one booster strategy and one antiviral strategy"))
+    #validate(need(length(count_plot_dimensions())<1, "Please select only one booster strategy and one antiviral strategy"))
     to_plot <- dataInput_TornadoPlot() %>%  ungroup() 
     isolate_base_value <- to_plot[to_plot$direction == "lower" &  to_plot$label == "Long COVID (off/on)", ]
     to_plot <- to_plot %>% filter(label %in% input$INPUT_parameters)

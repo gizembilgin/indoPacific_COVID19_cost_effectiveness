@@ -86,7 +86,7 @@ estimate_healthcare_costs_averted <- function(
   
   
   ### PART TWO: calculating healthcare costs ###################################
-  load(file = "2_inputs/hosp_adm.Rdata")
+  load(file = "02_inputs/hosp_adm.Rdata")
   
   ##inputs
   hosp_adm = hosp_adm %>%

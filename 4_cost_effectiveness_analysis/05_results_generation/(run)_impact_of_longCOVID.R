@@ -2,13 +2,11 @@
 
 
 queue = list(
-  list(wastage_rate_antiviralSchedule = 0.0),
-  list(wastage_rate_antiviralSchedule = 0.2),
-  list(wastage_rate_antiviralSchedule = 0.4),
-  list(wastage_rate_antiviralSchedule = 0.6)
+  list(TOGGLE_longCOVID = "off"),
+  list(TOGGLE_longCOVID = "on")
 )
 
-antiviral_wastage_results = data.frame()
+long_COVID_results = data.frame()
 CommandDeck_CONTROLS = list()
 
 for (ticket in 1:length(queue)){
@@ -19,7 +17,6 @@ for (ticket in 1:length(queue)){
                                   LIST_perspectives = c("healthcare","societal"),
                                   LIST_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost", "high_income_cost"),
                                   LIST_discounting_rate = 0.03,
-                                  TOGGLE_longCOVID = "off",
                                   
                                   LIST_booster_vax_scenarios = list(
                                     "all willing adults vaccinated with a primary schedule and high risk group recieve a booster: assume booster to all adults who have previously recieved a primary schedule"
@@ -36,37 +33,19 @@ for (ticket in 1:length(queue)){
                                   DECISION_sampling_strategy = "single_run"
                                 )
   )
-
-  source(paste(getwd(),"/CommandDeck.R",sep=""))
   
-  rows = CommandDeck_result_long %>% #CEAC_dataframe
-    filter(evaluation_level == "incremental" &
-             cost_per_outcome_averted != -Inf &
-             cost_per_outcome_averted != Inf) %>%
-    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group) %>%
-    arrange(cost_per_outcome_averted) %>%
-    mutate(row_number = row_number(),
-           probability = row_number/TOGGLE_numberOfRuns) %>%
-    rename(WTP = cost_per_outcome_averted) %>%
-    select(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP) %>%
-    mutate(probability = round(probability,digits=2)) %>%
-    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
-    summarise(WTP = mean(WTP),
-              .groups = "keep") %>%
-    ungroup()
-    
-  rows = rows %>%
-    mutate(antiviral_wastage_rate = CommandDeck_CONTROLS$wastage_rate_antiviralSchedule) 
+  source(paste0(getwd(),"/CommandDeck.R"))
   
-  antiviral_wastage_results = rbind(antiviral_wastage_results,rows)
+  rows = CommandDeck_result_long  %>%
+    mutate(long_COVID = CommandDeck_CONTROLS$TOGGLE_longCOVID) 
+  
+  long_COVID_results = rbind(long_COVID_results,rows)
   
 }
 
 CommandDeck_CONTROLS = list()
 
-
-
-antiviral_wastage_results = antiviral_wastage_results %>%
+long_COVID_results = long_COVID_results %>%
   mutate(
     setting = case_when(
       setting == "FJI" ~ "Fiji",
@@ -95,15 +74,15 @@ antiviral_wastage_results = antiviral_wastage_results %>%
     perspective = paste(perspective," perspective",sep = ""),
     
     antiviral_cost_scenario = 
-           case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
-                     antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
-                     antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"),
+      case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
+                antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
+                antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"),
     
     discounting_rate = discounting_rate *100
-    )
+  )
 
-antiviral_wastage_results$antiviral_cost_scenario <- factor(antiviral_wastage_results$antiviral_cost_scenario, levels = rev(c("low generic reference price ($25 USD per schedule)",
-                                                                                                                          "middle-income reference price ($250 USD per schedule)",
-                                                                                                                          "high-income reference price ($530 USD per schedule)")))
-save(antiviral_wastage_results,file = "Rshiny/x_results/antiviral_wastage_results.Rdata")
+long_COVID_results$antiviral_cost_scenario <- factor(long_COVID_results$antiviral_cost_scenario, levels = rev(c("low generic reference price ($25 USD per schedule)",
+                                                                                                                              "middle-income reference price ($250 USD per schedule)",
+                                                                                                                              "high-income reference price ($530 USD per schedule)")))
+save(long_COVID_results,file = "07_shiny/x_results/long_COVID_results.Rdata")
 #_______________________________________________________________________________

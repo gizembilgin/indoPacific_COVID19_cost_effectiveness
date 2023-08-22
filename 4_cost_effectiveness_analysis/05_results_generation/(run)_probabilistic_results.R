@@ -21,7 +21,7 @@ CommandDeck_CONTROLS =
     DECISION_sampling_strategy = "single_run"
   )
 
-source(paste(getwd(),"/CommandDeck.R",sep=""))
+source(paste0(getwd(),"/CommandDeck.R"))
 CommandDeck_CONTROLS = list()
 ################################################################################
 
@@ -174,8 +174,8 @@ if (DECISION_include_net == "N"){
   save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/incremental_complete_CEA_result",time_of_result,".Rdata"))
   
   #breakdown into chunks that CAN live in the GitHub repositry
-  save(ICER_table              ,file = paste0("Rshiny/x_results/ICER_table",time_of_result,".Rdata"))
-  save(CommandDeck_result      ,file = paste0("Rshiny/x_results/CommandDeck_result",time_of_result,".Rdata"))
+  save(ICER_table              ,file = paste0("07_shiny/x_results/ICER_table",time_of_result,".Rdata"))
+  save(CommandDeck_result      ,file = paste0("07_shiny/x_results/CommandDeck_result",time_of_result,".Rdata"))
   
   #>100 MB
   CEAC_dataframe = CEAC_dataframe %>%
@@ -185,7 +185,7 @@ if (DECISION_include_net == "N"){
               .groups = "keep") %>%
     ungroup() %>%
     filter(!(antiviral_type == "molunipiravir" & outcome == "hosp"))
-  save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_",time_of_result,".Rdata"))
+  save(CEAC_dataframe,file = paste0("07_shiny/x_results/CEAC_dataframe_",time_of_result,".Rdata"))
   
   # object.size(CEAC_dataframe)  # 1184081984 bytes
   CEAC_dataframe = CEAC_dataframe[CEAC_dataframe$outcome == "QALYs",] %>%
@@ -197,12 +197,12 @@ if (DECISION_include_net == "N"){
               .groups = "keep") %>%
     ungroup()
   #2.5% of size of CEAC_dataframe -> 60 megabytes
-  save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
+  save(CEAC_dataframe,file = paste0("07_shiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
   
   CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
   CommandDeck_result_long_part2 = CommandDeck_result_long %>% filter(!(setting %in% c("Indonesia","Fiji")))
-  save(CommandDeck_result_long_part1,file = paste0("Rshiny/x_results/CommandDeck_result_long_1_",time_of_result,".Rdata"))
-  save(CommandDeck_result_long_part2,file = paste0("Rshiny/x_results/CommandDeck_result_long_2_",time_of_result,".Rdata"))
+  save(CommandDeck_result_long_part1,file = paste0("07_shiny/x_results/CommandDeck_result_long_1_",time_of_result,".Rdata"))
+  save(CommandDeck_result_long_part2,file = paste0("07_shiny/x_results/CommandDeck_result_long_2_",time_of_result,".Rdata"))
 
   
   #object.size(CommandDeck_result_long) # 1852500856 bytes
@@ -211,7 +211,7 @@ if (DECISION_include_net == "N"){
                       replace = FALSE)
   CommandDeck_result_long = CommandDeck_result_long %>%
     filter(run_ID %in% sampled_df)
-  save(CommandDeck_result_long,file = paste0("Rshiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
+  save(CommandDeck_result_long,file = paste0("07_shiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
   #5% of size of CommandDeck_result_long -> 185 megabytes
   
 } else{
@@ -223,7 +223,7 @@ if (DECISION_include_net == "N"){
 
 
 ###Load latest results for troubleshooting
-# rootpath = paste0(getwd(), "/Rshiny", "")
+# rootpath = paste0(getwd(), "/07_shiny", "")
 # list_poss_Rdata = list.files(path = paste0(rootpath, "/x_results/"),
 #                              pattern = "ICER_table*")
 # list_poss_Rdata_details = double()

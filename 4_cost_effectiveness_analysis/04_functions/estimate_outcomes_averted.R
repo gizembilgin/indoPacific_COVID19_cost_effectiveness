@@ -13,7 +13,7 @@ estimate_outcomes_averted <- function(
     ){
 
   ### PART ONE: loading QALY estimates############################################
-  load(file = "2_inputs/QALY_estimates.Rdata")
+  load(file = "02_inputs/QALY_estimates.Rdata")
   QALY_estimates = QALY_estimates %>%
     filter(setting %in% LIST_CEA_settings &
              (discounting_rate %in% list_discounting_rate | is.na(discounting_rate)))

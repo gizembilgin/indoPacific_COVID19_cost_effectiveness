@@ -17,7 +17,7 @@ INPUT_include_GDP = TRUE
 
 
 if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
-  #load(file = "Rshiny/x_results/CEAC_dataframe_2023-07-30 11-16-57.Rdata")
+  #load(file = "07_shiny/x_results/CEAC_dataframe_2023-07-30 11-16-57.Rdata")
   
   if (INPUT_plot_name == "static_plot"){
     this_pattern = "CEAC_dataframe_20*"
@@ -25,26 +25,26 @@ if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
     this_pattern = "CEAC_dataframe_reduced_*"
   }
   
-  list_poss_Rdata = list.files(path = "Rshiny/x_results/",pattern = this_pattern)
+  list_poss_Rdata = list.files(path = "07_shiny/x_results/",pattern = this_pattern)
   if (length(list_poss_Rdata) > 0) {
     list_poss_Rdata_details = double()
     for (j in 1:length(list_poss_Rdata)) {
       list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste("Rshiny/x_results/", list_poss_Rdata[[j]], sep = ''))$mtime)
+                                      file.info(paste0("07_shiny/x_results/", list_poss_Rdata[[j]]))$mtime)
     }
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-    load(file = paste("Rshiny/x_results/", latest_file, sep = ''))
+    load(file = paste0("07_shiny/x_results/", latest_file))
   } else{
     stop(paste("Can't find results",this_setting))
   }
 } else if (INPUT_plot_name == "antiviral_wastage_rate"){
-  load(file = "Rshiny/x_results/antiviral_wastage_results.Rdata")
+  load(file = "07_shiny/x_results/antiviral_wastage_results.Rdata")
   CEAC_dataframe = antiviral_wastage_results
 }
 
 
 ### load functions
-subset_data_to_widgets <- function(df){
+subset_data_to_selected <- function(df){
   df %>%
     filter(
       setting %in% INPUT_include_setting &
@@ -62,40 +62,40 @@ consolidate_plot_list <- function(plot_list){
   if(length(plot_list) > 2) {row_num = 2; col_num = 2}
   plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
 }
-apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
+apply_plot_dimensions <- function(df,aes_x,aes_y,count_plot_dimensions){
   
-  if (length(plot_dimensions) == 0){
+  if (length(count_plot_dimensions) == 0){
     this_plot = ggplot(df) +
       geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]))
-  } else if (length(plot_dimensions) == 1){
+  } else if (length(count_plot_dimensions) == 1){
     if("antiviral_wastage_rate" %in% colnames(df)){
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1]))) +
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]))) +
+        labs(color = paste(gsub("_"," ", count_plot_dimensions[1]))) +
         facet_grid(paste0(antiviral_wastage_rate*100,"%")~.)
     } else{
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1])))
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]))) +
+        labs(color = paste(gsub("_"," ", count_plot_dimensions[1])))
     }
     
-  } else if (length(plot_dimensions) == 2){
-    if (aes_x == "WTP" & plot_dimensions[2] == "booster_vax_scenario"){
+  } else if (length(count_plot_dimensions) == 2){
+    if (aes_x == "WTP" & count_plot_dimensions[2] == "booster_vax_scenario"){
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1]))) +
-        facet_grid(.data[[plot_dimensions[2]]]~.)
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]))) +
+        labs(color = paste(gsub("_"," ", count_plot_dimensions[1]))) +
+        facet_grid(.data[[count_plot_dimensions[2]]]~.)
     } else{
       this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]]))) +
-        labs(color = paste(gsub("_"," ", plot_dimensions[1])),
-             shape = paste(gsub("_"," ", plot_dimensions[2])))
+        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]),shape = as.factor(.data[[count_plot_dimensions[2]]]))) +
+        labs(color = paste(gsub("_"," ", count_plot_dimensions[1])),
+             shape = paste(gsub("_"," ", count_plot_dimensions[2])))
     }
   }
   
   return(this_plot)
 }
-plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario){
+count_plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario){
   plot_dimension_vector = c()
   
   if (length(INPUT_antiviral_cost_scenario)>1)       {plot_dimension_vector = c(plot_dimension_vector,"antiviral_cost_scenario")}
@@ -108,7 +108,7 @@ plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discounting_rate
 
 
 ### Create plots
-to_plot = subset_data_to_widgets(CEAC_dataframe)%>%
+to_plot = subset_data_to_selected(CEAC_dataframe)%>%
   filter(outcome %in% INPUT_include_outcomes) 
 
 if(INPUT_fix_xaxis == TRUE){
@@ -130,8 +130,8 @@ if (nrow(to_plot) > 1) {
     plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
                                                               aes_x="WTP",
                                                               aes_y="probability",
-                                                              plot_dimensions = plot_dimensions(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario))  +
-      xlab(paste("Willingness to pay ($/",INPUT_include_outcomes,")",sep="")) +
+                                                              count_plot_dimensions = count_plot_dimensions(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario))  +
+      xlab(paste0("Willingness to pay ($/",INPUT_include_outcomes,")")) +
       ylab("Probability cost-effective") +
       theme_bw() +
       theme(legend.position = "bottom") +

@@ -5,7 +5,7 @@
 
 ### LOADING ####################################################################
 require(beepr); require(parallel); require(foreach); require(ids); require(readr); require(ggplot2); require(tidyverse); 
-source(paste(getwd(),"/(function)_CEA_worker.R",sep=""),local=TRUE)
+source(paste0(getwd(),"/04_functions/CEA_worker.R"),local=TRUE)
 ################################################################################
 
 
@@ -236,7 +236,7 @@ if(TOGGLE_numberOfRuns == 1){
         UPI = mean + qt(.975,df=(TOGGLE_numberOfRuns-1))*sd*sqrt(1+(1/TOGGLE_numberOfRuns))
       ) %>%
       mutate(variable_type = "ICER",
-             variable = paste("cost_per_",outcome,"_averted",sep="")) %>%
+             variable = paste0("cost_per_",outcome,"_averted")) %>%
       select(evaluation_level,perspective,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,variable_type,variable,mean,sd,LPI,UPI)
     
     CommandDeck_result = CommandDeck_result %>%

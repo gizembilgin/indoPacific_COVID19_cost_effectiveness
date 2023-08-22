@@ -30,7 +30,7 @@ INPUT_parameters = c(
 INPUT_include_GDP = "Y"
 
 
-load(file = "Rshiny/x_results/tornado_result.Rdata")
+load(file = "07_shiny/x_results/tornado_result.Rdata")
 tornado_variable_of_interest = paste("cost_per_",
                                      gsub("QALYs","QALY",INPUT_include_outcomes),
                                      "_averted",

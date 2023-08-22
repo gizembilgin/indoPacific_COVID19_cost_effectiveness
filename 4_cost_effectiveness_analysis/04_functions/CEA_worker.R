@@ -16,13 +16,13 @@ CEA_worker <- function(
 ){
   
   ### LOAD
-  source(paste(getwd(),"/(function)_sample_compartmentalModel_run.R",sep=""),local=TRUE)
-  source(paste(getwd(),"/(function)_outcomesAverted_estimator.R",sep=""),local=TRUE)
-  source(paste(getwd(),"/(function)_interventionCost_estimator.R",sep=""),local=TRUE)
-  source(paste(getwd(),"/(function)_healthCareCostsAverted_estimator.R",sep=""),local=TRUE)
-  source(paste(getwd(),"/(function)_productivityCosts_estimator.R",sep=""),local=TRUE)
-  source(paste(getwd(),"/(function)_simulationSummary.R",sep=""),local=TRUE)
-  load(file = "2_inputs/fitted_distributions.Rdata")
+  source(paste0(getwd(),"/04_functions/sample_transmission_model_runs.R"),local=TRUE)
+  source(paste0(getwd(),"/04_functions/estimate_outcomes_averted.R"),local=TRUE)
+  source(paste0(getwd(),"/04_functions/estimate_intervention_costs.R"),local=TRUE)
+  source(paste0(getwd(),"/04_functions/estimate_healthcare_costs_averted.R"),local=TRUE)
+  source(paste0(getwd(),"/04_functions/estimate_productivity_losses_averted.R"),local=TRUE)
+  source(paste0(getwd(),"/04_functions/summarise_this_CEA_run.R"),local=TRUE)
+  load(file = "02_inputs/fitted_distributions.Rdata")
   local_fitted_distributions = fitted_distributions; rm(fitted_distributions)
   
   this_risk_group = CEA_risk_group
@@ -64,7 +64,7 @@ CEA_worker <- function(
     # 7.82 seconds for all combinations, 0.39 for one booster + one antiviral
     
     if ("societal" %in% LIST_perspectives){
-      productivityCosts <- productivityCosts_estimator (
+      productivityCosts <- estimate_productivity_losses_averted (
         LIST_CEA_settings_mod,
         MASTER_antiviral_simulations,
         TORNADO_PLOT_OVERRIDE,
@@ -77,7 +77,7 @@ CEA_worker <- function(
     rm(MASTER_antiviral_simulations)
     
     ###(3/3) CEA per setting
-    this_result <- simulationSummary(DECISION_include_net,
+    this_result <- summarise_this_CEA_run(DECISION_include_net,
                                      outcomesAvertedEstimation$outcomes_averted,
                                      interventionCost_estimates,
                                      healthcareCostEstimation$healthcareCosts_averted,

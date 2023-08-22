@@ -30,32 +30,32 @@ if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
     this_pattern = "CommandDeck_result_long_reduced_*"
   }
   
-  list_poss_Rdata = list.files(path = "Rshiny/x_results/",pattern = this_pattern)
+  list_poss_Rdata = list.files(path = "07_shiny/x_results/",pattern = this_pattern)
   if (length(list_poss_Rdata) > 0) {
     list_poss_Rdata_details = double()
     for (j in 1:length(list_poss_Rdata)) {
       list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste("Rshiny/x_results/", list_poss_Rdata[[j]], sep = ''))$mtime)
+                                      file.info(paste0("07_shiny/x_results/", list_poss_Rdata[[j]]))$mtime)
     }
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-    load(file = paste("Rshiny/x_results/", latest_file, sep = ''))
+    load(file = paste0("07_shiny/x_results/", latest_file))
     
     #if part1, also load part2 and join
     if (this_pattern == "CommandDeck_result_long_1_*"){
-      load(file = paste("Rshiny/x_results/", gsub("long_1","long_2",latest_file), sep = ''))
+      load(file = paste0("07_shiny/x_results/", gsub("long_1","long_2",latest_file)))
       CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
     }
   } else{
     stop(paste("Can't find results",this_setting))
   }
 } else if (INPUT_plot_name == "long_COVID"){
-  load(file = "Rshiny/x_results/long_COVID_results.Rdata")
+  load(file = "07_shiny/x_results/long_COVID_results.Rdata")
   CommandDeck_result_long = long_COVID_results
 }
 
 
 ### load functions
-subset_data_to_widgets <- function(df){
+subset_data_to_selected <- function(df){
   df %>%
     filter(
       setting %in% INPUT_include_setting &
@@ -73,25 +73,25 @@ consolidate_plot_list <- function(plot_list){
   if(length(plot_list) > 2) {row_num = 2; col_num = 2}
   plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
 }
-apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
+apply_plot_dimensions <- function(df,aes_x,aes_y,count_plot_dimensions){
   
-  if (length(plot_dimensions) == 0){
+  if (length(count_plot_dimensions) == 0){
     this_plot = ggplot(df) +
       geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]))
-  } else if (length(plot_dimensions) == 1){
+  } else if (length(count_plot_dimensions) == 1){
     
     if(INPUT_plot_name == "long_COVID"){
       df = df %>%
-        mutate("{plot_dimensions[1]}" := paste0(.data[[plot_dimensions[1]]]," (long COVID ",long_COVID,")"))
+        mutate("{count_plot_dimensions[1]}" := paste0(.data[[count_plot_dimensions[1]]]," (long COVID ",long_COVID,")"))
     }
     this_plot = ggplot(df) +
-      geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]))) +
-      labs(color = paste(gsub("_"," ", plot_dimensions[1])))
-  } else if (length(plot_dimensions) == 2){
+      geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]))) +
+      labs(color = paste(gsub("_"," ", count_plot_dimensions[1])))
+  } else if (length(count_plot_dimensions) == 2){
     this_plot = ggplot(df) +
-      geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[plot_dimensions[1]]]),shape = as.factor(.data[[plot_dimensions[2]]]))) +
-      labs(color = paste(gsub("_"," ", plot_dimensions[1])),
-           shape = paste(gsub("_"," ", plot_dimensions[2])))
+      geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]),shape = as.factor(.data[[count_plot_dimensions[2]]]))) +
+      labs(color = paste(gsub("_"," ", count_plot_dimensions[1])),
+           shape = paste(gsub("_"," ", count_plot_dimensions[2])))
   }
   if (length(INPUT_perspective)>1){
     this_plot = this_plot + 
@@ -100,7 +100,7 @@ apply_plot_dimensions <- function(df,aes_x,aes_y,plot_dimensions){
   
   return(this_plot)
 }
-plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario){
+count_plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario){
   plot_dimension_vector = c()
   
   #if(INPUT_plot_name == "long_COVID"){plot_dimension_vector = c(plot_dimension_vector,"long_COVID")}
@@ -113,7 +113,7 @@ plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discounting_rate
 }
 
 ### Subset results
-to_plot =  subset_data_to_widgets(CommandDeck_result_long)%>%
+to_plot =  subset_data_to_selected(CommandDeck_result_long)%>%
   filter(outcome %in% INPUT_include_outcomes)
 
 
@@ -124,7 +124,7 @@ for (this_setting in INPUT_include_setting){
   plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = workshop,
                                                             aes_x="netCost",
                                                             aes_y="count_outcomes",
-                                                            plot_dimensions = plot_dimensions(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario))  +
+                                                            count_plot_dimensions = count_plot_dimensions(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario))  +
     ylab(paste(INPUT_include_outcomes,"averted")) +
     xlab("incremental cost (2022 USD)") +
     xlim(min(min(workshop$netCost),0), 

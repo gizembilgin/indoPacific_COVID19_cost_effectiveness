@@ -23,7 +23,7 @@ for (this_DECISION_include_net in c("Y")){
           DECISION_include_net = this_DECISION_include_net
         )
       
-      source(paste(getwd(),"/CommandDeck.R",sep=""))
+      source(paste0(getwd(),"/CommandDeck.R"))
       
       time.end=proc.time()[[3]]
       time_this_run = time.end-time.start
