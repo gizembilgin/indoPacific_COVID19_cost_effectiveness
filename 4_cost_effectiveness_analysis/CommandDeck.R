@@ -88,7 +88,7 @@ doParallel::registerDoParallel(CLUSTER) # activate cluster
 system.time({
   CommandDeck_result_long <- foreach::foreach(
     model_run_number = c(1:TOGGLE_clusterNumber),
-    .packages = c('tidyverse','ids'),
+    .packages = c("tidyverse","ids"),
     .combine = rbind,
     .inorder = FALSE
   )  %dopar% {

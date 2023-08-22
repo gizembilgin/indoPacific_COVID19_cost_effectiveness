@@ -24,7 +24,7 @@ raw <- read.csv("02_inputs/age_severity_specific_QALYs.csv",header=TRUE)
 
 #Step Three: calculate QALYs per model age group weighted by pop dn
 QALYs_nonFatal = raw %>%
-  left_join(pop_orig, by = c('age'), relationship = "many-to-many") %>%
+  left_join(pop_orig, by = c("age"), relationship = "many-to-many") %>%
   select(severity,ISO3_code,age,QALYs,population) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
   group_by(ISO3_code,severity,age_group) %>%
@@ -114,7 +114,7 @@ ggplot(workshop[workshop$discounting_rate %in% c(0,0.03,0.05),]) +
 
 #Step Three: calculate YLL per model age group weighted by pop dn
 QALYs_fatal = workshop %>%
-  left_join(pop_orig, by = c('age','ISO3_code')) %>%
+  left_join(pop_orig, by = c("age","ISO3_code")) %>%
   select(ISO3_code,discounting_rate,age,QALY,population) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
   group_by(ISO3_code,discounting_rate,age_group) %>%

@@ -42,7 +42,7 @@ for (this_DECISION_include_net in c("Y")){
       temp_name = ''
       time = Sys.time()
       time = gsub(':','-',time)
-      time = paste(temp_name,time,sep='')
+      time = paste0(temp_name,time)
       write.csv(timing_df, file = paste("x_results/",time,"timing_df.csv"))
     }
   }

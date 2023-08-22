@@ -182,7 +182,7 @@ ui <- fluidPage(
 ##### SERVER DEFINITION ########################################################
 server <- function(input, output, session) {
   
-  is_local <- Sys.getenv('SHINY_PORT') == "" #boolean of whether this shiny is being hosted locally or on posit.co
+  is_local <- Sys.getenv("SHINY_PORT") == "" #boolean of whether this shiny is being hosted locally or on posit.co
   
   # output$test <- renderText({
   #   paste0("is_local = ",is_local)
@@ -210,7 +210,7 @@ server <- function(input, output, session) {
     list_poss_Rdata_details = double()
     for (j in 1:length(list_poss_Rdata)) {
       list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste0('x_results/', list_poss_Rdata[[j]]))$mtime)
+                                      file.info(paste0("x_results/", list_poss_Rdata[[j]]))$mtime)
     }
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
     load(file = paste0("x_results/",latest_file)) #loading ICER table
@@ -345,7 +345,7 @@ server <- function(input, output, session) {
   
   #widget for booster and oral antiviral eligibility strategies
   output$booster_strategy <- renderUI({
-    if(input$INPUT_select_sentitivity_analysis == 'probab'){
+    if(input$INPUT_select_sentitivity_analysis == "probab"){
       checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
                          choices = CHOICES$booster_vax_scenario,
                          selected = c( "all adults","high risk adults", "no booster")) 
@@ -356,7 +356,7 @@ server <- function(input, output, session) {
     }
   })
   output$antiviral_strategy <- renderUI({
-    if(input$INPUT_select_sentitivity_analysis == 'probab'){
+    if(input$INPUT_select_sentitivity_analysis == "probab"){
        checkboxGroupInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
                          choices = CHOICES$antiviral_target_group,
                          selected = "adults with comorbidities") 
@@ -369,7 +369,7 @@ server <- function(input, output, session) {
   
   #widget for GDP line
   output$GDP_line_toggle <- renderUI({
-    if(input$INPUT_select_sentitivity_analysis == 'probab'){
+    if(input$INPUT_select_sentitivity_analysis == "probab"){
       checkboxInput("INPUT_include_GDP","Include GDP per capita as a dashed line",value = TRUE)
     } else{
       radioGroupButtons("INPUT_include_GDP","Include GDP per capita as a line?",
@@ -528,7 +528,7 @@ server <- function(input, output, session) {
           }
           if (input$INPUT_include_GDP == TRUE){
             plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
-              geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype='dashed') #+
+              geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype="dashed") #+
               #annotate("text", y = 0.25, x = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
             #very difficult NOT to get text to overlap something with range of WTP
           }
@@ -606,7 +606,7 @@ server <- function(input, output, session) {
             geom_hline(yintercept = base.value) +
             theme_bw() + 
             #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-            theme(axis.title.y=element_blank(), legend.position = 'bottom',
+            theme(axis.title.y=element_blank(), legend.position = "bottom",
                   legend.title = element_blank())  +
             ylab(paste("Cost per",gsub("QALYs","QALY",input$INPUT_include_outcomes),"averted (2022 USD)")) +
             scale_x_continuous(breaks = c(1:length(order_parameters)), 
@@ -617,8 +617,8 @@ server <- function(input, output, session) {
           
           if (input$INPUT_include_GDP == "Yes"){
             plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
-              #geom_hline(aes(yintercept = this_setting_GDP, color = 'GDP per capita'),linetype='dashed') +
-              geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
+              #geom_hline(aes(yintercept = this_setting_GDP, color = "GDP per capita"),linetype="dashed") +
+              geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype="dashed") +
               annotate("text", x = 4, y = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
             
           } else{
@@ -664,18 +664,18 @@ server <- function(input, output, session) {
       temp_name = ''
       time = Sys.time()
       time = gsub(':','-',time)
-      time = paste(temp_name,time,sep='')
+      time = paste0(temp_name,time)
       
-      if (input$INPUT_select_sentitivity_analysis == 'det') { paste(time, "tornado_plot.pdf")
-      } else if (input$tabset == 'ICER table') {              paste0(time, " ", input$tabset, ".csv")
+      if (input$INPUT_select_sentitivity_analysis == "det") { paste(time, "tornado_plot.pdf")
+      } else if (input$tabset == "ICER table") {              paste0(time, " ", input$tabset, ".csv")
       } else {                                                paste0(time, " ", input$tabset, ".pdf")}
     },
     
     content = function(result) {
-      if (input$INPUT_select_sentitivity_analysis == 'det'){ configure_downloaded_figure(result,PLOT_tornado_plot())
-      } else if (input$tabset == 'Incremental plane'){       configure_downloaded_figure(result,PLOT_incremental_plane())
-      } else if (input$tabset == 'Willingness to pay curve'){configure_downloaded_figure(result,PLOT_WTP_curve())
-      } else if (input$tabset == 'ICER table'){              write.csv(dataInput_ICER_table(), result)}
+      if (input$INPUT_select_sentitivity_analysis == "det"){ configure_downloaded_figure(result,PLOT_tornado_plot())
+      } else if (input$tabset == "Incremental plane"){       configure_downloaded_figure(result,PLOT_incremental_plane())
+      } else if (input$tabset == "Willingness to pay curve"){configure_downloaded_figure(result,PLOT_WTP_curve())
+      } else if (input$tabset == "ICER table"){              write.csv(dataInput_ICER_table(), result)}
     }
   )
   #_____________________________________________________________________________

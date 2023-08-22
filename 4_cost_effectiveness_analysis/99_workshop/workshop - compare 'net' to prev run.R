@@ -10,21 +10,20 @@ for (i in 1:length(LIST_CEA_settings)){
   if (this_setting == "PNG"){this_setting = "PNG_low_beta"}
   
   list_poss_Rdata = list.files(
-    path = paste(rootpath, "x_results/", sep = ''),
-    pattern = paste("AntiviralRun_", this_setting, "_", this_risk_group, "*", sep ="")
+    path = paste0(rootpath, "x_results/"),
+    pattern = paste0("AntiviralRun_", this_setting, "_", this_risk_group, "*")
   )
   if (length(list_poss_Rdata) > 0) {
     list_poss_Rdata_details = double()
     for (j in 1:length(list_poss_Rdata)) {
-      list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste(rootpath, 'x_results/', list_poss_Rdata[[j]], sep = ''))$mtime)
+      list_poss_Rdata_details = rbind(list_poss_Rdata_details,file.info(paste0(rootpath, "x_results/", list_poss_Rdata[[j]]))$mtime)
     }
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-    load(file = paste(rootpath, "x_results/", latest_file, sep = ''))
+    load(file = paste0(rootpath, "x_results/", latest_file))
     latest_file = RECORD_antiviral_model_simulations 
     
     prev_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)-1]]
-    load(file = paste(rootpath, "x_results/", prev_file, sep = ''))
+    load(file = paste0(rootpath, "x_results/", prev_file))
     prev_file = RECORD_antiviral_model_simulations
     
   } 

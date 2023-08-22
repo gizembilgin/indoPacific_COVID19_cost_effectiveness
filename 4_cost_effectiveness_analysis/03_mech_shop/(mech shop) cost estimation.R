@@ -21,9 +21,9 @@ raw <- read.csv(paste0("02_inputs/",latest_file),header=TRUE)
 workshop_WB = raw %>%
   pivot_longer(
     cols = 5:ncol(raw) ,
-    names_to = 'year',
+    names_to = "year",
     names_prefix = "X",
-    values_to = 'value'
+    values_to = "value"
   ) %>%
   mutate(year = as.numeric(substr(year, 1, 4))) %>%
   rename(variable = Series.Name,
@@ -41,9 +41,9 @@ raw <- read.csv("02_inputs/IMF_data.csv",header=TRUE)
 workshop_IMF = raw %>%
   pivot_longer(
     cols = 5:(ncol(raw)-1) ,
-    names_to = 'year',
+    names_to = "year",
     names_prefix = "X",
-    values_to = 'value'
+    values_to = "value"
   ) %>%
   mutate(year = as.numeric(substr(year, 1, 4))) %>%
   select(ISO,Subject.Descriptor,year,value) %>%
@@ -111,7 +111,7 @@ workshop = WHO_CHOICE_raw  %>%
   mutate(value = model_prediction * proportion) %>%
   select(-proportion) %>%
   pivot_wider(names_from = "statistic",
-              values_from = 'value')
+              values_from = "value")
 #_______________________________________________________________________________
 
 
@@ -188,7 +188,7 @@ workshop_NCU = WHO_CHOICE_2010 %>%
 
 #adj to NCU to USD in 2022
 workshop_USD = workshop_NCU %>%
-  left_join(exchange_rates, by = 'ISO3_code') %>%
+  left_join(exchange_rates, by = "ISO3_code") %>%
   mutate(value = value * NCU_to_USD)  %>%
   mutate(currency_short = "USD")%>%
   select(-NCU_to_USD)

@@ -162,7 +162,7 @@ ICER_table = ICER_table %>%
 temp_name = ''
 time_of_result = Sys.time()
 time_of_result = gsub(':','-',time_of_result)
-time_of_result = paste(temp_name,time_of_result,sep='')
+time_of_result = paste0(temp_name,time_of_result)
 
 complete_results = list(CommandDeck_result_long = CommandDeck_result_long,
                         CommandDeck_result = CommandDeck_result,
@@ -229,7 +229,7 @@ if (DECISION_include_net == "N"){
 # list_poss_Rdata_details = double()
 # for (j in 1:length(list_poss_Rdata)) {
 #  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-#                                  file.info(paste0(rootpath,'/x_results/', list_poss_Rdata[[j]]))$mtime)
+#                                  file.info(paste0(rootpath,"/x_results/", list_poss_Rdata[[j]]))$mtime)
 # }
 # latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
 # load(file = paste0(rootpath,"/x_results/",latest_file)) #loading ICER table

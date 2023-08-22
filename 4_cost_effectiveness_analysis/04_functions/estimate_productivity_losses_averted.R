@@ -11,7 +11,7 @@ estimate_productivity_costs <- function(
   
   ### PART ONE: loading productivity loss estimates#############################
   if (length(list_discounting_rate[!list_discounting_rate %in% seq(0,0.1,by = 0.01)])>0){
-    stop(" Can't find productivity losses with this discounting rate. 
+    stop("Can't find productivity losses with this discounting rate. 
          Go back to (mech shop) productivity loss and ensure that productivity losses by this discounting rate are calculated")
   }
   

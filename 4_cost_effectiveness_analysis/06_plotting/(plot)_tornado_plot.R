@@ -95,9 +95,9 @@ for (this_setting in unique(tornado_result$setting)){
     geom_hline(yintercept = base.value) +
     theme_bw() + 
     #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-    theme(axis.title.y=element_blank(), legend.position = 'bottom',
+    theme(axis.title.y=element_blank(), legend.position = "bottom",
           legend.title = element_blank())  +
-    ylab('Cost per QALY averted (2022 USD)') +
+    ylab("Cost per QALY averted (2022 USD)") +
     scale_x_continuous(breaks = c(1:length(order_parameters)), 
                        labels = order_parameters) +
     coord_flip() +
@@ -105,7 +105,7 @@ for (this_setting in unique(tornado_result$setting)){
   
   if (INPUT_include_GDP == "Y"){
     plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
-    geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype='dashed') +
+    geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype="dashed") +
     annotate("text", x = 4, y = this_setting_GDP*0.8, label = "GDP per capita")
   }
 }

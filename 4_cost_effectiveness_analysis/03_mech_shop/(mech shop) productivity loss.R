@@ -3,7 +3,7 @@
 
 discounting_rate_list = seq(0,0.1,by = 0.01)
 age_groups_num = c(0,4,9,17,29,44,59,69,110)
-age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
+age_group_labels = c("0 to 4","5 to 9","10 to 17","18 to 29","30 to 44","45 to 59","60 to 69","70 to 100")
 LIST_CEA_settings = c("PNG","TLS","FJI","IDN")
 
 
@@ -176,7 +176,7 @@ ggplot(workshop) +
 
 # calculate remaining_lifetime_earnings per model age group weighted by pop dn
 remaining_lifetime_earnings = workshop %>%
-  left_join(pop_RAW, by = c('age','setting')) %>%
+  left_join(pop_RAW, by = c("age","setting")) %>%
   select(setting,discounting_rate,age,remaining_lifetime_earnings,PopTotal) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
   group_by(setting,discounting_rate,age_group) %>%
@@ -462,7 +462,7 @@ pop_RAW =  UN_pop_est   %>%
   rename(setting = ISO3_code)
 
 productivity_lost = workshop %>%
-  left_join(pop_RAW, by = c('age','setting')) %>%
+  left_join(pop_RAW, by = c("age","setting")) %>%
   select(setting,age,discounting_rate,patient_type,productivity_lost,PopTotal) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
   group_by(setting,discounting_rate,patient_type,age_group) %>%

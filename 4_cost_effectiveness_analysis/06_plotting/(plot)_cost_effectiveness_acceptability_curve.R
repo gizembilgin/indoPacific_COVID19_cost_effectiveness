@@ -145,7 +145,7 @@ if (nrow(to_plot) > 1) {
     }
     if (INPUT_include_GDP == TRUE){
       plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
-        geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype='dashed') #+
+        geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype="dashed") #+
       #annotate("text", y = 0.25, x = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
       #very difficult NOT to get text to overlap something with range of WTP
     }
