@@ -2,8 +2,9 @@
 #### To save model run_time we have pre-calculated and saved productivity losses by outcome for discounting rates 0-10% using 1% increments
 
 discounting_rate_list = seq(0,0.1,by = 0.01)
-
-
+age_groups_num = c(0,4,9,17,29,44,59,69,110)
+age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 59','60 to 69','70 to 100')
+LIST_CEA_settings = c("PNG","TLS","FJI","IDN")
 
 
 ####  Importing key datasets ###################################################
@@ -428,7 +429,7 @@ for (this_setting in unique(expected_yearly_earnings$setting)){
         group_by(patient_type) %>%
         mutate(partial = yearly_earning*(this_workshop$life_expectancy - floor(this_workshop$life_expectancy)))  %>%
         select(patient_type,age,setting,life_expectancy,partial)
-      if (nrow(partial) == 3 ){
+      if (nrow(partial) == length(unique(return_to_work_RAW$patient_type)) ){
         this_row = full %>%
           left_join(partial, by = c("patient_type")) %>%
           mutate(productivity_lost = full+partial,
@@ -436,8 +437,6 @@ for (this_setting in unique(expected_yearly_earnings$setting)){
                  age = this_age,
                  setting = this_setting) %>%
           select(-full,-partial)
-      } else if (nrow(partial) %in% c(1,2)){
-        stop('here')
       } else if (nrow(partial) == 0){
         this_row = full  %>%
           mutate(productivity_lost = full,
@@ -446,9 +445,7 @@ for (this_setting in unique(expected_yearly_earnings$setting)){
                  setting = this_setting) %>%
           select(-full)
       }
-      
 
-      
       workshop = bind_rows(workshop,this_row)
     }
   }
