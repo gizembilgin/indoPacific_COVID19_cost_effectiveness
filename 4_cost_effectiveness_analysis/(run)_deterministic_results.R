@@ -85,10 +85,8 @@ for (ticket in 1:length(queue)){
                                   )
     )
     
-    if(!("LIST_discounting_rate" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                                                                                    list(LIST_discounting_rate = 0.03))}
-    if(!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))){CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
-                                                                                             list(TOGGLE_longCOVID = "off"))}
+    if (!("LIST_discounting_rate" %in% names(CommandDeck_CONTROLS))) CommandDeck_CONTROLS = append(CommandDeck_CONTROLS, list(LIST_discounting_rate = 0.03))
+    if (!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))) CommandDeck_CONTROLS = append(CommandDeck_CONTROLS, list(TOGGLE_longCOVID = "off"))
     
     source(paste(getwd(),"/CommandDeck.R",sep=""))
     
