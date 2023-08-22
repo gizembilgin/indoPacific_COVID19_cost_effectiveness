@@ -183,7 +183,8 @@ if (DECISION_include_net == "N"){
     group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
     summarise(WTP = mean(WTP),
               .groups = "keep") %>%
-    ungroup()
+    ungroup() %>%
+    filter(!(antiviral_type == "molunipiravir" & outcome == "hosp"))
   save(CEAC_dataframe,file = paste0("Rshiny/x_results/CEAC_dataframe_",time_of_result,".Rdata"))
   
   # object.size(CEAC_dataframe)  # 1184081984 bytes
