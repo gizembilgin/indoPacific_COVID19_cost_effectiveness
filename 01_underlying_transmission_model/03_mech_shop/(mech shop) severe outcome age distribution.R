@@ -6,7 +6,7 @@ for (this_setting in c('SLE',"PNG","TLS","IDN","FJI","SLB","PHL")){
   
   ### (1) Importing raw age distributions ########################################################
   #(A) importing raw values from Seedat et al. (Ayoub et al underlying data)
-  workshop = read.csv('1_inputs/severe_outcome_age_distribution_RAW.csv')
+  workshop = read.csv('01_inputs/severe_outcome_age_distribution_RAW.csv')
   
   #(B) join overall value back on to age-specific values
   overall = workshop %>%
@@ -58,7 +58,7 @@ for (this_setting in c('SLE',"PNG","TLS","IDN","FJI","SLB","PHL")){
   
   ### (2) Adjust age-distributions to this_setting ###########################################################
   #(A) Multiply RR by pop-level value
-  load(file = "1_inputs/severe_outcome_country_level.Rdata")
+  load(file = "01_inputs/severe_outcome_country_level.Rdata")
   pop_level = severe_outcome_country_level %>%
     filter(country == this_setting) %>%
     mutate(pop_est = percentage) %>%
@@ -183,5 +183,5 @@ for (i in 1:length(unique(workshop$outcome))){
 gridExtra::grid.arrange(grobs=plot_list)
 
 
-save(age_dn_severe_outcomes, file = "1_inputs/severe_outcome_age_distribution.Rdata")
+save(age_dn_severe_outcomes, file = "01_inputs/severe_outcome_age_distribution.Rdata")
 rm(workshop_sum,workshop,age_group_labels_10,age_groups_10,pop_w,overall,plot_list)

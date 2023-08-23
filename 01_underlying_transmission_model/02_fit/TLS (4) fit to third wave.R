@@ -1,12 +1,12 @@
 ### load fit of first two waves
-list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("TLS_rough_fit*",sep=""))
+list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("TLS_rough_fit*",sep=""))
 list_poss_Rdata_details = double()
 for (i in 1:length(list_poss_Rdata)){
   list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                  file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+                                  file.info(paste("01_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
 }
 latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-load(file = paste("1_inputs/fit/",latest_file,sep=''))
+load(file = paste("01_inputs/fit/",latest_file,sep=''))
 firstSecondWaveFit = rough_fit
 #______________________________
 
@@ -102,7 +102,7 @@ thirdWaveFit <- DEoptim(fn = fit_thirdWave,
                      control = list(NP = 20,
                                     itermax = 10,
                                     storepopfrom = 1)) 
-save(thirdWaveFit, file = paste('1_inputs/fit/TLS_thirdWave',Sys.Date(),'.Rdata',sep=''))
+save(thirdWaveFit, file = paste('01_inputs/fit/TLS_thirdWave',Sys.Date(),'.Rdata',sep=''))
 #__________________________
 
 
@@ -136,7 +136,7 @@ fitted_results = list(
   FR_covid19_waves = covid19_waves,
   FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
+save(fitted_results, file = paste("01_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
 
 
 workshop = case_history %>%
@@ -216,5 +216,5 @@ fitted_results = list(
   FR_covid19_waves = covid19_waves,
   FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
+save(fitted_results, file = paste("01_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
 #_________________________________________________

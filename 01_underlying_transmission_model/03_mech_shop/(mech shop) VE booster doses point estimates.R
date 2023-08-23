@@ -9,7 +9,7 @@ require(ggpubr); require(readr);require(ggplot2); require(tidyverse)
 
 
 #####  Visualise estimates from IVAC living systematic review ##########4#########################################################################
-VE_raw <- read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
+VE_raw <- read.csv("01_inputs/VE_WHO_forest_plot.csv",header=TRUE)
 
 #convert generic "mRNA" rows to Moderna and Pfizer
 workshop = VE_raw  %>% filter(vaccine_type == 'mRNA')
@@ -60,7 +60,7 @@ VE_estimates = VE_raw %>%
   summarise(VE = sum(VE)/n())
 
 #load dose 1 and 2, as previously decided
-load(file = "1_inputs/VE_estimates_imputed.Rdata")
+load(file = "01_inputs/VE_estimates_imputed.Rdata")
 VE_estimates_imputed = VE_estimates_imputed %>% 
   select(strain, vaccine_type, dose, outcome,VE) %>%
   filter(dose<3)
@@ -415,7 +415,7 @@ ggarrange(plot_list[[2]],plot_list[[1]],plot_list[[4]],plot_list[[3]],
                        legend="bottom"
 )
 
-save(VE_booster_estimates,file = "1_inputs/VE_booster_estimates.Rdata")
+save(VE_booster_estimates,file = "01_inputs/VE_booster_estimates.Rdata")
 
 
 

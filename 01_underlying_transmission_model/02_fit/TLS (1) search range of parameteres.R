@@ -77,7 +77,7 @@ ggplot() +
   labs(color = 'beta1') + 
   facet_grid(shift1 ~. )
 
-save(first_wave_search, file = paste('1_inputs/fit/TLS_first_wave_search.Rdata',sep=''))
+save(first_wave_search, file = paste('01_inputs/fit/TLS_first_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
 
 
@@ -181,7 +181,7 @@ ggplot() +
   facet_grid(shift2 ~. )
 
 beep()
-save(plot_tracker, file = paste('1_inputs/fit/TLS_second_wave_search.Rdata',sep=''))
+save(plot_tracker, file = paste('01_inputs/fit/TLS_second_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
 
 
@@ -236,8 +236,8 @@ ggplot() +
   geom_point(data=to_plot,aes(x=date,y=adjusted_reported)) +
   plot_standard +
   facet_grid(scenario ~. )
-#save(plot_tracker_FINAL, file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
-#load(file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
+#save(plot_tracker_FINAL, file = paste('01_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
+#load(file = paste('01_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
 
 #NOTE: third wave takes off without seeding due to drop in NPI (scenario = 3 in plot_tracker_FINAL)
 #DECISION (March 2023): let's 

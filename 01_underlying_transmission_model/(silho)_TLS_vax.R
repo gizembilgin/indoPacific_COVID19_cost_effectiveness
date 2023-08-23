@@ -68,7 +68,7 @@ workshop = vaccination_history_DOSE_NUMBER %>%
 
 ### Reflect government reporting
 #Step One: load setting_vaccine_dn
-setting_vaccine_dn <- read.csv("1_inputs/vaccination/vaccine_setting_dn.csv",header=TRUE)%>%
+setting_vaccine_dn <- read.csv("01_inputs/vaccination/vaccine_setting_dn.csv",header=TRUE)%>%
   filter(setting == this_setting)
 setting_vaccine_dn$last_update = as.Date(setting_vaccine_dn$last_update,format = '%d/%m/%Y')
 

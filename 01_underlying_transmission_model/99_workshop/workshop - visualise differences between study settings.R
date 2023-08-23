@@ -26,7 +26,7 @@ plot_list
 
 
 ### RISK GROUP DISTRIBUTIONS
-workshop <- read.csv('1_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
+workshop <- read.csv('01_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
 workshop = workshop %>% filter(country %in% WPR_settings)
 all_ages <- workshop %>% filter(age_group_charac == 'all ages')
 ggplot() + geom_col(data = all_ages,aes(x=country,y=high_risk)) 

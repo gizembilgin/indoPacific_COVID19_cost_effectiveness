@@ -33,38 +33,38 @@ if (fitting == "on"){
   
   #load latest model run in known dates
   if (fitting == "wave_three" & exists("scenario_MASTER") == TRUE){
-    list_poss_Rdata = list.files(path="1_inputs/fit/",
+    list_poss_Rdata = list.files(path="01_inputs/fit/",
                                  pattern = paste("start_point_wave_three_",setting_beta,"_v_",scenario_MASTER,"_*",sep=""))
   } else if (fitting == "wave_three"){
-    list_poss_Rdata = list.files(path="1_inputs/fit/",
+    list_poss_Rdata = list.files(path="01_inputs/fit/",
                                  pattern = paste("start_point_wave_three_",setting_beta,"*",sep=""))
   
   } else if (fitting == "wave_two" & exists("scenario_MASTER") == TRUE){
-    list_poss_Rdata = list.files(path="1_inputs/fit/",
+    list_poss_Rdata = list.files(path="01_inputs/fit/",
                                  pattern = paste("start_point_wave_two_",setting_beta,"_v_",scenario_MASTER,"_*",sep=""))
   } else if (fitting == "wave_two"){
-    list_poss_Rdata = list.files(path="1_inputs/fit/",
+    list_poss_Rdata = list.files(path="01_inputs/fit/",
                                  pattern = paste("start_point_wave_two_",setting_beta,"*",sep=""))
   
   } else{
     if (risk_group_name == "pregnant_women"){
-      list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_pregnant_women_",setting_beta,"*",sep=""))
+      list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("fitted_results_pregnant_women_",setting_beta,"*",sep=""))
     } else{
-      list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
+      list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
     }
   }
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+                                    file.info(paste("01_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
   }
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(paste('1_inputs/fit/',latest_file,sep=''))
+  load(paste('01_inputs/fit/',latest_file,sep=''))
   #___________________________________
     
     if('additional_doses' %in% names(sensitivity_analysis_toggles)){
       if (sensitivity_analysis_toggles$additional_doses == 'start_2022'){
-        load(file = '1_inputs/fitted_results_SA_2022.Rdata')
+        load(file = '01_inputs/fitted_results_SA_2022.Rdata')
       }
     }
     
@@ -138,12 +138,12 @@ prev_risk_group = risk_group_name
 
 
 ##(B) Load functions
-source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_VE_time_step.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_rho_time_step.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_vax_strategies.R",sep=""),local=TRUE)
-source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""),local=TRUE)
-if (exists("VE_estimates_imputed") == FALSE){load(file='1_inputs/VE_estimates_imputed.Rdata')}
+source(paste(getwd(),"/04_functions/(function)_COVID_ODE.R",sep=""),local=TRUE)
+source(paste(getwd(),"/04_functions/(function)_VE_time_step.R",sep=""),local=TRUE)
+source(paste(getwd(),"/04_functions/(function)_rho_time_step.R",sep=""),local=TRUE)
+source(paste(getwd(),"/04_functions/(function)_vax_strategies.R",sep=""),local=TRUE)
+source(paste(getwd(),"/04_functions/(function)_vax_strategies_risk.R",sep=""),local=TRUE)
+if (exists("VE_estimates_imputed") == FALSE){load(file='01_inputs/VE_estimates_imputed.Rdata')}
 
 
 ##(C) Run the model!

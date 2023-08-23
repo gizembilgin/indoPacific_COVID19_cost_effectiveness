@@ -15,7 +15,7 @@ plotting_standard =  theme_bw() +
 
 
 ### (1) SPEED OF WANING ##############################################################################################################################################
-raw <- read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)
+raw <- read.csv(file = '01_inputs/VE_severe_outcomes.csv',header=TRUE)
 
 predicted_distribution = data.frame()
 subplot_list = list()
@@ -109,7 +109,7 @@ apply_ratio = workshop_age %>% filter(days == 22) %>% rename(VE_ratio = VE_overa
 
 
 ### COVERT TO MODEL AGE GROUP ##################################################################################################################################
-load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+load(file = "01_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
 SA_VE_older_muted_SO = data.frame()
 for (setting in c("SLE","PNG","TLS","IDN","FJI","SLB","PHL")){
   age_groups_num = c(0,4,9,17,29,44,59,69,110)
@@ -187,8 +187,8 @@ for (setting in c("SLE","PNG","TLS","IDN","FJI","SLB","PHL")){
   
   
   ### APPLY TO POINT ESTIMATES ##################################################################################################################################
-  load(file = "1_inputs/VE_estimates_imputed.Rdata")
-  load(file = "1_inputs/VE_booster_estimates.Rdata")
+  load(file = "01_inputs/VE_estimates_imputed.Rdata")
+  load(file = "01_inputs/VE_booster_estimates.Rdata")
   
   point_estimates = VE_estimates_imputed %>% 
     filter(outcome_family == 'severe_outcome' &  dose < 3) %>%
@@ -260,5 +260,5 @@ SA_VE_older_muted_SO = SA_VE_older_muted_SO %>%
     vaccine_type == 'Johnson & Johnson' ~ 'viral_vector'
   ))
 
-save(SA_VE_older_muted_SO, file = '1_inputs/SA_VE_older_muted_SO.Rdata')
+save(SA_VE_older_muted_SO, file = '01_inputs/SA_VE_older_muted_SO.Rdata')
 #_________________________________________________________________________________________________________________________________________

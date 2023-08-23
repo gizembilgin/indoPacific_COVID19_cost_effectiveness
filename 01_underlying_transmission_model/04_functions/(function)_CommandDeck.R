@@ -14,16 +14,16 @@ library(gridExtra)
 library(ggpubr)
 library(tidyverse)
 
-load(file = '1_inputs/last_fit_date.Rdata')
+load(file = '01_inputs/last_fit_date.Rdata')
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") #Note: x_results not stored within GitHub repository
 
 # Load functions
-source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
-source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_rho_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
-if (exists("VE_estimates_imputed") == FALSE){load(file='1_inputs/VE_estimates_imputed.Rdata')}
+source(paste(getwd(),"/04_functions/(function)_COVID_ODE.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_VE_time_step.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_rho_time_step.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_vax_strategies.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_vax_strategies_risk.R",sep=""))
+if (exists("VE_estimates_imputed") == FALSE){load(file='01_inputs/VE_estimates_imputed.Rdata')}
 #_____________________________________________________________________________________________
 
 
@@ -96,11 +96,11 @@ CommandDeck <- function(
       warning('refitting model as fitted_max_date over one month since today!')
       source(paste(getwd(),"/(0)_fitting_model.R",sep=""))
     } else{
-      load(file = '1_inputs/fitted_results.Rdata')
+      load(file = '01_inputs/fitted_results.Rdata')
       
       if('additional_doses' %in% names(sensitivity_analysis_toggles)){
         if (sensitivity_analysis_toggles$additional_doses == 'start_2022'){
-          load(file = '1_inputs/fitted_results_SA_2022.Rdata')
+          load(file = '01_inputs/fitted_results_SA_2022.Rdata')
         }
       }
       
@@ -133,7 +133,7 @@ CommandDeck <- function(
     
     if (! risk_group_name == 'pregnant_women'){stop('havent configured vax hesistance sensitivity analysis for another risk group')}
     
-    load(file = '1_inputs/SA_vaxHest_fitted_results.Rdata')
+    load(file = '01_inputs/SA_vaxHest_fitted_results.Rdata')
     
     parameters = SA_vaxHest_fitted_results[[1]] %>% filter(country == setting)
     fitted_next_state = SA_vaxHest_fitted_results[[2]]  %>% filter(country == setting)

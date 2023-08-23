@@ -19,7 +19,7 @@ colnames(strategy) = gsub("[()+/]","", colnames(strategy))
 
 
 ### LOAD UNICEF’s COVID-19 Market Dashboard
-supply <- read.csv("1_inputs/vaccine_market_UNICEF.csv",header=TRUE) 
+supply <- read.csv("01_inputs/vaccine_market_UNICEF.csv",header=TRUE) 
 supply$delivery_month = as.Date(supply$delivery_month, "%d/%m/%Y")
 supply$vaccine_type[supply$vaccine_type == "Covishield"] = "AstraZeneca" #The Oxford–AstraZeneca COVID‑19 vaccine, sold under the brand names Covishield and Vaxzevria
 supply = supply %>%

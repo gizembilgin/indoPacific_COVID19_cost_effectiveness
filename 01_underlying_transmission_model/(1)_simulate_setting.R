@@ -28,7 +28,7 @@ age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 5
 num_age_groups = J = length(age_group_labels)          
 age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
 
-load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+load(file = "01_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
 
 pop_orig <- UN_pop_est %>% 
   rename(country = ISO3_code,
@@ -60,11 +60,11 @@ if (num_risk_groups>1){
  
   if(risk_group_name %in% c('adults_with_comorbidities')){
     if (setting == "SLE"){
-      risk_dn = read.csv('1_inputs/risk_group_distribution.csv')
+      risk_dn = read.csv('01_inputs/risk_group_distribution.csv')
       risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name,]
     } else{
       
-      workshop <- read.csv('1_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
+      workshop <- read.csv('01_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
       workshop = workshop %>% 
         filter(age_group_charac != 'all ages') %>%
         filter(country == setting) %>%
@@ -96,7 +96,7 @@ if (num_risk_groups>1){
       
     }
   } else if (risk_group_name %in% c('pregnant_women')){
-    load(file = "1_inputs/prevalence_pregnancy.Rdata")
+    load(file = "01_inputs/prevalence_pregnancy.Rdata")
     risk_dn = prevalence_pregnancy %>%
       filter(country == setting)
   } else {
@@ -137,7 +137,7 @@ risk_group_labels = unique(pop_risk_group_dn$risk_group)
 ### (2/5) Contact patterns of population
 #CONFIRMATION FROM MARK JIT: .Rdata files are more up to date on GitHub (Prem et al. 2021 paper)
 #(A/C) load contact matrix
-load(file = "1_inputs/contact_all.Rdata")
+load(file = "01_inputs/contact_all.Rdata")
 contact_matrix_setting <- contact_all[[setting]]
 Prem_et_al_age_list <- c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75)
 colnames(contact_matrix_setting) <- Prem_et_al_age_list; rownames(contact_matrix_setting) <- Prem_et_al_age_list
@@ -201,8 +201,8 @@ rm(contact_all, contact_matrix_setting, sum_1, sum_2,
 
 
 ###(3/5) Live updates of cases
-if (file.exists(paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
-  load(file = paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
+if (file.exists(paste("01_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("01_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
 } else {
   workshop_cases <- readr::read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
   workshop_cases = workshop_cases[workshop_cases$'Country/Region' == setting_long,]
@@ -231,7 +231,7 @@ if (file.exists(paste("1_inputs/live_updates/case_history",this_setting,Sys.Date
   #         panel.border = element_blank(),
   #         axis.line = element_line(color = 'black'))
   
-  save(case_history, file = paste("1_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
+  save(case_history, file = paste("01_inputs/live_updates/case_history",this_setting,Sys.Date(),".Rdata",sep=''))
 }
 #______________________________________________________________________________________________________________________________________
 
@@ -249,14 +249,14 @@ vaxCovDelay = vaxCovDelay %>%
 
 
 ##(i/iii) Load and clean data _________________________________________________
-if (file.exists(paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep='')) == TRUE){
-  load(file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
+if (file.exists(paste("01_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("01_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
 } else {
   if (setting != "SLE"){source(paste(getwd(),"/(silho) doses to dose_number.R",sep=""))}
   source(paste(getwd(),"/(silho)_",setting,"_vax.R",sep=""))
   
 
-  save(vaccination_history_TRUE, file = paste("1_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
+  save(vaccination_history_TRUE, file = paste("01_inputs/live_updates/vaccination_history_TRUE",this_setting,risk_group_name,Sys.Date(),".Rdata",sep=''))
 
 }
 
@@ -387,8 +387,8 @@ if(antiviral_setup == "on"){
 ### Static toggles
 NPI_toggle = 'contain_health'   #choice of NPI metric: contain_health, stringency
 
-if (file.exists(paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
-  load(file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
+if (file.exists(paste("01_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep='')) == TRUE){
+  load(file = paste("01_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
 } else {
   if (NPI_toggle == 'stringency'){
     workshop <- readr::read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/timeseries/stringency_index_avg.csv")
@@ -419,6 +419,6 @@ if (file.exists(paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Dat
   
   #ggplot(NPI_estimates[NPI_estimates$date %in% workshop$date,]) + geom_line(aes(x=date,y=NPI))
   
-  save(NPI_estimates, file = paste("1_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
+  save(NPI_estimates, file = paste("01_inputs/live_updates/NPI_estimates",this_setting,Sys.Date(),".Rdata",sep=''))
 }
 #______________________________________________________________________________________________________________________________________

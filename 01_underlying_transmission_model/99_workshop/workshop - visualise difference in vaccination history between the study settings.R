@@ -4,23 +4,23 @@ plot_list = list()
 for (this_setting in c("TLS","FJI","PNG","IDN")){
   
   ###LOAD THIS SETTING'S VACCINATION HISTORY TRUE
-  list_poss_Rdata = list.files(path="1_inputs/live_updates/",pattern = paste("vaccination_history_TRUE",this_setting,"adults_with_comorbidities","*",sep=""))
+  list_poss_Rdata = list.files(path="01_inputs/live_updates/",pattern = paste("vaccination_history_TRUE",this_setting,"adults_with_comorbidities","*",sep=""))
   if (length(list_poss_Rdata)>0){
     list_poss_Rdata_details = double()
     for (j in 1:length(list_poss_Rdata)){
       list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste('1_inputs/live_updates/',list_poss_Rdata[[j]],sep=''))$mtime)
+                                      file.info(paste('01_inputs/live_updates/',list_poss_Rdata[[j]],sep=''))$mtime)
     }
   }
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(file = paste("1_inputs/live_updates/",latest_file,sep=''))
+  load(file = paste("01_inputs/live_updates/",latest_file,sep=''))
   #______________________________________________________________
   
   
   
   ###LOAD THIS SETTING'S pop risk distribution
-  load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
-  workshop <- read.csv('1_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
+  load(file = "01_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+  workshop <- read.csv('01_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
   workshop = workshop %>% 
     filter(age_group_charac != 'all ages' & 
              country == this_setting) %>%

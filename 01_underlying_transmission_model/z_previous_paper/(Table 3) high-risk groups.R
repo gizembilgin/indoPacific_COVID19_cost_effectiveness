@@ -141,7 +141,7 @@ for (ticket in 1:length(queue)){
       RR_estimate = RR_to_test_list[[RR_loop]]
       
       source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) 
-      source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
+      source(paste(getwd(),"/04_functions/(function)_severe_outcome_proj.R",sep=""))
       
       row = row %>% mutate(scenario = vax_strategy_description,
                            RR_estimate = RR_estimate) %>% 
@@ -174,7 +174,7 @@ for (ticket in 1:length(queue)){
       } else{this_sensitivity_analysis = 'VE_older_adults'} #COMEBACK - there MUST be a simpler way to do this in R, but a quick 30min search yielded no results
       
       source(paste(getwd(),"/(5)_severe_outcomes_calc.R",sep="")) 
-      source(paste(getwd(),"/(function)_severe_outcome_proj.R",sep=""))
+      source(paste(getwd(),"/04_functions/(function)_severe_outcome_proj.R",sep=""))
       
       row = row %>% mutate(scenario = vax_strategy_description,
                            VE_mod = this_sensitivity_analysis) %>% 

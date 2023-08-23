@@ -13,7 +13,7 @@ for (ticket in 1:length(setting_list)){
   
   ### read in data
   if (this_setting == "SLE"){ #use SLE DHS 2019 data
-    ASFR = read.csv("1_inputs/DHS_ASFR.csv",header=TRUE)
+    ASFR = read.csv("01_inputs/DHS_ASFR.csv",header=TRUE)
     
     # add 10-14 pregnancy as reported in DHS 2019 with retrospective data
     row_10_14 = data.frame(' 10-14 ',4/1000,NA,NA)
@@ -34,7 +34,7 @@ for (ticket in 1:length(setting_list)){
             axis.line = element_line(color = 'black'))
     
   } else { # use UN estimates
-    load(file = "1_inputs/UN_world_population_prospects/UN_ASFR_est.Rdata")
+    load(file = "01_inputs/UN_world_population_prospects/UN_ASFR_est.Rdata")
     
     ASFR = UN_ASFR_est %>%
       filter(ISO3_code == this_setting) %>%
@@ -162,4 +162,4 @@ ggplot(data=prevalence_pregnancy[prevalence_pregnancy$country %in% c("FJI","IDN"
   labs(title="") 
 
 prevalence_pregnancy_summary
-#save(prevalence_pregnancy, file = "1_inputs/prevalence_pregnancy.Rdata")
+#save(prevalence_pregnancy, file = "01_inputs/prevalence_pregnancy.Rdata")

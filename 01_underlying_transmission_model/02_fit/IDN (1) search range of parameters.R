@@ -86,7 +86,7 @@ ggplot() +
   labs(color = 'beta1') + 
   facet_grid(shift1 ~. )
 
-save(first_wave_search, file = paste('1_inputs/fit/IDN_first_wave_search.Rdata',sep=''))
+save(first_wave_search, file = paste('01_inputs/fit/IDN_first_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
 
 
@@ -193,7 +193,7 @@ ggplot() +
   labs(color = 'beta modifier')+ 
   facet_grid(shift2 ~ .) 
 
-save(plot_tracker, file = paste('1_inputs/fit/IDN_second_wave_search.Rdata',sep=''))
+save(plot_tracker, file = paste('01_inputs/fit/IDN_second_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
 
 
@@ -224,7 +224,7 @@ fitted_results = list(
   FR_prev_beta = prev_beta,
   FR_this_beta = this_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=''))
+save(fitted_results, file = paste("01_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=''))
 
 wave_three_baseline_covid19_waves = covid19_waves
 wave_three_fitting_beta = fitting_beta

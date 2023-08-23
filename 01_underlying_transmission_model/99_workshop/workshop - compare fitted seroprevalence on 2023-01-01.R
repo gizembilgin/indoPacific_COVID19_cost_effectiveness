@@ -7,14 +7,14 @@ for (setting_beta in c("PNG_low_beta","IDN","FJI","TLS")){
   this_setting = setting_beta
   if (setting_beta == "PNG_low_beta"){this_setting = "PNG"}
   
-  list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
+  list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+                                    file.info(paste("01_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
   }
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(paste('1_inputs/fit/',latest_file,sep=''))
+  load(paste('01_inputs/fit/',latest_file,sep=''))
   
   fitted_next_state = fitted_results[[2]] 
   

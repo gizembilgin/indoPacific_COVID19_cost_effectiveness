@@ -102,7 +102,7 @@ rough_fit <- DEoptim(fn = fit_firstTwo_waves,
                     control = list(NP = 50,
                                    itermax = 10,
                                    storepopfrom = 1)) 
-save(rough_fit, file = paste('1_inputs/fit/TLS_rough_fit',Sys.Date(),'.Rdata',sep=''))
+save(rough_fit, file = paste('01_inputs/fit/TLS_rough_fit',Sys.Date(),'.Rdata',sep=''))
 #____________________
 
 
@@ -140,5 +140,5 @@ fitted_results = list(
   FR_prev_beta = prev_beta,
   FR_this_beta = this_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=""))
+save(fitted_results, file = paste("01_inputs/fit/start_point_wave_three_",this_setting,Sys.Date(),".Rdata",sep=""))
 #____________________

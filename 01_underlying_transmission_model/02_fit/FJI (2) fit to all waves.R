@@ -116,7 +116,7 @@ full_fit <- DEoptim(fn = fit_all_waves,
                     control = list(NP = 30, #ideally 60, possible rerun depending on plot of bestvalit/bestmemit
                                    itermax = 10,
                                    storepopfrom = 1)) 
-save(full_fit, file = paste('1_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
+save(full_fit, file = paste('01_inputs/fit/full_fit',this_setting,Sys.Date(),'.Rdata',sep=''))
 #_________________________________________________
 
 
@@ -151,7 +151,7 @@ fitted_results = list(
   FR_covid19_waves = covid19_waves,
   FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
+save(fitted_results, file = paste("01_inputs/fit/fitted_results_",this_setting,Sys.Date(),".Rdata",sep=""))
 #_________________________________________________
 
 
@@ -171,5 +171,5 @@ fitted_results = list(
   FR_covid19_waves = covid19_waves,
   FR_fitting_beta = fitting_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
+save(fitted_results, file = paste("01_inputs/fit/fitted_results_pregnant_women_",this_setting,Sys.Date(),".Rdata",sep=""))
 #_________________________________________________

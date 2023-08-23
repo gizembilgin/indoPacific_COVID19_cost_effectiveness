@@ -7,7 +7,7 @@
 discounting_rate = 0
 
 ##### (1/7) Load population-level wild-type estimate of severe outcomes
-severe_outcome_country_level <- read.csv('1_inputs/severe_outcome_country_level.csv')
+severe_outcome_country_level <- read.csv('01_inputs/severe_outcome_country_level.csv')
 
 #Note, the paper includes no estimates for nations < 1 million, 
 #hence estimating Fiji <-> Indonesia and Solomon Islands <-> PNG as closest in pop over 65 and HAQ Index in the region
@@ -19,16 +19,16 @@ workshop = severe_outcome_country_level %>%
 severe_outcome_country_level = rbind(severe_outcome_country_level,workshop)
 
 severe_outcome_country_level$percentage = severe_outcome_country_level$percentage/100 #make it between 0-1
-save(severe_outcome_country_level,file = "1_inputs/severe_outcome_country_level.Rdata")
+save(severe_outcome_country_level,file = "01_inputs/severe_outcome_country_level.Rdata")
 
 severe_outcome_0 = severe_outcome_country_level
 #_______________________________________________________________________________
 
 
 #####(2/7) Load variant-specific multipliers
-workshop <- read.csv('1_inputs/severe_outcome_variant_multiplier.csv')
+workshop <- read.csv('01_inputs/severe_outcome_variant_multiplier.csv')
 #<interlude for omicron>
-workshop2 <- read.csv('1_inputs/severe_outcome_variant_multiplier_complex.csv') #omicron vs delta
+workshop2 <- read.csv('01_inputs/severe_outcome_variant_multiplier_complex.csv') #omicron vs delta
 omicron_basis = workshop[workshop$variant == 'delta',]
 omicron_basis$variant = 'omicron'
 omicron_basis$source = paste(omicron_basis$source,'/',workshop2$source)
@@ -65,7 +65,7 @@ for (VOC in c('omicron')){ #since we are only considering severe outcomes during
   
   
   #####(4/7) Calculating age-specific estimates of severe outcomes
-  load(file = '1_inputs/severe_outcome_age_distribution.Rdata') #adjusted values from Qatar
+  load(file = '01_inputs/severe_outcome_age_distribution.Rdata') #adjusted values from Qatar
 
   severe_outcome_2 <- severe_outcome_1 %>%  
     left_join(age_dn_severe_outcomes) %>% mutate(percentage=percentage*RR)
@@ -82,7 +82,7 @@ for (VOC in c('omicron')){ #since we are only considering severe outcomes during
   #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
   # who would be subject during the remaining of their lives to the mortality rates of a given period."
   # https://population.un.org/wpp/Download/Standard/Mortality/
-  load(file = "1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata")
+  load(file = "01_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata")
   YLL_FINAL = UN_lifeExpect_est %>%
    # filter(ISO3_code == setting) %>%
     rename(country = ISO3_code,
@@ -131,4 +131,4 @@ ggplot() +
         axis.line = element_line(color = 'black'))
 #_______________________________________________________________________________
 
-save(severe_outcome_FINAL, file = "1_inputs/severe_outcome_FINAL.Rdata")
+save(severe_outcome_FINAL, file = "01_inputs/severe_outcome_FINAL.Rdata")

@@ -297,7 +297,7 @@ if (plot_name %in% c("figure_2",
   workshop_this_plot$vax_scenario_short = factor(workshop_this_plot$vax_scenario_short, levels = LIST_vax_scenarios)
   
   #join on to UN_pop_est by country
-  load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+  load(file = "01_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
   UN_total_pop <- UN_pop_est %>% 
     rename(country = ISO3_code) %>%
     filter(country %in% unique(workshop_this_plot$country)) %>%

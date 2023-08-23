@@ -1,13 +1,13 @@
 
 ### Load rough wave one and two
-list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("TLS_rough_fit","*",sep=''))
+list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("TLS_rough_fit","*",sep=''))
 list_poss_Rdata_details = double()
 for (i in 1:length(list_poss_Rdata)){
   list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                  file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+                                  file.info(paste("01_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
 }
 latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-load(file = paste("1_inputs/fit/",latest_file,sep=''))
+load(file = paste("01_inputs/fit/",latest_file,sep=''))
 #_______________________________________________________________________________
 
 
@@ -76,7 +76,7 @@ ggplot() +
   facet_grid(shift3 ~. )  +
   geom_vline(xintercept = baseline_covid19_waves$date[3] + ceiling(365/2))
 beep()
-save(third_wave_tracker, file = paste('1_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
+save(third_wave_tracker, file = paste('01_inputs/fit/TLS_third_wave_search.Rdata',sep=''))
 #_______________________________________________________________________________
 
 

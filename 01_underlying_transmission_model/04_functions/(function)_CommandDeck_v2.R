@@ -16,12 +16,12 @@ library(tidyverse)
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") #Note: x_results not stored within GitHub repository
 
 # Load functions
-source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
-source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_rho_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
-source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
-if (exists("VE_estimates_imputed") == FALSE){load(file='1_inputs/VE_estimates_imputed.Rdata')}
+source(paste(getwd(),"/04_functions/(function)_COVID_ODE.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_VE_time_step.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_rho_time_step.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_vax_strategies.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_vax_strategies_risk.R",sep=""))
+if (exists("VE_estimates_imputed") == FALSE){load(file='01_inputs/VE_estimates_imputed.Rdata')}
 #_____________________________________________________________________________________________
 
 
@@ -64,11 +64,11 @@ CommandDeck <- function(
   } else if ( ! 'vax_hesistancy_risk_group' %in% names(sensitivity_analysis_toggles)){
     
     #load latest model run in known dates
-    list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting,"*",sep=""))
+    list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("fitted_results_",setting,"*",sep=""))
     list_poss_Rdata_details = double()
     for (i in 1:length(list_poss_Rdata)){
       list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                      file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+                                      file.info(paste("01_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
     }
     latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
     load(paste(rootpath,'x_results/',latest_file,sep=''))
@@ -76,7 +76,7 @@ CommandDeck <- function(
     
     if('additional_doses' %in% names(sensitivity_analysis_toggles)){
       if (sensitivity_analysis_toggles$additional_doses == 'start_2022'){
-        load(file = '1_inputs/fitted_results_SA_2022.Rdata')
+        load(file = '01_inputs/fitted_results_SA_2022.Rdata')
       }
     }
     
@@ -108,7 +108,7 @@ CommandDeck <- function(
     
     if (! risk_group_name == 'pregnant_women'){stop('havent configured vax hesistance sensitivity analysis for another risk group')}
     
-    load(file = '1_inputs/SA_vaxHest_fitted_results.Rdata')
+    load(file = '01_inputs/SA_vaxHest_fitted_results.Rdata')
     
     parameters = SA_vaxHest_fitted_results[[1]] %>% filter(country == setting)
     fitted_next_state = SA_vaxHest_fitted_results[[2]]  %>% filter(country == setting)
@@ -164,12 +164,12 @@ CommandDeck <- function(
   
   
   ##(B) Load functions
-  source(paste(getwd(),"/(function)_COVID_ODE.R",sep=""))
-  source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
-  source(paste(getwd(),"/(function)_rho_time_step.R",sep=""))
-  source(paste(getwd(),"/(function)_vax_strategies.R",sep=""))
-  source(paste(getwd(),"/(function)_vax_strategies_risk.R",sep=""))
-  if (exists("VE_estimates_imputed") == FALSE){load(file='1_inputs/VE_estimates_imputed.Rdata')}
+  source(paste(getwd(),"/04_functions/(function)_COVID_ODE.R",sep=""))
+  source(paste(getwd(),"/04_functions/(function)_VE_time_step.R",sep=""))
+  source(paste(getwd(),"/04_functions/(function)_rho_time_step.R",sep=""))
+  source(paste(getwd(),"/04_functions/(function)_vax_strategies.R",sep=""))
+  source(paste(getwd(),"/04_functions/(function)_vax_strategies_risk.R",sep=""))
+  if (exists("VE_estimates_imputed") == FALSE){load(file='01_inputs/VE_estimates_imputed.Rdata')}
   
   
   ##(C) Run the model!

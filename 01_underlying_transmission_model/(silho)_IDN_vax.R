@@ -8,7 +8,7 @@ vaccination_history_WORKSHOP = vaccination_history_DOSE_NUMBER %>%
   filter(doses_delivered_this_date>0) %>%
   select(date,dose,doses_delivered_this_date)
 
-setting_vaccine_dn <- read.csv("1_inputs/vaccination/vaccine_setting_dn.csv",header=TRUE)%>%
+setting_vaccine_dn <- read.csv("01_inputs/vaccination/vaccine_setting_dn.csv",header=TRUE)%>%
   filter(setting == this_setting)
 setting_vaccine_dn$last_update = as.Date(setting_vaccine_dn$last_update,format = '%d/%m/%Y')
 
@@ -314,7 +314,7 @@ if (round(expected) != round(sum(vaccination_history_WORKSHOP$doses_delivered_th
 
 
 ### INCLUDE VACCINE TYPE USING UNICEF’s COVID-19 Market Dashboard #______________________________________________________
-supply <- read.csv("1_inputs/vaccine_market_UNICEF.csv",header=TRUE) 
+supply <- read.csv("01_inputs/vaccine_market_UNICEF.csv",header=TRUE) 
 supply$delivery_month = as.Date(supply$delivery_month, "%d/%m/%Y")
 
 #seven vaccines will blow out the number of model classes, let's condense down to those where there is sufficient doses to cover >2.5% of Indonesia's population

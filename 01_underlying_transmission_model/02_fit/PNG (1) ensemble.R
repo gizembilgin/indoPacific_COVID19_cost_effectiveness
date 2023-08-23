@@ -116,7 +116,7 @@ PNG_ensemble = list(
   final_state_tracker = final_state_tracker,
   workshop_incidence_log_tracker = workshop_incidence_log_tracker
 )
-save(PNG_ensemble, file = paste("1_inputs/PNG_ensemble_",Sys.Date(),".Rdata"))
+save(PNG_ensemble, file = paste("01_inputs/PNG_ensemble_",Sys.Date(),".Rdata"))
 #_______________________________________________________________________________
 
 
@@ -154,7 +154,7 @@ for (this_scenario in 1:nrow(scenarios)){
     mutate(scenario = scenarios$name[this_scenario])
   two_scenarios_plot = rbind(two_scenarios_plot,incidence_log)
   
-  save(fitted_results, file = paste("1_inputs/fit/fitted_results_",scenarios$name[this_scenario],Sys.Date(),".Rdata",sep=""))
+  save(fitted_results, file = paste("01_inputs/fit/fitted_results_",scenarios$name[this_scenario],Sys.Date(),".Rdata",sep=""))
 }
 
 ggplot() +
@@ -235,17 +235,17 @@ ggplot() +
 #     FR_fitting_beta = fitting_beta
 #   )
 # 
-#   save(fitted_results, file = paste("1_inputs/fit/fitted_results_pregnant_women_",scenarios$name[this_scenario],Sys.Date(),".Rdata",sep=""))
+#   save(fitted_results, file = paste("01_inputs/fit/fitted_results_pregnant_women_",scenarios$name[this_scenario],Sys.Date(),".Rdata",sep=""))
 # }
 # 
-# load("1_inputs/fit/fitted_results_pregnant_women_PNG_high_beta2023-02-06.Rdata")
+# load("01_inputs/fit/fitted_results_pregnant_women_PNG_high_beta2023-02-06.Rdata")
 # preg_high_beta = fitted_results$FR_incidence_log %>% mutate(risk_group = 'pregnant_women', setting_beta = "high_beta")
-# load("1_inputs/fit/fitted_results_pregnant_women_PNG_low_beta2023-02-06.Rdata")
+# load("01_inputs/fit/fitted_results_pregnant_women_PNG_low_beta2023-02-06.Rdata")
 # preg_low_beta = fitted_results$FR_incidence_log  %>% mutate(risk_group = 'pregnant_women', setting_beta = "low_beta")
 # 
-# load("1_inputs/fit/fitted_results_PNG_high_beta2023-01-19.Rdata")
+# load("01_inputs/fit/fitted_results_PNG_high_beta2023-01-19.Rdata")
 # comorb_high_beta = fitted_results$FR_incidence_log %>% mutate(risk_group = 'adults_with_comorbidities', setting_beta = "high_beta")
-# load("1_inputs/fit/fitted_results_PNG_low_beta2023-01-19.Rdata")
+# load("01_inputs/fit/fitted_results_PNG_low_beta2023-01-19.Rdata")
 # comorb_low_beta = fitted_results$FR_incidence_log  %>% mutate(risk_group = 'adults_with_comorbidities', setting_beta = "low_beta")
 # 
 # to_plot = rbind(preg_high_beta,preg_low_beta,comorb_high_beta,comorb_low_beta)

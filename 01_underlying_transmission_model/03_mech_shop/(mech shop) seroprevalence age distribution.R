@@ -4,7 +4,7 @@
 ### Creates: seroprev.
 #_________________________________________________________________________________________________________________________________________________________________________
 
-seroprev_raw = read.csv("1_inputs/seroprevalence_RAW.csv",header=TRUE)
+seroprev_raw = read.csv("01_inputs/seroprevalence_RAW.csv",header=TRUE)
 
 this_setting = "IDN"
 
@@ -42,7 +42,7 @@ seroprev = pop_workshop %>%
   mutate(year = 2021, setting = this_setting) %>%
   select(year,setting,age_group,seroprev)
 
-save(seroprev, file = paste("1_inputs/seroprev_",this_setting,".Rdata",sep=''))
+save(seroprev, file = paste("01_inputs/seroprev_",this_setting,".Rdata",sep=''))
 
 
 

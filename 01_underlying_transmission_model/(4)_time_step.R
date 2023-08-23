@@ -87,14 +87,14 @@ for (increments_number in 1:num_time_steps){
         }
       } else if (fitting %in% c("on","wave_three","wave_two")){
         #load latest VE saved in known dates
-        list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("VE_real_range_",setting,"*",sep=""))
+        list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("VE_real_range_",setting,"*",sep=""))
         list_poss_Rdata_details = double()
         for (i in 1:length(list_poss_Rdata)){
           list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                          file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+                                          file.info(paste("01_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
         }
         latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-        load(paste('1_inputs/fit/',latest_file,sep=''))
+        load(paste('01_inputs/fit/',latest_file,sep=''))
         
         
         if (date_now %in% omicron_shift$date[omicron_shift$wave == 1]){

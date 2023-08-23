@@ -1,4 +1,4 @@
-### This scripts sets up for the fitting scripts stored in 2_fit
+### This scripts sets up for the fitting scripts stored in 02_fit
 
 rm(list=ls()) #clear the field!
 this_setting = setting = "TLS"
@@ -63,21 +63,21 @@ RR_estimate = 1.95
 
 ### Saving VE for known dates __________________________________________________________________________________
 #Load vax history
-source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
-source(paste(getwd(),"/(function)_rho_time_step.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_VE_time_step.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_rho_time_step.R",sep=""))
 source(paste(getwd(),"/(1)_simulate_setting.R",sep="")) 
 source(paste(getwd(),"/(3)_disease_characteristics.R",sep=""))
 source(paste(getwd(),"/(2)_inital_state.R",sep=""))
 
-list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("VE_real_range_",this_setting,"*",sep=''))
+list_poss_Rdata = list.files(path="01_inputs/fit/",pattern = paste("VE_real_range_",this_setting,"*",sep=''))
 if (length(list_poss_Rdata)>0){
   list_poss_Rdata_details = double()
   for (i in 1:length(list_poss_Rdata)){
     list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-                                    file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
+                                    file.info(paste("01_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
   }
   latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-  load(file = paste("1_inputs/fit/",latest_file,sep=''))
+  load(file = paste("01_inputs/fit/",latest_file,sep=''))
   
   date_list = seq(max(max(VE_real_range$date)+1), # run only dates not yet filled
                   Sys.Date()+1,
@@ -120,7 +120,7 @@ for (i in 1:length(date_list)) {
 }
 
 rm(VE_time_step)
-save(VE_real_range, file = paste('1_inputs/fit/VE_real_range_',this_setting,'_',Sys.Date(),'.Rdata',sep=''))
+save(VE_real_range, file = paste('01_inputs/fit/VE_real_range_',this_setting,'_',Sys.Date(),'.Rdata',sep=''))
 #______________________________________________________________________________________________________________
 
 

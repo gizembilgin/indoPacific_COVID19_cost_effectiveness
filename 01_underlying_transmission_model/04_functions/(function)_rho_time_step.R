@@ -34,7 +34,7 @@ rho_dn_wide = rho_dn %>% pivot_wider(
 # The Lancet Infectious Diseases,2023,
 # ISSN 1473-3099,
 # https://doi.org/10.1016/S1473-3099(22)00801-5.
-hybrid_raw <- read.csv("1_inputs/hybrid_immunity.csv")
+hybrid_raw <- read.csv("01_inputs/hybrid_immunity.csv")
 hybrid_raw = hybrid_raw %>% 
   filter(immunity_type == "previous_infection" &
            protection_against == "severe_disease") %>%
@@ -78,9 +78,9 @@ rho_dn = bind_rows(rho_dn,workshop)
 
 ### (2) Shape of introduction ###############################################################################
 if (setting %in% c('SLE')){
-  intro_raw <- read.csv("1_inputs/GISAID_omicron_intro_Africa.csv", header=TRUE)
+  intro_raw <- read.csv("01_inputs/GISAID_omicron_intro_Africa.csv", header=TRUE)
 } else if (setting %in% c('IDN','FJI','PHL','PNG','SLB','TLS')){
-  intro_raw <- read.csv("1_inputs/GISAID_Oceania.csv", header=TRUE)
+  intro_raw <- read.csv("01_inputs/GISAID_Oceania.csv", header=TRUE)
 }
 
 synthetic_strain_shift = data.frame()

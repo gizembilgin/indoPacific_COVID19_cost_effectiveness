@@ -210,7 +210,7 @@ for (ticket in 1:nrow(first_wave_scenarios)){
     FR_prev_beta = prev_beta,
     FR_this_beta = this_beta
   )
-  save(fitted_results, file = paste("1_inputs/fit/start_point_wave_two_",this_setting,"_v_",ticket,"_",Sys.Date(),".Rdata",sep=''))
+  save(fitted_results, file = paste("01_inputs/fit/start_point_wave_two_",this_setting,"_v_",ticket,"_",Sys.Date(),".Rdata",sep=''))
   
 }
 beep()
@@ -374,7 +374,7 @@ fitted_results = list(
   FR_prev_beta = prev_beta,
   FR_this_beta = this_beta
 )
-save(fitted_results, file = paste("1_inputs/fit/start_point_wave_three_",this_setting,"_",Sys.Date(),".Rdata",sep=''))
+save(fitted_results, file = paste("01_inputs/fit/start_point_wave_three_",this_setting,"_",Sys.Date(),".Rdata",sep=''))
 
 beep()
 

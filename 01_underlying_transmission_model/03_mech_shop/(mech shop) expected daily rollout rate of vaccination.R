@@ -1,4 +1,4 @@
-workshop <- read.csv(file = "1_inputs/vaccination/daily-covid-vaccination-doses-per-capita.csv", header=TRUE)
+workshop <- read.csv(file = "01_inputs/vaccination/daily-covid-vaccination-doses-per-capita.csv", header=TRUE)
 colnames(workshop) = c("setting_long","setting","date","daily_percentage_pop")
 
 unique(workshop$setting_long)

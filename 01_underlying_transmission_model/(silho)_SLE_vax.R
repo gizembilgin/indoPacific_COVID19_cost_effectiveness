@@ -77,7 +77,7 @@ for (row in 1:nrow(timing_check)){
 
 ### Load data on vaccine supply in from African CDC Dashboard https://africacdc.org/covid-19-vaccination/ (last update 23/09/2022)
 this_setting = setting
-setting_vaccine <- read.csv("1_inputs/vaccination/vaccine_setting_history.csv",header=TRUE)%>%
+setting_vaccine <- read.csv("01_inputs/vaccination/vaccine_setting_history.csv",header=TRUE)%>%
   filter(setting == this_setting)
 setting_vaccine$last_update = as.Date(setting_vaccine$last_update,format = '%d/%m/%Y')
 setting_vaccine <- setting_vaccine %>% filter( last_update == max(setting_vaccine$last_update))

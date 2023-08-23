@@ -14,7 +14,7 @@ workshop = workshop %>%
 UN_pop_est = workshop %>%
   mutate(AgeGrp = case_when(AgeGrp == "100+" ~ "100", TRUE ~ AgeGrp)) %>%
   mutate(AgeGrp = as.numeric(AgeGrp))
-save(UN_pop_est,file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+save(UN_pop_est,file = "01_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
 
 
 ### (2/3) Life expectancy
@@ -28,7 +28,7 @@ workshop = workshop %>%
   rename(AgeGrp = AgeGrpStart)
 UN_lifeExpect_est = workshop %>%
   mutate(AgeGrp = as.numeric(AgeGrp))
-save(UN_lifeExpect_est,file = "1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata")
+save(UN_lifeExpect_est,file = "01_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata")
 
 
 ### (3/3) ASFR
@@ -41,4 +41,4 @@ workshop = workshop %>%
   mutate(ASFR = ASFR / 1000)
 UN_ASFR_est = workshop %>%
   mutate(AgeGrp = as.numeric(AgeGrp))
-save(UN_ASFR_est,file = "1_inputs/UN_world_population_prospects/UN_ASFR_est.Rdata")
+save(UN_ASFR_est,file = "01_inputs/UN_world_population_prospects/UN_ASFR_est.Rdata")

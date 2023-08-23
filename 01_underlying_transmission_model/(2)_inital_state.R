@@ -139,8 +139,8 @@ if (exists("booster_toggles") == FALSE){booster_toggles = "no"}
 if (length(booster_toggles)>1){
   
   if (booster_toggles$function_name == "booster_prioritised_strategies"){
-    source(paste(getwd(),"/(function)_booster_dose_delivery.R",sep=""))
-    source(paste(getwd(),"/(function)_prioritised_booster_dose_delivery.R",sep=""))
+    source(paste(getwd(),"/04_functions/(function)_booster_dose_delivery.R",sep=""))
+    source(paste(getwd(),"/04_functions/(function)_prioritised_booster_dose_delivery.R",sep=""))
     
     vaccination_history_FINAL =
       booster_strategy_prioritised(
@@ -150,7 +150,7 @@ if (length(booster_toggles)>1){
     rm(booster_strategy_prioritised)
     
   } else if (booster_toggles$function_name == "booster_strategy"){
-    source(paste(getwd(),"/(function)_booster_dose_delivery.R",sep=""))
+    source(paste(getwd(),"/04_functions/(function)_booster_dose_delivery.R",sep=""))
     vaccination_history_FINAL =
       booster_strategy( booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
                         booster_dose_allocation     = booster_toggles$dose_allocation,  # num of doses avaliable
@@ -163,7 +163,7 @@ if (length(booster_toggles)>1){
       )
     rm(booster_strategy)
   } else if (booster_toggles$function_name == "booster_strategy_informed_prior"){
-    source(paste(getwd(),"/(function)_booster_strategy_informed_prior.R",sep=""))
+    source(paste(getwd(),"/04_functions/(function)_booster_strategy_informed_prior.R",sep=""))
     workshop = booster_strategy_informed_prior(booster_strategy_start_date = booster_toggles$start_date,       # start of hypothetical vaccination program
                                      booster_dose_supply        = booster_toggles$dose_supply,      # num of doses avaliable
                                      #booster_rollout_months     = booster_toggles$rollout_months,   # number of months to complete booster program
@@ -321,8 +321,8 @@ if(nrow(check)>1){stop('inital vaccine coverage > 100%')}
 
 
 #1(B/B) Vaccine Effectiveness (VE)
-source(paste(getwd(),"/(function)_VE_waning_distribution.R",sep=""),local=TRUE)
-load( file = '1_inputs/VE_waning_distribution.Rdata')
+source(paste(getwd(),"/04_functions/(function)_VE_waning_distribution.R",sep=""),local=TRUE)
+load( file = '01_inputs/VE_waning_distribution.Rdata')
 VE_waning_distribution = VE_waning_distribution %>%
   filter(waning == waning_toggle_acqusition) %>%
   mutate(outcome = 'any_infection',
@@ -375,8 +375,8 @@ if (fitting == "off"){
 
 
 ###### (2/5) Seroprevalence
-if (file.exists(paste("1_inputs/seroprev_",this_setting,".Rdata",sep='')) == TRUE){
-  load(paste("1_inputs/seroprev_",this_setting,".Rdata",sep=''))
+if (file.exists(paste("01_inputs/seroprev_",this_setting,".Rdata",sep='')) == TRUE){
+  load(paste("01_inputs/seroprev_",this_setting,".Rdata",sep=''))
   seroprev = seroprev %>%
     select(age_group,seroprev)
 } else{
@@ -640,7 +640,7 @@ if (waning_toggle_rho_acqusition == TRUE ){
 if (rho_inital > 1){stop('rho is > 1')}
 
 #LIMITATION WARNING: no age-specific susceptibility to infection is included (no delta data available)
-source(paste(getwd(),"/(function)_calculate_R0_Reff.R",sep=""))
+source(paste(getwd(),"/04_functions/(function)_calculate_R0_Reff.R",sep=""))
 beta = rep(beta_fitted_values$beta_optimised[beta_fitted_values$strain == strain_inital],num_age_groups)
 #________________________________________________________________
 

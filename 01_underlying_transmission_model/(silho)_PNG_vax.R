@@ -3,7 +3,7 @@ this_setting = setting = "PNG"
 
 
 ### LOAD UNICEF’s COVID-19 Market Dashboard
-supply <- read.csv("1_inputs/vaccine_market_UNICEF.csv",header=TRUE) 
+supply <- read.csv("01_inputs/vaccine_market_UNICEF.csv",header=TRUE) 
 supply$delivery_month = as.Date(supply$delivery_month, "%d/%m/%Y")
 supply$vaccine_type[supply$vaccine_type == "Covishield"] = "AstraZeneca" #The Oxford–AstraZeneca COVID‑19 vaccine, sold under the brand names Covishield and Vaxzevria
 supply$vaccine_type[supply$vaccine_type == "Janssen"] = "Johnson & Johnson"
@@ -17,14 +17,14 @@ supply = supply %>%
 
 ### LOAD GOVERNMENT REPORT OF DELIVERED VACCINES
 #total doses delivered by vaccine type
-setting_vaccine <- read.csv("1_inputs/vaccination/vaccine_setting_history.csv",header=TRUE)%>%
+setting_vaccine <- read.csv("01_inputs/vaccination/vaccine_setting_history.csv",header=TRUE)%>%
   filter(setting == this_setting)
 setting_vaccine$last_update = as.Date(setting_vaccine$last_update,format = '%d/%m/%Y')
 setting_vaccine <- setting_vaccine %>% filter( last_update == max(setting_vaccine$last_update)) %>%
   select(vaccine_type,doses)
 
 #total doses delivered by age group floor
-setting_vaccine_dn <- read.csv("1_inputs/vaccination/vaccine_setting_dn.csv",header=TRUE)%>%
+setting_vaccine_dn <- read.csv("01_inputs/vaccination/vaccine_setting_dn.csv",header=TRUE)%>%
   filter(setting == this_setting)
 setting_vaccine_dn$last_update = as.Date(setting_vaccine_dn$last_update,format = '%d/%m/%Y')
 setting_vaccine_dn <- setting_vaccine_dn %>% filter( last_update == max(setting_vaccine_dn$last_update)) %>%
