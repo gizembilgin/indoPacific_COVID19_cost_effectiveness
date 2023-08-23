@@ -1,7 +1,6 @@
-### PLOT
-##Note: run for default booster dose strategy and antiviral strategy, go back to (run)_deterministic_results.R to extract more results
-## make reactive so doesn't reload when different number of param selected (line 74)
-require(ggpubr)
+# This script creates a tornado plot from the determinsitic one-way sensitivity analysis
+require(ggpubr); require(ggtext)
+options(scipen=999) #turn off scientific notation
 
 INPUT_include_setting = c("Papua New Guinea", "Timor-Leste","Fiji","Indonesia")
 INPUT_perspective = "healthcare perspective"
@@ -10,10 +9,10 @@ INPUT_include_antiviral_target_group = "unvaccinated adults"
 INPUT_include_outcomes = "QALYs"
 INPUT_antiviral_type = "molunipiravir"
 INPUT_parameters = c(
-   "Antiviral schedule price ($25-530)",
-   "Antiviral wastage (0-60%)"          ,
-   "Inpatient costs (±50%)"              ,
-   "Discounting rate (0-5%)"              ,
+  "Antiviral schedule price ($25-530)",
+  "Antiviral wastage (0-60%)"          ,
+  "Inpatient costs (±50%)"              ,
+  "Discounting rate (0-5%)"              ,
   "RAT price ($1-5)"                      ,
   "RAT wastage factor (3-12)"              ,
   "Cost per extra LOS (±50%)"               ,
@@ -34,9 +33,9 @@ load(file = "07_shiny/x_results/tornado_result.Rdata")
 tornado_variable_of_interest = paste0("cost_per_",
                                      gsub("QALYs","QALY",INPUT_include_outcomes),
                                      "_averted")
-tornado_result = tornado_result %>%
-  filter(evaluation_level == "incremental") %>%
-  filter(antiviral_type == INPUT_antiviral_type  &
+tornado_result <- tornado_result %>%
+  filter(evaluation_level == "incremental" &
+           antiviral_type == INPUT_antiviral_type  &
            variable == tornado_variable_of_interest &
            setting %in% INPUT_include_setting &
            perspective %in% INPUT_perspective &
@@ -46,7 +45,7 @@ tornado_result = tornado_result %>%
 plot_list = list()
 
 for (this_setting in unique(tornado_result$setting)){
-  to_plot = tornado_result %>%
+  to_plot <- tornado_result %>%
     filter(setting == this_setting &   
             label %in% INPUT_parameters)
   
@@ -85,17 +84,17 @@ for (this_setting in unique(tornado_result$setting)){
            xmax=as.numeric(label)+width/2)
   
   # create plot
-  require(ggtext)
-  options(scipen=999) #turn off scientific notation
-  
-  plot_list[[length(plot_list)+1]] = ggplot() + 
+  plot_list[[length(plot_list)+1]] <- ggplot() + 
     geom_rect(data = df_2,
-              aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
+              aes(ymax=ymax, 
+                  ymin=ymin, 
+                  xmax=xmax, 
+                  xmin=xmin, 
+                  fill=paste(direction,"estimate"))) + 
     geom_hline(yintercept = base.value) +
     theme_bw() + 
     #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-    theme(axis.title.y=element_blank(), legend.position = "bottom",
-          legend.title = element_blank())  +
+    theme(axis.title.y=element_blank(), legend.position = "bottom", legend.title = element_blank())  +
     ylab("Cost per QALY averted (2022 USD)") +
     scale_x_continuous(breaks = c(1:length(order_parameters)), 
                        labels = order_parameters) +
@@ -110,13 +109,7 @@ for (this_setting in unique(tornado_result$setting)){
 }
 
 ### Arrange plots based no number of settings
-if (length(plot_list) == 1){
-  plot_list
-} else if (length(plot_list) == 2){
-  ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
-} else if (length(plot_list) == 3){
-  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
-} else if (length(plot_list) == 4){
-  ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)
-}
-
+if (length(plot_list) == 1) plot_list
+if (length(plot_list) == 2) ggarrange(plot_list[[1]],plot_list[[2]], ncol = 1, nrow = 2, common.legend = TRUE)
+if (length(plot_list) == 3) ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]], ncol = 2, nrow = 2, common.legend = TRUE)
+if (length(plot_list) == 4) ggarrange(plot_list[[1]],plot_list[[2]],plot_list[[3]],plot_list[[4]], ncol = 2, nrow = 2, common.legend = TRUE)

@@ -1,4 +1,6 @@
-#Require result (CommandDeck_result_long) with variables outcome, setting, perspective, discounting_rate, antiviral_cost_scenario, booster_vax_scenario,antiviral_type,netCost,count_outcomes
+# This script creates a plot of incremental benefits against incremental costs
+# for the 1000 probabilistic model runs.
+
 require(ggpubr);options(scipen = 1000)
 
 INPUT_plot_name = "long_COVID" # options: static_plot, reduced_static_plot (hosted R Shiny), long_COVID (SM S4.7)
@@ -22,8 +24,11 @@ INPUT_include_outcomes = "QALYs"
 # INPUT_antiviral_type = c("nirmatrelvir_ritonavir")
 # INPUT_include_antiviral_target_group = c("adults with comorbidities","all adults","unvaccinated adults")
 
-### load data
+
+
+### load data _____________________________________________________________
 if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
+  
   if (INPUT_plot_name == "static_plot"){
     this_pattern = "CommandDeck_result_long_1_*"
   } else if (INPUT_plot_name == "reduced_static_plot"){
@@ -48,13 +53,14 @@ if (INPUT_plot_name %in% c("static_plot","reduced_static_plot")){
   } else{
     stop(paste("Can't find results",this_setting))
   }
+  
 } else if (INPUT_plot_name == "long_COVID"){
   load(file = "07_shiny/x_results/long_COVID_results.Rdata")
   CommandDeck_result_long = long_COVID_results
 }
 
 
-### load functions
+### load functions _____________________________________________________________
 subset_data_to_selected <- function(df){
   df %>%
     filter(
@@ -71,36 +77,47 @@ consolidate_plot_list <- function(plot_list){
   if(length(plot_list) == 1){row_num = 1; col_num = 1}
   if(length(plot_list) == 2){row_num = 1; col_num = 2}
   if(length(plot_list) > 2) {row_num = 2; col_num = 2}
-  plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom")
+  plot = ggarrange(plotlist = plot_list, 
+                   ncol = col_num, 
+                   nrow = row_num, 
+                   common.legend = TRUE, 
+                   legend = "bottom")
 }
+
 apply_plot_dimensions <- function(df,aes_x,aes_y,count_plot_dimensions){
   
   if (length(count_plot_dimensions) == 0){
     this_plot = ggplot(df) +
       geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]))
-  } else if (length(count_plot_dimensions) == 1){
     
+  } else if (length(count_plot_dimensions) == 1){
     if(INPUT_plot_name == "long_COVID"){
       df = df %>%
         mutate("{count_plot_dimensions[1]}" := paste0(.data[[count_plot_dimensions[1]]]," (long COVID ",long_COVID,")"))
     }
     this_plot = ggplot(df) +
-      geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]))) +
+      geom_point(aes(x = .data[[aes_x]],
+                     y=.data[[aes_y]],
+                     color=as.factor(.data[[count_plot_dimensions[1]]]))) +
       labs(color = paste(gsub("_"," ", count_plot_dimensions[1])))
+  
   } else if (length(count_plot_dimensions) == 2){
     this_plot = ggplot(df) +
-      geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]),shape = as.factor(.data[[count_plot_dimensions[2]]]))) +
+      geom_point(aes(x = .data[[aes_x]],
+                     y=.data[[aes_y]],
+                     color=as.factor(.data[[count_plot_dimensions[1]]]),
+                     shape = as.factor(.data[[count_plot_dimensions[2]]]))) +
       labs(color = paste(gsub("_"," ", count_plot_dimensions[1])),
            shape = paste(gsub("_"," ", count_plot_dimensions[2])))
   }
-  if (length(INPUT_perspective)>1){
-    this_plot = this_plot + 
-      facet_grid(perspective ~.) 
-  }
+  
+  if (length(INPUT_perspective)>1) this_plot = this_plot + facet_grid(perspective ~.) 
   
   return(this_plot)
 }
+
 count_plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario){
+
   plot_dimension_vector = c()
   
   #if(INPUT_plot_name == "long_COVID"){plot_dimension_vector = c(plot_dimension_vector,"long_COVID")}
@@ -109,19 +126,18 @@ count_plot_dimensions <- function(INPUT_antiviral_cost_scenario,INPUT_discountin
   if (length(INPUT_include_antiviral_target_group)>1){plot_dimension_vector = c(plot_dimension_vector,"antiviral_target_group")}
   if (length(INPUT_include_booster_vax_scenario)>1)  {plot_dimension_vector = c(plot_dimension_vector,"booster_vax_scenario")}
   
-  plot_dimension_vector
+  return (plot_dimension_vector)
 }
 
-### Subset results
-to_plot =  subset_data_to_selected(CommandDeck_result_long)%>%
+
+### Create plots _____________________________________________________________
+to_plot <- subset_data_to_selected(CommandDeck_result_long)%>%
   filter(outcome %in% INPUT_include_outcomes)
 
-
-### Create plots
 plot_list = list()
 for (this_setting in INPUT_include_setting){
-  workshop =  to_plot[to_plot$setting == this_setting,]
-  plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = workshop,
+  workshop <- to_plot[to_plot$setting == this_setting,]
+  plot_list[[length(plot_list)+ 1]] <- apply_plot_dimensions(df = workshop,
                                                             aes_x="netCost",
                                                             aes_y="count_outcomes",
                                                             count_plot_dimensions = count_plot_dimensions(INPUT_antiviral_cost_scenario,INPUT_discounting_rate,INPUT_include_antiviral_target_group,INPUT_include_booster_vax_scenario))  +
@@ -136,20 +152,13 @@ for (this_setting in INPUT_include_setting){
     labs(title = this_setting) +
     guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) + 
     scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
-    # scale_colour_manual(values = c("all adults (catch-up campaign)" = "chocolate1",
-    #                                "all adults" = "chocolate3",
-    #                                "high risk adults" = "orchid3",
-    #                                "high-risk adults (catch-up campaign)" = "orchid1"
-    #                       
-    #                                ))
-
 }
 
 print(consolidate_plot_list(plot_list))
 
 #let's create a table to summarise the impact of long COVID on the cost-effectiveness of booster doses
 if (INPUT_plot_name == "long_COVID"){
-  table_S4_1 = to_plot %>% 
+  table_S4_1 <- to_plot %>% 
     group_by(evaluation_level, perspective, discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,
              antiviral_type,antiviral_target_group,long_COVID,outcome) %>%
     summarise(
@@ -158,83 +167,14 @@ if (INPUT_plot_name == "long_COVID"){
       #expected_healthcareCostAverted = mean(healthcareCostAverted), #long COVID doesn't impact immediate healthcare needs of severe cases
       #expected_productivityLoss = mean(productivityLoss),           #we haven't included any productivity losses associated with long COVID
       #expected_netCost = mean(netCost),
-      expected_count_outcome = mean(count_outcomes),
-              .groups = "keep") %>%
+      expected_count_outcome = mean(count_outcomes), .groups = "keep") %>%
     ungroup() %>%
     #outcomes averted are not influenced by the CEA perspective
     filter(perspective == "healthcare perspective") %>%
-    select(-perspective,-evaluation_level,-antiviral_cost_scenario,-discounting_rate,-antiviral_type,-antiviral_target_group,-outcome) %>%
+    select(-perspective, -evaluation_level, -antiviral_cost_scenario, -discounting_rate, -antiviral_type, -antiviral_target_group, -outcome) %>%
     pivot_wider(values_from = expected_count_outcome,
                 names_from = long_COVID,
                 names_prefix = "long_COVID_") 
   
   write.csv(table_S4_1, "x_results/table_S4.1.csv")
-
 }
-
-
-
-### make catch-up campaign a shape
-# to_plot = to_plot %>%
-#   mutate(
-#     eligible_group = case_when(
-#       booster_vax_scenario %in% c(
-#         "all adults who have previously completed their primary schedule but have not recieved a booster",
-#         "all adults"
-#       ) ~ "all adults",
-#       booster_vax_scenario %in% c(
-#         "high-risk adults who have previously completed their primary schedule but have not recieved a booster",
-#         "high risk adults"
-#       ) ~ "high risk adults"
-#     ),
-#     program_type = case_when(
-#       booster_vax_scenario %in% c(
-#         "all adults who have previously completed their primary schedule but have not recieved a booster",
-#         "high-risk adults who have previously completed their primary schedule but have not recieved a booster"
-#       ) ~ "catchup campaign",
-#       TRUE ~ "standard campaign"
-#     )
-#   )
-# 
-# plot_list = list()
-# for (this_setting in INPUT_include_setting){
-#   
-#   plot_list[[length(plot_list)+ 1]] = ggplot(to_plot[to_plot$setting == this_setting,]) +
-#     geom_point(aes(x = netCost,y=count_outcomes,color=as.factor(eligible_group),shape = as.factor(program_type))) +
-#     labs(color ="eligible group",
-#          shape = "program type") +
-#     ylab(paste(INPUT_include_outcomes,"averted")) +
-#     xlab("incremental cost (2022 USD)") +
-#     theme_bw() +
-#     theme(legend.position="bottom") +
-#     labs(title = this_setting) +
-#     guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) + 
-#     scale_shape_manual(
-#       values = c("catchup campaign" = 1, "standard campaign" = 16)
-#     )
-#   
-# }
-# 
-# print(consolidate_plot_list(plot_list))
-
-
-### try all settings on one axis
-# plot_list = list()
-# for (this_booster_vax_scenario in INPUT_include_booster_vax_scenario){
-#   plot_list[[length(plot_list)+ 1]] = ggplot( to_plot[to_plot$booster_vax_scenario == this_booster_vax_scenario,]) +
-#     geom_point(aes(x = netCost,y=count_outcomes,color=as.factor(setting))) +
-#     ylab(paste(INPUT_include_outcomes,"averted")) +
-#     xlab("incremental cost (2022 USD)") +
-#     theme_bw() +
-#     theme(legend.position="bottom") +
-#     labs(title = this_booster_vax_scenario) +
-#     guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) +
-#     scale_x_continuous(trans = pseudolog10_trans)+
-#     scale_y_continuous(trans=pseudolog10_trans)
-# 
-# }
-# 
-# print(consolidate_plot_list(plot_list))
-#can't log scale since can't log negative numbers
-
-       
