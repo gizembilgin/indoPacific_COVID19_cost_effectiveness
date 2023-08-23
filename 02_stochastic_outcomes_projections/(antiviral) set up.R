@@ -1,6 +1,8 @@
 ### This script runs the primary transmission model for the scenarios of the antiviral paper.
 ### The incidence log and other antiviral model dependencies are then saved.
 
+
+
 ### DEPENDENCIES: nil!
 if (exists("master_toggles")){
   this_risk_group_name = risk_group_name = master_toggles$risk_group_name
@@ -19,16 +21,6 @@ setting = this_setting = substr(setting_beta,1,3)
 time.start.AntiviralSetUp=proc.time()[[3]]
 
 fitting = "off";plotting = "off"
-
-#find latest model run in known dates
-# list_poss_Rdata = list.files(path="1_inputs/fit/",pattern = paste("fitted_results_",setting_beta,"*",sep=""))
-# list_poss_Rdata_details = double()
-# for (i in 1:length(list_poss_Rdata)){
-#   list_poss_Rdata_details = rbind(list_poss_Rdata_details,
-#                                   file.info(paste("1_inputs/fit/",list_poss_Rdata[[i]],sep=''))$mtime)
-# }
-# latest_file = list_poss_Rdata[[which.max(list_poss_Rdata_details)]]
-#date_start = as.Date(file.info(paste("1_inputs/fit/",latest_file,sep=''))$mtime) 
 
 ###KATIE DISCUSSION
 date_start = as.Date('2022-12-31')
@@ -301,7 +293,8 @@ for (ticket in 1:length(queue)){
      RR_estimate  = RR_default = 1.95
    }
  
-   source(paste(getwd(),"/CommandDeck.R",sep=""),local=TRUE)
+   source(paste0(gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model/",getwd()),
+                 "CommandDeck.R"),local=TRUE)
    
    ### CREATE DEPENDENCIES OF ANTIVIRAL FUNCTION (n=4)  #################################################################
    # Recall, dependencies of antiviral function from transmission model (n=5): incidence_log_tidy, severe_outcome_log_tidy, severe_outcome_this_run, reinfection_protection, param_age 
@@ -469,8 +462,11 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
                               ageSpecific_outcomes_without_antivirals = RECORD_ageSpecific_outcomes_without_antivirals)
 
 
-save.image(file = paste(rootpath,"x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
-save(RECORD_antiviral_setup, file = paste(rootpath,"x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+
+save.image(file = paste(gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd()),
+                        "x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+save(RECORD_antiviral_setup, file = paste(gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd())
+                                          ,"x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp

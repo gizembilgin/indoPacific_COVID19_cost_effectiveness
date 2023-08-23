@@ -80,8 +80,9 @@ stochastic_severe_outcomes_application <- function(
   
   ### PART THREE: Final calc ########################################################################   
   #(A)  infection-derived immunity against severe outcomes
-  load(file = '1_inputs/AverageSymptomaticPeriod.Rdata' )
-  load(file = '1_inputs/lengthInfectionDerivedImmunity.Rdata' )
+  rootpath = gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model",getwd())
+  load(file = paste0(rootpath,'/01_inputs/AverageSymptomaticPeriod.Rdata' ))
+  load(file = paste0(rootpath,'/01_inputs/lengthInfectionDerivedImmunity.Rdata' ))
   
   APPLIED_rho_SO_est = data.frame()
   

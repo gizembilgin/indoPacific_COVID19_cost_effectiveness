@@ -1,5 +1,7 @@
 ### This program fits distributions to confidence intervals from literature
 
+rootpath = gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model",getwd())
+
 ### MINIMISE FUNCTIONS #########################################################
 fit_normal <- function(mean,LB,UB){
   
@@ -82,7 +84,7 @@ fit_gamma <- function(mean,LB,UB){
 
 
 ### PART ONE: severe_outcome_age_distribution_RAW ______________________________
-workshop = read.csv('1_inputs/severe_outcome_age_distribution_RAW.csv')
+workshop = read.csv(paste0(rootpath,'/01_inputs/severe_outcome_age_distribution_RAW.csv'))
 
 #remove dodgy 80+ group (see Seedat et al. 2021's discussion)
 workshop = workshop %>% 
@@ -101,7 +103,7 @@ workshop[workshop$agegroup == '0 to 9' & workshop$outcome=='death',] = row_repla
 
 lognorm_param = mapply(fit_lognormal, workshop$mean, workshop$LB, workshop$UB)
 severe_outcome_age_distribution_RAW_v2 = cbind(workshop,t(lognorm_param)) 
-save(severe_outcome_age_distribution_RAW_v2, file = '1_inputs/severe_outcome_age_distribution_RAW_v2.Rdata' )
+save(severe_outcome_age_distribution_RAW_v2, file = paste0(rootpath,'/01_inputs/severe_outcome_age_distribution_RAW_v2.Rdata'))
 
 rm(row_replacement,workshop,lognorm_param)
 
@@ -116,7 +118,7 @@ rm(row_replacement,workshop,lognorm_param)
 
 
 ### PART TWO: severe outcome setting-specific value (severe_outcome_country_level)
-# severe_outcome_country_level <- read.csv('1_inputs/severe_outcome_country_level.csv')
+# severe_outcome_country_level <- read.csv(paste0(rootpath,'/01_inputs/severe_outcome_country_level.csv'))
 # severe_outcome_country_level %>% mutate(diff = (UB-LB)/mean) 
 # Let's  use a uniform distribution because CI so tight (LB == mean and UB == mean for some rows)
 #_______________________________________________________________________________
@@ -125,7 +127,7 @@ rm(row_replacement,workshop,lognorm_param)
 
 ### PART THREE: variant-specific multipliers ___________________________________
 #WT to Delta multiplier
-workshop <- read.csv('1_inputs/severe_outcome_variant_multiplier.csv')
+workshop <- read.csv(paste0(rootpath,'/01_inputs/severe_outcome_variant_multiplier.csv'))
 workshop = workshop %>% filter(variant == 'delta')
 norm_param = mapply(fit_normal, workshop$multiplier, workshop$lower_est, workshop$upper_est)
 delta_multiplier = cbind(workshop,sd = norm_param) 
@@ -136,7 +138,7 @@ plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2]
 plot(density(sampled_value[,3])); mean(sampled_value[,3]); min(sampled_value[,3])
 
 #Delta to Omicron multiplier
-omicron_multiplier <- read.csv('1_inputs/severe_outcome_variant_multiplier_complex.csv') #omicron vs delta
+omicron_multiplier <- read.csv(paste0(rootpath,'/01_inputs/severe_outcome_variant_multiplier_complex.csv')) #omicron vs delta
 workshop = omicron_multiplier
 norm_param = mapply(fit_normal, workshop$multiplier, workshop$lower_est, workshop$upper_est)
 omicron_multiplier = cbind(workshop,sd = norm_param) 
@@ -146,8 +148,8 @@ sampled_value2 =  mapply(runif,10000000,omicron_multiplier$lower_est, omicron_mu
 plot(density(sampled_value[,1]));lines(density(sampled_value2[,1]))
 plot(density(sampled_value[,2]));lines(density(sampled_value2[,2]))
 
-save(delta_multiplier, file = '1_inputs/delta_multiplier.Rdata' )
-save(omicron_multiplier, file = '1_inputs/omicron_multiplier.Rdata' )
+save(delta_multiplier, file = paste0(rootpath,'/01_inputs/delta_multiplier.Rdata'))
+save(omicron_multiplier, file = paste0(rootpath,'/01_inputs/omicron_multiplier.Rdata'))
 #_______________________________________________________________________________
 
 
@@ -156,8 +158,8 @@ save(omicron_multiplier, file = '1_inputs/omicron_multiplier.Rdata' )
 #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
 # who would be subject during the remaining of their lives to the mortality rates of a given period."
 # https://population.un.org/wpp/Download/Standard/Mortality/
-load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
-load(file = "1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata")
+load(file = paste0(rootpath,"/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
+load(file = paste0(rootpath,"/01_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
 YLL_FINAL = UN_lifeExpect_est %>%
   rename(life_expectancy = ex) %>%
   left_join(UN_pop_est, by = c('AgeGrp','ISO3_code')) %>%
@@ -167,7 +169,7 @@ YLL_FINAL = UN_lifeExpect_est %>%
   mutate(group_percent = PopTotal/sum(PopTotal),
          interim = life_expectancy * group_percent) %>%
   summarise(YLL = sum(interim)) 
-save(YLL_FINAL, file = '1_inputs/YLL_FINAL.Rdata' )
+save(YLL_FINAL, file = paste0(rootpath,'/01_inputs/YLL_FINAL.Rdata' ))
 #_______________________________________________________________________________
 
 
@@ -183,13 +185,13 @@ RR_sample = cbind(RR_sample,sd = param_est)
 # sampled_value = mapply(rnorm,10000000,RR_sample$RR, RR_sample$sd)
 # plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
 # plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
-save(RR_sample,file = '1_inputs/RR_sample.Rdata') #VERIFIED 04/11/2022
+save(RR_sample,file = paste0(rootpath,'/01_inputs/RR_sample.Rdata')) #VERIFIED 04/11/2022
 #_______________________________________________________________________________
 
 
 
 ### PART SIX: infection-derived protection against severe outcomes _____________
-rho_SO_sample <- read.csv("1_inputs/hybrid_immunity.csv")
+rho_SO_sample <- read.csv(paste0(rootpath,"/01_inputs/hybrid_immunity.csv"))
 rho_SO_sample = rho_SO_sample %>% 
   filter(immunity_type == "previous_infection" &
            protection_against == "severe_disease") %>%
@@ -203,13 +205,13 @@ rho_SO_sample = cbind(rho_SO_sample,t(param_est))
 sampled_value = mapply(rbeta, 10000000,as.numeric(rho_SO_sample$beta_a), as.numeric(rho_SO_sample$beta_b))
 plot(density(sampled_value[,1])); mean(sampled_value[,1]); min(sampled_value[,1])
 plot(density(sampled_value[,2])); mean(sampled_value[,2]); min(sampled_value[,2])
-save(rho_SO_sample,file = '1_inputs/rho_SO_sample.Rdata') #VERIFIED 04/11/2022
+save(rho_SO_sample,file = paste0(rootpath,"/01_inputs/rho_SO_sample.Rdata")) #VERIFIED 04/11/2022
 #_______________________________________________________________________________
 
 
 
 ### PART SEVEN: raw_VE_point_est (dose 1 and 2) ________________________________
-raw = read.csv("1_inputs/VE_WHO_forest_plot.csv",header=TRUE)
+raw = read.csv(paste0(rootpath,"/01_inputs/VE_WHO_forest_plot.csv"),header=TRUE)
 raw = raw %>% mutate(
   VE = VE/100,
   lower_est = lower_est/100,
@@ -225,7 +227,7 @@ VE_WHO_est = cbind(workshop,sd = norm_param)
 VE_WHO_est = VE_WHO_est %>% select(strain,vaccine_type,primary_if_booster,dose,outcome,actual.measure,reference,sd)
 VE_WHO_est = raw %>% left_join(VE_WHO_est)
 
-save(VE_WHO_est,file = '1_inputs/VE_WHO_est.Rdata')
+save(VE_WHO_est,file = paste0(rootpath,'/01_inputs/VE_WHO_est.Rdata'))
 
 # check
 # sampled_value_beta = mapply(rbeta,100,VE_WHO_est_norm $beta_a, VE_WHO_est_norm$beta_b)
@@ -248,7 +250,7 @@ save(VE_WHO_est,file = '1_inputs/VE_WHO_est.Rdata')
 
 
 ### PART NINE: raw_VE_severe_outcomes (dn to fit) ______________________________
-workshop = read.csv(file = '1_inputs/VE_severe_outcomes.csv',header=TRUE)
+workshop = read.csv(file = paste0(rootpath,'/01_inputs/VE_severe_outcomes.csv'),header=TRUE)
 
 # beta_param = mapply(fit_beta, workshop$VE, workshop$LB, workshop$UB)
 # SO_pt_est_beta = cbind(workshop,t(beta_param))
@@ -257,7 +259,7 @@ norm_param = mapply(fit_normal, workshop$VE, workshop$LB, workshop$UB)
 SO_pt_est_norm = cbind(workshop,sd = norm_param) 
 
 VE_severe_outcomes_waning_pt_est = SO_pt_est_norm
-save(VE_severe_outcomes_waning_pt_est,file = '1_inputs/VE_severe_outcomes_waning_pt_est.Rdata')
+save(VE_severe_outcomes_waning_pt_est,file = paste0(rootpath,'/01_inputs/VE_severe_outcomes_waning_pt_est.Rdata'))
 
 # sampled_value_beta = mapply(rbeta,100000,SO_pt_est_beta $beta_a, SO_pt_est_beta$beta_b)
 # sampled_value_norm = mapply(rnorm,100000,SO_pt_est_norm$VE, SO_pt_est_norm$sd)
@@ -273,10 +275,10 @@ save(VE_severe_outcomes_waning_pt_est,file = '1_inputs/VE_severe_outcomes_waning
 
 
 ### PART TEN: Antiviral effectiveness ________________________________________
-workshop = read.csv('1_inputs/antiviral_effectiveness.csv')
+workshop = read.csv(paste0(rootpath,'/01_inputs/antiviral_effectiveness.csv'))
 beta_param = mapply(fit_beta, workshop$mean, workshop$LB, workshop$UB)
 antiviral_effectiveness = cbind(workshop,t(beta_param)) 
-save(antiviral_effectiveness, file = '1_inputs/antiviral_effectiveness.Rdata' )
+save(antiviral_effectiveness, file = paste0(rootpath,'/01_inputs/antiviral_effectiveness.Rdata'))
 
 rm(workshop,beta_param)
 

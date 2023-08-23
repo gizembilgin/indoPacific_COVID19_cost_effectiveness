@@ -11,7 +11,8 @@ age_group_labels = c('0 to 4','5 to 9','10 to 17','18 to 29','30 to 44','45 to 5
 num_age_groups = J = length(age_group_labels)          
 age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
 
-load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+rootpath = gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model",getwd())
+load(file = paste0(rootpath,'/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata'))
 
 pop_raw <- UN_pop_est %>% 
   filter(ISO3_code %in% settings_to_plot) %>%
@@ -27,7 +28,7 @@ pop_orig = pop_raw %>%
 
 #Step 2: separate into risk groups
 if (risk_group_name %in% c('adults_with_comorbidities')) {
-  workshop <-  read.csv('1_inputs/risk_group_distribution_Clarke_et_al_2020.csv')
+  workshop <-  read.csv(paste0(rootpath,'/01_inputs/risk_group_distribution_Clarke_et_al_2020.csv'))
   workshop = workshop %>%
     filter(age_group_charac != 'all ages') %>%
     filter(country %in% settings_to_plot) %>%
@@ -59,7 +60,7 @@ if (risk_group_name %in% c('adults_with_comorbidities')) {
         rename(age_group = agegroup_MODEL)
       
 } else if (risk_group_name %in% c('pregnant_women')){
-    load(file = "1_inputs/prevalence_pregnancy.Rdata")
+    load(file = paste0(rootpath,'/01_inputs/prevalence_pregnancy.Rdata'))
     risk_dn = prevalence_pregnancy %>%
       filter(country %in% settings_to_plot)
 } else {

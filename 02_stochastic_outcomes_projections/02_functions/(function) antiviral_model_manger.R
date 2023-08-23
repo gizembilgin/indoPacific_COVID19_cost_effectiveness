@@ -36,9 +36,10 @@ antiviral_model_manger <- function(
   booster_start_date = RECORD_antiviral_setup$generic_booster_toggles$start_date
 
   #load functions to be copied into clusters
-  load(file = '1_inputs/antiviral_effectiveness.Rdata' )
-  source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
-  source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
+  rootpath = gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model",getwd())
+  load(file = paste0(rootpath,'/01_inputs/antiviral_effectiveness.Rdata'))
+  source("02_functions/(function) stochastic_severe_outcomes_sampling.R")
+  source("02_functions/(function) stochastic_severe_outcomes_application.R")
   copy_sampling_fx_into_cluster = stochastic_severe_outcomes_sampling
   copy_application_fx_into_cluster = stochastic_severe_outcomes_application
   #____________________________________

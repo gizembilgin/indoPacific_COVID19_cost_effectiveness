@@ -1,8 +1,9 @@
 ### This program includes uncertainty in our estimates of VE by sampling from each VE estimate confidence interval using a uniform distribution
 
-load(file = '1_inputs/VE_WHO_est.Rdata')
-load(file = '1_inputs/VE_severe_outcomes_waning_pt_est.Rdata')
-load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+rootpath = gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model",getwd())
+load(file = paste0(rootpath,'/01_inputs/VE_WHO_est.Rdata'))
+load(file = paste0(rootpath,'/01_inputs/VE_severe_outcomes_waning_pt_est.Rdata'))
+load(file = paste0(rootpath,'/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata'))
 #system.time({stochastic_VE()}) #1.28 sec
 
 stochastic_VE <- function(
@@ -723,7 +724,7 @@ stochastic_VE <- function(
   }
   
   
-  source("3_antiviral_model/(antiviral)(function)_VE_waning_distribution_expander.R",local=TRUE)
+  source("02_functions/(function)_VE_waning_distribution_expander.R",local=TRUE)
   VE_waning_distribution_SO <- VE_waning_distribution_expander(VE_waning_distribution_SO,"severe_disease",booster_combinations)
   VE_waning_distribution_SO <- VE_waning_distribution_expander(VE_waning_distribution_SO,"death",booster_combinations)
   

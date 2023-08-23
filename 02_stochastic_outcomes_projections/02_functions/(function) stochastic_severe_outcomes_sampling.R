@@ -21,17 +21,18 @@ stochastic_severe_outcomes_sampling <- function(
 ){
   
   ##### SETUP
-  load(file = '1_inputs/severe_outcome_age_distribution_RAW_v2.Rdata' )
-  load(file = '1_inputs/delta_multiplier.Rdata' )
-  load(file = '1_inputs/omicron_multiplier.Rdata' )
-  load(file = '1_inputs/YLL_FINAL.Rdata' )
-  load(file = '1_inputs/RR_sample.Rdata')
-  load(file = '1_inputs/rho_SO_sample.Rdata') 
-  load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
-  load(file = "1_inputs/severe_outcome_country_level.Rdata")
+  rootpath = gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model",getwd())
+  load(file = paste0(rootpath,'/01_inputs/severe_outcome_age_distribution_RAW_v2.Rdata' ))
+  load(file = paste0(rootpath,'/01_inputs/delta_multiplier.Rdata' ))
+  load(file = paste0(rootpath,'/01_inputs/omicron_multiplier.Rdata' ))
+  load(file = paste0(rootpath,'/01_inputs/YLL_FINAL.Rdata' ))
+  load(file = paste0(rootpath,'/01_inputs/RR_sample.Rdata'))
+  load(file = paste0(rootpath,'/01_inputs/rho_SO_sample.Rdata')) 
+  load(file = paste0(rootpath,'/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata'))
+  load(file = paste0(rootpath,'/01_inputs/severe_outcome_country_level.Rdata'))
 
-  source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_VE.R",sep=""))
-  source(paste(getwd(),"/(function)_VE_time_step.R",sep=""))
+  source("02_functions/(function) stochastic_VE.R")
+  source(paste(rootpath,"/04_functions/(function)_VE_time_step.R",sep=""))
   
   risk_group_labels = c('general_public',risk_group_name)
   
@@ -221,10 +222,10 @@ stochastic_severe_outcomes_sampling <- function(
       
       #create pop distribution of high-risk group
       if (risk_group_name %in% c('adults_with_comorbidities')) {
-        risk_dn = read.csv('1_inputs/risk_group_distribution.csv')
+        risk_dn = read.csv(paste0(rootpath,'/01_inputs/risk_group_distribution.csv'))
         risk_dn = risk_dn[risk_dn$risk_group_name == risk_group_name, ]
       } else if (risk_group_name %in% c('pregnant_women')) {
-        load(file = "1_inputs/prevalence_pregnancy.Rdata")
+        load(file = paste0(rootpath,'/01_inputs/prevalence_pregnancy.Rdata'))
         risk_dn = prevalence_pregnancy %>%
           filter(country == setting)
       } else {

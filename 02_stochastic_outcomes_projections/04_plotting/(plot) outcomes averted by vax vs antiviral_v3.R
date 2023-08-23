@@ -30,7 +30,7 @@ if (plot_name ==  "figure_S3_2_1"){
 ### LOAD
 MASTER_RECORD_antiviral_model_simulations = data.frame()
 
-rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
+rootpath = rootpath = gsub("GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd())
 for (r in 1:length(risk_groups_to_plot)){
   this_risk_group = risk_groups_to_plot[r]
   for (i in 1:length(settings_to_plot)){
@@ -300,7 +300,7 @@ if (plot_name %in% c("figure_2",
   workshop_this_plot$vax_scenario_short = factor(workshop_this_plot$vax_scenario_short, levels = LIST_vax_scenarios)
   
   #join on to UN_pop_est by country
-  load(file = "1_inputs/UN_world_population_prospects/UN_pop_est.Rdata")
+  load(file = paste0(rootpath,'/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata'))
   UN_total_pop <- UN_pop_est %>% 
     rename(country = ISO3_code) %>%
     filter(country %in% unique(workshop_this_plot$country)) %>%

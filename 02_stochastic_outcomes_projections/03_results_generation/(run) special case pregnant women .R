@@ -12,12 +12,12 @@ library(foreach)
 
 #dependencies -> nil!
 #rm(list=ls())
-rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
+rootpath = rootpath = gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd())
 
-source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) antiviral_model_manger.R",sep=""))
-source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) antiviral_model_worker.R",sep=""))
-source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_sampling.R",sep=""))
-source(paste(getwd(),"/3_antiviral_model/(antiviral)(function) stochastic_severe_outcomes_application.R",sep=""))
+source("02_functions/(function) antiviral_model_manger.R")
+source("02_functions/(function) antiviral_model_worker.R")
+source("02_functions/(function) stochastic_severe_outcomes_sampling.R")
+source("02_functions/(function) stochastic_severe_outcomes_application.R")
 copy_function_into_cluster = antiviral_model_worker
 RECORD_antiviral_model_simulations = data.frame()
 #____________________________________________________________________________
