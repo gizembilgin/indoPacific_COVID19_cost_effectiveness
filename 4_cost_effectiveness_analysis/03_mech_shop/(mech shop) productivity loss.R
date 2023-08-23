@@ -1,10 +1,13 @@
-#### Productivity lossesare a combination of days off work due to illness and premature death
-#### To save model run_time we have pre-calculated and saved productivity losses by outcome for discounting rates 0-10% using 1% increments
+#### This script creates productivity_loss_reference_df.Rdata - age-specific 
+#### estimates of productivity losses per mild, severe, critical, fatal episode 
+#### of COVID-19. Productivity losses are a combination of days off work due to 
+#### illness and premature death. To save model run_time we have pre-calculated 
+#### and saved productivity losses by outcome for discounting rates 0-10%.
 
 discounting_rate_list = seq(0,0.1,by = 0.01)
-age_groups_num = c(0,4,9,17,29,44,59,69,110)
-age_group_labels = c("0 to 4","5 to 9","10 to 17","18 to 29","30 to 44","45 to 59","60 to 69","70 to 100")
-LIST_CEA_settings = c("PNG","TLS","FJI","IDN")
+age_groups_num <- c(0,4,9,17,29,44,59,69,110)
+age_group_labels <- c("0 to 4","5 to 9","10 to 17","18 to 29","30 to 44","45 to 59","60 to 69","70 to 100")
+LIST_CEA_settings <- c("PNG","TLS","FJI","IDN")
 
 
 ####  Importing key datasets ###################################################
@@ -15,7 +18,7 @@ annual_output_per_worker_RAW <- read.csv("02_inputs/Output per worker (GDP const
 age_specific_return_to_work_RAW <- read.csv("02_inputs/age_specific_return_to_work.csv",header=TRUE)
 return_to_work_RAW <- read.csv("02_inputs/return_to_work.csv",header=TRUE)
 
-UN_lifeExpect_est = UN_lifeExpect_est %>%
+UN_lifeExpect_est <- UN_lifeExpect_est %>%
   rename(life_expectancy = ex,
          age = AgeGrp,
          setting = ISO3_code) %>%
@@ -53,7 +56,7 @@ labour_force_participation <- labour_force_participation_RAW %>%
 #Translate to model age groups
 underlying_age_grouping <- c(15,24,54,64,110)
 
-pop_RAW =  UN_pop_est   %>%
+pop_RAW <- UN_pop_est   %>%
   rename(age = AgeGrp,
          setting = ISO3_code) %>%
   select(setting,age,PopTotal) %>%
@@ -64,7 +67,7 @@ pop_RAW =  UN_pop_est   %>%
   group_by(agegroup_MODEL,setting) %>%
   mutate(model_group_percent = PopTotal/sum(PopTotal)) 
 
-labour_force_participation = pop_RAW %>% 
+labour_force_participation <- pop_RAW %>% 
   left_join(labour_force_participation,by = join_by(setting, agegroup_RAW)) %>% 
   mutate(interim = model_group_percent * value) %>%
   group_by(setting,agegroup_MODEL) %>%
@@ -86,7 +89,7 @@ annual_output_per_worker <- annual_output_per_worker_RAW %>%
   select(-indicator.label, -source.label, - ref_area.label)
 
 #Inflate to 2022 USD!
-adj_factor = workshop_IMF %>% 
+adj_factor <- workshop_IMF %>% 
   filter(year %in% c(2015,2022) & variable == "GDP_deflator") %>%
   mutate(year = paste("year",year,sep="_")) %>%
   pivot_wider(names_from = year,values_from = value) %>%
@@ -94,7 +97,7 @@ adj_factor = workshop_IMF %>%
   select(ISO3_code,adj) %>%
   rename(setting = ISO3_code)
 
-annual_output_per_worker = annual_output_per_worker %>% 
+annual_output_per_worker <- annual_output_per_worker %>% 
   left_join(adj_factor, by = "setting") %>%
   mutate(value = obs_value * adj) %>%
   select(setting,value) 
@@ -102,7 +105,7 @@ annual_output_per_worker = annual_output_per_worker %>%
 
 
 #Hence, expected daily earnings (2022 USD)
-expected_daily_earnings = annual_output_per_worker %>%
+expected_daily_earnings <- annual_output_per_worker %>%
   mutate(daily_earning = value/365) %>%
   select(-value) %>%
   left_join(labour_force_participation, by = "setting") %>%
@@ -117,7 +120,7 @@ save(expected_daily_earnings, file = "02_inputs/expected_daily_earnings.Rdata")
 
 #### Productivity loss due to premature death ##################################
 # I.e., expected remaining lifetime earnings at each age
-remaining_lifetime_earnings = expected_daily_earnings %>%
+remaining_lifetime_earnings <- expected_daily_earnings %>%
   left_join(UN_lifeExpect_est, by = c("age_group","setting")) %>%
   mutate(yearly_earning = daily_earning * 365)
 
@@ -126,12 +129,12 @@ for (this_setting in unique(remaining_lifetime_earnings$setting)){ # for each se
   for (this_age in unique(remaining_lifetime_earnings$age)){ # for each age
     
     #how many years of life left at this age in this setting?
-    this_workshop = remaining_lifetime_earnings %>% 
+    this_workshop <- remaining_lifetime_earnings %>% 
       filter(setting == this_setting &
                age == this_age)
     
     #create window of ages we are looking at
-    this_workshop_window = remaining_lifetime_earnings %>% 
+    this_workshop_window <- remaining_lifetime_earnings %>% 
       filter(setting == this_setting &
                age > this_age &
                age <= (this_age + ceiling(this_workshop$life_expectancy))) 
@@ -139,7 +142,7 @@ for (this_setting in unique(remaining_lifetime_earnings$setting)){ # for each se
     for (toggle_discounting_rate in discounting_rate_list){
       #apply discounting (if>0) to each subsequent year of life
       if (toggle_discounting_rate>0){
-        this_workshop_window = this_workshop_window %>%
+        this_workshop_window <- this_workshop_window %>%
           mutate(discounting_year = age - this_age,
                  discounting_multiplier = 1/(1+toggle_discounting_rate)^discounting_year,
                  yearly_earning = yearly_earning*discounting_multiplier) %>%
@@ -148,24 +151,24 @@ for (this_setting in unique(remaining_lifetime_earnings$setting)){ # for each se
       }
       
       #integer component of years of life left, e.g., if life expectancy 68.8 years -> 68 years
-      full = this_workshop_window %>% filter(setting == this_setting &
+      full <- this_workshop_window %>% filter(setting == this_setting &
                                                age > this_age &
                                                age <= (this_age + floor(this_workshop$life_expectancy)))
       full = sum(full$yearly_earning)
       
       #decimal component of years of life left, e.g., if life expectancy 68.8 years -> 0.8 years
-      partial = this_workshop_window %>% filter(setting == this_setting &
+      partial <- this_workshop_window %>% filter(setting == this_setting &
                                                   age == (this_age + ceiling(this_workshop$life_expectancy)))
       partial = partial$yearly_earning*(this_workshop$life_expectancy - floor(this_workshop$life_expectancy))
       if(length(partial) == 0){partial = 0}
       
-      this_row = data.frame(age=this_age,
+      this_row <- data.frame(age=this_age,
                             setting = this_setting,
                             discounting_rate = toggle_discounting_rate,
                             life_expectancy = this_workshop$life_expectancy,
                             remaining_lifetime_earnings = full+partial)
       
-      workshop = rbind(workshop,this_row)
+      workshop <- rbind(workshop,this_row)
     }
   }
 }
@@ -175,7 +178,7 @@ ggplot(workshop) +
 
 
 # calculate remaining_lifetime_earnings per model age group weighted by pop dn
-remaining_lifetime_earnings = workshop %>%
+remaining_lifetime_earnings <- workshop %>%
   left_join(pop_RAW, by = c("age","setting")) %>%
   select(setting,discounting_rate,age,remaining_lifetime_earnings,PopTotal) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
@@ -237,7 +240,7 @@ age_specific_RTW <- age_specific_return_to_work_RAW %>%
 #NB: algebra is hand written in 1_derivation folder pdf dated 2023/06/29
 underlying_age_grouping <- c(18,25,35,45,55,64)
 
-pop_RAW =  UN_pop_est   %>%
+pop_RAW <- UN_pop_est   %>%
   rename(age = AgeGrp) %>%
   select(ISO3_code,age,PopTotal) %>%
   filter(ISO3_code %in% LIST_CEA_settings) %>%
@@ -249,14 +252,14 @@ pop_RAW =  UN_pop_est   %>%
   group_by(ISO3_code,agegroup_RAW) %>%
   summarise(raw_group_percent = sum(raw_group_percent))
 
-workshop =  pop_RAW %>% 
+workshop <- pop_RAW %>% 
   left_join(age_specific_RTW,by = join_by(agegroup_RAW),
             relationship = "many-to-many") %>% #applying same relationship to multiple settings
   mutate(interim = raw_group_percent * ratio) %>%
   group_by(ISO3_code,admission) %>%
   summarise(ratio_pop = 1/sum(interim))
 
-age_specific_RTW = age_specific_RTW %>%
+age_specific_RTW <- age_specific_RTW %>%
   left_join(workshop, by = c("admission"),
             relationship = "many-to-many") %>% #applying same relationship to multiple settings
   mutate(ratio_pop = ratio_pop * ratio) %>%
@@ -273,7 +276,7 @@ age_specific_RTW = age_specific_RTW %>%
 #   summarise(one = sum(interim))
 
 #Translate to model age groups
-pop_RAW =  UN_pop_est   %>%
+pop_RAW <- UN_pop_est   %>%
   rename(age = AgeGrp) %>%
   select(ISO3_code,age,PopTotal) %>%
   filter(ISO3_code %in% LIST_CEA_settings ) %>%
@@ -284,7 +287,7 @@ pop_RAW =  UN_pop_est   %>%
   group_by(agegroup_MODEL,ISO3_code) %>%
   mutate(model_group_percent = PopTotal/sum(PopTotal))
 
-workshop = pop_RAW %>% 
+workshop <- pop_RAW %>% 
   left_join(age_specific_RTW,by = join_by(agegroup_RAW,ISO3_code),
             relationship = "many-to-many") %>% #applying same relationship to multiple settings
   mutate(interim = model_group_percent * ratio_pop) %>%
@@ -300,17 +303,17 @@ ggplot(workshop[workshop$ISO3_code == "IDN",]) +
 #Add missing age groups (although likely not included since low workforce participation)
 for (this_age_group in age_group_labels[!(age_group_labels %in% unique(workshop$age_group))]){
   if (this_age_group %in% c("0 to 4",    "5 to 9" ,   "10 to 17" )){
-    rows = workshop %>%
+    rows <- workshop %>%
       filter(age_group == "18 to 29") %>%
       mutate(age_group = this_age_group)
   } else{
-    rows = workshop %>%
+    rows <- workshop %>%
       filter(age_group ==  "60 to 69") %>%
       mutate(age_group = this_age_group)
   }
-  workshop = rbind(workshop,rows)
+  workshop <- rbind(workshop,rows)
 }
-age_specific_RTW = workshop
+age_specific_RTW <- workshop
 #_______________________________________________________________________________
 
 
@@ -323,7 +326,7 @@ age_specific_RTW = workshop
 
 
 ### Step three: bring together two sources of data on return to work
-return_to_work_COLLATED = return_to_work_RAW %>%
+return_to_work_COLLATED <- return_to_work_RAW %>%
   mutate(admission = case_when(
     patient_type  %in% c("ICU","inpatient") ~ "Y",
     patient_type == "not admitted" ~ "N"
@@ -345,7 +348,7 @@ return_to_work_COLLATED = return_to_work_RAW %>%
 
 ### Step four: calculate productivity loss in the first year
 # Essentially integrating under the curve of % not returning to work * expected daily earnings at that age
-first_year_loss = return_to_work_COLLATED %>%
+first_year_loss <- return_to_work_COLLATED %>%
   select(setting,age_group,patient_type,weeks,not_returning)  %>%
   left_join(expected_daily_earnings, by = c("age_group","setting")) %>%
   mutate(interim = case_when(
@@ -359,7 +362,7 @@ first_year_loss = return_to_work_COLLATED %>%
 #   xlim(5,24) +
 #   ylim(0,150)
 
-first_year_loss = first_year_loss %>%
+first_year_loss <- first_year_loss %>%
   group_by(setting,age_group,patient_type) %>%
   summarise(first_year = sum(interim))
 # ggplot(first_year_loss) + 
@@ -369,7 +372,7 @@ first_year_loss = first_year_loss %>%
 
 
 ### Step five: calculate loss in subsequent years of life
-expected_yearly_earnings = expected_daily_earnings %>%
+expected_yearly_earnings <- expected_daily_earnings %>%
   left_join(UN_lifeExpect_est, by = c("age_group","setting")) %>%
   mutate(yearly_earning = daily_earning * 365)
 
@@ -380,24 +383,24 @@ for (this_setting in unique(expected_yearly_earnings$setting)){
     this_age_group = unique(UN_lifeExpect_est$age_group[UN_lifeExpect_est$age == this_age])
     
     #how many years of life left at this age in this setting?
-    this_workshop = expected_yearly_earnings %>% 
+    this_workshop <- expected_yearly_earnings %>% 
       filter(setting == this_setting &
                age == this_age)
     
     #what proportion will 'never' return to work at this age?
-    this_RTW = return_to_work_COLLATED %>%
+    this_RTW <- return_to_work_COLLATED %>%
       filter(setting == this_setting &
                weeks == max(return_to_work_COLLATED$weeks) &
                age_group == this_age_group) %>%
       select(setting,patient_type,not_returning)
     
     #create window of ages we are looking at
-    this_workshop_window = expected_yearly_earnings %>% 
+    this_workshop_window <- expected_yearly_earnings %>% 
       filter(setting == this_setting &
                age > this_age &
                age <= (this_age + ceiling(this_workshop$life_expectancy))) 
     
-    this_workshop_window = this_workshop_window %>%
+    this_workshop_window <- this_workshop_window %>%
       left_join(this_RTW, by = "setting",
                 relationship = "many-to-many") %>% # many to many as many outcomes (ICU, inpatient, not admitted)
       mutate(yearly_earning = yearly_earning * not_returning)
@@ -405,31 +408,31 @@ for (this_setting in unique(expected_yearly_earnings$setting)){
     for (toggle_discounting_rate in discounting_rate_list){
       #apply discounting (if>0) to each subsequent year of life
       if (toggle_discounting_rate>0){
-        this_workshop_window_2 = this_workshop_window %>%
+        this_workshop_window_2 <- this_workshop_window %>%
           mutate(discounting_year = age - this_age,
                  discounting_multiplier = 1/(1+toggle_discounting_rate)^discounting_year,
                  yearly_earning = yearly_earning*discounting_multiplier) %>%
           select(-discounting_year,-discounting_multiplier)
         
       } else{
-        this_workshop_window_2 = this_workshop_window 
+        this_workshop_window_2 <- this_workshop_window 
       }
       
       #integer component of years of life left, e.g., if life expectancy 68.8 years -> 68 years
-      full = this_workshop_window_2 %>% filter(setting == this_setting &
+      full <- this_workshop_window_2 %>% filter(setting == this_setting &
                                                age > this_age &
                                                age <= (this_age + floor(this_workshop$life_expectancy))) %>%
         group_by(patient_type) %>%
         summarise(full = sum(yearly_earning)) 
       
       #decimal component of years of life left, e.g., if life expectancy 68.8 years -> 0.8 years
-      partial = this_workshop_window_2 %>% filter(setting == this_setting &
+      partial <- this_workshop_window_2 %>% filter(setting == this_setting &
                                                   age == (this_age + ceiling(this_workshop$life_expectancy)))%>%
         group_by(patient_type) %>%
         mutate(partial = yearly_earning*(this_workshop$life_expectancy - floor(this_workshop$life_expectancy)))  %>%
         select(patient_type,age,setting,life_expectancy,partial)
       if (nrow(partial) == length(unique(return_to_work_RAW$patient_type)) ){
-        this_row = full %>%
+        this_row <- full %>%
           left_join(partial, by = c("patient_type")) %>%
           mutate(productivity_lost = full+partial,
                  discounting_rate = toggle_discounting_rate,
@@ -437,7 +440,7 @@ for (this_setting in unique(expected_yearly_earnings$setting)){
                  setting = this_setting) %>%
           select(-full,-partial)
       } else if (nrow(partial) == 0){
-        this_row = full  %>%
+        this_row <- full  %>%
           mutate(productivity_lost = full,
                  discounting_rate = toggle_discounting_rate,
                  age = this_age,
@@ -445,13 +448,13 @@ for (this_setting in unique(expected_yearly_earnings$setting)){
           select(-full)
       }
 
-      workshop = bind_rows(workshop,this_row)
+      workshop <- bind_rows(workshop,this_row)
     }
   }
 }
 
 # calculate remaining_lifetime_earnings per model age group weighted by pop dn
-pop_RAW =  UN_pop_est   %>%
+pop_RAW <- UN_pop_est   %>%
   rename(age = AgeGrp) %>%
   select(ISO3_code,age,PopTotal) %>%
   filter(ISO3_code %in% unique(labour_force_participation$setting)) %>%
@@ -461,7 +464,7 @@ pop_RAW =  UN_pop_est   %>%
   mutate(model_group_percent = PopTotal/sum(PopTotal)) %>%
   rename(setting = ISO3_code)
 
-productivity_lost = workshop %>%
+productivity_lost <- workshop %>%
   left_join(pop_RAW, by = c("age","setting")) %>%
   select(setting,age,discounting_rate,patient_type,productivity_lost,PopTotal) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
@@ -490,16 +493,15 @@ productivity_lost = workshop %>%
 
 
 
-
 #### Combine and save dataset
 # colnames(remaining_lifetime_earnings)
 # colnames(productivity_lost)
 
-remaining_lifetime_earnings = remaining_lifetime_earnings %>%
+remaining_lifetime_earnings <- remaining_lifetime_earnings %>%
   rename(productivity_loss = remaining_lifetime_earnings) %>%
   mutate(outcome = "death")
 
-productivity_lost = productivity_lost %>%
+productivity_lost <- productivity_lost %>%
   rename(productivity_loss = productivity_lost,
          outcome = patient_type) %>%
   #translating outcomes in this way to account for lower access to care in the Pacific/SE Asia compared to Denmark
@@ -509,10 +511,10 @@ productivity_lost = productivity_lost %>%
     outcome == "not admitted" ~ "mild"
     ))
 
-productivity_loss_reference_df = bind_rows(remaining_lifetime_earnings,productivity_lost)
+productivity_loss_reference_df <- bind_rows(remaining_lifetime_earnings,productivity_lost)
 save(productivity_loss_reference_df, file = "02_inputs/productivity_loss_reference_df.Rdata")
 
-to_plot = productivity_loss_reference_df %>%
+to_plot <- productivity_loss_reference_df %>%
   filter(setting == "IDN"
          #& outcome != "death"
          )
@@ -521,10 +523,8 @@ ggplot(to_plot[to_plot$discounting_rate %in% c(0,0.03,0.05),]) +
   geom_col(aes(x=age_group,y=productivity_loss,fill=as.factor(discounting_rate)),position = "dodge") +
   facet_grid(outcome ~.)
 
-print = productivity_loss_reference_df %>% 
+print <- productivity_loss_reference_df %>% 
   filter(discounting_rate %in% c(0,0.03,0.05)) %>%
   pivot_wider(names_from = setting,values_from = productivity_loss)
 write.csv(print, file = "x_results/Table_S2.csv")
 ################################################################################
-
-

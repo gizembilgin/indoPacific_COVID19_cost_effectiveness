@@ -1,29 +1,30 @@
+### This script creates QALY_estimates.Rdata - age-specific estimates of QALYs lost per mild, severe, critical, fatal episode of COVID-19
 
 discounting_rate_list = seq(0,0.1,by = 0.01)
+age_groups_num <- c(0,4,9,17,29,44,59,69,110)
+age_group_labels <- c("0 to 4","5 to 9","10 to 17","18 to 29","30 to 44","45 to 59","60 to 69","70 to 100")
 setting_list = c("FJI","IDN","PNG","TLS")
 
 
 ### PART ONE: loading QALY estimates############################################
 ## non-fatal QALYS 
-#Step One: load population distribution
+# Step One: load population distribution by age
 load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
 
 pop_orig <- UN_pop_est %>% 
-  rename(country_long = Location,
-         population = PopTotal,
-         population_female = PopFemale,
+  rename(population = PopTotal,
          age = AgeGrp) %>%
   filter(ISO3_code %in% setting_list)
 rm(UN_pop_est)
 #_______________________________________________________________________________
 
-#Step Two: load non-fatal QALYs by severity and age
+# Step Two: load non-fatal QALYs by severity and age
 raw <- read.csv("02_inputs/age_severity_specific_QALYs.csv",header=TRUE) 
 #ggplot(raw) + geom_line(aes(x=age,y=QALYs)) + facet_grid(severity ~ ., scale = "free_y")
 #_______________________________________________________________________________
 
-#Step Three: calculate QALYs per model age group weighted by pop dn
-QALYs_nonFatal = raw %>%
+# Step Three: calculate QALYs per model age group weighted by pop distribution
+QALYs_nonFatal <- raw %>%
   left_join(pop_orig, by = c("age"), relationship = "many-to-many") %>%
   select(severity,ISO3_code,age,QALYs,population) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
@@ -36,13 +37,13 @@ QALYs_nonFatal = raw %>%
 
 
 ## fatal QALYS ###########################################################
-#Step One: load life expectancy at age X
+# Step One: load life expectancy at age X
 #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
 # who would be subject during the remaining of their lives to the mortality rates of a given period."
 # https://population.un.org/wpp/Download/Standard/Mortality/
 load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
 
-UN_lifeExpect_est = UN_lifeExpect_est %>%
+UN_lifeExpect_est <- UN_lifeExpect_est %>%
   rename(life_expectancy = ex,
          age = AgeGrp)
 
@@ -50,10 +51,10 @@ UN_lifeExpect_est = UN_lifeExpect_est %>%
 #   geom_point(aes(x=age,y=life_expectancy,color=as.factor(ISO3_code)),position="dodge")
 #_______________________________________________________________________________
 
-#Step Two: convert life expectancy to QALYs using HRQoL estimates
+# Step Two: convert life expectancy to QALYs using HRQoL estimates
 raw <- read.csv("02_inputs/age_specific_HRQoL_v2.csv",header=TRUE) 
 
-HRQoL = raw %>%
+HRQoL <- raw %>%
   left_join(UN_lifeExpect_est, by = c("age")) %>%
   select(ISO3_code,age,HRQoL,life_expectancy) %>%
   filter(ISO3_code %in% setting_list)
@@ -63,11 +64,11 @@ for (this_setting in unique(HRQoL$ISO3_code)){ # for each setting
   for (this_age in unique(HRQoL$age)){ # for each age
     
     #how many years of life left at this age in this setting?
-    this_workshop = HRQoL %>% filter(ISO3_code == this_setting &
+    this_workshop <- HRQoL %>% filter(ISO3_code == this_setting &
                                        age == this_age)
     
     #create window of ages we are looking at
-    this_workshop_window = HRQoL %>% 
+    this_workshop_window <- HRQoL %>% 
       filter(ISO3_code == this_setting &
                age > this_age &
                age <= (this_age + ceiling(this_workshop$life_expectancy))) 
@@ -75,7 +76,7 @@ for (this_setting in unique(HRQoL$ISO3_code)){ # for each setting
     for (toggle_discounting_rate in discounting_rate_list){
       #apply discounting (if>0) to each subsequent year of life
       if (toggle_discounting_rate>0){
-        this_workshop_window = this_workshop_window %>%
+        this_workshop_window <- this_workshop_window %>%
           mutate(discounting_year = age - this_age,
                  discounting_multiplier = 1/(1+toggle_discounting_rate)^discounting_year,
                  HRQoL = HRQoL*discounting_multiplier) %>%
@@ -84,24 +85,24 @@ for (this_setting in unique(HRQoL$ISO3_code)){ # for each setting
       }
       
       #integer component of years of life left, e.g., if life expectancy 68.8 years -> 68 years
-      full = this_workshop_window %>% filter(ISO3_code == this_setting &
+      full <- this_workshop_window %>% filter(ISO3_code == this_setting &
                                                age > this_age &
                                                age <= (this_age + floor(this_workshop$life_expectancy)))
       full = sum(full$HRQoL)
       
       #decimal component of years of life left, e.g., if life expectancy 68.8 years -> 0.8 years
-      partial = this_workshop_window %>% filter(ISO3_code == this_setting &
+      partial <- this_workshop_window %>% filter(ISO3_code == this_setting &
                                                   age == (this_age + ceiling(this_workshop$life_expectancy)))
       partial = partial$HRQoL*(this_workshop$life_expectancy - floor(this_workshop$life_expectancy))
       if(length(partial) == 0){partial = 0}
       
-      this_row = data.frame(age=this_age,
+      this_row <- data.frame(age=this_age,
                             ISO3_code = this_setting,
                             discounting_rate = toggle_discounting_rate,
                             life_expectancy = this_workshop$life_expectancy,
                             QALY = full+partial)
       
-      workshop = rbind(workshop,this_row)
+      workshop <- rbind(workshop,this_row)
     }
   }
 }
@@ -112,8 +113,8 @@ ggplot(workshop[workshop$discounting_rate %in% c(0,0.03,0.05),]) +
 #_______________________________________________________________________________
 
 
-#Step Three: calculate YLL per model age group weighted by pop dn
-QALYs_fatal = workshop %>%
+# Step Three: calculate YLL per model age group weighted by pop dn
+QALYs_fatal <- workshop %>%
   left_join(pop_orig, by = c("age","ISO3_code")) %>%
   select(ISO3_code,discounting_rate,age,QALY,population) %>%
   mutate(age_group = cut(age,breaks = age_groups_num, include.lowest = T,labels = age_group_labels)) %>%
@@ -132,19 +133,18 @@ prevalence_postSixMonths = 0.027
 prevalence_upToSixMonths = 0.457
 longCOVID_disability_weight = 0.051
 
-QALYs_longCOVID = QALYs_fatal %>%
+QALYs_longCOVID <- QALYs_fatal %>%
   #for ongoing long COVID use fatal QALY estimates of YLL weighted by HRQoL and discounted in future years
-  mutate(QALYs = QALYs * prevalence_postSixMonths*longCOVID_disability_weight) %>%
-  mutate(severity = "total_cases") %>% #ASSUMPTION: all cases of COVID-19 can develop long COVID
-  #for short-term long COVID
-  mutate(QALYs = QALYs + prevalence_upToSixMonths*longCOVID_disability_weight*0.5)
+  mutate(QALYs = QALYs * prevalence_postSixMonths*longCOVID_disability_weight,
+         severity = "total_cases", #ASSUMPTION: all cases of COVID-19 can develop long COVID
+         QALYs = QALYs + prevalence_upToSixMonths*longCOVID_disability_weight*0.5)
 
-QALY_estimates = rbind(QALYs_nonFatal,QALYs_fatal,QALYs_longCOVID) 
+QALY_estimates <- rbind(QALYs_nonFatal,QALYs_fatal,QALYs_longCOVID) 
 #_______________________________________________________________________________
 
 
 ## bring together QALYS ######################################################
-QALY_estimates = QALY_estimates %>%
+QALY_estimates <- QALY_estimates %>%
   rename(setting = ISO3_code) %>%
   mutate(outcome = case_when(
     severity == "critical" ~ "critical_disease",
