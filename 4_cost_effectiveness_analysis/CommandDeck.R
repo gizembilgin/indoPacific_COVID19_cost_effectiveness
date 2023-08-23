@@ -58,22 +58,20 @@ if (length(CommandDeck_CONTROLS)>0){
   
   TORNADO_PLOT_OVERRIDE              = CommandDeck_CONTROLS
   
-  if("LIST_perspectives" %in% names(CommandDeck_CONTROLS))         {LIST_perspectives                 = CommandDeck_CONTROLS$LIST_perspectives}
-  if("TOGGLE_uncertainty" %in% names(CommandDeck_CONTROLS))        {TOGGLE_uncertainty                 = CommandDeck_CONTROLS$TOGGLE_uncertainty}
-  if("TOGGLE_numberOfRuns" %in% names(CommandDeck_CONTROLS))       {TOGGLE_numberOfRuns                = CommandDeck_CONTROLS$TOGGLE_numberOfRuns}  
-  if("TOGGLE_clusterNumber" %in% names(CommandDeck_CONTROLS))      {TOGGLE_clusterNumber               = CommandDeck_CONTROLS$TOGGLE_clusterNumber}
-  if("LIST_discounting_rate" %in% names(CommandDeck_CONTROLS))     {LIST_discounting_rate            = CommandDeck_CONTROLS$LIST_discounting_rate}
-  if("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))          {TOGGLE_longCOVID                   = CommandDeck_CONTROLS$TOGGLE_longCOVID}
-  if("LIST_antiviral_cost_scenario" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_cost_scenario = CommandDeck_CONTROLS$LIST_antiviral_cost_scenario}
+  if("TOGGLE_uncertainty" %in% names(CommandDeck_CONTROLS))         TOGGLE_uncertainty                 = CommandDeck_CONTROLS$TOGGLE_uncertainty
+  if("TOGGLE_numberOfRuns" %in% names(CommandDeck_CONTROLS))        TOGGLE_numberOfRuns                = CommandDeck_CONTROLS$TOGGLE_numberOfRuns  
+  if("TOGGLE_clusterNumber" %in% names(CommandDeck_CONTROLS))       TOGGLE_clusterNumber               = CommandDeck_CONTROLS$TOGGLE_clusterNumber
+  if("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))           TOGGLE_longCOVID                   = CommandDeck_CONTROLS$TOGGLE_longCOVID
+  if("DECISION_include_net" %in% names(CommandDeck_CONTROLS))       DECISION_include_net               = CommandDeck_CONTROLS$DECISION_include_net
+  if("DECISION_sampling_strategy" %in% names(CommandDeck_CONTROLS)) DECISION_sampling_strategy         = CommandDeck_CONTROLS$DECISION_sampling_strategy
+  if("LIST_perspectives" %in% names(CommandDeck_CONTROLS))          LIST_perspectives                  = CommandDeck_CONTROLS$LIST_perspectives
+  if("LIST_discounting_rate" %in% names(CommandDeck_CONTROLS))      LIST_discounting_rate              = CommandDeck_CONTROLS$LIST_discounting_rate
+  if("LIST_CEA_settings" %in% names(CommandDeck_CONTROLS))          LIST_CEA_settings                  = CommandDeck_CONTROLS$LIST_CEA_settings
+  if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)) LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios
+  if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)) LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups
+  if("LIST_antiviral_types" %in% names(CommandDeck_CONTROLS))       LIST_antiviral_types               = CommandDeck_CONTROLS$LIST_antiviral_types
+  if("LIST_antiviral_cost_scenario" %in% names(CommandDeck_CONTROLS)) LIST_antiviral_cost_scenario     = CommandDeck_CONTROLS$LIST_antiviral_cost_scenario
   
-  if("DECISION_include_net" %in% names(CommandDeck_CONTROLS))      {DECISION_include_net               = CommandDeck_CONTROLS$DECISION_include_net}
-  if("DECISION_sampling_strategy" %in% names(CommandDeck_CONTROLS)){DECISION_sampling_strategy         = CommandDeck_CONTROLS$DECISION_sampling_strategy}
-  
-  if("LIST_CEA_settings" %in% names(CommandDeck_CONTROLS))         {LIST_CEA_settings                  = CommandDeck_CONTROLS$LIST_CEA_settings}
-  if("LIST_booster_vax_scenarios" %in% names(CommandDeck_CONTROLS)){LIST_booster_vax_scenarios         = CommandDeck_CONTROLS$LIST_booster_vax_scenarios}
-  if("LIST_antiviral_elig_groups" %in% names(CommandDeck_CONTROLS)){LIST_antiviral_elig_groups         = CommandDeck_CONTROLS$LIST_antiviral_elig_groups}
-  if("LIST_antiviral_types" %in% names(CommandDeck_CONTROLS))      {LIST_antiviral_types               = CommandDeck_CONTROLS$LIST_antiviral_types}
-
 }
 if (TOGGLE_uncertainty == "fixed"){TOGGLE_numberOfRuns = 1;TOGGLE_clusterNumber = 1}
 ################################################################################
@@ -112,77 +110,20 @@ system.time({
     
   }
 })
-#t = 102.11/99.80  seconds for 10 runs of societal/healthcare ; NB: using one cluster and antiviral model also running at the same time
-#32 minutes per setting for 100 runs
-#i.e., 3 hours per settings without parallel running
-parallel::stopCluster(CLUSTER)
 
-# normality_tracker = data.frame()
-# if (TOGGLE_numberOfRuns>10){
-#   for (this_setting in unique(CommandDeck_result_long$setting)){
-#     for (this_antiviral_type in unique(CommandDeck_result_long$antiviral_type)){
-#       for (this_antiviral_target_group in unique(CommandDeck_result_long$antiviral_target_group)){
-#         for (this_booster_scenario in unique(CommandDeck_result_long$booster_vax_scenario)){
-#           for (this_antiviral_cost_scenario in unique(CommandDeck_result_long$antiviral_cost_scenario)){
-#             if (!(this_booster_scenario == "no booster dose" & this_antiviral_type == "no antiviral")){
-#               check_normality_df = CommandDeck_result_long %>%
-#                 filter(setting == this_setting &
-#                          antiviral_type == this_antiviral_type &
-#                          booster_vax_scenario == this_booster_scenario &
-#                          antiviral_cost_scenario == this_antiviral_cost_scenario &
-#                          antiviral_target_group == this_antiviral_target_group &
-#                          discounting_rate == unique(CommandDeck_result_long$discounting_rate)[1] &
-#                          evaluation_level == "incremental" &
-#                          perspective == unique(CommandDeck_result_long$perspective)[[1]])
-#               this_row = data.frame(setting = this_setting,
-#                                     antiviral_type = this_antiviral_type,
-#                                     booster_vax_scenario = this_booster_scenario,
-#                                     antiviral_target_group = this_antiviral_target_group,
-#                                     antiviral_cost_scenario = this_antiviral_cost_scenario,
-#                                     interventionCost = FALSE,
-#                                     healthcareCostAverted = FALSE,
-#                                     QALYs = FALSE,
-#                                     hosp = FALSE,
-#                                     death = FALSE,
-#                                     productivityLoss = FALSE)
-#               
-#               if (nrow(check_normality_df)>5000){
-#                 #the shapiro.test can only handle up to 5000 values
-#                 check_normality_df = check_normality_df[c(1:5000),] 
-#               }
-#               
-#               if (nrow(check_normality_df)>0){
-#                 if (shapiro.test(check_normality_df$interventionCost)$p.value < 0.05){this_row$interventionCost = TRUE}
-#                 if (shapiro.test(check_normality_df$healthcareCostAverted)$p.value < 0.05){this_row$healthcareCostAverted = TRUE}
-#                 if (shapiro.test(check_normality_df$QALYs)$p.value < 0.05){this_row$QALYs = TRUE}
-#                 if (shapiro.test(check_normality_df$death)$p.value < 0.05){this_row$death = TRUE}
-#                 if("societal" == unique(CommandDeck_result_long$perspective)[[1]]){
-#                   if(shapiro.test(check_normality_df$productivityLoss[check_normality_df$perspective == "societal"])$p.value < 0.05){this_row$productivityLoss = TRUE}
-#                 }
-#                 if(nrow(check_normality_df[check_normality_df$hosp>0,])){
-#                   if (shapiro.test(check_normality_df$hosp)$p.value < 0.05){this_row$hosp = TRUE}
-#                 }
-#               }
-#               normality_tracker = rbind(normality_tracker,this_row)
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
-#On inspection, intervention costs not normal when no booster, hosp not normal when molnupiravir etc. i.e., as expected
+parallel::stopCluster(CLUSTER)
 
 #calculating 'expected' of each
 CommandDeck_result = CommandDeck_result_long %>%
-  mutate(netCost = 
+  mutate(netCost =
            case_when(
-             evaluation_level == "incremental" ~ interventionCost - healthcareCostAverted - productivityLoss , #healthCostAverted and productivityLoss averted but interventioncost spent
+             evaluation_level == "incremental" ~ interventionCost - healthcareCostAverted - productivityLoss ,
+             #healthCostAverted and productivityLoss averted but interventioncost spent
              evaluation_level == "net" ~ healthcareCostAverted + productivityLoss + interventionCost
-             ),
-         cost_per_QALY_averted = netCost/QALYs,
-         cost_per_death_averted = netCost/death,
-         cost_per_hosp_averted = netCost/hosp) %>%
+           ),
+         cost_per_QALY_averted = netCost / QALYs,
+         cost_per_death_averted = netCost / death,
+         cost_per_hosp_averted = netCost / hosp) %>%
   pivot_longer(cols = c("interventionCost", "healthcareCostAverted","productivityLoss", "QALYs", "death","hosp","netCost","cost_per_QALY_averted","cost_per_death_averted","cost_per_hosp_averted"),
                names_to = "variable",
                values_to = "value_raw") %>%
@@ -193,13 +134,15 @@ CommandDeck_result = CommandDeck_result_long %>%
   )) 
 if(TOGGLE_numberOfRuns == 1){
   CommandDeck_result = CommandDeck_result %>%
-    group_by(evaluation_level,perspective,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,variable_type,variable) %>%
+    group_by(evaluation_level, perspective, discounting_rate, setting, booster_vax_scenario,
+             antiviral_cost_scenario, antiviral_type, antiviral_target_group, variable_type, variable) %>%
     summarise(mean = mean(value_raw),
               .groups = "keep"
     )  
 } else{
   CommandDeck_result = CommandDeck_result %>%
-    group_by(evaluation_level,perspective,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,variable_type,variable) %>%
+    group_by(evaluation_level, perspective, discounting_rate, setting, booster_vax_scenario,
+             antiviral_cost_scenario, antiviral_type, antiviral_target_group, variable_type, variable) %>%
     summarise(mean = mean(value_raw),
               sd = sd(value_raw),
               LPI = mean(value_raw)-qt(.975,df=(TOGGLE_numberOfRuns-1))*sd(value_raw)*sqrt(1+(1/TOGGLE_numberOfRuns)),
@@ -256,6 +199,7 @@ CommandDeck_result_long = CommandDeck_result_long %>%
              evaluation_level == "net" ~ healthcareCostAverted + productivityLoss + interventionCost
            ),
          cost_per_outcome_averted = netCost / count_outcomes) %>%
-  select(evaluation_level,perspective,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,
-         interventionCost,healthcareCostAverted,productivityLoss,netCost,
-         outcome,count_outcomes,cost_per_outcome_averted,discounting_rate,run_ID)
+  select(evaluation_level, perspective, discounting_rate, setting, booster_vax_scenario,
+         antiviral_cost_scenario, antiviral_type, antiviral_target_group,
+         interventionCost, healthcareCostAverted, productivityLoss, netCost,
+         outcome, count_outcomes, cost_per_outcome_averted, discounting_rate, run_ID)
