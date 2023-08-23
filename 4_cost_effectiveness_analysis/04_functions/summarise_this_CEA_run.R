@@ -1,51 +1,45 @@
+# This function summarises the result for this complete run of the CEA model
 
+summarise_this_CEA_run <- function(
+    DECISION_include_net,
+    outcomesAvertedEstimation,
+    interventionCost_estimates,
+    healthcareCostEstimation,
+    productivityCosts
+) {
 
-summarise_this_CEA_run <- function(DECISION_include_net,
-                              outcomesAvertedEstimation,
-                            interventionCost_estimates,
-                            healthcareCostEstimation,
-                            productivityCosts)
-{
-  #colnames(outcomesAvertedEstimation$outcomes_averted)
-  #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"   "antiviral_type"     "antiviral_target_group" "count_outcomes" (12/07/2023)
-  #"evaluation_level"       "setting"                "outcome"                "booster_vax_scenario"    "intervention"          "intervention_target_group "count_outcomes" (14/07/2023) 
-  
-  #colnames(interventionCost_estimates) #need to copy for both evaluation_levels
-  #"setting"                   "booster_vax_scenario"      "intervention"              "intervention_target_group" "cost"  
-  
-  #colnames(healthcareCostEstimation$healthcareCosts_averted); colnames(productivityCosts) #both the same!
-  #"evaluation_level" "setting"                   "booster_vax_scenario"      "intervention"              "intervention_target_group" "cost"   
-  
-  
-  
   ### PART ONE: Join all data sets together! ###################################
-  Combined_0 = crossing(interventionCost_estimates,
+  Combined_0 <- crossing(interventionCost_estimates,
                         evaluation_level = unique(outcomesAvertedEstimation$evaluation_level)) 
   rm(interventionCost_estimates)
   if ("net" %in% unique(outcomesAvertedEstimation$evaluation_level)){
-    null_row = crossing(setting = unique(Combined_0$setting),
-                        booster_vax_scenario = "no booster dose",
-                        intervention = "no intervention",
-                        intervention_target_group = NA,
-                        cost = 0,
-                        evaluation_level = "net",
-                        antiviral_cost_scenario = NA)
-    Combined_0 = rbind(Combined_0,null_row)
+    null_row <- crossing(
+      setting = unique(Combined_0$setting),
+      booster_vax_scenario = "no booster dose",
+      intervention = "no intervention",
+      intervention_target_group = NA,
+      cost = 0,
+      evaluation_level = "net",
+      antiviral_cost_scenario = NA
+    )
+    Combined_0 <- rbind(Combined_0,null_row)
   }
-  Combined_0 = Combined_0%>%
+  
+  Combined_0 <- Combined_0%>%
     rename(interventionCost = cost) %>%
     left_join(healthcareCostEstimation, by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group)) %>%
     rename(healthcareCostAverted = cost) %>%
     left_join(outcomesAvertedEstimation,by = join_by(evaluation_level,setting, booster_vax_scenario, intervention, intervention_target_group),
               relationship = "many-to-many") #because of outcomes
   rm(outcomesAvertedEstimation,healthcareCostEstimation)
+  
   if (nrow(productivityCosts)>0){
-    Combined_0 = Combined_0 %>%
+    Combined_0 <- Combined_0 %>%
       left_join(productivityCosts, by = join_by(evaluation_level,discounting_rate,setting, booster_vax_scenario, intervention, intervention_target_group)) %>%
       rename(productivityLoss = cost)
     rm(productivityCosts)
   } else{
-    Combined_0 = Combined_0 %>%
+    Combined_0 <- Combined_0 %>%
       mutate(productivityLoss = 0)
   }
   ##############################################################################
@@ -55,37 +49,39 @@ summarise_this_CEA_run <- function(DECISION_include_net,
   ### PART TWO: Recreate booster-antiviral scenarios ###########################
   if (DECISION_include_net == "N"){
     #NB: the incremental effect of booster doses and antiviral scenarios were kept separate in (antiviral) run, let's combine back all combination!  
-    Combined_1 = Combined_0 %>% 
+    Combined_1 <- Combined_0 %>% 
       filter(evaluation_level == "incremental")
     rm(Combined_0)
     
     Combined = data.frame()
     ##vax no antiviral
-    this_row = Combined_1 %>% 
+    this_row <- Combined_1 %>% 
       filter(intervention == "booster dose 2023-03-01") %>%
       mutate(antiviral_type = "no antiviral",
              antiviral_target_group = NA)  %>%
-      select(evaluation_level,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,
+      select(evaluation_level, discounting_rate, setting, booster_vax_scenario, antiviral_cost_scenario, antiviral_type, antiviral_target_group,
              interventionCost, healthcareCostAverted, productivityLoss,
-             outcome,count_outcomes)
-    Combined = rbind(Combined,this_row)
+             outcome, count_outcomes)
+    Combined <- rbind(Combined,this_row)
     
     ##vax with antiviral
     for (this_antiviral in unique(Combined_1$intervention[Combined_1$intervention != "booster dose 2023-03-01"])){     # cycle through the types of antivirals
       for (this_antiviral_target in unique(Combined_1$intervention_target_group)){                                     # cycle through antiviral target groups
         
         #booster component
-        booster_component =  Combined_1 %>% 
+        booster_component <- Combined_1 %>% 
           filter(intervention %in% c("booster dose 2023-03-01")) %>%
           select(-antiviral_cost_scenario)
-        booster_component = crossing(booster_component,
-                            antiviral_cost_scenario = unique(Combined_1$antiviral_cost_scenario[is.na(Combined_1$antiviral_cost_scenario)==FALSE]))
+        booster_component <- crossing(
+          booster_component,
+          antiviral_cost_scenario = unique(Combined_1$antiviral_cost_scenario[is.na(Combined_1$antiviral_cost_scenario)==FALSE])
+          )
         
-        this_row = Combined_1 %>% 
+        this_row <- Combined_1 %>% 
           filter(intervention %in% this_antiviral) 
-        this_row = rbind(this_row,booster_component) %>%
+        this_row <- rbind(this_row,booster_component) %>%
           filter(intervention_target_group == this_antiviral_target | intervention == "booster dose 2023-03-01") %>%
-          group_by(evaluation_level,discounting_rate,antiviral_cost_scenario,setting,booster_vax_scenario,outcome) %>%
+          group_by(evaluation_level, discounting_rate, antiviral_cost_scenario, setting, booster_vax_scenario, outcome) %>%
           summarise(interventionCost = sum(interventionCost),
                     healthcareCostAverted = sum(healthcareCostAverted),
                     count_outcomes = sum(count_outcomes),
@@ -93,19 +89,19 @@ summarise_this_CEA_run <- function(DECISION_include_net,
                     .groups = "keep") %>%
           mutate(antiviral_type = this_antiviral,
                  antiviral_target_group = this_antiviral_target) %>%
-          select(evaluation_level,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,
-                 interventionCost, healthcareCostAverted,productivityLoss,
-                 outcome,count_outcomes)
-        Combined = rbind(Combined,this_row)
+          select(evaluation_level, discounting_rate, setting, booster_vax_scenario, antiviral_cost_scenario, antiviral_type, antiviral_target_group,
+                 interventionCost, healthcareCostAverted, productivityLoss,
+                 outcome, count_outcomes)
+        Combined <- rbind(Combined,this_row)
       }
     }
     rm(Combined_1,this_row)
     
     #make wider because makes object 60% smaller
-    Combined  = Combined %>% pivot_wider(values_from = "count_outcomes", names_from = "outcome")
+    Combined <- Combined %>% pivot_wider(values_from = "count_outcomes", names_from = "outcome")
     
   } else if (DECISION_include_net == "Y"){
-    Combined = Combined_0 %>%
+    Combined <- Combined_0 %>%
       filter(evaluation_level != "incremental") %>%
       rename(antiviral_type = intervention,
              antiviral_target_group = intervention_target_group) %>%
@@ -125,23 +121,24 @@ summarise_this_CEA_run <- function(DECISION_include_net,
     rm(Combined_0)
     
     #Let's derive incremental from the difference between net scenarios
-    null_row = Combined %>% 
-      filter(booster_vax_scenario == "no booster dose" & antiviral_type == "no antiviral") %>%
+    null_row <- Combined %>% 
+      filter(booster_vax_scenario == "no booster dose" & 
+               antiviral_type == "no antiviral") %>%
       ungroup() %>%
-      select(-booster_vax_scenario,-antiviral_type,-antiviral_target_group,-antiviral_cost_scenario) %>%
+      select(-booster_vax_scenario, -antiviral_type, -antiviral_target_group, -antiviral_cost_scenario) %>%
       rename(baseline = value)
     
-    workshop_incremental = Combined %>%
+    workshop_incremental <- Combined %>%
       rename(net = value) %>%
       left_join(null_row,by = join_by(setting, discounting_rate,evaluation_level, parameter)) %>%
       mutate(incremental_derived = baseline - net) %>%
       ungroup() %>%
       mutate(evaluation_level = "incremental") %>%
       rename(value = incremental_derived) %>%
-      select(-baseline,-net)
+      select(-baseline, -net)
     workshop_incremental$value[workshop_incremental$parameter == "interventionCost"] <- workshop_incremental$value[workshop_incremental$parameter == "interventionCost"] * -1 #expect this to be positive
     
-    Combined = rbind(Combined,workshop_incremental) %>%
+    Combined <- rbind(Combined,workshop_incremental) %>%
       pivot_wider(values_from = "value", names_from = "parameter")
     rm(workshop_incremental,null_row)
   }

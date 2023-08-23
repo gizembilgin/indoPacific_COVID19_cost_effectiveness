@@ -1,5 +1,5 @@
-### This function calculates the productivity losses due to illness and premature mortality 
-### NB: no sampling for this cost category since underlying uncertainty not available for multiple informing data sources
+# This function calculates the productivity losses due to illness and premature mortality 
+# NB: no sampling for this cost category since underlying uncertainty not available for multiple informing data sources
 
 estimate_productivity_costs <- function(
     LIST_CEA_settings,
@@ -7,7 +7,8 @@ estimate_productivity_costs <- function(
     TORNADO_PLOT_OVERRIDE,
     list_discounting_rate = 0.03, 
     this_risk_group = "adults_with_comorbidities"
-){
+) {
+  
   
   ### PART ONE: loading productivity loss estimates#############################
   if (length(list_discounting_rate[!list_discounting_rate %in% seq(0,0.1,by = 0.01)])>0){
@@ -20,12 +21,15 @@ estimate_productivity_costs <- function(
     filter(discounting_rate %in% list_discounting_rate) %>%
     ungroup() 
   rm(productivity_loss_reference_df)
+  
   if (length(TORNADO_PLOT_OVERRIDE)>0){
     if ("productivity_loss_illness" %in% names(TORNADO_PLOT_OVERRIDE)) {
-      productivity_loss_df$productivity_loss[productivity_loss_df$outcome != "death"] = productivity_loss_df$productivity_loss[productivity_loss_df$outcome != "death"] * TORNADO_PLOT_OVERRIDE$productivity_loss_illness
+      productivity_loss_df$productivity_loss[productivity_loss_df$outcome != "death"] = 
+        productivity_loss_df$productivity_loss[productivity_loss_df$outcome != "death"] * TORNADO_PLOT_OVERRIDE$productivity_loss_illness
     }
     if ("productivity_loss_death" %in% names(TORNADO_PLOT_OVERRIDE)) {
-      productivity_loss_df$productivity_loss[productivity_loss_df$outcome == "death"] = productivity_loss_df$productivity_loss[productivity_loss_df$outcome == "death"] * TORNADO_PLOT_OVERRIDE$productivity_loss_death
+      productivity_loss_df$productivity_loss[productivity_loss_df$outcome == "death"] = 
+        productivity_loss_df$productivity_loss[productivity_loss_df$outcome == "death"] * TORNADO_PLOT_OVERRIDE$productivity_loss_death
     }
   }
   ##############################################################################
@@ -56,18 +60,17 @@ estimate_productivity_costs <- function(
            #   outcome == "death" ~ "death",
            #   TRUE ~ "illness")
            ) %>%
-    group_by(evaluation_level,discounting_rate,setting,booster_vax_scenario,intervention,intervention_target_group,productivity_loss_category) %>%
+    group_by(evaluation_level, discounting_rate, setting, booster_vax_scenario, intervention, intervention_target_group, productivity_loss_category) %>%
     summarise(cost = sum(productivity_loss), .groups = "keep")
   ##############################################################################
   
 
   productivity_loss = productivity_loss_breakdown %>%
-    group_by(evaluation_level,discounting_rate,setting,booster_vax_scenario,intervention,intervention_target_group) %>%
+    group_by(evaluation_level, discounting_rate, setting, booster_vax_scenario, intervention, intervention_target_group) %>%
     summarise(cost = sum(cost), .groups = "keep")
   
   result = list(productivity_loss = productivity_loss,
                 productivity_loss_breakdown = productivity_loss_breakdown)  
   
   return(result)
-  #interestingly higher cost due to illness than death!
 }

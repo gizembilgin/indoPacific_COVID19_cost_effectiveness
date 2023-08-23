@@ -1,11 +1,17 @@
+# This function samples a run of the underlying transmission model.
+# The sampled run will contains net outcomes, incremental outcomes averted, and 
+# the number of intervention doses delivered.
 
-sample_transmission_model_runs <- function(LIST_CEA_settings,
-                                          LIST_booster_vax_scenarios,
-                                          LIST_antiviral_elig_groups,
-                                          LIST_antiviral_types,
-                                          sampling_strategy = "empirical_distribution",
-                                          toggle_uncertainty = TOGGLE_uncertainty,
-                                          decision_include_net = DECISION_include_net){
+sample_transmission_model_runs <- function(
+    LIST_CEA_settings,
+    LIST_booster_vax_scenarios,
+    LIST_antiviral_elig_groups,
+    LIST_antiviral_types,
+    sampling_strategy = "empirical_distribution",
+    toggle_uncertainty = TOGGLE_uncertainty,
+    decision_include_net = DECISION_include_net
+) {
+
   
   rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
   MASTER_antiviral_simulations = data.frame()
@@ -29,7 +35,7 @@ sample_transmission_model_runs <- function(LIST_CEA_settings,
       stop(paste("Can't find underlying transmission model results for",this_setting,"with",this_risk_group,"see sample_transmission_model_runs"))
     }
     
-    if (this_setting == "PNG_low_beta"){this_setting = "PNG"}
+    if (this_setting == "PNG_low_beta") this_setting = "PNG"
     
     df_this_setting = RECORD_antiviral_model_simulations %>% mutate(setting = this_setting)
     MASTER_antiviral_simulations = bind_rows(MASTER_antiviral_simulations,df_this_setting)
@@ -62,9 +68,9 @@ sample_transmission_model_runs <- function(LIST_CEA_settings,
   if (nrow(sampled_df) != nrow(MASTER_antiviral_simulations)/100){stop("Can't find 100 underlying transmission model simulations")}
 
   sampled_df = sampled_df %>%
-    filter(vax_scenario %in% LIST_booster_vax_scenarios) %>%
-    filter(antiviral_type %in% LIST_antiviral_types | is.na(antiviral_type)) %>%
-    filter(antiviral_target_group %in% LIST_antiviral_elig_groups | is.na(antiviral_target_group)) %>%
+    filter(vax_scenario %in% LIST_booster_vax_scenarios &
+             antiviral_type %in% LIST_antiviral_types | is.na(antiviral_type) &
+             antiviral_target_group %in% LIST_antiviral_elig_groups | is.na(antiviral_target_group)) %>%
     select(-country,-setting_beta) %>%
     
     #created shorten name to describe booster dose eligibility
@@ -81,7 +87,7 @@ sample_transmission_model_runs <- function(LIST_CEA_settings,
     
     mutate(evaluation_level = 
              case_when(
-               is.na(evaluation_group) ~ "incremental", #is.na() when antiviral_type and antiviral_target_group is.na(),
+               is.na(evaluation_group) ~ "incremental",         #is.na() when antiviral_type and antiviral_target_group is.na(),
                evaluation_group == "pop_level" ~ "incremental", #rename, used to be "pop_level" to distinguish between pop-level and high-risk incremental changes
                TRUE ~ evaluation_group
              )) %>%
@@ -137,4 +143,3 @@ sample_transmission_model_runs <- function(LIST_CEA_settings,
 
   return(sampled_df)
 }
-                                       

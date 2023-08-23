@@ -1,3 +1,4 @@
+# This function estimates intervention costs of implementing each booster dose and oral antiviral program
 
 estimate_intervention_costs <- function(
     LIST_CEA_settings,
@@ -8,7 +9,8 @@ estimate_intervention_costs <- function(
     toggle_uncertainty = TOGGLE_uncertainty,
     fitted_distributions = local_fitted_distributions,
     cutoff_sampling = 1000000 #cutoff number at which we do not sample from the distribution
-    ){
+) {
+  
   
   #NB: we include a wastage factor for RAT tests (i.e., how many RATs needed to led to a dispensation of oral antivirals),
   #     but we include wastage rates for all other components.
@@ -17,9 +19,9 @@ estimate_intervention_costs <- function(
   
   ### PART ONE: load antiviral simulation ######################################
   TRANSLATED_antiviral_simulations = MASTER_antiviral_simulations %>%
-    filter(is.na(age_group) == TRUE) %>%   #select overall value of intervention doses delivered, not age-specific
-    filter(evaluation_level == "incremental") %>% #the incremental number of doses delivered will be the same for "net" and "pop_level"
-    filter(outcome == "death") %>% #ensure one value per simulation, NB: we don't care about the outcome, only the intervention_doses_delivered column
+    filter(is.na(age_group) == TRUE &          #select overall value of intervention doses delivered, not age-specific
+           evaluation_level == "incremental" & #the incremental number of doses delivered will be the same for "net" and "pop_level"
+           outcome == "death") %>% #ensure one value per simulation, NB: we don't care about the outcome, only the intervention_doses_delivered column
     select(setting, booster_vax_scenario, intervention, intervention_target_group,intervention_doses_delivered)
   
   if (nrow(TRANSLATED_antiviral_simulations) != nrow(na.omit(TRANSLATED_antiviral_simulations))) stop("NA introduced in TRANSLATED_antiviral_simulations during estimate_intervention_costs") 
@@ -62,21 +64,22 @@ estimate_intervention_costs <- function(
 
     #use any overrides for tornado plot
     if (length(TORNADO_PLOT_OVERRIDE)>0){
-      if("price_per_boosterDose" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_boosterDose = TORNADO_PLOT_OVERRIDE$price_per_boosterDose}
-      if("wastage_rate_boosterDose" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_boosterDose = TORNADO_PLOT_OVERRIDE$wastage_rate_boosterDose}
-      if("price_per_injectionEquipmentDose" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_injectionEquipmentDose = TORNADO_PLOT_OVERRIDE$price_per_injectionEquipmentDose}
-      if("wastage_rate_injectionEquipment" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_injectionEquipment = TORNADO_PLOT_OVERRIDE$wastage_rate_injectionEquipment}
-      if("vax_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){operational_cost = TORNADO_PLOT_OVERRIDE$vax_operational_cost}
+      if("price_per_boosterDose" %in% names(TORNADO_PLOT_OVERRIDE))            price_per_boosterDose            = TORNADO_PLOT_OVERRIDE$price_per_boosterDose
+      if("wastage_rate_boosterDose" %in% names(TORNADO_PLOT_OVERRIDE))         wastage_rate_boosterDose         = TORNADO_PLOT_OVERRIDE$wastage_rate_boosterDose
+      if("price_per_injectionEquipmentDose" %in% names(TORNADO_PLOT_OVERRIDE)) price_per_injectionEquipmentDose = TORNADO_PLOT_OVERRIDE$price_per_injectionEquipmentDose
+      if("wastage_rate_injectionEquipment" %in% names(TORNADO_PLOT_OVERRIDE))  wastage_rate_injectionEquipment  = TORNADO_PLOT_OVERRIDE$wastage_rate_injectionEquipment
+      if("vax_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE))             operational_cost                 = TORNADO_PLOT_OVERRIDE$vax_operational_cost
     }
     
     #calculate!
-    static_costs = price_per_boosterDose*(1/(1-wastage_rate_boosterDose)) +
+    static_costs = 
+      price_per_boosterDose*(1/(1-wastage_rate_boosterDose)) +
       price_per_injectionEquipmentDose*(1/(1-wastage_rate_injectionEquipment))
     
     vax_estimates = TRANSLATED_antiviral_simulations  %>%
       filter(intervention == "booster dose 2023-03-01" & setting == this_setting) %>%
       mutate(cost = intervention_doses_delivered * (operational_cost + static_costs)) %>%
-      select(setting,booster_vax_scenario,intervention,intervention_target_group,cost)
+      select(setting, booster_vax_scenario, intervention, intervention_target_group, cost)
     
     interventionCost_estimates = bind_rows(interventionCost_estimates,vax_estimates); rm(vax_estimates)
     #___________________________________________________________________________
@@ -97,18 +100,18 @@ estimate_intervention_costs <- function(
       filter(parameter == "outpatient_visit_cost" & setting == this_setting)
     
     antiviral_estimates = TRANSLATED_antiviral_simulations  %>%
-      filter(setting == this_setting) %>%
-      filter(intervention != "booster dose 2023-03-01") %>%
+      filter(setting == this_setting &
+               intervention != "booster dose 2023-03-01") %>%
       mutate(operational_cost = 0)
     
     if (toggle_uncertainty == "rand"){
       for (row_num in 1:nrow(antiviral_estimates)){
         if (antiviral_estimates$intervention_doses_delivered[row_num]<cutoff_sampling){
-          this_sample = data.frame(est = rlnorm (antiviral_estimates$intervention_doses_delivered[row_num],meanlog = op_fitted_distributions$param1, sdlog = op_fitted_distributions$param2)) %>%
-            mutate(est = case_when(
-              est <0 ~ 0,
-              TRUE ~ est
-            ))
+          this_sample = data.frame(est = rlnorm (antiviral_estimates$intervention_doses_delivered[row_num],
+                                                 meanlog = op_fitted_distributions$param1, 
+                                                 sdlog = op_fitted_distributions$param2)) %>%
+            mutate(est = case_when(est < 0 ~ 0,
+                                   TRUE ~ est))
           antiviral_estimates$operational_cost[row_num] = sum(this_sample$est)
           rm(this_sample)
         } else{
@@ -132,19 +135,20 @@ estimate_intervention_costs <- function(
         }
       #use any overrides for tornado plot
       if (length(TORNADO_PLOT_OVERRIDE)>0){
-        if("price_per_antiviralDose" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_antiviralDose = TORNADO_PLOT_OVERRIDE$price_per_antiviralDose}
-        if("wastage_rate_antiviralSchedule" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_rate_antiviralSchedule = TORNADO_PLOT_OVERRIDE$wastage_rate_antiviralSchedule}
-        if("price_per_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){price_per_RAT = TORNADO_PLOT_OVERRIDE$price_per_RAT}
-        if("wastage_factor_RAT" %in% names(TORNADO_PLOT_OVERRIDE)){wastage_factor_RAT = TORNADO_PLOT_OVERRIDE$wastage_factor_RAT}
-        if("antiviral_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE)){antiviral_estimates$operational_cost = antiviral_estimates$operational_cost * TORNADO_PLOT_OVERRIDE$antiviral_operational_cost}
+        if("price_per_antiviralDose" %in% names(TORNADO_PLOT_OVERRIDE))        price_per_antiviralDose        = TORNADO_PLOT_OVERRIDE$price_per_antiviralDose
+        if("wastage_rate_antiviralSchedule" %in% names(TORNADO_PLOT_OVERRIDE)) wastage_rate_antiviralSchedule = TORNADO_PLOT_OVERRIDE$wastage_rate_antiviralSchedule
+        if("price_per_RAT" %in% names(TORNADO_PLOT_OVERRIDE))                  price_per_RAT                  = TORNADO_PLOT_OVERRIDE$price_per_RAT
+        if("wastage_factor_RAT" %in% names(TORNADO_PLOT_OVERRIDE))             wastage_factor_RAT             = TORNADO_PLOT_OVERRIDE$wastage_factor_RAT
+        if("antiviral_operational_cost" %in% names(TORNADO_PLOT_OVERRIDE))     antiviral_estimates$operational_cost = antiviral_estimates$operational_cost * TORNADO_PLOT_OVERRIDE$antiviral_operational_cost
       }
       
       #calculate!
-      this_static_cost = price_per_antiviralDose*(1/(1-wastage_rate_antiviralSchedule)) +
+      this_static_cost = 
+        price_per_antiviralDose*(1/(1-wastage_rate_antiviralSchedule)) +
         price_per_RAT*wastage_factor_RAT
       this_static_cost = data.frame(static_cost = this_static_cost,
                                 antiviral_cost_scenario = this_antiviral_cost_scenario)
-      static_costs = rbind(static_costs,this_static_cost); rm(this_static_cost)
+      static_costs = rbind(static_costs, this_static_cost); rm(this_static_cost)
     }
 
     
@@ -152,7 +156,7 @@ estimate_intervention_costs <- function(
                                    antiviral_cost_scenario = LIST_antiviral_cost_scenario) %>%
       left_join(static_costs, by = "antiviral_cost_scenario") %>%
       mutate(cost = operational_cost + intervention_doses_delivered * static_cost) %>%
-      select(setting,antiviral_cost_scenario,booster_vax_scenario,intervention,intervention_target_group,cost)
+      select(setting, antiviral_cost_scenario, booster_vax_scenario, intervention, intervention_target_group, cost)
     
     interventionCost_estimates = bind_rows(interventionCost_estimates,antiviral_estimates); rm(antiviral_estimates)
     #___________________________________________________________________________
