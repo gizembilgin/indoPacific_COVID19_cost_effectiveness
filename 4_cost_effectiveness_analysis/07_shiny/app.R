@@ -1,8 +1,8 @@
-require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(wesanderson);require(ggtext); require(tidyverse)
-require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
+require(beepr); require(ggplot2); require(gridExtra); require(ggpubr); require(wesanderson);require(ggtext) 
+require(tidyverse); require(shiny); require(shinyWidgets); require(reactlog); require(waiter)
 #library(rsconnect); rsconnect::deployApp(paste0(getwd(),"/07_shiny/"), appName = "indoPacific_COVID19_costEffectivenessAnalysis"); beep()
 options(scipen = 1000) #turn off scientific notation
-rm(list = ls())
+#rm(list = ls())
 
 
 ##### CONFIGURE CHOICES ########################################################
@@ -76,18 +76,20 @@ ui <- fluidPage(
                               choices = list("Probabilistic sensitivity analysis" = "probab", 
                                              "Deterministic sensitivity analysis" = "det"), 
                               selected = "probab"),
-                  checkboxGroupInput("INPUT_include_setting","Settings to include:",
+                  checkboxGroupInput(inputId = "INPUT_include_setting",
+                                     label = "Settings to include:",
                                      choices = CHOICES$setting,
                                      selected = CHOICES$setting),
                   checkboxGroupButtons(inputId = "INPUT_perspective",
                                     label = "Perspective(s):", 
                                     choices = CHOICES$perspective,
                                     selected = "healthcare perspective"),
-                  radioGroupButtons("INPUT_antiviral_type",
+                  radioGroupButtons(inputId = "INPUT_antiviral_type",
                                label = "Antiviral type:",
                                choices = CHOICES$antiviral_type,
                                selected = "nirmatrelvir_ritonavir"),
-                  radioGroupButtons("INPUT_include_outcomes","Outcome:",
+                  radioGroupButtons(inputId = "INPUT_include_outcomes",
+                                    label = "Outcome:",
                                     choices = CHOICES$outcome,
                                     selected = "QALYs"), 
                   uiOutput("booster_strategy"),
@@ -150,10 +152,10 @@ ui <- fluidPage(
                
                fluidRow(
                  conditionalPanel(condition = "input.tabset != 'ICER table' || input.INPUT_select_sentitivity_analysis == 'det'",
-                                  column(1,numericInputIcon(inputId = "plot_height", label = "Plot height:", min = 100, max = 2000, value = 800,step =100)),
-                                  column(1,numericInputIcon(inputId = "plot_width", label = "Plot width:", min = 100, max = 2000, value = 1200,step =100))
+                                  column(1,numericInputIcon(inputId = "plot_height", label = "Plot height:", min = 100, max = 2000, value = 800, step =100)),
+                                  column(1,numericInputIcon(inputId = "plot_width", label = "Plot width:", min = 100, max = 2000, value = 1200, step =100))
                                   ),
-                 column(10,downloadButton("download"),style = "margin-top: 25px;")
+                 column(10, downloadButton("download"), style = "margin-top: 25px;")
                  ),
                
                conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 'probab'",
@@ -170,7 +172,7 @@ ui <- fluidPage(
                                 tabsetPanel(tabPanel(
                                   "Tornado plot",
                                   plotOutput("OUTPUT_tornado_plot", height = "800px")
-                                ))),
+                                ))), 
     )
   )
 )
@@ -221,7 +223,7 @@ server <- function(input, output, session) {
       #load CommandDeck_result_long
       load(file = paste0("x_results/CommandDeck_result_long_1_",time_of_result)) 
       load(file = paste0("x_results/CommandDeck_result_long_2_",time_of_result)) 
-      CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
+      CommandDeck_result_long <- rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
       
       #load CEAC_dataframe
       load(file = paste0("x_results/CEAC_dataframe_",time_of_result))
@@ -229,7 +231,6 @@ server <- function(input, output, session) {
       load(file = paste0("x_results/CEAC_dataframe_reduced_",time_of_result))
       load(file = paste0("x_results/CommandDeck_result_long_reduced_",time_of_result))
     }
-
 
   } else{
     stop("Can't find underlying simulation to load!")
@@ -290,29 +291,39 @@ server <- function(input, output, session) {
     }
     
     if (length(count_plot_dimensions) == 0){
-      this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]]),size = this_point_size)
+      this_plot <- ggplot(df) +
+        geom_point(aes(x = .data[[aes_x]],
+                       y=.data[[aes_y]]),
+                   size = this_point_size)
     } else if (length(count_plot_dimensions) == 1){
-      this_plot = ggplot(df) +
-        geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]])),size = this_point_size) +
+      this_plot <- ggplot(df) +
+        geom_point(aes(x = .data[[aes_x]],
+                       y=.data[[aes_y]],
+                       color=as.factor(.data[[count_plot_dimensions[1]]])),
+                   size = this_point_size) +
         labs(color = paste(gsub("_"," ", count_plot_dimensions[1])))
       
     } else if (length(count_plot_dimensions) == 2){
       if (aes_x == "WTP"){
-        this_plot = ggplot(df) +
-          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]))) +
+        this_plot <- ggplot(df) +
+          geom_point(aes(x = .data[[aes_x]],
+                         y=.data[[aes_y]],
+                         color=as.factor(.data[[count_plot_dimensions[1]]]))) +
           labs(color = paste(gsub("_"," ", count_plot_dimensions[1]))) +
           facet_grid(.data[[count_plot_dimensions[2]]]~.)
       } else{
-        this_plot = ggplot(df) +
-          geom_point(aes(x = .data[[aes_x]],y=.data[[aes_y]],color=as.factor(.data[[count_plot_dimensions[1]]]),shape = as.factor(.data[[count_plot_dimensions[2]]]))) +
+        this_plot <- ggplot(df) +
+          geom_point(aes(x = .data[[aes_x]],
+                         y=.data[[aes_y]],
+                         color=as.factor(.data[[count_plot_dimensions[1]]]),
+                         shape = as.factor(.data[[count_plot_dimensions[2]]]))) +
           labs(color = paste(gsub("_"," ", count_plot_dimensions[1])),
                shape = paste(gsub("_"," ", count_plot_dimensions[2])))
       }
     }
     
     if (length(input$INPUT_perspective)>1){
-      this_plot = this_plot + 
+      this_plot <- this_plot + 
         facet_grid(perspective ~.) 
     }
     if (length(count_plot_dimensions) != 0){
@@ -348,22 +359,24 @@ server <- function(input, output, session) {
     if(input$INPUT_select_sentitivity_analysis == "probab"){
       checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
                          choices = CHOICES$booster_vax_scenario,
-                         selected = c( "all adults","high risk adults", "no booster")) 
+                         selected = c("all adults","high risk adults", "no booster")) 
     } else{
       radioButtons("INPUT_include_booster_vax_scenario","Booster strategies to include:",
                          choices = CHOICES$booster_vax_scenario,
-                         selected = c( "all adults"))
+                         selected = c("all adults"))
     }
   })
   output$antiviral_strategy <- renderUI({
     if(input$INPUT_select_sentitivity_analysis == "probab"){
-       checkboxGroupInput("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
-                         choices = CHOICES$antiviral_target_group,
-                         selected = "adults with comorbidities") 
+       checkboxGroupInput("INPUT_include_antiviral_target_group",
+                          "Antiviral strategies to include:",
+                          choices = CHOICES$antiviral_target_group,
+                          selected = "adults with comorbidities") 
     } else{
-        radioButtons("INPUT_include_antiviral_target_group","Antiviral strategies to include:",
-                   choices = CHOICES$antiviral_target_group,
-                   selected = "adults with comorbidities") 
+        radioButtons("INPUT_include_antiviral_target_group",
+                     "Antiviral strategies to include:",
+                     choices = CHOICES$antiviral_target_group,
+                     selected = "adults with comorbidities") 
     }
   })
   
@@ -382,8 +395,12 @@ server <- function(input, output, session) {
     if(length(plot_list) == 1){row_num = 1; col_num = 1}
     if(length(plot_list) == 2){row_num = 1; col_num = 2}
     if(length(plot_list) > 2) {row_num = 2; col_num = 2}
-    plot = ggarrange(plotlist = plot_list, ncol = col_num, nrow = row_num, common.legend = TRUE, legend = "bottom",
-                     legend.grob = get_legend(plot_list[[2]]))
+    plot <- ggarrange(plotlist = plot_list,
+                      ncol = col_num, 
+                      nrow = row_num, 
+                      common.legend = TRUE, 
+                      legend = "bottom",
+                      legend.grob = get_legend(plot_list[[2]]))
   }
   
   # text to display when too many dimensions have been selected
@@ -411,13 +428,14 @@ server <- function(input, output, session) {
   })
 
   dataInput_ICER_table <- reactive({
-    this_ICER_table = subset_data_to_selected(ICER_table) %>%
+    this_ICER_table <- subset_data_to_selected(ICER_table) %>%
       filter(outcome %in% c("netCost",input$INPUT_include_outcomes)) %>%
       rename(incremental_cost = net_cost) %>%
-      select(setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_target_group,count_outcome_averted,incremental_cost,ICER,LPI_ICER,UPI_ICER) 
+      select(setting, booster_vax_scenario, antiviral_cost_scenario, antiviral_target_group, 
+             count_outcome_averted, incremental_cost, ICER, LPI_ICER, UPI_ICER) 
     
     if(nrow(this_ICER_table)>0 & input$INPUT_include_net == "No"){
-      this_ICER_table = this_ICER_table %>% select(-incremental_cost,-count_outcome_averted)
+      this_ICER_table <- this_ICER_table %>% select(-incremental_cost,-count_outcome_averted)
     }
     colnames(this_ICER_table)[colnames(this_ICER_table) == "count_outcome_averted"]<- paste(input$INPUT_include_outcomes,"averted")
     colnames(this_ICER_table) <- gsub("_"," ",colnames(this_ICER_table))
@@ -428,12 +446,12 @@ server <- function(input, output, session) {
   output$OUTPUT_ICER_table <- renderDataTable({dataInput_ICER_table()})
   
   dataInput_TornadoPlot <- reactive({
-    tornado_variable_of_interest = paste0("cost_per_",
+    tornado_variable_of_interest <- paste0("cost_per_",
                                          gsub("QALYs","QALY",input$INPUT_include_outcomes),
                                          "_averted")
     tornado_result %>%
-      filter(evaluation_level == "incremental") %>%
-      filter(antiviral_type %in% c("no antiviral", input$INPUT_antiviral_type) & 
+      filter(evaluation_level == "incremental" &
+               antiviral_type %in% c("no antiviral", input$INPUT_antiviral_type) & 
                variable %in%  tornado_variable_of_interest &
                setting %in% input$INPUT_include_setting &
                perspective %in% input$INPUT_perspective  &
@@ -457,8 +475,8 @@ server <- function(input, output, session) {
       plot_list = list()
       
       for (this_setting in input$INPUT_include_setting){
-        workshop =  to_plot[to_plot$setting == this_setting,]
-        plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = workshop,
+        workshop <- to_plot[to_plot$setting == this_setting,]
+        plot_list[[length(plot_list)+ 1]] <- apply_plot_dimensions(df = workshop,
                                                                   aes_x="netCost",
                                                                   aes_y="count_outcomes",
                                                                   count_plot_dimensions = count_plot_dimensions())  +
@@ -471,8 +489,8 @@ server <- function(input, output, session) {
           theme_bw() +
           theme(legend.position="bottom") +
           labs(title = this_setting) +
-          guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
-        
+          guides(color = guide_legend(ncol = 1),
+                 shape = guide_legend(ncol = 1)) 
       }
       rm(to_plot,workshop)
       consolidate_plot_list(plot_list)
@@ -494,13 +512,14 @@ server <- function(input, output, session) {
      
     validate(need(length(count_plot_dimensions())<=2, too_many_dimensions_text))
     to_plot <- dataInput_WTPcurve()
-    if(input$INPUT_fix_xaxis == TRUE){
-      to_plot_xmin = min(to_plot$WTP)
-      to_plot_xmax = max(to_plot$WTP)
-    }
-    
+
     if (nrow(to_plot) > 1) {
       plot_list = list()
+      
+      if(input$INPUT_fix_xaxis == TRUE){
+        to_plot_xmin = min(to_plot$WTP)
+        to_plot_xmax = max(to_plot$WTP)
+      }
 
       #withProgress({ #the slow part of the plot is the sub-setting of the data frame NOT the plotting
         for (this_setting in input$INPUT_include_setting) {
@@ -510,7 +529,7 @@ server <- function(input, output, session) {
           } else if (this_setting == "Papua New Guinea"){this_setting_GDP = 3020.3
           } else if (this_setting == "Timor-Leste"){this_setting_GDP = 2358.4}
           
-          plot_list[[length(plot_list)+ 1]] = apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
+          plot_list[[length(plot_list)+ 1]] <- apply_plot_dimensions(df = to_plot[to_plot$setting == this_setting,],
                                                                     aes_x="WTP",
                                                                     aes_y="probability",
                                                                     count_plot_dimensions = count_plot_dimensions())  +
@@ -522,11 +541,11 @@ server <- function(input, output, session) {
             guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
           
           if(input$INPUT_fix_xaxis == TRUE){
-            plot_list[[length(plot_list)]] =  plot_list[[length(plot_list)]] +
+            plot_list[[length(plot_list)]] <-  plot_list[[length(plot_list)]] +
               xlim(to_plot_xmin,to_plot_xmax)
           }
           if (input$INPUT_include_GDP == TRUE){
-            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+            plot_list[[length(plot_list)]] <- plot_list[[length(plot_list)]] + 
               geom_vline(mapping = NULL, xintercept = this_setting_GDP, linetype="dashed") #+
               #annotate("text", y = 0.25, x = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
             #very difficult NOT to get text to overlap something with range of WTP
@@ -561,8 +580,9 @@ server <- function(input, output, session) {
       
       plot_list = list()
       for (this_setting in input$INPUT_include_setting){
-        to_plot_this_setting = to_plot %>%
+        to_plot_this_setting <- to_plot %>%
           filter(setting == this_setting)
+        
         if (nrow(to_plot_this_setting)>1){ #NB: FJI doesn't have unvax
           base.value <- isolate_base_value %>% filter(setting == this_setting)
           base.value <- base.value$mean
@@ -604,7 +624,6 @@ server <- function(input, output, session) {
                       aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=paste(direction,"estimate"))) + 
             geom_hline(yintercept = base.value) +
             theme_bw() + 
-            #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
             theme(axis.title.y=element_blank(), legend.position = "bottom",
                   legend.title = element_blank())  +
             ylab(paste("Cost per",gsub("QALYs","QALY",input$INPUT_include_outcomes),"averted (2022 USD)")) +
@@ -615,19 +634,19 @@ server <- function(input, output, session) {
           
           
           if (input$INPUT_include_GDP == "Yes"){
-            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+            plot_list[[length(plot_list)]] <- plot_list[[length(plot_list)]] + 
               #geom_hline(aes(yintercept = this_setting_GDP, color = "GDP per capita"),linetype="dashed") +
               geom_hline(mapping = NULL, yintercept = this_setting_GDP, linetype="dashed") +
               annotate("text", x = 4, y = this_setting_GDP*annotate_multiple, label = "GDP per capita", angle = 90) 
             
           } else{
-            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] +
+            plot_list[[length(plot_list)]] <- plot_list[[length(plot_list)]] +
               ylim(min(min(df_2$ymin),0),
                    max(max(df_2$ymax),0))
           }
           rm(df_2)
           if (length(input$INPUT_perspective)>1){
-            plot_list[[length(plot_list)]] = plot_list[[length(plot_list)]] + 
+            plot_list[[length(plot_list)]] <- plot_list[[length(plot_list)]] + 
               facet_grid(perspective ~.) 
           }
         }
@@ -660,10 +679,8 @@ server <- function(input, output, session) {
   output$download <-  downloadHandler(
   
     filename = function() {
-      temp_name = ''
       time = Sys.time()
       time = gsub(':','-',time)
-      time = paste0(temp_name,time)
       
       if (input$INPUT_select_sentitivity_analysis == "det") { paste(time, "tornado_plot.pdf")
       } else if (input$tabset == "ICER table") {              paste0(time, " ", input$tabset, ".csv")
@@ -680,7 +697,6 @@ server <- function(input, output, session) {
   #_____________________________________________________________________________
   
 }
-
 
 
 shinyApp(ui, server) #run application!
