@@ -68,7 +68,8 @@ estimate_healthcare_costs_averted <- function(
   
   #adding reduced LOS to TRANSLATED_antiviral_simulations for this cost to be calculated alongside reduced cost due to hospital admissions prevented
   workshop <- reduced_LOS_estimates %>%
-    rename(count_outcomes = estimates) %>%
+    select(-count_outcomes) %>%
+    rename(count_outcomes = estimate) %>%
     mutate(outcome = "hosp") 
   rm(reduced_LOS_estimates)
   

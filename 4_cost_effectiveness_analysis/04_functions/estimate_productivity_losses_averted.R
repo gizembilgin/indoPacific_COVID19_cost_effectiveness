@@ -1,7 +1,7 @@
 # This function calculates the productivity losses due to illness and premature mortality 
 # NB: no sampling for this cost category since underlying uncertainty not available for multiple informing data sources
 
-estimate_productivity_costs <- function(
+estimate_productivity_losses_averted <- function(
     LIST_CEA_settings,
     MASTER_antiviral_simulations,
     TORNADO_PLOT_OVERRIDE,
