@@ -1,3 +1,4 @@
+# This workshop was used to check that net values align with incremental values
 ### ALL ALIGN FOR DECISION_sampling_strategy == "single_run"
 ### DON'T ALIGN FOR DECISION_sampling_strategy == "empirical_distribution" since sampling from both age-specific dn and net dn
 

@@ -1,4 +1,4 @@
-
+# This workshop was used to check the ideal number of cores for the parallel run of the model
 
 timing_df = ICER_plane_df = data.frame()
 

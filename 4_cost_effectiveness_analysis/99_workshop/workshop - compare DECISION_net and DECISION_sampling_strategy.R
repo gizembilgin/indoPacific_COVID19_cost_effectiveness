@@ -1,5 +1,5 @@
+#This workshop was used to compare results with varying choices of  DECISION_include_net & DECISION_sampling_strategy
 
-### Let's compare the time per run & ICER plane plot of varying DECISION_include_net & DECISION_sampling_strategy
 ICER_plane_df = data.frame()
 tracking_times_df = data.frame()
 

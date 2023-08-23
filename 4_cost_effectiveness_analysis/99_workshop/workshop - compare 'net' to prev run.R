@@ -1,9 +1,9 @@
-### Compare to previous run
+# This workshop compares the latest transmission model run to the previous
+# It was used to check that nothing had changed when net outcomes were saved for the first time
+
 LIST_CEA_settings = c("PNG_low_beta")
 rootpath = str_replace(getwd(), "GitHub_vaxAllocation/4_cost_effectiveness_analysis","")
 MASTER_antiviral_simulations = data.frame()
-
-
 
 for (i in 1:length(LIST_CEA_settings)){
   this_setting = LIST_CEA_settings[[i]]
