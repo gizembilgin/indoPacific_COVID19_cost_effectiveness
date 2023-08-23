@@ -1,5 +1,5 @@
-### RUN SCENARIOS FOR SUPPLEMENTARY MATERIAL S4.6
-
+# This scripts runs the model with and without the inclusion of QALYs associated
+# with long COVID. The results are presented in the Supplementary Material
 
 queue = list(
   list(TOGGLE_longCOVID = "off"),

@@ -1,12 +1,10 @@
-### RUN SCENARIOS FOR:
-### (1) (plot)_cost_effectiveness_acceptability_curve
-### (2) (plot)_ICER_table
-### (3) (plot)_incremental_plane
-##Note: will use LIST_CEA_settings,LIST_booster_vax_scenarios,LIST_antiviral_elig_groups,LIST_antiviral_types from CommandDeck (line 15)
+# This script runs 1000 probabilistic simulations of the model, i.e., runs the 
+# model 1000 times sampling from the underlying distributions of all parameters.
+
 
 
 ### RUN SIMULATIONS ############################################################
-CommandDeck_CONTROLS =
+CommandDeck_CONTROLS <-
   list(
     LIST_CEA_settings = list("PNG_low_beta","TLS","FJI","IDN"),
     LIST_perspectives = c("healthcare","societal"),
@@ -22,14 +20,14 @@ CommandDeck_CONTROLS =
   )
 
 source(paste0(getwd(),"/CommandDeck.R"))
-CommandDeck_CONTROLS = list()
+CommandDeck_CONTROLS <- list()
 ################################################################################
 
 
 
-### process results for R Shiny ################################################
+### PROCESS RESULTS FOR R SHINY ################################################
 # aligning results with buttons
-CommandDeck_result_long = CommandDeck_result_long %>%
+CommandDeck_result_long <- CommandDeck_result_long %>%
   mutate(
     setting = case_when(
       setting == "FJI" ~ "Fiji",
@@ -55,19 +53,20 @@ CommandDeck_result_long = CommandDeck_result_long %>%
     ),
     
     perspective = paste0(perspective," perspective"),      
-    discounting_rate = discounting_rate * 100
-  ) %>%
-  mutate(antiviral_cost_scenario = 
+    discounting_rate = discounting_rate * 100,
+    antiviral_cost_scenario = 
            case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
                      antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
                      antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"))
-CommandDeck_result_long$antiviral_cost_scenario <- factor(CommandDeck_result_long$antiviral_cost_scenario, levels = rev(c("low generic reference price ($25 USD per schedule)",
-                                                                                          "middle-income reference price ($250 USD per schedule)",
-                                                                                          "high-income reference price ($530 USD per schedule)")))
+CommandDeck_result_long$antiviral_cost_scenario <- factor(
+  CommandDeck_result_long$antiviral_cost_scenario, 
+  levels = rev(c("low generic reference price ($25 USD per schedule)",
+                 "middle-income reference price ($250 USD per schedule)",
+                 "high-income reference price ($530 USD per schedule)")))
 #_____________________________________________
 
 
-CommandDeck_result = CommandDeck_result %>%
+CommandDeck_result <- CommandDeck_result %>%
   mutate(
     setting = case_when(
       setting == "FJI" ~ "Fiji",
@@ -93,52 +92,62 @@ CommandDeck_result = CommandDeck_result %>%
     ),
     
     perspective = paste0(perspective," perspective"),      
-    discounting_rate = discounting_rate * 100
+    discounting_rate = discounting_rate * 100,
+    
+    antiviral_cost_scenario = 
+      case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
+                antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
+                antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)")
   ) %>%
   rename(outcome = variable) %>%
   mutate(
     outcome = gsub("cost_per_", "", outcome),
     outcome = gsub("_averted", "", outcome)
-  ) %>%
-  mutate(antiviral_cost_scenario = 
-           case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
-                     antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
-                     antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"))
-CommandDeck_result$antiviral_cost_scenario <- factor(CommandDeck_result$antiviral_cost_scenario, levels = rev(c("low generic reference price ($25 USD per schedule)",
-                                                                                                                          "middle-income reference price ($250 USD per schedule)",
-                                                                                                                          "high-income reference price ($530 USD per schedule)")))
+  ) 
+CommandDeck_result$antiviral_cost_scenario <- factor(
+  CommandDeck_result$antiviral_cost_scenario, 
+  levels = rev(c(
+    "low generic reference price ($25 USD per schedule)",
+    "middle-income reference price ($250 USD per schedule)",
+    "high-income reference price ($530 USD per schedule)"
+  )))
 CommandDeck_result$outcome[CommandDeck_result$outcome == "QALY"] <- "QALYs"
 #_____________________________________________
 
 
-CEAC_dataframe = CommandDeck_result_long %>%
+CEAC_dataframe <- CommandDeck_result_long %>%
   filter(evaluation_level == "incremental" &
            cost_per_outcome_averted != -Inf &
            cost_per_outcome_averted != Inf) %>%
-  group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group) %>%
+  group_by(outcome, setting, perspective, discounting_rate, antiviral_cost_scenario, booster_vax_scenario, antiviral_type, antiviral_target_group) %>%
   arrange(cost_per_outcome_averted) %>%
   mutate(row_number = row_number(),
          probability = row_number/TOGGLE_numberOfRuns) %>%
   rename(WTP = cost_per_outcome_averted) %>%
-  select(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability,WTP) 
+  select(outcome, setting, perspective, discounting_rate, antiviral_cost_scenario, booster_vax_scenario, antiviral_type, antiviral_target_group, probability, WTP) 
 #_____________________________________________
 
 
-ICER_table = CommandDeck_result %>%
+ICER_table <- CommandDeck_result %>%
   filter(evaluation_level == "incremental") %>%
   ungroup() %>%
   filter(variable_type %in% c("ICER","outcome") | outcome == "netCost") %>%
   select(-sd,-evaluation_level)
-cost_column = ICER_table %>%
+cost_column <- ICER_table %>%
   filter(variable_type == "cost") %>%
   mutate(variable_type = "netCost") %>%
   rename(netCost = mean) %>%
   ungroup() %>%
   select(-variable_type,-outcome,-LPI,-UPI)
-cost_column = crossing(cost_column,outcome = unique(ICER_table$outcome[ICER_table$outcome != "netCost"]))
-ICER_table = ICER_table %>%
+cost_column <- crossing(
+  cost_column,
+  outcome = unique(ICER_table$outcome[ICER_table$outcome != "netCost"])
+  )
+ICER_table <- ICER_table %>%
   filter(variable_type != "cost") %>%
-  left_join(cost_column, by = join_by(perspective, discounting_rate, setting, booster_vax_scenario, antiviral_cost_scenario, antiviral_type, antiviral_target_group, outcome)) %>%
+  left_join(cost_column, 
+            by = join_by(perspective, discounting_rate, setting, booster_vax_scenario, 
+                         antiviral_cost_scenario, antiviral_type, antiviral_target_group, outcome)) %>%
   pivot_wider(names_from = variable_type,
               values_from = c(mean,LPI,UPI)) %>%
   select(-LPI_outcome,-UPI_outcome) %>%
@@ -153,18 +162,17 @@ ICER_table = ICER_table %>%
          PI = paste(round(LPI_ICER),"to",round(UPI_ICER)),
   ) %>%
   ungroup() %>%
-  select(perspective,discounting_rate,setting,booster_vax_scenario,antiviral_cost_scenario,antiviral_type,antiviral_target_group,outcome,count_outcome_averted,net_cost,ICER,LPI_ICER,UPI_ICER)
+  select(perspective, discounting_rate, setting, booster_vax_scenario, antiviral_cost_scenario, antiviral_type,
+         antiviral_target_group, outcome, count_outcome_averted, net_cost, ICER, LPI_ICER, UPI_ICER)
 ################################################################################
 
 
 
-### save complete results ######################################################
-temp_name = ''
+### SAVE RESULTS ###############################################################
 time_of_result = Sys.time()
 time_of_result = gsub(':','-',time_of_result)
-time_of_result = paste0(temp_name,time_of_result)
 
-complete_results = list(CommandDeck_result_long = CommandDeck_result_long,
+complete_results <- list(CommandDeck_result_long = CommandDeck_result_long,
                         CommandDeck_result = CommandDeck_result,
                         CEAC_dataframe = CEAC_dataframe,
                         ICER_table = ICER_table)
@@ -175,47 +183,41 @@ if (DECISION_include_net == "N"){
   
   #breakdown into chunks that CAN live in the GitHub repositry
   save(ICER_table              ,file = paste0("07_shiny/x_results/ICER_table",time_of_result,".Rdata"))
+  
   save(CommandDeck_result      ,file = paste0("07_shiny/x_results/CommandDeck_result",time_of_result,".Rdata"))
   
-  #>100 MB
-  CEAC_dataframe = CEAC_dataframe %>%
+  CEAC_dataframe <- CEAC_dataframe %>%
     mutate(probability = round(probability,digits=2)) %>%
-    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
-    summarise(WTP = mean(WTP),
-              .groups = "keep") %>%
+    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,
+             booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
+    summarise(WTP = mean(WTP), .groups = "keep") %>%
     ungroup() %>%
     filter(!(antiviral_type == "molunipiravir" & outcome == "hosp"))
   save(CEAC_dataframe,file = paste0("07_shiny/x_results/CEAC_dataframe_",time_of_result,".Rdata"))
   
-  # object.size(CEAC_dataframe)  # 1184081984 bytes
-  CEAC_dataframe = CEAC_dataframe[CEAC_dataframe$outcome == "QALYs",] %>%
+  CEAC_dataframe <- CEAC_dataframe[CEAC_dataframe$outcome == "QALYs",] %>%
     mutate(probability = ceiling(probability/0.05)*0.05) %>%
-    #mutate(probability = round(probability,digits=2)) %>%
-    #filter(probability %in% seq(0.02,1,by=0.02)) %>% #even numbers only!
-    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
-    summarise(WTP = mean(WTP),
-              .groups = "keep") %>%
+    group_by(outcome,setting,perspective,discounting_rate,antiviral_cost_scenario,
+             booster_vax_scenario,antiviral_type,antiviral_target_group,probability) %>%
+    summarise(WTP = mean(WTP),.groups = "keep") %>%
     ungroup()
   #2.5% of size of CEAC_dataframe -> 60 megabytes
   save(CEAC_dataframe,file = paste0("07_shiny/x_results/CEAC_dataframe_reduced_",time_of_result,".Rdata"))
   
-  CommandDeck_result_long_part1 = CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
-  CommandDeck_result_long_part2 = CommandDeck_result_long %>% filter(!(setting %in% c("Indonesia","Fiji")))
+  CommandDeck_result_long_part1 <- CommandDeck_result_long %>% filter(setting %in% c("Indonesia","Fiji"))
+  CommandDeck_result_long_part2 <- CommandDeck_result_long %>% filter(!(setting %in% c("Indonesia","Fiji")))
   save(CommandDeck_result_long_part1,file = paste0("07_shiny/x_results/CommandDeck_result_long_1_",time_of_result,".Rdata"))
   save(CommandDeck_result_long_part2,file = paste0("07_shiny/x_results/CommandDeck_result_long_2_",time_of_result,".Rdata"))
-
   
-  #object.size(CommandDeck_result_long) # 1852500856 bytes
-  sampled_df = sample(unique(CommandDeck_result_long$run_ID),
+  sampled_df <- sample(unique(CommandDeck_result_long$run_ID),
                       size = 50,
                       replace = FALSE)
-  CommandDeck_result_long = CommandDeck_result_long %>%
+  CommandDeck_result_long <- CommandDeck_result_long %>%
     filter(run_ID %in% sampled_df)
-  save(CommandDeck_result_long,file = paste0("07_shiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
   #5% of size of CommandDeck_result_long -> 185 megabytes
+  save(CommandDeck_result_long,file = paste0("07_shiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
   
 } else{
-  #save outside of GitHub repositry since > 100 MB
   save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/net_complete_CEA_result",time_of_result,".Rdata"))
 }
 ################################################################################
@@ -224,8 +226,7 @@ if (DECISION_include_net == "N"){
 
 ###Load latest results for troubleshooting
 # rootpath = paste0(getwd(), "/07_shiny", "")
-# list_poss_Rdata = list.files(path = paste0(rootpath, "/x_results/"),
-#                              pattern = "ICER_table*")
+# list_poss_Rdata = list.files(path = paste0(rootpath, "/x_results/"), pattern = "ICER_table*")
 # list_poss_Rdata_details = double()
 # for (j in 1:length(list_poss_Rdata)) {
 #  list_poss_Rdata_details = rbind(list_poss_Rdata_details,
@@ -240,6 +241,5 @@ if (DECISION_include_net == "N"){
 # load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_1_",time_of_result))
 #  load(file = paste0(rootpath,"/x_results/CommandDeck_result_long_2_",time_of_result))
 #  CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
-# 
 # #load CEAC_dataframe
 # load(file = paste0(rootpath,"/x_results/CEAC_dataframe_",time_of_result))

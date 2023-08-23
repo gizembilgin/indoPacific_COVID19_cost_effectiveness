@@ -1,7 +1,9 @@
-### RUN SCENARIOS FOR TORNADO PLOT
+# This scripts runs one-way sensitivity analysis using the lower and upper estimates
+# for each parameter, one at a time. The results of this script are visualised
+# in the tornado plot.
 
 
-queue = list(
+queue <- list(
   
   ## (1/3) healthcare costs averted
   list(cost_per_extra_LOS = 0.5, label = "Cost per extra LOS (±50%)",direction = "lower"),
@@ -64,15 +66,14 @@ queue = list(
   list(productivity_loss_death = 0.5, label = "Productivity loss due to death (±50%)",direction = "lower"),
   list(productivity_loss_death = 1.5, label = "Productivity loss due to death (±50%)",direction = "upper")
   
-  
 )
 
 tornado_result = data.frame()
 CommandDeck_CONTROLS = list()
 
 for (ticket in 1:length(queue)){
-    CommandDeck_CONTROLS = queue[[ticket]]
-    CommandDeck_CONTROLS = append(CommandDeck_CONTROLS,
+    CommandDeck_CONTROLS <- queue[[ticket]]
+    CommandDeck_CONTROLS <- append(CommandDeck_CONTROLS,
                                   list(
                                     LIST_CEA_settings = list("PNG_low_beta","TLS","FJI","IDN"),
                                     LIST_perspectives = c("healthcare","societal"),
@@ -86,23 +87,23 @@ for (ticket in 1:length(queue)){
     )
     
     if (!("LIST_discounting_rate" %in% names(CommandDeck_CONTROLS))) CommandDeck_CONTROLS = append(CommandDeck_CONTROLS, list(LIST_discounting_rate = 0.03))
-    if (!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS))) CommandDeck_CONTROLS = append(CommandDeck_CONTROLS, list(TOGGLE_longCOVID = "off"))
+    if (!("TOGGLE_longCOVID" %in% names(CommandDeck_CONTROLS)))      CommandDeck_CONTROLS = append(CommandDeck_CONTROLS, list(TOGGLE_longCOVID = "off"))
     
     source(paste0(getwd(),"/CommandDeck.R"))
     
-    rows = CommandDeck_result %>%
+    rows <- CommandDeck_result %>%
       filter(variable_type == "ICER") %>%
       mutate(label = CommandDeck_CONTROLS$label,
              direction = CommandDeck_CONTROLS$direction) 
-    tornado_result = rbind(tornado_result,rows)
+    tornado_result <- rbind(tornado_result,rows)
     
 }
 
-
-
 CommandDeck_CONTROLS = list()
 
-tornado_result = tornado_result %>%
+
+
+tornado_result <- tornado_result %>%
   mutate(
     setting = case_when(
       setting == "FJI" ~ "Fiji",
@@ -131,7 +132,6 @@ tornado_result = tornado_result %>%
     perspective = paste0(perspective," perspective")      
   ) %>%
   filter(!(antiviral_type ==  "molunipiravir" & variable == "cost_per_hosp_averted")) #these results don't make any sense as molnupiravir is not effective against hospitalisation
-
 
 save(tornado_result,file = "07_shiny/x_results/tornado_result.Rdata")
 beep()
