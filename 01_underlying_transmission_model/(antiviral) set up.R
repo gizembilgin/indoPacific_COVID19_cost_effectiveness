@@ -293,8 +293,7 @@ for (ticket in 1:length(queue)){
      RR_estimate  = RR_default = 1.95
    }
  
-   source(paste0(gsub("02_stochastic_outcomes_projections","01_underlying_transmission_model/",getwd()),
-                 "CommandDeck.R"),local=TRUE)
+   source("CommandDeck.R",local=TRUE)
    
    ### CREATE DEPENDENCIES OF ANTIVIRAL FUNCTION (n=4)  #################################################################
    # Recall, dependencies of antiviral function from transmission model (n=5): incidence_log_tidy, severe_outcome_log_tidy, severe_outcome_this_run, reinfection_protection, param_age 
@@ -464,9 +463,9 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
 
 
 save.image(file = paste(gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd()),
-                        "x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+                        "/x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
 save(RECORD_antiviral_setup, file = paste(gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd())
-                                          ,"x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+                                          ,"/x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
