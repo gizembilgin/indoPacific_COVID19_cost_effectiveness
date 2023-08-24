@@ -1,3 +1,5 @@
+# 02_stochastic_outcomes_projections
+
 ## Folder contents
 This folder contains code to stochastically estimate the impacts of oral antivirals and booster doses on 
 severe outcomes associated with COVID-19 transmssion. For further details on parameter estimation associated with this
