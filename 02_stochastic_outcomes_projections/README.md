@@ -2,7 +2,7 @@
 
 ## Folder contents
 This folder contains code to stochastically estimate the impacts of oral antivirals and booster doses on 
-severe outcomes associated with COVID-19 transmssion. For further details on parameter estimation associated with this
+severe outcomes associated with COVID-19 transmssion. For further details on parameter estimation for this
 model see the [previous paper](https://dx.doi.org/10.2139/ssrn.4456598). 
 
 ## Scripts included in this folder
@@ -14,5 +14,6 @@ model see the [previous paper](https://dx.doi.org/10.2139/ssrn.4456598).
 04_plotting/ | plots model results
 
 ## Model schematic
-![stochastic_outcomes_projections_schematic](https://github.com/gizembilgin/GitHub_vaxAllocation/assets/37473520/140a7b5d-380c-4940-aade-79843fa73e83)
+![stochastic_outcomes_projections_schematic](https://github.com/gizembilgin/indoPacific_COVID19_cost_effectiveness/assets/37473520/3311a884-8a28-41ab-8bec-048b9e993318)
+
 
