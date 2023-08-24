@@ -11,8 +11,10 @@ LIST_CEA_settings <- c("PNG","TLS","FJI","IDN")
 
 
 ####  Importing key datasets ###################################################
-load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
-load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
+load(file = paste0(gsub("03_cost_effectiveness_analysis","01_underlying_transmission_model",getwd()),
+                   "/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
+load(file = paste0(gsub("03_cost_effectiveness_analysis","01_underlying_transmission_model",getwd()),
+                   "/01_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
 labour_force_participation_RAW <- read.csv("02_inputs/Labour force participation rate by age - ILO modelled estimates.csv",header=TRUE)
 annual_output_per_worker_RAW <- read.csv("02_inputs/Output per worker (GDP constant 2015 US $).csv",header=TRUE)
 age_specific_return_to_work_RAW <- read.csv("02_inputs/age_specific_return_to_work.csv",header=TRUE)

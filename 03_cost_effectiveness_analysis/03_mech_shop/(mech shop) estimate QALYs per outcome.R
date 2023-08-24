@@ -9,7 +9,8 @@ setting_list = c("FJI","IDN","PNG","TLS")
 ### PART ONE: loading QALY estimates############################################
 ## non-fatal QALYS 
 # Step One: load population distribution by age
-load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
+load(file = paste0(gsub("03_cost_effectiveness_analysis","01_underlying_transmission_model",getwd()),
+                   "/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
 
 pop_orig <- UN_pop_est %>% 
   rename(population = PopTotal,
@@ -41,7 +42,8 @@ QALYs_nonFatal <- raw %>%
 #"The average number of remaining years of life expected by a hypothetical cohort of individuals alive at age x 
 # who would be subject during the remaining of their lives to the mortality rates of a given period."
 # https://population.un.org/wpp/Download/Standard/Mortality/
-load(file = paste0(gsub("4_cost_effectiveness_analysis","",getwd()),"1_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
+load(file = paste0(gsub("03_cost_effectiveness_analysis","01_underlying_transmission_model",getwd()),
+                   "/01_inputs/UN_world_population_prospects/UN_lifeExpect_est.Rdata"))
 
 UN_lifeExpect_est <- UN_lifeExpect_est %>%
   rename(life_expectancy = ex,

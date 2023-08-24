@@ -179,7 +179,8 @@ complete_results <- list(CommandDeck_result_long = CommandDeck_result_long,
 
 if (DECISION_include_net == "N"){
   #save outside of GitHub repositry since > 100 MB
-  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/incremental_complete_CEA_result",time_of_result,".Rdata"))
+  save(complete_results,file = paste0(gsub("GitHub_vaxAllocation/03_cost_effectiveness_analysis","",rootpath),
+                                      "x_results/incremental_complete_CEA_result",time_of_result,".Rdata"))
   
   #breakdown into chunks that CAN live in the GitHub repositry
   save(ICER_table              ,file = paste0("07_shiny/x_results/ICER_table",time_of_result,".Rdata"))
@@ -218,7 +219,8 @@ if (DECISION_include_net == "N"){
   save(CommandDeck_result_long,file = paste0("07_shiny/x_results/CommandDeck_result_long_reduced_",time_of_result,".Rdata"))
   
 } else{
-  save(complete_results,file = paste0(gsub("/GitHub_vaxAllocation/4_cost_effectiveness_analysis","",rootpath),"/x_results/net_complete_CEA_result",time_of_result,".Rdata"))
+  save(complete_results,file = paste0(gsub("GitHub_vaxAllocation/03_cost_effectiveness_analysis","",rootpath),
+                                      "x_results/net_complete_CEA_result",time_of_result,".Rdata"))
 }
 ################################################################################
 
