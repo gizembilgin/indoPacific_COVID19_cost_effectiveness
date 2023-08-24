@@ -5,7 +5,7 @@ This folder contains the deterministic COVID-19 transmission model underlying th
 A summary of this model is provided in the Supplementary Material associated with this paper.
 
 ## Model schematic
-![transmission_model_schematic](https://github.com/gizembilgin/GitHub_vaxAllocation/assets/37473520/a2e66348-9d5b-4b3e-8d8b-ce2b07a90173)
+![transmission_model_schematic](https://github.com/gizembilgin/indoPacific_COVID19_cost_effectiveness/assets/37473520/ba89828c-e8c0-4c24-ba9a-fad75d95cf89)
 
 ## Scripts included in this folder
 | Folder or script | Purpose | 
