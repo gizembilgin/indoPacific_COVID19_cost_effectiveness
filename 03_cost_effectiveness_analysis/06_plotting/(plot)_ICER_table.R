@@ -15,7 +15,7 @@ INPUT_include_outcomes = c("QALY")
 INPUT_include_net = "Y"
 
 
-rootpath = str_replace(getwd(), "GitHub_vaxAllocation/03_cost_effectiveness_analysis","")
+rootpath = str_replace(getwd(), "indoPacific_COVID19_cost_effectiveness/03_cost_effectiveness_analysis","")
 this_path <- paste0(rootpath,"/x_results/")
 list_poss_Rdata = list.files(path = this_path,pattern = paste0(INPUT_ICER_table,"_complete_CEA_result*"))
 if (length(list_poss_Rdata) > 0) {

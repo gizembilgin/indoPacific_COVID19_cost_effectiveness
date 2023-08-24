@@ -118,7 +118,6 @@ for (setting in c("SLE","PNG","TLS","IDN","FJI","SLB","PHL")){
   num_age_groups = J = length(age_group_labels)          
   age_group_order = data.frame(age_group = age_group_labels, age_group_num = seq(1:J))
   
-  rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") 
   pop_setting_orig <- UN_pop_est %>% 
     rename(country = ISO3_code,
            population = PopTotal,

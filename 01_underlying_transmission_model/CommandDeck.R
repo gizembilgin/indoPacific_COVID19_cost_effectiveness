@@ -20,7 +20,7 @@ debug_type = "partial" #options: "full", "partial"
 
 
 ### set default values of toggles if debug is on
-rootpath = str_replace(getwd(), "GitHub_vaxAllocation","") #Note: x_results not stored within GitHub repository
+rootpath = gsub("indoPacific_COVID19_cost_effectiveness/01_underlying_transmission_model","",getwd())
 complete_model_runs = 1   # when >1 samples randomly from distribution of parameters (where available)
 if (exists("setting_beta") == FALSE){setting_beta = setting}
 if (exists("fitting") == FALSE){fitting = "off"}

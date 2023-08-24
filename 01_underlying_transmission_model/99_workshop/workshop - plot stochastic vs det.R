@@ -7,13 +7,13 @@ MASTER_RECORD_antiviral_model_simulations = data.frame()
 risk_groups_to_plot = "adults_with_comorbidities"
 settings_to_plot = "IDN"
 
-rootpath = str_replace(getwd(), "GitHub_vaxAllocation","")
+rootpath = gsub("indoPacific_COVID19_cost_effectiveness/01_underlying_transmission_model","",getwd())
 for (r in 1:length(risk_groups_to_plot)){
   this_risk_group = risk_groups_to_plot[r]
   for (i in 1:length(settings_to_plot)){
     this_setting = settings_to_plot[i]
     
-    list_poss_Rdata = list.files(path=paste(rootpath,"x_results/",sep=''),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
+    list_poss_Rdata = list.files(path=paste0(rootpath,"x_results/"),pattern = paste("AntiviralRun_",this_setting,"_",this_risk_group,"*",sep=""))
     list_poss_Rdata = list_poss_Rdata[substr(list_poss_Rdata,1,26) != "Stochastic_VE_AntiviralRun"]
     if (length(list_poss_Rdata)>0){
       list_poss_Rdata_details = double()

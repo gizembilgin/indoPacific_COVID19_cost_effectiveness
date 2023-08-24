@@ -12,7 +12,7 @@ library(foreach)
 
 #dependencies -> nil!
 #rm(list=ls())
-rootpath = rootpath = gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd())
+rootpath = rootpath = gsub( "indoPacific_COVID19_cost_effectiveness/02_stochastic_outcomes_projections","",getwd())
 
 source("02_functions/(function) antiviral_model_manger.R")
 source("02_functions/(function) antiviral_model_worker.R")

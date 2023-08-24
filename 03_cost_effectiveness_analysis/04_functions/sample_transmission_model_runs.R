@@ -13,7 +13,7 @@ sample_transmission_model_runs <- function(
 ) {
 
   
-  rootpath = str_replace(getwd(), "GitHub_vaxAllocation/03_cost_effectiveness_analysis","")
+  rootpath = str_replace(getwd(), "indoPacific_COVID19_cost_effectiveness/03_cost_effectiveness_analysis","")
   MASTER_antiviral_simulations = data.frame()
   
   for (i in 1:length(LIST_CEA_settings)){

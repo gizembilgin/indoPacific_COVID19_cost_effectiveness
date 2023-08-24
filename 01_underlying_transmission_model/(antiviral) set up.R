@@ -462,10 +462,10 @@ RECORD_antiviral_setup = list(outcomes_without_antivirals = RECORD_outcomes_with
 
 
 
-save.image(file = paste(gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd()),
-                        "/x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
-save(RECORD_antiviral_setup, file = paste(gsub( "GitHub_vaxAllocation/02_stochastic_outcomes_projections","",getwd())
-                                          ,"/x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+save.image(file = paste(gsub( "indoPacific_COVID19_cost_effectiveness/01_underlying_transmission_model","",getwd()),
+                        "x_results/antiviralSetUp_fullImage_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
+save(RECORD_antiviral_setup, file = paste(gsub( "indoPacific_COVID19_cost_effectiveness/01_underlying_transmission_model","",getwd())
+                                          ,"x_results/antiviralSetUp_",setting_beta,"_",this_risk_group_name,"_",Sys.Date(),".Rdata",sep=''))
 
 time.end.AntiviralSetUp=proc.time()[[3]]
 time.end.AntiviralSetUp - time.start.AntiviralSetUp
