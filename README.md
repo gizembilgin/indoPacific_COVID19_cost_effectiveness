@@ -1,4 +1,4 @@
-# GitHub_vaxAllocation
+# indoPacific_COVID19_cost_effectiveness
 **Associated paper**: Cost-effectiveness analysis of COVID-19 booster doses and oral antivirals in the Indo-Pacific [working paper]
 
 ## Abstract
