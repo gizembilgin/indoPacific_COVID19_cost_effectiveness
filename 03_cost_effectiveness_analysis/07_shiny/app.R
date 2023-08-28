@@ -329,7 +329,13 @@ server <- function(input, output, session) {
     if (length(count_plot_dimensions) != 0){
       if (count_plot_dimensions[1] == "booster_vax_scenario"){
         this_plot <- this_plot +
-          scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
+          scale_color_manual(values = #wesanderson::wes_palette( name="Zissou1"))
+                               c("high risk adults" = "#e1a500",
+                                 "all adults" = "#3b94b2" ,
+                                 "high-risk adults (catch-up campaign)" ="#ebd829" ,
+                                 "all adults (catch-up campaign)" = "#76c3c4" ,
+                                 "no booster" = "#d6607c")
+          )
       } else if (count_plot_dimensions[1] == "antiviral_cost_scenario"){
         this_plot <- this_plot +
           scale_color_manual(values = wesanderson::wes_palette( name="FantasticFox1"))
@@ -392,15 +398,15 @@ server <- function(input, output, session) {
   
   # function to consolidate plot_list into one figure
   consolidate_plot_list <- function(plot_list){
-    if(length(plot_list) == 1){row_num = 1; col_num = 1}
-    if(length(plot_list) == 2){row_num = 1; col_num = 2}
-    if(length(plot_list) > 2) {row_num = 2; col_num = 2}
+    if(length(plot_list) == 1){row_num = 1; col_num = 1;this_legend = get_legend(plot_list[[1]])}
+    if(length(plot_list) == 2){row_num = 1; col_num = 2; this_legend = get_legend(plot_list[[2]])}
+    if(length(plot_list) > 2) {row_num = 2; col_num = 2; this_legend = get_legend(plot_list[[2]])}
     plot <- ggarrange(plotlist = plot_list,
                       ncol = col_num, 
                       nrow = row_num, 
                       common.legend = TRUE, 
                       legend = "bottom",
-                      legend.grob = get_legend(plot_list[[2]]))
+                      legend.grob = this_legend)
   }
   
   # text to display when too many dimensions have been selected

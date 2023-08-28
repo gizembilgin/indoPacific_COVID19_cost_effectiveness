@@ -3,7 +3,7 @@
 
 require(ggpubr);options(scipen = 1000)
 
-INPUT_plot_name = "long_COVID" # options: static_plot, reduced_static_plot (hosted R Shiny), long_COVID (SM S4.7)
+INPUT_plot_name = "reduced_static_plot" # options: static_plot, reduced_static_plot (hosted R Shiny), long_COVID (SM S4.7)
 
 
 INPUT_include_setting = c("Fiji","Indonesia","Papua New Guinea","Timor-Leste")
@@ -11,6 +11,7 @@ INPUT_include_booster_vax_scenario = c("high risk adults"
                                        , "all adults"
                                        , "all adults (catch-up campaign)"
                                        , "high-risk adults (catch-up campaign)"
+                                       , "no booster"
                                         )
 INPUT_antiviral_type = c() # c("nirmatrelvir_ritonavir")
 INPUT_antiviral_type = c(INPUT_antiviral_type,"no antiviral")
@@ -23,6 +24,9 @@ INPUT_include_outcomes = "QALYs"
 # INPUT_include_booster_vax_scenario = "no booster"
 # INPUT_antiviral_type = c("nirmatrelvir_ritonavir")
 # INPUT_include_antiviral_target_group = c("adults with comorbidities","all adults","unvaccinated adults")
+
+INPUT_antiviral_type = c("nirmatrelvir_ritonavir")
+INPUT_include_antiviral_target_group = c("adults with comorbidities")
 
 
 
@@ -112,7 +116,16 @@ apply_plot_dimensions <- function(df,aes_x,aes_y,count_plot_dimensions){
   }
   
   if (length(INPUT_perspective)>1) this_plot = this_plot + facet_grid(perspective ~.) 
-  
+  if (count_plot_dimensions[1] == "booster_vax_scenario" && INPUT_plot_name != "long_COVID"){
+    this_plot <- this_plot +
+      scale_color_manual(values = #wesanderson::wes_palette( name="Zissou1"))
+                           c("high risk adults" = "#e1a500",
+                             "all adults" = "#3b94b2" ,
+                             "high-risk adults (catch-up campaign)" ="#ebd829" ,
+                             "all adults (catch-up campaign)" = "#76c3c4" ,
+                             "no booster" = "#d6607c")
+      )
+  }
   return(this_plot)
 }
 
@@ -150,8 +163,7 @@ for (this_setting in INPUT_include_setting){
     theme_bw() +
     theme(legend.position="bottom") +
     labs(title = this_setting) +
-    guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) + 
-    scale_color_manual(values = wesanderson::wes_palette( name="Zissou1"))
+    guides(color = guide_legend(ncol = 1),shape = guide_legend(ncol = 1)) 
 }
 
 print(consolidate_plot_list(plot_list))
