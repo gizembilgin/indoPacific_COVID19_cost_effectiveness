@@ -7,7 +7,7 @@ INPUT_plot_name = "reduced_static_plot" # options: static_plot, reduced_static_p
 
 
 INPUT_include_setting = c("Fiji","Indonesia","Papua New Guinea","Timor-Leste")
-INPUT_include_booster_vax_scenario = c("high risk adults"
+INPUT_include_booster_vax_scenario = c("high-risk adults"
                                        , "all adults"
                                        , "all adults (catch-up campaign)"
                                        , "high-risk adults (catch-up campaign)"
@@ -119,7 +119,7 @@ apply_plot_dimensions <- function(df,aes_x,aes_y,count_plot_dimensions){
   if (count_plot_dimensions[1] == "booster_vax_scenario" && INPUT_plot_name != "long_COVID"){
     this_plot <- this_plot +
       scale_color_manual(values = #wesanderson::wes_palette( name="Zissou1"))
-                           c("high risk adults" = "#e1a500",
+                           c("high-risk adults" = "#e1a500",
                              "all adults" = "#3b94b2" ,
                              "high-risk adults (catch-up campaign)" ="#ebd829" ,
                              "all adults (catch-up campaign)" = "#76c3c4" ,

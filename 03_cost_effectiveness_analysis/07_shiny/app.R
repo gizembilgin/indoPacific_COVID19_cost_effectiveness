@@ -11,12 +11,12 @@ CHOICES = list(
                                 "middle-income reference price ($250 USD per schedule)" = "middle-income reference price ($250 USD per schedule)" , 
                                 "high-income reference price ($530 USD per schedule)" = "high-income reference price ($530 USD per schedule)"),
   antiviral_target_group = c("all adults", 
-                             "adults with comorbidities", 
+                             "high-risk adults", 
                              "unvaccinated adults",
                              "no antiviral"),
   antiviral_type = list("molunipiravir" = "molunipiravir",
                         "nirmatrelvir_ritonavir" = "nirmatrelvir_ritonavir"),
-  booster_vax_scenario = c("high risk adults"
+  booster_vax_scenario = c("high-risk adults"
                            , "all adults"
                            ,"high-risk adults (catch-up campaign)"
                            , "all adults (catch-up campaign)"  
@@ -332,7 +332,7 @@ server <- function(input, output, session) {
       if (count_plot_dimensions[1] == "booster_vax_scenario"){
         this_plot <- this_plot +
           scale_color_manual(values = #wesanderson::wes_palette( name="Zissou1"))
-                               c("high risk adults" = "#e1a500",
+                               c("high-risk adults" = "#e1a500",
                                  "all adults" = "#3b94b2" ,
                                  "high-risk adults (catch-up campaign)" ="#ebd829" ,
                                  "all adults (catch-up campaign)" = "#76c3c4" ,
@@ -345,7 +345,7 @@ server <- function(input, output, session) {
         this_plot <- this_plot +
           scale_colour_manual(values = 
                                 c("all adults" = "#619CFF", 
-                                  "adults with comorbidities" = "#00BA38", 
+                                  "high-risk adults" = "#00BA38", 
                                   "unvaccinated adults" = "#F8766D" ,
                                   "no antiviral" = "#999999"))
       }
@@ -367,7 +367,7 @@ server <- function(input, output, session) {
     if(input$INPUT_select_sentitivity_analysis == "probab"){
       checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster eligibility (select at least one):",
                          choices = CHOICES$booster_vax_scenario,
-                         selected = c("all adults","high risk adults", "no booster")) 
+                         selected = c("all adults","high-risk adults", "no booster")) 
     } else{
       radioButtons("INPUT_include_booster_vax_scenario","Booster eligibility:",
                          choices = CHOICES$booster_vax_scenario,
@@ -379,12 +379,12 @@ server <- function(input, output, session) {
        checkboxGroupInput("INPUT_include_antiviral_target_group",
                           "Antiviral eligibility (select at least one):",
                           choices = CHOICES$antiviral_target_group,
-                          selected = "adults with comorbidities") 
+                          selected = "high-risk adults") 
     } else{
         radioButtons("INPUT_include_antiviral_target_group",
                      "Antiviral eligibility:",
                      choices = CHOICES$antiviral_target_group,
-                     selected = "adults with comorbidities") 
+                     selected = "high-risk adults") 
     }
   })
   

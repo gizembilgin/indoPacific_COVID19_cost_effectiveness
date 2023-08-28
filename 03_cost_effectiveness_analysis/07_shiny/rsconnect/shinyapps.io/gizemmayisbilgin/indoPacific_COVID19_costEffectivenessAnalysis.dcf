@@ -5,6 +5,6 @@ account: gizemmayisbilgin
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9570119
-bundleId: 7595252
+bundleId: 7614404
 url: https://gizemmayisbilgin.shinyapps.io/indoPacific_COVID19_costEffectivenessAnalysis/
 version: 1

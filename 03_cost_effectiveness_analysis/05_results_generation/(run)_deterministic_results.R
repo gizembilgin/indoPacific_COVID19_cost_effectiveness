@@ -114,7 +114,7 @@ tornado_result <- tornado_result %>%
     ),
     
     booster_vax_scenario = case_when(
-      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
+      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high-risk adults",
       booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
       booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults (catch-up campaign)"  ,
       booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults (catch-up campaign)",
@@ -126,6 +126,7 @@ tornado_result <- tornado_result %>%
     antiviral_target_group = gsub("_"," ",antiviral_target_group),
     antiviral_target_group = case_when(
       antiviral_type == "no antiviral" ~ antiviral_type,
+      antiviral_target_group == "adults with comorbidities" ~ "high-risk adults",
       TRUE ~ antiviral_target_group
     ),
 

@@ -37,7 +37,7 @@ CommandDeck_result_long <- CommandDeck_result_long %>%
       TRUE ~ setting
     ),
     booster_vax_scenario = case_when(
-      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
+      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high-risk adults",
       booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
       booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults (catch-up campaign)"  ,
       booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults (catch-up campaign)"   ,
@@ -49,6 +49,7 @@ CommandDeck_result_long <- CommandDeck_result_long %>%
     antiviral_target_group = gsub("_"," ",antiviral_target_group),
     antiviral_target_group = case_when(
       antiviral_type == "no antiviral" ~ antiviral_type,
+      antiviral_target_group == "adults with comorbidities" ~ "high-risk adults",
       TRUE ~ antiviral_target_group
     ),
     
@@ -76,7 +77,7 @@ CommandDeck_result <- CommandDeck_result %>%
       TRUE ~ setting
     ),
     booster_vax_scenario = case_when(
-      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high risk adults",
+      booster_vax_scenario == "booster to all high-risk adults previously willing to be vaccinated" ~ "high-risk adults",
       booster_vax_scenario == "booster to all adults previously willing to be vaccinated" ~ "all adults"    ,
       booster_vax_scenario == "booster dose catch-up campaign for all adults" ~ "all adults (catch-up campaign)"  ,
       booster_vax_scenario == "booster dose catch-up campaign for high-risk adults" ~ "high-risk adults (catch-up campaign)",
@@ -88,6 +89,7 @@ CommandDeck_result <- CommandDeck_result %>%
     antiviral_target_group = gsub("_"," ",antiviral_target_group),
     antiviral_target_group = case_when(
       antiviral_type == "no antiviral" ~ antiviral_type,
+      antiviral_target_group == "adults with comorbidities" ~ "high-risk adults",
       TRUE ~ antiviral_target_group
     ),
     
@@ -245,3 +247,4 @@ if (DECISION_include_net == "N"){
 #  CommandDeck_result_long = rbind(CommandDeck_result_long_part1,CommandDeck_result_long_part2); rm(CommandDeck_result_long_part1,CommandDeck_result_long_part2)
 # #load CEAC_dataframe
 # load(file = paste0(rootpath,"/x_results/CEAC_dataframe_",time_of_result))
+# time_of_result <- gsub(".Rdata","",time_of_result)
