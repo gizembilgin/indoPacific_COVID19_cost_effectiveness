@@ -158,6 +158,8 @@ ui <- fluidPage(
                  column(10, downloadButton("download"), style = "margin-top: 25px;")
                  ),
                
+               textOutput("warning_on_hosp_molnupiravir"),
+               
                conditionalPanel(condition = "input.INPUT_select_sentitivity_analysis == 'probab'",
                                 tabsetPanel(
                                   id = "tabset",
@@ -363,11 +365,11 @@ server <- function(input, output, session) {
   #widget for booster and oral antiviral eligibility strategies
   output$booster_strategy <- renderUI({
     if(input$INPUT_select_sentitivity_analysis == "probab"){
-      checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster strategies to include:",
+      checkboxGroupInput("INPUT_include_booster_vax_scenario","Booster eligibility (select at least one):",
                          choices = CHOICES$booster_vax_scenario,
                          selected = c("all adults","high risk adults", "no booster")) 
     } else{
-      radioButtons("INPUT_include_booster_vax_scenario","Booster strategies to include:",
+      radioButtons("INPUT_include_booster_vax_scenario","Booster eligibility:",
                          choices = CHOICES$booster_vax_scenario,
                          selected = c("all adults"))
     }
@@ -375,12 +377,12 @@ server <- function(input, output, session) {
   output$antiviral_strategy <- renderUI({
     if(input$INPUT_select_sentitivity_analysis == "probab"){
        checkboxGroupInput("INPUT_include_antiviral_target_group",
-                          "Antiviral strategies to include:",
+                          "Antiviral eligibility (select at least one):",
                           choices = CHOICES$antiviral_target_group,
                           selected = "adults with comorbidities") 
     } else{
         radioButtons("INPUT_include_antiviral_target_group",
-                     "Antiviral strategies to include:",
+                     "Antiviral eligibility:",
                      choices = CHOICES$antiviral_target_group,
                      selected = "adults with comorbidities") 
     }
@@ -416,6 +418,13 @@ server <- function(input, output, session) {
   output$warning_on_unvax_Fijian <- renderText({
     if("Fiji" %in% input$INPUT_include_setting & "unvaccinated adults" %in% input$INPUT_include_antiviral_target_group){
       validate("\nNote: Due to Fiji's high vaccine coverage rates, 'no antiviral' and 'unvaccinated adults' antiviral target simulations overlap")
+    }
+  })
+  
+  #text to display when hospitalisation for molnupiravir
+  output$warning_on_hosp_molnupiravir <- renderText({
+    if(input$INPUT_antiviral_type == "molunipiravir" && input$INPUT_include_outcomes == "hosp"){
+      validate("\nNote: This figure does not exist since cohort studies have not observed a statistically significiant effect of molnupiravir on the risk of hospitalisation \n  ")
     }
   })
   ##############################################################################
