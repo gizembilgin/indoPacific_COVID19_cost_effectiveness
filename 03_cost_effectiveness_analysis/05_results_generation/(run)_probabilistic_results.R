@@ -187,7 +187,7 @@ if (DECISION_include_net == "N"){
   #breakdown into chunks that CAN live in the GitHub repositry
   save(ICER_table              ,file = paste0("07_shiny/x_results/ICER_table",time_of_result,".Rdata"))
   
-  save(CommandDeck_result      ,file = paste0("07_shiny/x_results/CommandDeck_result",time_of_result,".Rdata"))
+  #save(CommandDeck_result      ,file = paste0("07_shiny/x_results/CommandDeck_result",time_of_result,".Rdata"))
   
   CEAC_dataframe <- CEAC_dataframe %>%
     mutate(probability = round(probability,digits=2)) %>%

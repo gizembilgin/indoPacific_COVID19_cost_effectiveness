@@ -196,7 +196,7 @@ server <- function(input, output, session) {
     string_to_print = c("This R Shiny accompanies the working paper <doi link once submitted>.")
       if (is_local == FALSE){
         string_to_print = c(string_to_print,
-                            "This hosted version of the R Shiny contains a subset of model simulations due to restrictions on virtual RAM. We expect that this subset of simulations is representative of the paper's results. For access to complete model simulations please download the full R Shiny available from <GitHub link>")
+                            "This hosted version of the R Shiny contains a subset of model simulations due to restrictions on virtual RAM. We expect that this subset of simulations is representative of the paper's results. For access to complete model simulations please download the full R Shiny available from https://github.com/gizembilgin/indoPacific_COVID19_cost_effectiveness/tree/main/03_cost_effectiveness_analysis/07_shiny")
       } else{
         string_to_print = c(string_to_print,"Please note that this application may take a minute or two to load the underlying simulations.")
       }
