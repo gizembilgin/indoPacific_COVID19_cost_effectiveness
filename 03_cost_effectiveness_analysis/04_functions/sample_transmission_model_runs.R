@@ -69,8 +69,8 @@ sample_transmission_model_runs <- function(
 
   sampled_df = sampled_df %>%
     filter(vax_scenario %in% LIST_booster_vax_scenarios &
-             antiviral_type %in% LIST_antiviral_types | is.na(antiviral_type) &
-             antiviral_target_group %in% LIST_antiviral_elig_groups | is.na(antiviral_target_group)) %>%
+             (antiviral_type %in% LIST_antiviral_types | is.na(antiviral_type)) &
+             (antiviral_target_group %in% LIST_antiviral_elig_groups | is.na(antiviral_target_group))) %>%
     select(-country,-setting_beta) %>%
     
     #created shorten name to describe booster dose eligibility
