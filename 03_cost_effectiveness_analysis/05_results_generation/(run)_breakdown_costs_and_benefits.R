@@ -1,11 +1,13 @@
 # This script explore how strongly different outcomes contribute to outcomes averted,
 # productivity losses, healthcare costs and intervention costs. The results of this
 # script are visualized in figures S3.1 and S3.2 of the Supplementary Material.
+options(scipen = 1000)
 
 CommandDeck_CONTROLS = list(
   LIST_CEA_settings = list("PNG_low_beta", "TLS", "FJI", "IDN"),
   LIST_perspectives = c("societal"),
-  LIST_antiviral_cost_scenario = c("middle_income_cost"),
+  LIST_antiviral_cost_scenario = c("low_generic_cost","middle_income_cost", "high_income_cost"),
+  #LIST_antiviral_cost_scenario = c("middle_income_cost"),
   LIST_discounting_rate = 0.03,
   
   LIST_booster_vax_scenarios = list(
@@ -39,13 +41,25 @@ figure_S3_1 [[1]] <- ggplot(outcomesAvertedEstimation$QALY_breakdown) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   xlab("") 
 
+interventionCost_estimates <- interventionCost_estimates %>% 
+  mutate(antiviral_cost_scenario = 
+           case_when(antiviral_cost_scenario == "high_income_cost" ~ "high-income reference price ($530 USD per schedule)",
+                     antiviral_cost_scenario == "middle_income_cost" ~ "middle-income reference price ($250 USD per schedule)",
+                     antiviral_cost_scenario == "low_generic_cost" ~ "low generic reference price ($25 USD per schedule)"))
+interventionCost_estimates$antiviral_cost_scenario <- factor(interventionCost_estimates$antiviral_cost_scenario, 
+                                                                levels = c("low generic reference price ($25 USD per schedule)",   "middle-income reference price ($250 USD per schedule)",   "high-income reference price ($530 USD per schedule)"))
 figure_S3_1 [[2]] <- ggplot(interventionCost_estimates) + 
-  geom_col(aes(x=gsub(" 2023-01-01","",gsub(" 2023-03-01","",intervention)),y=cost)) +
+  geom_col(aes(x=gsub(" 2023-01-01","",gsub(" 2023-03-01","",intervention)),y=cost,fill=as.factor(antiviral_cost_scenario)),position = "dodge") +
+  scale_fill_manual(values = c("low generic reference price ($25 USD per schedule)" = "#46acc8",
+                               "middle-income reference price ($250 USD per schedule)" = "#e2d200",
+                               "high-income reference price ($530 USD per schedule)" = "#dd8c29"))+
   facet_grid(setting ~., scales = "free") + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   xlab("")+
-  labs(title = "intervention costs") 
+  labs(fill = "antiviral cost scenario",title = "intervention costs")
+this_legend = get_legend(figure_S3_1 [[2]])
+figure_S3_1 [[2]] <- figure_S3_1 [[2]] +  theme(legend.position="none") 
 
 figure_S3_1 [[3]] <- ggplot(productivityCosts$productivity_loss_breakdown) + 
   geom_col(aes(x=productivity_loss_category,y=cost)) +
@@ -145,5 +159,7 @@ for (this_setting in unique(net_cost_by_component$setting)){
 
 
 ### Print figures
-ggarrange(plotlist = figure_S3_1, ncol = 2, nrow = 2)
+ggarrange(plotlist = figure_S3_1, ncol = 2, nrow = 2,
+          legend.grob = this_legend,
+          legend = "bottom")
 ggarrange(plotlist = figure_S3_2, ncol = 1, nrow = 4,  legend = "none")
