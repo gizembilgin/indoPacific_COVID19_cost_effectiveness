@@ -4,10 +4,10 @@ options(scipen=999) #turn off scientific notation
 
 INPUT_include_setting = c("Papua New Guinea", "Timor-Leste","Fiji","Indonesia")
 INPUT_perspective = "healthcare perspective"
-INPUT_include_booster_vax_scenario = "no booster"
-INPUT_include_antiviral_target_group = "unvaccinated adults"
+INPUT_include_booster_vax_scenario =  "all adults"
+INPUT_include_antiviral_target_group = "high-risk adults"
 INPUT_include_outcomes = "QALYs"
-INPUT_antiviral_type = "molunipiravir"
+INPUT_antiviral_type = "nirmatrelvir_ritonavir"
 INPUT_parameters = c(
   "Antiviral schedule price ($25-530)",
   "Antiviral wastage (0-60%)"          ,
