@@ -11,7 +11,7 @@ their cost-effectiveness in middle-income settings.
 
 ## Code history
 The underlying transmission model estimating the impact of booster doses and oral antivirals in Fiji, Indonesia, Papua New Guinea, and Timor-Leste was 
-developed in a [previous project](https://github.com/gizembilgin/indoPacific_COVID19_model). The results of that study are currently [in preprint](https://dx.doi.org/10.2139/ssrn.4456598).
+developed in a [previous project](https://github.com/gizembilgin/indoPacific_COVID19_model). The results of that study have been published in [Vaccine: X](https://doi.org/10.1016/j.jvacx.2023.100386). 
 
 ## Folder structure
 *01_underlying_transmission_model* contains the deterministic transmission model  <br />
