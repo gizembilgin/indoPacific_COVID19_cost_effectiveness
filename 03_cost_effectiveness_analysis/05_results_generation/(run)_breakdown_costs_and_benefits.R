@@ -36,7 +36,7 @@ figure_S3_1 [[1]] <- ggplot(outcomesAvertedEstimation$QALY_breakdown) +
   geom_col(aes(x=outcome_source,y=count_outcomes)) +
   facet_grid(setting ~., scales = "free") + 
   this_plot_standard + 
-  labs(title = "QALYs averted") + 
+  labs(title = "QALYs gained") + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   xlab("") 

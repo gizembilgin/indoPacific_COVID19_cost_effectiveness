@@ -193,7 +193,7 @@ server <- function(input, output, session) {
   #   })
   
   output$shiny_description <- renderText({
-    string_to_print = c("This R Shiny accompanies the working paper <doi link once submitted>.")
+    string_to_print = c("This R Shiny accompanies the working paper https://doi.org/10.1101/2023.10.26.23297613.")
       if (is_local == FALSE){
         string_to_print = c(string_to_print,
                             "This hosted version of the R Shiny contains a subset of model simulations due to restrictions on virtual RAM. We expect that this subset of simulations is representative of the paper's results. For access to complete model simulations please download the full R Shiny available from https://github.com/gizembilgin/indoPacific_COVID19_cost_effectiveness/tree/main/03_cost_effectiveness_analysis/07_shiny")
@@ -495,7 +495,7 @@ server <- function(input, output, session) {
                                                                   aes_x="netCost",
                                                                   aes_y="count_outcomes",
                                                                   count_plot_dimensions = count_plot_dimensions())  +
-          ylab(paste(input$INPUT_include_outcomes,"averted")) +
+          ylab(paste(input$INPUT_include_outcomes,"gained")) +
           xlab("incremental cost (2022 USD)") +
           xlim(min(min(workshop$netCost),0), 
                max(max(workshop$netCost),0)) + 
@@ -641,7 +641,7 @@ server <- function(input, output, session) {
             theme_bw() + 
             theme(axis.title.y=element_blank(), legend.position = "bottom",
                   legend.title = element_blank())  +
-            ylab(paste("Cost per",gsub("QALYs","QALY",input$INPUT_include_outcomes),"averted (2022 USD)")) +
+            ylab(paste("Cost per",gsub("QALYs","QALY",input$INPUT_include_outcomes),"gained (2022 USD)")) +
             scale_x_continuous(breaks = c(1:length(order_parameters)), 
                                labels = order_parameters) +
             coord_flip() +

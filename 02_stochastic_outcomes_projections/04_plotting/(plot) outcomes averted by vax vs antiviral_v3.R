@@ -1,8 +1,9 @@
 library(RColorBrewer)
 options(scipen = 1000)
 
-plot_name = "figure_2" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3", "figure_S2_4"
+plot_name = "figure_1" #figure_1, figure_2, figure_S3_1_2,figure_S3_1_3,"figure_S3_2_1","figure_S3_2_3", "figure_S2_4"
 plot_list = list()
+EPIDEMICS_poster = TRUE
 
 #LIST_outcomes = list('hosp', 'severe_disease','YLL','death') # for extended plot (SM?)
 LIST_outcomes = list('hosp', 'death')
@@ -13,8 +14,8 @@ TOGGLE_antiviral_type = "nirmatrelvir_ritonavir"
 risk_groups_to_plot = c("adults_with_comorbidities")
 if (plot_name == "figure_S2_4"){risk_groups_to_plot = "pregnant_women"}
 
-settings_to_plot = c("PNG_high_beta","PNG_low_beta")
-#settings_to_plot = c("TLS","PNG_low_beta","FJI","IDN")
+#settings_to_plot = c("PNG_high_beta","PNG_low_beta")
+settings_to_plot = c("TLS","PNG_low_beta","FJI","IDN")
 
 
 if (plot_name ==  "figure_S3_2_3"){
@@ -94,7 +95,14 @@ if (plot_name %in% c("figure_1",
                      "figure_S3_1_2", # prioritised
                      "figure_S3_1_3"  # only same subset get vaxed again
                      )){
-  if (plot_name == "figure_1"){
+  if(EPIDEMICS_poster == TRUE){
+    LIST_vax_scenarios = c(
+      #"catch-up campaign all adults",
+      "booster to all",
+      #"catch-up campaign high-risk",
+      "booster to high-risk",
+      "no booster")
+  } else if (plot_name == "figure_1"){
     LIST_vax_scenarios = c(
       "catch-up campaign all adults",
       "booster to all",
@@ -300,7 +308,9 @@ if (plot_name %in% c("figure_2",
   workshop_this_plot$vax_scenario_short = factor(workshop_this_plot$vax_scenario_short, levels = LIST_vax_scenarios)
   
   #join on to UN_pop_est by country
-  load(file = paste0(rootpath,'/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata'))
+  load(file = paste0(gsub("02_stochastic_outcomes_projections","",getwd()),
+                    "01_underlying_transmission_model/01_inputs/UN_world_population_prospects/UN_pop_est.Rdata"))
+
   UN_total_pop <- UN_pop_est %>% 
     rename(country = ISO3_code) %>%
     filter(country %in% unique(workshop_this_plot$country)) %>%
@@ -426,4 +436,16 @@ if (plot_name %in% c("figure_2",
 #_______________________________________________________________________________
 
 saved_plot
+
+#"#000000";"#333333"; "#BE4E0E";"#CB7352";"#BE830E";"#DFC187";"#F2DCD4";"#F5EDDE";"#FFFFFF"
+
+
+if (EPIDEMICS_poster == TRUE){
+  plot_list[[2]] = plot_list[[2]]  +
+    scale_colour_manual(values = 
+                          c("booster dose" = "#BE830E", 
+                            "oral antiviral" = "#BE4E0E", 
+                            "total" = "#333333"))
+}
+plot_list[[2]]
 

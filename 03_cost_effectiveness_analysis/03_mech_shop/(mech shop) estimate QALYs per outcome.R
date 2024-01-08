@@ -112,6 +112,16 @@ ggplot(workshop[workshop$discounting_rate %in% c(0,0.03,0.05),]) +
   geom_line(aes(x=age,y=life_expectancy,color=as.factor(ISO3_code))) +
   geom_line(aes(x=age,y=QALY,color=as.factor(ISO3_code)),linetype ="dashed") +
   facet_grid(discounting_rate ~.)
+
+ggplot(workshop[workshop$discounting_rate %in% c(0,0.03,0.05) & 
+                  workshop$ISO3_code == "IDN" &
+                  workshop$age != 0,]) + 
+  #geom_line(aes(x=age,y=life_expectancy,color=as.factor(discounting_rate))) +
+  geom_line(aes(x=age,y=QALY,color=as.factor(discounting_rate*100)),linewidth = 0.75) +
+  xlab("age at premature death") +
+  ylab("QALYs lost") +
+  labs(color = "discounting rate (%)") +
+  theme_bw()+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 #_______________________________________________________________________________
 
 
