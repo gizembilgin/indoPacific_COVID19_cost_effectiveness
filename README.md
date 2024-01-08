@@ -1,5 +1,5 @@
 # indoPacific_COVID19_cost_effectiveness
-**Associated paper**: Cost-effectiveness analysis of COVID-19 booster doses and oral antivirals in the Indo-Pacific [working paper]
+**Associated paper**: Cost-effectiveness analysis of COVID-19 booster doses and oral antivirals in the Indo-Pacific [under review in PLOS ONE]
 
 ## Abstract
 The [WHO SAGE roadmap for the use of COVID-19 vaccines](https://www.who.int/publications/i/item/WHO-2019-nCoV-Vaccines-SAGE-Roadmap) 
