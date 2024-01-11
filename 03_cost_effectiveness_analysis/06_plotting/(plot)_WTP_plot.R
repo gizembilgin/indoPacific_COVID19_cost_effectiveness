@@ -3,7 +3,7 @@
 
 options(scipen = 1000); require(ggpubr)
 
-INPUT_plot_name = "antiviral_wastage_rate" # options: static_plot, reduced_static_plot (hosted R Shiny), antiviral_wastage_rate (SM Figure S4.6)
+INPUT_plot_name = "static_plot" # options: static_plot, reduced_static_plot (hosted R Shiny), antiviral_wastage_rate (SM Figure S4.6)
 
 INPUT_include_setting = c("Fiji","Indonesia","Papua New Guinea","Timor-Leste")
 INPUT_include_outcome = "QALYs"
@@ -12,10 +12,10 @@ INPUT_discounting_rate = 3
 INPUT_antiviral_cost_scenario = c("low generic reference price ($25 USD per schedule)",
                                   "middle-income reference price ($250 USD per schedule)",
                                   "high-income reference price ($530 USD per schedule)")
-INPUT_include_booster_vax_scenario = c("no booster")
+INPUT_include_booster_vax_scenario = c("no booster","all adults", "high-risk adults") #, "all adults", "high-risk adults"
 INPUT_antiviral_type = c("nirmatrelvir_ritonavir")
 INPUT_antiviral_type = c(INPUT_include_antiviral_type,"no antiviral")
-INPUT_include_antiviral_target_group = c("adults with comorbidities")
+INPUT_include_antiviral_target_group = c("high-risk adults")
 INPUT_fix_xaxis = TRUE
 INPUT_include_GDP = TRUE
 
@@ -177,3 +177,12 @@ if (nrow(to_plot) > 1) {
   print(consolidate_plot_list(plot_list))
 }
 
+
+
+GDP_by_setting <- data.frame(setting = c("Fiji","Indonesia","Papua New Guinea","Timor-Leste"),
+                             GDP = c(5316.7,4788.0,3020.3,2358.4))
+workshop <- to_plot %>% 
+  left_join(GDP_by_setting, by = "setting") %>% 
+  filter(WTP<GDP) %>%
+  group_by(setting,antiviral_cost_scenario,booster_vax_scenario) %>%
+  summarise(probability = max(probability))
